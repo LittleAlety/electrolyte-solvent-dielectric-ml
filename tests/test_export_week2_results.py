@@ -32,6 +32,11 @@ def test_week2_export_is_self_contained(tmp_path) -> None:
         "dataset_dielectric_observations",
         "dataset_summary",
         "dataset_v01_docs",
+        "dielectric_gpr_summary",
+        "dielectric_gpr_predictions",
+        "dielectric_gpr_parity",
+        "dielectric_gpr_report",
+        "dielectric_gpr_docs",
     }.issubset(exported_summary["outputs"])
     for value in exported_summary["outputs"].values():
         destination = _resolved_output_path(tmp_path, value)

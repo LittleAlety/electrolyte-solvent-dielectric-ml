@@ -67,3 +67,15 @@
 - Decision: the pipeline is GREEN but the model gate is FAILED. The evidence
   supports insufficient 3D/conformational representation rather than a unit
   mismatch or simple code bug. Move next to Chemprop/D-MPNN or a 3D/GNN.
+
+## 2026-09-23: Dielectric GPR is a weak starting baseline
+
+- Input: `data/dielectric_v01.csv`, 100 unique P1 compound keys. The 45
+  Chodera keys all overlap P1 and add no independent compounds.
+- Fixed model: Morgan count fingerprint radius 2/2048 bits, StandardScaler,
+  GaussianProcessRegressor with deterministic 80/20 split, seed 42.
+- Final kernel: `2.16**2 * RBF(length_scale=42.4) + WhiteKernel(noise_level=0.278)`.
+- Test metrics: MAE `11.5345014`, RMSE `21.0820913`, R2 `0.2312574`.
+- Posterior uncertainty: mean std `18.3566`; 95% empirical coverage `19/20`.
+- Decision: this is an active-learning starting point, not a finished model.
+  The R2 gate fails, and no Week3/P4 work is started from this result.
