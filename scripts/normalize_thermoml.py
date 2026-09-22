@@ -76,7 +76,18 @@ def main() -> int:
             except (DownloadError, OSError) as exc:
                 errors.append({"file": xml_path.name, "error": str(exc)})
 
-        digest = str(metadata.get("sha256") or sha256_file(xml_path))
+        digest = sha256_file(xml_path)
+        metadata_digest = str(metadata.get("sha256", ""))
+        if metadata_digest and metadata_digest.lower() != digest.lower():
+            errors.append(
+                {
+                    "file": xml_path.name,
+                    "error": (
+                        "SHA256 mismatch between XML file and metadata sidecar: "
+                        f"{digest} != {metadata_digest}"
+                    ),
+                }
+            )
         source_url = str(metadata.get("url", ""))
         retrieved_at = str(metadata.get("retrieved_at", ""))
         try:
