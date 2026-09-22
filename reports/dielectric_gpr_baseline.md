@@ -6,6 +6,9 @@ This baseline uses only `data/dielectric_v01.csv`: 100 independent P1
 compound-level InChIKeys. Chodera contributes 45 historical/cross-check keys,
 and all 45 overlap P1, so the effective union remains 100, not 145.
 
+The recorded input SHA256 is the canonical UTF-8 text hash after normalizing
+CRLF/CR line endings to LF, so Windows and Linux checkouts agree.
+
 ## Fixed Model
 
 - Morgan count fingerprint, radius 2, 2048 bits.

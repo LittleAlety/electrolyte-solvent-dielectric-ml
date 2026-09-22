@@ -20,6 +20,14 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def canonical_text_sha256(path: Path) -> str:
+    """Hash UTF-8 text after normalizing CRLF and CR line endings to LF."""
+
+    text = path.read_text(encoding="utf-8")
+    canonical_bytes = text.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    return hashlib.sha256(canonical_bytes).hexdigest()
+
+
 def _exported_files(output_dir: Path) -> list[Path]:
     manifest_path = (output_dir / MANIFEST_NAME).resolve()
     files = [

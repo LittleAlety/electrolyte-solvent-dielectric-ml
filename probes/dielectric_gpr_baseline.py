@@ -6,8 +6,12 @@ import argparse
 import csv
 import hashlib
 import json
+import sys
 from collections.abc import Sequence
 from pathlib import Path
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
 import matplotlib
 
@@ -21,7 +25,7 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel, WhiteKernel
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+from electrolyte_ml.exporting import canonical_text_sha256
 
 SEED = 42
 TEST_FRACTION = 0.2
@@ -251,7 +255,8 @@ def run_baseline(
     summary = {
         "schema_version": 1,
         "input_path": input_path.relative_to(REPOSITORY_ROOT).as_posix(),
-        "input_sha256": sha256_file(input_path),
+        "input_sha256": canonical_text_sha256(input_path),
+        "input_hash_mode": "canonical_text_lf_utf8",
         "compound_count": len(rows),
         "unique_inchikey_count": len({row["inchikey"] for row in rows}),
         "feature": {

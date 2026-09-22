@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 
 from electrolyte_ml.exporting import (
+    canonical_text_sha256,
     verify_export_manifest,
     write_export_manifest,
 )
@@ -80,3 +81,21 @@ def test_manifest_detects_unlisted_file(tmp_path) -> None:
 
     assert errors
     assert "unlisted file" in errors[0]
+
+
+def test_canonical_text_sha256_normalizes_line_endings(tmp_path) -> None:
+    lf_path = tmp_path / "lf.csv"
+    crlf_path = tmp_path / "crlf.csv"
+    lf_path.write_bytes(b"a,b\n1,2\n")
+    crlf_path.write_bytes(b"a,b\r\n1,2\r\n")
+
+    assert canonical_text_sha256(lf_path) == canonical_text_sha256(crlf_path)
+
+
+def test_canonical_text_sha256_detects_real_content_change(tmp_path) -> None:
+    path = tmp_path / "table.csv"
+    path.write_bytes(b"a,b\n1,2\n")
+    before = canonical_text_sha256(path)
+    path.write_bytes(b"a,b\n1,3\n")
+
+    assert canonical_text_sha256(path) != before

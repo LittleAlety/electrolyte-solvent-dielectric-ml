@@ -4,6 +4,9 @@ The baseline consumes only `data/dielectric_v01.csv`, containing 100 unique P1
 compound keys. Chodera's 45 keys are historical cross-checks and are entirely
 overlapped by P1; they do not create a 145-compound dataset.
 
+Input integrity uses a canonical UTF-8/LF text SHA256. CRLF and LF representations
+of the same text therefore verify identically on Windows and Linux.
+
 Artifacts:
 
 - `probes/dielectric_gpr_baseline.py`: reproducible model and split.

@@ -17,7 +17,9 @@ from typing import TextIO
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 
+from electrolyte_ml.exporting import canonical_text_sha256
 from probes.dielectric_gpr_baseline import deterministic_split
 
 PREDICTION_COLUMNS = {
@@ -49,14 +51,6 @@ def read_csv_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _metrics(rows: Sequence[Mapping[str, str]]) -> dict[str, float]:
     target = [float(row["target"]) for row in rows]
     prediction = [float(row["prediction"]) for row in rows]
@@ -77,10 +71,16 @@ def check_input_hash(
     input_path = root / str(summary.get("input_path", ""))
     if not input_path.is_file():
         return Check("GPR input", False, f"missing input: {input_path}")
-    actual = sha256_file(input_path)
+    actual = canonical_text_sha256(input_path)
     if actual != summary.get("input_sha256"):
         return Check("GPR input", False, "input SHA256 mismatch")
-    return Check("GPR input", True, "input SHA256 matches dielectric v0.1")
+    if summary.get("input_hash_mode") != "canonical_text_lf_utf8":
+        return Check("GPR input", False, "input hash mode mismatch")
+    return Check(
+        "GPR input",
+        True,
+        "canonical LF text SHA256 matches dielectric v0.1",
+    )
 
 
 def check_prediction_rows(rows: Sequence[Mapping[str, str]]) -> Check:
