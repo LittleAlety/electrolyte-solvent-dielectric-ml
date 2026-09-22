@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from scripts.verify_dielectric_kernel_comparison import (
+    _xgboost_model,
     check_derived_summary,
     check_grid,
     check_metric_values,
@@ -26,6 +27,22 @@ def test_kernel_verifier_rejects_missing_grid_combination() -> None:
 
     assert result.passed is False
     assert "missing" in result.detail
+
+
+def test_kernel_verifier_xgboost_is_single_threaded() -> None:
+    assert _xgboost_model().n_jobs == 1
+
+
+def test_kernel_summary_records_single_threaded_xgboost() -> None:
+    summary = json.loads(
+        (
+            REPOSITORY_ROOT
+            / "probes"
+            / "dielectric_kernel_comparison_summary.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert "n_jobs=1" in summary["models"]["XGBoost"]["config"]
 
 
 def test_kernel_verifier_rejects_metric_tampering() -> None:

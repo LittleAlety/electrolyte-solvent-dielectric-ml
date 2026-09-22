@@ -7,7 +7,6 @@ import csv
 import hashlib
 import json
 import math
-import os
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
@@ -240,6 +239,21 @@ def _metrics(target: np.ndarray, prediction: np.ndarray) -> dict[str, float]:
     }
 
 
+def _xgboost_model() -> XGBRegressor:
+    return XGBRegressor(
+        objective="reg:squarederror",
+        n_estimators=800,
+        max_depth=10,
+        learning_rate=0.05,
+        subsample=0.8,
+        colsample_bytree=0.6,
+        reg_lambda=1.0,
+        tree_method="hist",
+        n_jobs=1,
+        random_state=42,
+    )
+
+
 def _predict_independent(
     model_name: str,
     binary: np.ndarray,
@@ -277,18 +291,7 @@ def _predict_independent(
         model.fit(count[train_indices], target[train_indices])
         return model.predict(count[test_indices])
     if model_name == "XGBoost":
-        model = XGBRegressor(
-            objective="reg:squarederror",
-            n_estimators=800,
-            max_depth=10,
-            learning_rate=0.05,
-            subsample=0.8,
-            colsample_bytree=0.6,
-            reg_lambda=1.0,
-            tree_method="hist",
-            n_jobs=max(1, min(os.cpu_count() or 1, 8)),
-            random_state=42,
-        )
+        model = _xgboost_model()
         model.fit(count[train_indices], target[train_indices])
         return model.predict(count[test_indices])
     raise ValueError(f"unknown model: {model_name}")

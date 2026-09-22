@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 
 from probes.dielectric_kernel_comparison import (
+    _model_config,
+    _xgboost_model,
     summarize_metric_rows,
     tanimoto_kernel,
 )
@@ -37,3 +39,10 @@ def test_summarize_metric_rows_reports_mean_and_std() -> None:
 
     assert summary["Tanimoto_GPR"]["mae"]["mean"] == 2.0
     assert summary["Tanimoto_GPR"]["mae"]["std"] == pytest.approx(np.sqrt(2.0))
+
+
+def test_xgboost_comparison_model_and_config_are_single_threaded() -> None:
+    model = _xgboost_model()
+
+    assert model.n_jobs == 1
+    assert "n_jobs=1" in _model_config("XGBoost")

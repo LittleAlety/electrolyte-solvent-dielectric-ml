@@ -25,9 +25,9 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Kernel
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import RepeatedKFold
+from xgboost import XGBRegressor
 
 from electrolyte_ml.exporting import canonical_text_sha256
-from probes.p2_battp30k_baseline import _model
 
 MODEL_NAMES = ("Tanimoto_GPR", "RBF_GPR", "XGBoost")
 CV_SPLITS = 5
@@ -141,6 +141,21 @@ def _rbf_gpr():
     )
 
 
+def _xgboost_model() -> XGBRegressor:
+    return XGBRegressor(
+        objective="reg:squarederror",
+        n_estimators=800,
+        max_depth=10,
+        learning_rate=0.05,
+        subsample=0.8,
+        colsample_bytree=0.6,
+        reg_lambda=1.0,
+        tree_method="hist",
+        n_jobs=1,
+        random_state=SEED,
+    )
+
+
 def _predict_fold(
     model_name: str,
     *,
@@ -164,7 +179,7 @@ def _predict_fold(
         model.fit(count[train_indices], target[train_indices])
         return model.predict(count[test_indices])
     if model_name == "XGBoost":
-        model = _model(seed=SEED)
+        model = _xgboost_model()
         model.fit(count[train_indices], target[train_indices])
         return model.predict(count[test_indices])
     raise ValueError(f"unknown model: {model_name}")
@@ -205,7 +220,8 @@ def _model_config(model_name: str) -> str:
         )
     return (
         "count Morgan r=2/2048; XGBoost n_estimators=800, max_depth=10, "
-        "learning_rate=0.05, subsample=0.8, colsample_bytree=0.6, seed=42"
+        "learning_rate=0.05, subsample=0.8, colsample_bytree=0.6, "
+        "n_jobs=1, seed=42"
     )
 
 
