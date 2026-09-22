@@ -12,7 +12,7 @@ from collections.abc import Callable, Iterable, Sequence
 from dataclasses import asdict, dataclass
 from typing import TextIO
 
-PYTHON_MINIMUM = (3, 11)
+PYTHON_MINIMUM = (3, 12)
 
 
 @dataclass(frozen=True)
@@ -27,10 +27,10 @@ class PackageSpec:
 
 
 PACKAGE_SPECS = (
-    PackageSpec("numpy", "numpy", (1, 26)),
+    PackageSpec("numpy", "numpy", (2, 5, 3)),
     PackageSpec("pandas", "pandas", (2, 1)),
-    PackageSpec("scikit-learn", "sklearn", (1, 3)),
-    PackageSpec("xgboost", "xgboost", (2, 0)),
+    PackageSpec("scikit-learn", "sklearn", (1, 9, 1)),
+    PackageSpec("xgboost", "xgboost", (3, 4, 1)),
     PackageSpec("matplotlib", "matplotlib", (3, 8)),
     PackageSpec("rdkit", "rdkit", (2023, 9)),
     PackageSpec("PyYAML", "yaml", (6, 0)),

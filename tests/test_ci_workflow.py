@@ -100,3 +100,39 @@ def test_ci_runs_week3_verifiers() -> None:
         for command in commands
     )
     assert any("scripts/verify_viscosity_baseline.py" in command for command in commands)
+
+
+def test_ci_uses_python_312_and_validated_dependency_pins() -> None:
+    jobs = _workflow()["jobs"]
+    python_versions = []
+    for job in jobs.values():
+        for step in job.get("steps", []):
+            if step.get("uses", "").startswith("actions/setup-python@"):
+                python_versions.append(str(step.get("with", {}).get("python-version")))
+
+    assert python_versions == ["3.12", "3.12"]
+
+    verify_install = "\n".join(
+        str(step.get("run", ""))
+        for step in jobs["verify"]["steps"]
+        if "pip install" in str(step.get("run", ""))
+    )
+    environment_install = "\n".join(
+        str(step.get("run", ""))
+        for step in jobs["environment"]["steps"]
+        if "pip install" in str(step.get("run", ""))
+    )
+    for package_pin in ("numpy==2.5.3", "scikit-learn==1.9.1", "xgboost==3.4.1"):
+        assert package_pin in verify_install
+        assert package_pin in environment_install
+
+    root = Path(__file__).resolve().parents[1]
+    pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+    environment = (root / "environment.yml").read_text(encoding="utf-8")
+    assert 'requires-python = ">=3.12,<3.13"' in pyproject
+    for package_pin in ("numpy==2.5.3", "scikit-learn==1.9.1", "xgboost==3.4.1"):
+        assert package_pin in pyproject
+    assert "python=3.12" in environment
+    assert "numpy=2.5.3" in environment
+    assert "scikit-learn=1.9.1" in environment
+    assert "xgboost=3.4.1" in environment

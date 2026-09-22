@@ -8,10 +8,10 @@ from scripts import check_environment
 
 
 def test_python_check_accepts_real_sys_version_info_shape() -> None:
-    result = check_environment.check_python((3, 11, 9, "final", 0))
+    result = check_environment.check_python((3, 12, 14, "final", 0))
 
     assert result.passed is True
-    assert result.actual == "3.11.9"
+    assert result.actual == "3.12.14"
 
 
 def test_package_check_fails_when_import_is_missing() -> None:
@@ -69,7 +69,7 @@ def test_run_checks_passes_with_importable_packages_and_minimal_rdkit() -> None:
         return SimpleNamespace(__name__=name)
 
     report = check_environment.run_checks(
-        python_version=(3, 11, 9),
+        python_version=(3, 12, 14),
         importer=fake_importer,
         version_getter=lambda name: "9999.0.0",
     )
@@ -101,7 +101,7 @@ def test_main_json_all_pass_returns_zero_and_machine_readable_output() -> None:
     stdout = StringIO()
     exit_code = check_environment.main(
         ["--json"],
-        python_version=(3, 11, 9),
+        python_version=(3, 12, 14),
         importer=fake_importer,
         version_getter=lambda name: "9999.0.0",
         stdout=stdout,

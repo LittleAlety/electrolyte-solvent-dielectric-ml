@@ -11,13 +11,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
       - name: Install test dependencies
         run: >-
           python -m pip install
-          pytest pyyaml ruff matplotlib numpy pandas scikit-learn rdkit
-          xgboost h5py nbformat "thermoml-io[export,pandas]"
+          pytest pyyaml ruff matplotlib pandas rdkit h5py nbformat
+          numpy==2.5.3 scikit-learn==1.9.1 xgboost==3.4.1
+          "thermoml-io[export,pandas]"
       - name: Lint project
         run: python -m ruff check scripts src probes tests notebooks
       - name: Compile project
@@ -54,9 +55,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
       - name: Install project and development dependencies
-        run: python -m pip install -e ".[dev]" h5py nbformat
+        run: >-
+          python -m pip install -e ".[dev]" h5py nbformat
+          numpy==2.5.3 scikit-learn==1.9.1 xgboost==3.4.1
       - name: Verify installed environment
         run: python scripts/check_environment.py

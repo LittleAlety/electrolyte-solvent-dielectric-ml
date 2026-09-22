@@ -7,7 +7,7 @@
 
 截至 2026-09-22，当前 PowerShell 中没有可直接调用的全局 `python`、`python3` 或
 `conda` 命令。Windows `py` 启动器即使存在，也只能看到 Python 3.9，低于本项目要求的
-Python 3.11；不要用它运行项目或测试。
+Python 3.12；不要用它运行项目或测试。
 
 因此，本项目不依赖全局 Python 或全局 conda 包。必须先用 Miniconda 创建并激活
 `electrolyte-ml` 环境，再执行检查、测试或数据脚本。
@@ -58,7 +58,7 @@ conda info --base
 
 ## 2. 无 conda 时的镜像快速通道
 
-如果暂时不想安装 Miniconda，但本机已有 Python 3.11 或 3.12，可以先建立项目
+如果暂时不想安装 Miniconda，但本机已有 Python 3.12，可以先建立项目
 `.venv`。这条路径已在 2026-09-22 实际验证；`pip` 默认源在当天只有约 190 KB/s，
 而 USTC 镜像完成同一批下载后本地安装成功。
 
@@ -72,7 +72,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe scripts\check_environment.py
 ```
 
-若本机没有 Python 3.12，可把第一条改为已有的 Python 3.11。镜像只是下载通道，
+若本机没有 Python 3.12，必须先安装 Python 3.12；不要改用 Python 3.11。镜像只是下载通道，
 不会改变包版本解析和依赖内容。需要更快的备用源时，可按当前网络在
 `https://pypi.tuna.tsinghua.edu.cn/simple`、`https://mirrors.aliyun.com/pypi/simple`
 和 `https://pypi.mirrors.ustc.edu.cn/simple` 之间切换。
@@ -99,7 +99,7 @@ python --version
 python -c "import sys; print(sys.executable)"
 ```
 
-Python 必须为 3.11 或更高，且 `sys.executable` 路径应包含
+Python 必须为 3.12 或更高，且 `sys.executable` 路径应包含
 `envs\electrolyte-ml`。若仍显示 Python 3.9 或系统路径，说明环境没有正确激活。
 
 ## 4. 验证依赖与 RDKit
@@ -119,20 +119,23 @@ python scripts/check_environment.py --json
 
 JSON 顶层字段包括 `passed`、`python`、`packages`、`rdkit_smiles` 和 `failures`。
 
-当前最低版本如下：
+当前锁定版本如下：
 
-| 包 | 最低版本 |
+| 包 | 锁定版本 |
 |---|---:|
-| Python | 3.11 |
-| numpy | 1.26 |
+| Python | 3.12 |
+| numpy | 2.5.3 |
 | pandas | 2.1 |
-| scikit-learn | 1.3 |
-| xgboost | 2.0 |
+| scikit-learn | 1.9.1 |
+| xgboost | 3.4.1 |
 | matplotlib | 3.8 |
 | rdkit | 2023.9 |
 | PyYAML | 6.0 |
 | requests | 2.31 |
 | pytest | 7.4 |
+
+CI 与 `environment.yml` 对 Python、numpy、scikit-learn、xgboost 使用精确 pin。
+其余包仍按最低兼容版本检查，安装时由 conda/pip 解析当前兼容版本。
 
 ## 5. 运行测试
 
@@ -163,7 +166,7 @@ python scripts/verify_week0.py
 |---|---|
 | `conda` 不是内部或外部命令 | 安装后未重开终端，或 PowerShell 尚未初始化。重开终端；必要时从 Miniconda Prompt 执行 `conda init powershell`。 |
 | `conda activate` 后 `python` 仍是 3.9 | 环境未激活或 PATH 中其他解释器优先。用 `conda info --envs` 和 `python -c "import sys; print(sys.executable)"` 检查，再运行 `conda activate electrolyte-ml`。 |
-| `check_environment.py` 报告 Python 低于 3.11 | 当前正在使用全局或旧解释器。关闭终端，重新打开并激活 `electrolyte-ml`。 |
+| `check_environment.py` 报告 Python 低于 3.12 | 当前正在使用全局或旧解释器。关闭终端，重新打开并激活 `electrolyte-ml`。 |
 | 某包无法导入 | 确认环境已激活，再运行 `conda list` 查看该包；然后使用 `conda env update -n electrolyte-ml -f environment.yml` 更新环境。 |
 | 包版本低于要求 | 优先从 `environment.yml` 更新环境；不要在项目中进行全局 `pip install`。 |
 | RDKit 最小 SMILES 测试失败 | 检查 `conda list rdkit` 和平台是否为 64 位 Windows；必要时删除并重建环境。不要用 pip 包临时替代 conda-forge 构建。 |

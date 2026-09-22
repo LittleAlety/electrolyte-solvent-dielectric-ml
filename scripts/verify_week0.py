@@ -55,7 +55,7 @@ def _check_git_history() -> Check:
 def _check_required_terms() -> list[Check]:
     expected = {
         "environment.yml": [
-            "python=3.11",
+            "python=3.12",
             "rdkit",
             "scikit-learn",
             "xgboost",
