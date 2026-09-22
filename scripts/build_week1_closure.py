@@ -17,6 +17,7 @@ from typing import Any
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
+from electrolyte_ml.pathing import portable_basename
 from electrolyte_ml.standardize import (
     centipoise_to_pascal_second,
     standardize_molecule,
@@ -238,7 +239,7 @@ def _spot_check_row(
         }
     observed = float(observation["value"])
     delta = observed - expected_value
-    source_file = Path(observation["source_file"]).name
+    source_file = portable_basename(observation["source_file"])
     return {
         "anchor_id": anchor_id,
         "name": name,
@@ -642,7 +643,8 @@ def build_intersection(
                     "dielectric_source_doi": observation["doi"],
                     "viscosity_source_doi": CHEW_DOI,
                     "dielectric_source_file": (
-                        f"data/raw/thermoml/{Path(observation['source_file']).name}"
+                        "data/raw/thermoml/"
+                        f"{portable_basename(observation['source_file'])}"
                     ),
                     "dielectric_sha256": observation["source_sha256"],
                     "p1_is_pure": str(is_pure).lower(),

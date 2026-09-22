@@ -47,7 +47,7 @@ def test_extension_counts_real_fixture_observations() -> None:
             "primary_inchi": "InChI=1S/CH4/h1H4",
             "primary_name": "methane",
             "value": "1.8",
-            "source_file": "x.xml",
+            "source_file": r"C:\data\raw\thermoml\x.xml",
             "source_sha256": "0" * 64,
             "expanded_uncertainty": "",
             "standard_uncertainty": "",
@@ -61,5 +61,6 @@ def test_extension_counts_real_fixture_observations() -> None:
 
     assert len(expanded) == 2
     assert len(rows) == 2
+    assert expanded[0]["source_file"] == "data/raw/thermoml/x.xml"
     assert summary["row_counts"]["nist_keys"] == 1
     assert summary["row_counts"]["total_keys"] == 2

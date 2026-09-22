@@ -18,6 +18,7 @@ from rdkit import Chem
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
+from electrolyte_ml.pathing import portable_basename
 from electrolyte_ml.standardize import centipoise_to_pascal_second, standardize_molecule
 
 P1_SCOPE = "p1_thermoml_zero_frequency_pure_293.15_303.15K"
@@ -185,7 +186,8 @@ def build_p1_observations(
                 "confidence_level": row.get("confidence_level", ""),
                 "source_doi": row.get("doi", ""),
                 "source_file": (
-                    "data/raw/thermoml/" + Path(row.get("source_file", "")).name
+                    "data/raw/thermoml/"
+                    + portable_basename(row.get("source_file", ""))
                 ),
                 "source_sha256": row.get("source_sha256", ""),
                 "source_size_bytes": (

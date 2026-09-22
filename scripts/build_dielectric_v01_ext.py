@@ -17,6 +17,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
 from electrolyte_ml.exporting import canonical_text_sha256
+from electrolyte_ml.pathing import portable_basename
 
 EC_INCHIKEY = "KMTRUDSVKNLOMY-UHFFFAOYSA-N"
 EC_SMILES = "O=C1OCC1"
@@ -161,7 +162,7 @@ def build_extension(
             f"raw row {row_index}",
         )
         source_file = (
-            "data/raw/thermoml/" + Path(row.get("source_file", "")).name
+            "data/raw/thermoml/" + portable_basename(row.get("source_file", ""))
         )
         selected.append(
             {

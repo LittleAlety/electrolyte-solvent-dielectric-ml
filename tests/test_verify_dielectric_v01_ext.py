@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from scripts.verify_dielectric_v01_ext import (
+    _independent_nist,
     check_ec_summary,
     check_nist_compounds,
     check_nist_observations,
@@ -77,3 +78,20 @@ def test_extension_verifier_rejects_ec_metadata_tampering() -> None:
 
     assert result.passed is False
     assert "EC" in result.detail
+
+
+def test_extension_verifier_normalizes_windows_source_file(tmp_path) -> None:
+    processed = tmp_path / "data" / "processed"
+    processed.mkdir(parents=True)
+    (processed / "dielectric_raw.csv").write_text(
+        "property_family,is_pure,temperature_k,primary_inchi,primary_name,"
+        "value,source_file,source_sha256,doi,expanded_uncertainty,"
+        "standard_uncertainty,uncertainty_kind,confidence_level\n"
+        "zero_frequency,True,313.15,InChI=1S/CH4/h1H4,methane,1.8,"
+        "C:\\data\\raw\\thermoml\\x.xml,abc,10.1000/example,,,, \n",
+        encoding="utf-8",
+    )
+
+    _, observations = _independent_nist(tmp_path)
+
+    assert observations[0]["source_file"] == "data/raw/thermoml/x.xml"

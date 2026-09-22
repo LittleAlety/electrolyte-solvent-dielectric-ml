@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from electrolyte_ml.exporting import canonical_text_sha256
+from electrolyte_ml.pathing import portable_basename
 from electrolyte_ml.standardize import GATE_FLAGS
 
 EC_INCHIKEY = "KMTRUDSVKNLOMY-UHFFFAOYSA-N"
@@ -105,7 +106,7 @@ def _independent_nist(
                 "source_doi": row.get("doi", ""),
                 "source_type": "thermoml",
                 "source_file": (
-                    "data/raw/thermoml/" + Path(row["source_file"]).name
+                    "data/raw/thermoml/" + portable_basename(row["source_file"])
                 ),
                 "sha256": row["source_sha256"],
                 "selection_status": "high_temperature_extension",
