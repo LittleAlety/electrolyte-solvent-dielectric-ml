@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "input_path": "data/dielectric_v01.csv",
+  "input_sha256": "6f31c5b22a6a85a14954d3103a9ce5498eb4cdb265e55cfc8679adb78e4e5396",
+  "input_hash_mode": "canonical_text_lf_utf8",
+  "compound_count": 100,
+  "split": {
+    "seed": 42,
+    "train_count": 80,
+    "test_count": 20,
+    "split_id_hash": "a9ba1277297a5c1d8666e8271a6aec46e6ebad0497153b83dc2be5fe7e56b7ee"
+  },
+  "model_config": {
+    "DummyMean": "DummyRegressor(strategy='mean')",
+    "SizeOnlyRidge": "StandardScaler + Ridge(alpha=1.0), features=MW+HeavyAtoms",
+    "MorganRBFGPR": "StandardScaler + GaussianProcessRegressor; C(1)*RBF(length_scale=10)+WhiteKernel(noise_level=1); alpha=1e-6; normalize_y=True; n_restarts_optimizer=2",
+    "descriptor_enhancement": "Morgan count + 14 RDKit/Gasteiger descriptors; same StandardScaler+GPR",
+    "cv_splitter": "RepeatedKFold(n_splits=5, n_repeats=10, random_state=42)",
+    "learning_curve_sampling": "rng=default_rng(SEED + 1000*train_size + run); sample from the original deterministic 80-row train partition without replacement"
+  },
+  "single_split": {
+    "DummyMean": {
+      "mae": 17.068573375000003,
+      "rmse": 24.26164006598631,
+      "r2": -0.018108067880337808
+    },
+    "SizeOnlyRidge": {
+      "mae": 16.335219727953262,
+      "rmse": 23.592482394400513,
+      "r2": 0.037278108706607194
+    },
+    "MorganRBFGPR": {
+      "mae": 11.534501426486383,
+      "rmse": 21.082091324763155,
+      "r2": 0.23125739922743138
+    }
+  },
+  "cv": {
+    "n_splits": 5,
+    "n_repeats": 10,
+    "fold_rows": 150,
+    "models": {
+      "DummyMean": {
+        "mae": {
+          "mean": 14.9042897475,
+          "std": 3.5467878647790956
+        },
+        "rmse": {
+          "mean": 22.16449846458095,
+          "std": 9.368700908864641
+        },
+        "r2": {
+          "mean": -0.16383759399014797,
+          "std": 0.4661734561394245
+        }
+      },
+      "SizeOnlyRidge": {
+        "mae": {
+          "mean": 14.591276820358914,
+          "std": 3.4700389655271064
+        },
+        "rmse": {
+          "mean": 21.945241755696294,
+          "std": 8.966244641971809
+        },
+        "r2": {
+          "mean": -0.1861440167826873,
+          "std": 0.6698161397862833
+        }
+      },
+      "MorganRBFGPR": {
+        "mae": {
+          "mean": 11.686521591077645,
+          "std": 3.8582744261384323
+        },
+        "rmse": {
+          "mean": 20.236125432901098,
+          "std": 10.130014089069762
+        },
+        "r2": {
+          "mean": 0.022954567349629074,
+          "std": 0.6814885299246002
+        }
+      }
+    }
+  },
+  "learning_curve": {
+    "train_sizes": [
+      20,
+      40,
+      60,
+      80
+    ],
+    "repeats": 5,
+    "fixed_test_count": 20,
+    "rows": 60,
+    "summary": {
+      "DummyMean": {
+        "20": {
+          "mae": {
+            "mean": 17.480412100000002,
+            "std": 0.6939034997379334
+          },
+          "rmse": {
+            "mean": 24.270826820175124,
+            "std": 0.3515566687502522
+          },
+          "r2": {
+            "mean": -0.01905024917211704,
+            "std": 0.029775913304262932
+          }
+        },
+        "40": {
+          "mae": {
+            "mean": 16.9819021,
+            "std": 0.5090738087553157
+          },
+          "rmse": {
+            "mean": 24.456944118706964,
+            "std": 0.4895802136696985
+          },
+          "r2": {
+            "mean": -0.034897060446166514,
+            "std": 0.04175687443844388
+          }
+        },
+        "60": {
+          "mae": {
+            "mean": 17.019638666666665,
+            "std": 0.34001383971077037
+          },
+          "rmse": {
+            "mean": 24.341789827552322,
+            "std": 0.2735134390826099
+          },
+          "r2": {
+            "mean": -0.02494945375903379,
+            "std": 0.023121452712321546
+          }
+        },
+        "80": {
+          "mae": {
+            "mean": 17.068573375000003,
+            "std": 0.0
+          },
+          "rmse": {
+            "mean": 24.26164006598631,
+            "std": 0.0
+          },
+          "r2": {
+            "mean": -0.018108067880337808,
+            "std": 0.0
+          }
+        }
+      },
+      "SizeOnlyRidge": {
+        "20": {
+          "mae": {
+            "mean": 17.668381030562518,
+            "std": 1.6187313348885826
+          },
+          "rmse": {
+            "mean": 24.231671826021977,
+            "std": 0.6773107625655906
+          },
+          "r2": {
+            "mean": -0.016229239634598082,
+            "std": 0.0573225663733443
+          }
+        },
+        "40": {
+          "mae": {
+            "mean": 16.340521917897906,
+            "std": 0.17151848701526404
+          },
+          "rmse": {
+            "mean": 23.899394614632367,
+            "std": 0.6944241160273343
+          },
+          "r2": {
+            "mean": 0.011400025207891495,
+            "std": 0.05832229311089161
+          }
+        },
+        "60": {
+          "mae": {
+            "mean": 16.305398926824093,
+            "std": 0.21410636681545395
+          },
+          "rmse": {
+            "mean": 23.738319392849704,
+            "std": 0.2961236165665091
+          },
+          "r2": {
+            "mean": 0.025217849834753947,
+            "std": 0.024420447461886277
+          }
+        },
+        "80": {
+          "mae": {
+            "mean": 16.335219727953266,
+            "std": 1.7763568394002505e-15
+          },
+          "rmse": {
+            "mean": 23.592482394400513,
+            "std": 2.5121479338940403e-15
+          },
+          "r2": {
+            "mean": 0.037278108706607194,
+            "std": 1.3597399555105182e-16
+          }
+        }
+      },
+      "MorganRBFGPR": {
+        "20": {
+          "mae": {
+            "mean": 15.408849645563464,
+            "std": 1.8786865215623563
+          },
+          "rmse": {
+            "mean": 24.233140253084173,
+            "std": 2.2322619759341156
+          },
+          "r2": {
+            "mean": -0.022612551605902496,
+            "std": 0.19056320473501112
+          }
+        },
+        "40": {
+          "mae": {
+            "mean": 13.86885999481531,
+            "std": 1.3346415282438597
+          },
+          "rmse": {
+            "mean": 22.44530967210517,
+            "std": 1.7142580467738049
+          },
+          "r2": {
+            "mean": 0.12455938340372188,
+            "std": 0.1344858031698696
+          }
+        },
+        "60": {
+          "mae": {
+            "mean": 14.091920230664579,
+            "std": 1.775426813343259
+          },
+          "rmse": {
+            "mean": 23.540717123469975,
+            "std": 2.2532463956834707
+          },
+          "r2": {
+            "mean": 0.03447293604778161,
+            "std": 0.1811215417099324
+          }
+        },
+        "80": {
+          "mae": {
+            "mean": 11.534501426486354,
+            "std": 4.754036698909884e-14
+          },
+          "rmse": {
+            "mean": 21.082091324763088,
+            "std": 5.899537535972717e-14
+          },
+          "r2": {
+            "mean": 0.23125739922743627,
+            "std": 4.2948558340604624e-15
+          }
+        }
+      }
+    }
+  },
+  "descriptor_enhancement": {
+    "feature_names": [
+      "TPSA",
+      "MolLogP",
+      "NumHDonors",
+      "NumHAcceptors",
+      "FractionCSP3",
+      "NumRotatableBonds",
+      "MolWt",
+      "HeavyAtomCount",
+      "RingCount",
+      "Gasteiger_charge_min",
+      "Gasteiger_charge_max",
+      "Gasteiger_charge_mean_abs",
+      "Gasteiger_charge_std",
+      "Gasteiger_charge_sum_abs"
+    ],
+    "gasteiger_nonfinite_atom_count": 14,
+    "gasteiger_nonfinite_policy": "finite charges only; all-zero statistics if none are finite",
+    "metrics": {
+      "mae": 10.151426327967123,
+      "rmse": 18.92397520735393,
+      "r2": 0.380589862560724
+    },
+    "r2_gain_over_morgan": 0.14933246333329264,
+    "reached_r2_0_35": true
+  },
+  "limitations": [
+    "Only 100 compounds are available.",
+    "CV and learning-curve estimates are sensitive to high-dielectric outliers.",
+    "The descriptor enhancement is a single fixed quick test, not hyperparameter tuning."
+  ],
+  "outputs": {
+    "comparison_csv": "data/processed/dielectric_baseline_comparison.csv",
+    "cv_csv": "data/processed/dielectric_gpr_repeated_cv.csv",
+    "learning_curve_csv": "data/processed/dielectric_learning_curve.csv",
+    "comparison_plot": "probes/artifacts/dielectric_baseline_comparison.png",
+    "learning_curve_plot": "probes/artifacts/dielectric_learning_curve.png"
+  }
+}

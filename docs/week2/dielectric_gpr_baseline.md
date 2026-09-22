@@ -28,3 +28,8 @@ python scripts/verify_dielectric_gpr_baseline.py
 The current result is a weak but honest starting baseline. It must not be
 treated as a deployable model or as a replacement for the planned active
 learning loop.
+
+Additional diagnostics compare DummyMean, MW+heavy-atom Ridge, and MorganRBFGPR
+on the same split, run 5-fold/10-repeat CV, measure a fixed-test learning curve,
+and perform one descriptor-augmentation quick test. See
+`docs/week2/dielectric_baseline_diagnostics.md`.

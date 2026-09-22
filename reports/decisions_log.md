@@ -79,3 +79,16 @@
 - Posterior uncertainty: mean std `18.3566`; 95% empirical coverage `19/20`.
 - Decision: this is an active-learning starting point, not a finished model.
   The R2 gate fails, and no Week3/P4 work is started from this result.
+
+## 2026-09-23: Dielectric baseline diagnostics
+
+- Original 80/20 GPR metrics remain unchanged: MAE `11.5345`, RMSE `21.0821`,
+  R2 `0.23126`.
+- Same-split controls: Dummy R2 `-0.01811`; MW+heavy-atom Ridge R2 `0.03728`.
+- Repeated 5-fold/10-repeat CV: MorganRBFGPR R2 `0.02295 +/- 0.68149`, showing
+  weak and highly variable performance across folds.
+- The fixed-test learning curve is noisy; the full 80-row training subset was
+  best in this experiment.
+- Descriptor augmentation quick test reaches R2 `0.38059`, MAE `10.1514`, and
+  RMSE `18.9240`. This is evidence for a future representation upgrade, not a
+  gate pass or finalized model.

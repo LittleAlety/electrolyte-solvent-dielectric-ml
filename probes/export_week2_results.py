@@ -60,6 +60,34 @@ def export_week2_results(output_dir: Path) -> None:
         / "week2"
         / "dielectric_gpr_baseline.md": output_dir
         / "dielectric_gpr_baseline_docs.md",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "dielectric_baseline_comparison.csv": output_dir
+        / "dielectric_baseline_comparison.csv",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "dielectric_gpr_repeated_cv.csv": output_dir
+        / "dielectric_gpr_repeated_cv.csv",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "dielectric_learning_curve.csv": output_dir
+        / "dielectric_learning_curve.csv",
+        REPOSITORY_ROOT
+        / "probes"
+        / "dielectric_baseline_diagnostics_summary.json": output_dir
+        / "dielectric_baseline_diagnostics_summary.json",
+        REPOSITORY_ROOT
+        / "reports"
+        / "dielectric_baseline_diagnostics.md": output_dir
+        / "dielectric_baseline_diagnostics.md",
+        REPOSITORY_ROOT
+        / "docs"
+        / "week2"
+        / "dielectric_baseline_diagnostics.md": output_dir
+        / "dielectric_baseline_diagnostics_docs.md",
         REPOSITORY_ROOT / "data" / "processed" / "p2_learning_curve.csv": output_dir
         / "p2_learning_curve.csv",
         REPOSITORY_ROOT
@@ -77,6 +105,10 @@ def export_week2_results(output_dir: Path) -> None:
         artifacts / "p2_model_comparison.png": output_dir / "p2_model_comparison.png",
         artifacts / "dielectric_gpr_parity.png": output_dir
         / "dielectric_gpr_parity.png",
+        artifacts / "dielectric_baseline_comparison.png": output_dir
+        / "dielectric_baseline_comparison.png",
+        artifacts / "dielectric_learning_curve.png": output_dir
+        / "dielectric_learning_curve.png",
         artifacts / "p2_dipole_model.json": output_dir / "p2_dipole_model.json",
     }
     for source, destination in copies.items():
@@ -106,6 +138,20 @@ def export_week2_results(output_dir: Path) -> None:
         "dielectric_gpr_parity": "dielectric_gpr_parity.png",
         "dielectric_gpr_report": "dielectric_gpr_baseline.md",
         "dielectric_gpr_docs": "dielectric_gpr_baseline_docs.md",
+        "dielectric_baseline_comparison": "dielectric_baseline_comparison.csv",
+        "dielectric_repeated_cv": "dielectric_gpr_repeated_cv.csv",
+        "dielectric_learning_curve": "dielectric_learning_curve.csv",
+        "dielectric_baseline_diagnostics_summary": (
+            "dielectric_baseline_diagnostics_summary.json"
+        ),
+        "dielectric_baseline_comparison_plot": "dielectric_baseline_comparison.png",
+        "dielectric_learning_curve_plot": "dielectric_learning_curve.png",
+        "dielectric_baseline_diagnostics_report": (
+            "dielectric_baseline_diagnostics.md"
+        ),
+        "dielectric_baseline_diagnostics_docs": (
+            "dielectric_baseline_diagnostics_docs.md"
+        ),
     }
     (output_dir / "p2_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",

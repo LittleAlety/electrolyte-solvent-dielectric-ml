@@ -32,6 +32,19 @@ heterogeneous table:
 | R2 | 0.2312574 |
 | 95% coverage | 0.95 (19/20) |
 
+Diagnostic controls on the identical split are:
+
+| Model | MAE | RMSE | R2 |
+|---|---:|---:|---:|
+| DummyMean | 17.0686 | 24.2616 | -0.01811 |
+| MW + heavy atoms, Ridge | 16.3352 | 23.5925 | 0.03728 |
+| MorganRBFGPR | 11.5345 | 21.0821 | 0.23126 |
+
+Repeated 5-fold/10-repeat CV gives MorganRBFGPR R2 `0.02295 +/- 0.68149`,
+confirming that the original held-out result is not stable across folds. A
+single fixed descriptor-augmentation quick test reaches R2 `0.38059`; this is
+recorded as evidence only and does not replace the original metrics.
+
 Posterior standard deviations are finite and nonnegative, ranging from
 `13.0834` to `31.1628`, with mean `18.3566`. The high standard deviation,
 together with 95% empirical coverage, indicates a broad and highly uncertain

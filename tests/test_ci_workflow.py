@@ -67,3 +67,17 @@ def test_ci_runs_dielectric_gpr_verifier() -> None:
         "scripts/verify_dielectric_gpr_baseline.py" in command
         for command in commands
     )
+
+
+def test_ci_runs_dielectric_baseline_diagnostics_verifier() -> None:
+    workflow = _workflow()
+    commands = [
+        str(step.get("run", ""))
+        for job in workflow["jobs"].values()
+        for step in job.get("steps", [])
+    ]
+
+    assert any(
+        "scripts/verify_dielectric_baseline_diagnostics.py" in command
+        for command in commands
+    )

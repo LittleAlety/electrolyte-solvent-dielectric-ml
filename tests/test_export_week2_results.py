@@ -37,6 +37,14 @@ def test_week2_export_is_self_contained(tmp_path) -> None:
         "dielectric_gpr_parity",
         "dielectric_gpr_report",
         "dielectric_gpr_docs",
+        "dielectric_baseline_comparison",
+        "dielectric_repeated_cv",
+        "dielectric_learning_curve",
+        "dielectric_baseline_diagnostics_summary",
+        "dielectric_baseline_comparison_plot",
+        "dielectric_learning_curve_plot",
+        "dielectric_baseline_diagnostics_report",
+        "dielectric_baseline_diagnostics_docs",
     }.issubset(exported_summary["outputs"])
     for value in exported_summary["outputs"].values():
         destination = _resolved_output_path(tmp_path, value)
