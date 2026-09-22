@@ -56,11 +56,13 @@ A real public NIST XML sample was retrieved on 2026-09-22 (HTTP response dated
 The same source was downloaded again through the corrected Python path and
 normalized into the ignored `data/raw/` directory and the tracked
 `data/processed/` batch. After expanding to the first five API matches, the
-dielectric-only table contains 625 rows from four source documents, covering
-18 primary compounds and 578 static/zero-frequency plus 47 frequency-dependent
-values. All rows retain an uncertainty field, but 133 rows have no parsed
-temperature variable. See `data_summary.md` for the batch audit and
-limitations.
+dielectric-only table contains 625 candidate observation rows from four source
+documents, covering 18 primary compounds. The phase split is 578 Liquid and 47
+Gas observations; 578 rows are static/zero-frequency and 47 are
+frequency-dependent. Only 36 rows have `component_count=1`, while 589 are
+multicomponent observations. All rows retain an uncertainty field, and 133
+rows receive temperature from a Constraint rather than a temperature
+Variable. See `data_summary.md` for the batch audit and limitations.
 
 The NIST metadata API query `type:TRCTml4 AND dielectric` returned 93
 candidate records during this work. This establishes that the archive has a
@@ -71,8 +73,10 @@ The Python API query initially received HTTP 403 from the NIST/Cloudflare edge
 because it used the default Python User-Agent. The API and XML requests now
 send a project User-Agent and the corrected Python path successfully
 downloaded both the sample above and additional matching articles. The current
-Week 0 batch therefore exceeds the 100-row acceptance target; it is still a
-non-deduplicated candidate batch rather than the final v1.0 dataset.
+Week 0 batch does not yet satisfy the 100-300 qualified pure-solvent record
+target: 625 is the candidate observation count, and only 36 rows are
+single-component candidates. It remains a non-deduplicated candidate batch
+requiring curation and eligibility review rather than the final v1.0 dataset.
 
 ## Commands
 
@@ -132,6 +136,12 @@ and any explicit component-specific composition value. The provenance JSON
 records the schema version, generation time, source checksums, row counts,
 selected filter, parse errors, `"deduplication": "none"`, and
 `"unit_conversion": "none"`.
+
+Known recovery boundary: if the process terminates after renaming the completed
+partial into its final XML path but before writing the final sidecar, the next
+run refuses to overwrite that XML because its metadata is missing or invalid.
+Recovery requires inspecting or removing the incomplete destination before
+rerunning the fetch.
 
 ## Verification
 

@@ -5,11 +5,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections import Counter
+from functools import partial
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -18,12 +19,25 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 from electrolyte_ml.thermoml import (
     THERMOML_USER_AGENT,
     DownloadError,
+    destination_lock,
     download_url,
 )
 
 NIST_THERMOML_BASE_URL = "https://trc.nist.gov/ThermoML"
 THERMOML_API_URL = "https://trc.nist.gov/ThermoML-API/objects"
 DEFAULT_QUERY = "type:TRCTml4 AND dielectric"
+
+
+def _positive_page_size(value: str) -> int:
+    try:
+        page_size = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "--page-size must be a positive integer"
+        ) from exc
+    if page_size < 1:
+        raise argparse.ArgumentTypeError("--page-size must be a positive integer")
+    return page_size
 
 
 def _parse_args() -> argparse.Namespace:
@@ -61,7 +75,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--page-size",
-        type=int,
+        type=_positive_page_size,
         default=100,
         help="NIST API page size while discovering results.",
     )
@@ -149,27 +163,206 @@ def _url_from_doi(doi: str) -> str:
     return f"{NIST_THERMOML_BASE_URL}/{encoded_doi}.xml"
 
 
-def _destination_for_url(url: str, index: int) -> Path:
+def _safe_filename_component(value: str) -> str:
+    sanitized = "".join(
+        character if character.isalnum() or character in "._-" else "_"
+        for character in value
+    )
+    return sanitized.strip("._-") or "thermoml"
+
+
+def _destination_for_url(url: str) -> Path:
     path = urllib.parse.urlparse(url).path.rstrip("/")
-    filename = Path(path).name
-    if not filename.endswith(".xml"):
-        filename = f"thermoml-{index:04d}.xml"
-    return Path(filename)
+    segments = [
+        urllib.parse.unquote(segment)
+        for segment in path.split("/")
+        if segment
+    ]
+    filename = segments[-1] if segments else "thermoml.xml"
+    stem = filename.removesuffix(".xml") or "thermoml"
+    doi_prefix = next(
+        (
+            segment
+            for segment in segments[:-1]
+            if segment.startswith("10.")
+            and 4 <= len(segment.removeprefix("10.")) <= 9
+            and segment.removeprefix("10.").isdigit()
+        ),
+        "",
+    )
+    readable_name = f"{doi_prefix}__{stem}" if doi_prefix else stem
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:12]
+    return Path(f"{_safe_filename_component(readable_name)}-{digest}.xml")
 
 
 def _destinations_for_urls(urls: list[str]) -> list[Path]:
-    """Return deterministic, collision-free destination names for a batch."""
+    """Return stable collision-safe destination names independent of the batch."""
 
-    base_names = [_destination_for_url(url, index) for index, url in enumerate(urls)]
-    counts = Counter(path.name for path in base_names)
-    destinations: list[Path] = []
-    for url, base_name in zip(urls, base_names, strict=True):
-        if counts[base_name.name] == 1:
-            destinations.append(base_name)
+    return [_destination_for_url(url) for url in urls]
+
+
+def _legacy_destination_for_url(url: str) -> Path | None:
+    filename = Path(urllib.parse.urlparse(url).path).name
+    if not filename.endswith(".xml"):
+        return None
+    return Path(filename)
+
+
+def _legacy_download_candidates(
+    url: str,
+    output_dir: Path,
+    destination: Path,
+) -> list[Path]:
+    candidates: list[Path] = []
+    for candidate in sorted(output_dir.glob("*.xml")):
+        if candidate == destination:
             continue
-        digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:8]
-        destinations.append(base_name.with_name(f"{base_name.stem}-{digest}.xml"))
-    return destinations
+        metadata_path = candidate.with_name(candidate.name + ".meta.json")
+        if not candidate.is_file() or not metadata_path.is_file():
+            continue
+        try:
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(metadata, dict) and metadata.get("url") == url:
+            candidates.append(candidate)
+    return candidates
+
+
+def _move_download_pair(
+    source_xml: Path,
+    source_metadata: Path,
+    destination_xml: Path,
+    destination_metadata: Path,
+) -> None:
+    if destination_xml.exists() or destination_metadata.exists():
+        raise DownloadError(
+            f"refusing to overwrite migration target {destination_xml}"
+        )
+    metadata_moved = False
+    xml_moved = False
+    try:
+        os.replace(source_metadata, destination_metadata)
+        metadata_moved = True
+        os.replace(source_xml, destination_xml)
+        xml_moved = True
+    except OSError as exc:
+        rollback_errors: list[str] = []
+        if xml_moved:
+            try:
+                os.replace(destination_xml, source_xml)
+            except OSError as rollback_exc:
+                rollback_errors.append(str(rollback_exc))
+        if metadata_moved:
+            try:
+                os.replace(destination_metadata, source_metadata)
+            except OSError as rollback_exc:
+                rollback_errors.append(str(rollback_exc))
+        rollback_detail = (
+            f"; rollback errors: {'; '.join(rollback_errors)}"
+            if rollback_errors
+            else "; rollback completed"
+        )
+        raise DownloadError(
+            f"migration failed for {source_xml.name}: {exc}{rollback_detail}"
+        ) from exc
+
+
+def _quarantine_legacy_download(legacy_path: Path, output_dir: Path) -> Path:
+    destination = output_dir / f"{legacy_path.name}.migrated"
+    suffix = 1
+    while destination.exists() or destination.with_name(
+        destination.name + ".meta.json"
+    ).exists():
+        destination = output_dir / f"{legacy_path.name}.migrated.{suffix}"
+        suffix += 1
+    _move_download_pair(
+        legacy_path,
+        legacy_path.with_name(legacy_path.name + ".meta.json"),
+        destination,
+        destination.with_name(destination.name + ".meta.json"),
+    )
+    return destination
+
+
+def _migrate_legacy_download_locked(
+    url: str,
+    output_dir: Path,
+    destination: Path,
+) -> Path:
+    """Migrate or quarantine legacy candidates while the caller holds the lock."""
+
+    candidates = _legacy_download_candidates(url, output_dir, destination)
+    if not candidates:
+        return destination
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination_metadata = destination.with_name(destination.name + ".meta.json")
+    candidate_hashes = [(candidate, hashlib.sha256(candidate.read_bytes()).hexdigest()) for candidate in candidates]
+
+    if destination.exists():
+        if not destination_metadata.is_file():
+            raise DownloadError(
+                f"stable destination {destination.name} has no metadata sidecar"
+            )
+        stable_metadata = json.loads(destination_metadata.read_text(encoding="utf-8"))
+        if stable_metadata.get("url") != url:
+            raise DownloadError(
+                f"stable destination {destination.name} belongs to another URL"
+            )
+        stable_hash = hashlib.sha256(destination.read_bytes()).hexdigest()
+        conflicting = [
+            candidate.name
+            for candidate, candidate_hash in candidate_hashes
+            if candidate_hash != stable_hash
+        ]
+        if conflicting:
+            raise DownloadError(
+                "legacy candidates conflict with stable hashes: "
+                + ", ".join(conflicting)
+            )
+        for candidate, _ in candidate_hashes:
+            _quarantine_legacy_download(candidate, output_dir)
+        return destination
+
+    distinct_hashes = {candidate_hash for _, candidate_hash in candidate_hashes}
+    if len(distinct_hashes) != 1:
+        raise DownloadError(
+            "legacy candidates for one URL have conflicting hashes: "
+            + ", ".join(candidate.name for candidate, _ in candidate_hashes)
+        )
+
+    preferred = _legacy_destination_for_url(url)
+    selected = next(
+        (
+            candidate
+            for candidate, _ in candidate_hashes
+            if preferred is not None and candidate.name == preferred.name
+        ),
+        candidate_hashes[0][0],
+    )
+    _move_download_pair(
+        selected,
+        selected.with_name(selected.name + ".meta.json"),
+        destination,
+        destination_metadata,
+    )
+    for candidate, _ in candidate_hashes:
+        if candidate == selected:
+            continue
+        _quarantine_legacy_download(candidate, output_dir)
+    return destination
+
+
+def _migrate_legacy_download(
+    url: str,
+    output_dir: Path,
+    destination: Path,
+) -> Path:
+    """Move URL-matched legacy files into one stable, non-duplicated name."""
+
+    lock_path = destination.with_name(destination.name + ".lock")
+    with destination_lock(lock_path, timeout=60):
+        return _migrate_legacy_download_locked(url, output_dir, destination)
 
 
 def main() -> int:
@@ -202,6 +395,15 @@ def main() -> int:
                 dry_run=args.dry_run,
                 force=args.force,
                 timeout=args.timeout,
+                prepare_destination=(
+                    None
+                    if args.dry_run
+                    else partial(
+                        _migrate_legacy_download_locked,
+                        url,
+                        args.output_dir,
+                    )
+                ),
             )
         except DownloadError as exc:
             failures += 1

@@ -29,7 +29,7 @@ def _parse_args() -> argparse.Namespace:
         "--raw-dir",
         type=Path,
         default=Path("data/raw/thermoml"),
-        help="Directory containing raw .xml files and optional .meta.json sidecars.",
+        help="Directory containing raw .xml files and required .meta.json sidecars.",
     )
     parser.add_argument(
         "--csv",
@@ -69,12 +69,36 @@ def main() -> int:
 
     for xml_path in xml_paths:
         metadata_path = xml_path.with_name(xml_path.name + ".meta.json")
-        metadata: dict[str, object] = {}
-        if metadata_path.exists():
-            try:
-                metadata = read_download_metadata(metadata_path)
-            except (DownloadError, OSError) as exc:
-                errors.append({"file": xml_path.name, "error": str(exc)})
+        if not metadata_path.exists():
+            errors.append(
+                {
+                    "file": xml_path.name,
+                    "error": f"missing metadata sidecar: {metadata_path.name}",
+                }
+            )
+            continue
+        try:
+            metadata = read_download_metadata(metadata_path)
+        except (DownloadError, OSError) as exc:
+            errors.append({"file": xml_path.name, "error": str(exc)})
+            continue
+
+        missing_metadata_fields = [
+            field
+            for field in ("url", "retrieved_at")
+            if not str(metadata.get(field, "")).strip()
+        ]
+        if missing_metadata_fields:
+            errors.append(
+                {
+                    "file": xml_path.name,
+                    "error": (
+                        "metadata sidecar is missing required field(s): "
+                        + ", ".join(missing_metadata_fields)
+                    ),
+                }
+            )
+            continue
 
         digest = sha256_file(xml_path)
         metadata_digest = str(metadata.get("sha256", ""))

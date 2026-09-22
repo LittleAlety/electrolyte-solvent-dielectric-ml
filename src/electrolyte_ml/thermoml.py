@@ -8,18 +8,29 @@ decide whether a scientific normalization is appropriate.
 from __future__ import annotations
 
 import csv
+import errno
 import hashlib
+import http.client
 import json
 import os
 import tempfile
+import threading
+import time
 import urllib.error
 import urllib.request
+import uuid
 import xml.etree.ElementTree as ET
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
 
 THERMOML_NAMESPACE = "http://www.iupac.org/namespaces/ThermoML"
 THERMOML_USER_AGENT = "electrolyte-ml/0.0.0 (+https://trc.nist.gov/ThermoML/)"
@@ -47,6 +58,7 @@ CSV_COLUMNS = (
     "property_value_digits",
     "property_uncertainty",
     "property_uncertainty_kind",
+    "property_uncertainty_confidence_level",
     "temperature_value",
     "temperature_unit",
     "frequency_value",
@@ -59,6 +71,7 @@ CSV_COLUMNS = (
     "constraints_json",
     "source_row_index",
 )
+PROVENANCE_SCHEMA_VERSION = 2
 
 
 class ThermoMLError(ValueError):
@@ -67,6 +80,10 @@ class ThermoMLError(ValueError):
 
 class DownloadError(RuntimeError):
     """Raised when a source file cannot be downloaded or resumed safely."""
+
+
+class _ResumeRejected(RuntimeError):
+    """Internal signal to discard a partial and retry with a full download."""
 
 
 @dataclass(frozen=True)
@@ -197,13 +214,11 @@ def _property_definitions(data_set: ET.Element) -> dict[str, dict[str, str]]:
             "unit": _property_unit(property_element, raw_name),
             "phase": _nested_descendant_text(property_element, "ePropPhase"),
             "method_name": _nested_descendant_text(property_element, "sMethodName"),
-            "uncertainty_kind": (
-                "expanded_95"
-                if _nested_descendant_text(
+            "uncertainty_confidence_level": (
+                _nested_descendant_text(
                     property_element, "nCombUncertLevOfConfid"
                 )
-                == "95"
-                else "expanded_uncertainty"
+                or _nested_descendant_text(property_element, "nUncertLevOfConfid")
             ),
         }
     return definitions
@@ -358,16 +373,34 @@ def _variable_value(element: ET.Element) -> dict[str, str]:
     }
 
 
-def _property_uncertainty(property_value: ET.Element) -> str:
+def _property_uncertainty(
+    property_value: ET.Element,
+    default_confidence_level: str,
+) -> tuple[str, str, str]:
+    standard_value = ""
+    expanded_value = ""
+    confidence_level = ""
     for descendant in property_value.iter():
-        if _local_name(descendant.tag) in {
-            "nCombExpandUncertValue",
-            "nExpandUncertValue",
-        }:
-            value = _text(descendant)
-            if value:
-                return value
-    return ""
+        tag = _local_name(descendant.tag)
+        value = _text(descendant)
+        if not value:
+            continue
+        if tag in {"nCombStdUncertValue", "nStdUncertValue"} and not standard_value:
+            standard_value = value
+        elif tag in {"nCombExpandUncertValue", "nExpandUncertValue"} and not expanded_value:
+            expanded_value = value
+        elif tag in {"nCombUncertLevOfConfid", "nUncertLevOfConfid"}:
+            confidence_level = value
+
+    if expanded_value:
+        return (
+            expanded_value,
+            "expanded",
+            confidence_level or default_confidence_level,
+        )
+    if standard_value:
+        return standard_value, "standard", ""
+    return "", "", ""
 
 
 def _parse_data_set(
@@ -501,6 +534,14 @@ def _parse_data_set(
             property_definition = properties.get(property_number, {})
             property_name = property_definition.get("name", "")
             is_dielectric = _is_dielectric_property(property_name)
+            (
+                property_uncertainty,
+                property_uncertainty_kind,
+                property_uncertainty_confidence_level,
+            ) = _property_uncertainty(
+                property_value,
+                property_definition.get("uncertainty_confidence_level", ""),
+            )
             row = {
                 "source_file": source_name,
                 "source_url": source_url,
@@ -528,9 +569,10 @@ def _parse_data_set(
                 "property_value_digits": _text(
                     _first_child(property_value, "nPropDigits")
                 ),
-                "property_uncertainty": _property_uncertainty(property_value),
-                "property_uncertainty_kind": property_definition.get(
-                    "uncertainty_kind", ""
+                "property_uncertainty": property_uncertainty,
+                "property_uncertainty_kind": property_uncertainty_kind,
+                "property_uncertainty_confidence_level": (
+                    property_uncertainty_confidence_level
                 ),
                 "temperature_value": temperature_value,
                 "temperature_unit": temperature_unit,
@@ -622,7 +664,7 @@ def build_provenance(
     """Build machine-readable provenance for one normalized output batch."""
 
     return {
-        "schema_version": 1,
+        "schema_version": PROVENANCE_SCHEMA_VERSION,
         "generated_at": utc_now_iso(),
         "row_count": len(rows),
         "columns": list(CSV_COLUMNS),
@@ -714,6 +756,154 @@ def _write_metadata(path: Path, metadata: Mapping[str, Any]) -> None:
     )
 
 
+def _read_resume_metadata(path: Path, url: str) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        metadata = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(metadata, dict) or metadata.get("url") != url:
+        return {}
+    return metadata
+
+
+def _resume_validator(metadata: Mapping[str, Any]) -> str:
+    etag = str(metadata.get("etag", ""))
+    if etag and not etag.startswith("W/"):
+        return etag
+    return str(metadata.get("last_modified", ""))
+
+
+def _parse_content_range(value: str, expected_start: int) -> tuple[int, int]:
+    invalid_message = f"server returned an invalid Content-Range: {value!r}"
+    if not value.startswith("bytes "):
+        raise DownloadError(invalid_message)
+    try:
+        byte_range, total_text = value.removeprefix("bytes ").split("/", 1)
+        start_text, end_text = byte_range.split("-", 1)
+        start = int(start_text)
+        end = int(end_text)
+        total = int(total_text)
+    except (ValueError, TypeError) as exc:
+        raise DownloadError(invalid_message) from exc
+    if start != expected_start or end < start or end >= total:
+        raise DownloadError(invalid_message)
+    return total, end - start + 1
+
+
+def _content_length(headers: Mapping[str, str]) -> int:
+    try:
+        value = int(headers.get("Content-Length", ""))
+    except (TypeError, ValueError):
+        return 0
+    return max(value, 0)
+
+
+def _clear_partial_state(partial_path: Path, metadata_path: Path) -> None:
+    partial_path.unlink(missing_ok=True)
+    metadata_path.unlink(missing_ok=True)
+
+
+def _partial_state_matches(partial_path: Path, metadata: Mapping[str, Any]) -> bool:
+    if not partial_path.is_file():
+        return False
+    try:
+        expected_size = int(metadata.get("size_bytes", -1))
+        expected_sha256 = str(metadata.get("sha256", ""))
+    except (TypeError, ValueError):
+        return False
+    if expected_size != partial_path.stat().st_size or not expected_sha256:
+        return False
+    return expected_sha256 == sha256_file(partial_path)
+
+
+_THREAD_LOCKS_GUARD = threading.Lock()
+_THREAD_LOCKS: dict[Path, threading.Lock] = {}
+
+
+def _try_os_lock(descriptor: int) -> bool:
+    try:
+        if os.name == "nt":
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            msvcrt.locking(descriptor, msvcrt.LK_NBLCK, 1)
+        else:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError as exc:
+        if exc.errno in {errno.EACCES, errno.EAGAIN, errno.EDEADLK}:
+            return False
+        raise
+    return True
+
+
+def _release_os_lock(descriptor: int) -> None:
+    try:
+        if os.name == "nt":
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            msvcrt.locking(descriptor, msvcrt.LK_UNLCK, 1)
+        else:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+    except OSError:
+        return
+
+
+@contextmanager
+def _destination_lock(lock_path: Path, *, timeout: float) -> Iterator[None]:
+    try:
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise DownloadError(
+            f"cannot create lock directory {lock_path.parent}: {exc}"
+        ) from exc
+
+    deadline = time.monotonic() + timeout
+    with _THREAD_LOCKS_GUARD:
+        thread_lock = _THREAD_LOCKS.setdefault(lock_path, threading.Lock())
+    if not thread_lock.acquire(timeout=max(0, deadline - time.monotonic())):
+        raise DownloadError(f"timed out waiting for thread lock {lock_path}")
+
+    descriptor: int | None = None
+    locked = False
+    try:
+        try:
+            descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+            if os.name == "nt" and os.fstat(descriptor).st_size == 0:
+                os.write(descriptor, b"\0")
+        except OSError as exc:
+            raise DownloadError(f"cannot open lock {lock_path}: {exc}") from exc
+
+        while not locked:
+            try:
+                locked = _try_os_lock(descriptor)
+            except OSError as exc:
+                raise DownloadError(f"cannot lock {lock_path}: {exc}") from exc
+            if locked:
+                break
+            if time.monotonic() >= deadline:
+                raise DownloadError(f"timed out waiting for lock {lock_path}")
+            time.sleep(0.05)
+
+        try:
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            os.write(
+                descriptor,
+                f"pid={os.getpid()} acquired_at={utc_now_iso()}\n".encode(),
+            )
+        except OSError as exc:
+            raise DownloadError(f"cannot write lock owner {lock_path}: {exc}") from exc
+
+        yield
+    finally:
+        if descriptor is not None:
+            if locked:
+                _release_os_lock(descriptor)
+            os.close(descriptor)
+        thread_lock.release()
+
+
+destination_lock = _destination_lock
+
+
 def download_url(
     url: str,
     destination: Path,
@@ -723,6 +913,7 @@ def download_url(
     dry_run: bool = False,
     force: bool = False,
     timeout: float = 60,
+    prepare_destination: Callable[[Path], Path] | None = None,
 ) -> DownloadResult:
     """Download a URL atomically, preserving resume data and provenance."""
 
@@ -739,6 +930,29 @@ def download_url(
         )
         return DownloadResult(url, destination, metadata_path, status)
 
+    lock_path = destination.with_name(destination.name + ".lock")
+    with _destination_lock(lock_path, timeout=timeout):
+        if prepare_destination is not None:
+            destination = Path(prepare_destination(destination))
+        return _download_url_locked(
+            url,
+            destination,
+            metadata_path=metadata_path,
+            resume=resume,
+            force=force,
+            timeout=timeout,
+        )
+
+
+def _download_url_locked(
+    url: str,
+    destination: Path,
+    *,
+    metadata_path: Path,
+    resume: bool,
+    force: bool,
+    timeout: float,
+) -> DownloadResult:
     if destination.exists() and not force:
         metadata = _valid_existing_download(url, destination, metadata_path)
         if metadata is not None:
@@ -756,45 +970,197 @@ def download_url(
 
     destination.parent.mkdir(parents=True, exist_ok=True)
     partial_path = destination.with_name(destination.name + ".part")
-    if not resume and partial_path.exists():
-        partial_path.unlink()
+    partial_metadata_path = partial_path.with_name(partial_path.name + ".meta.json")
+    generation = uuid.uuid4().hex
+    if not resume:
+        _clear_partial_state(partial_path, partial_metadata_path)
 
     existing_size = partial_path.stat().st_size if partial_path.exists() else 0
+    resume_metadata = _read_resume_metadata(partial_metadata_path, url)
+    if existing_size and not _partial_state_matches(partial_path, resume_metadata):
+        _clear_partial_state(partial_path, partial_metadata_path)
+        existing_size = 0
+        resume_metadata = {}
+    elif not existing_size:
+        partial_metadata_path.unlink(missing_ok=True)
+        resume_metadata = {}
+
+    resume_validator = _resume_validator(resume_metadata)
+    try:
+        resume_total_size = int(resume_metadata.get("total_size", 0))
+    except (TypeError, ValueError):
+        resume_total_size = 0
+    resume_requested = bool(existing_size and resume_validator and resume_total_size)
     headers = {
         "Accept": "application/xml,text/xml;q=0.9,*/*;q=0.1",
         "User-Agent": THERMOML_USER_AGENT,
     }
-    if existing_size:
+    if resume_requested:
         headers["Range"] = f"bytes={existing_size}-"
+        headers["If-Range"] = resume_validator
     request = urllib.request.Request(url, headers=headers)
+    etag = ""
+    last_modified = ""
 
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        try:
+            response = urllib.request.urlopen(request, timeout=timeout)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 416 or not resume_requested:
+                raise
+            exc.close()
+            _clear_partial_state(partial_path, partial_metadata_path)
+            existing_size = 0
+            resume_requested = False
+            headers.pop("Range", None)
+            headers.pop("If-Range", None)
+            response = urllib.request.urlopen(
+                urllib.request.Request(url, headers=headers),
+                timeout=timeout,
+            )
+
+        with response:
             response_status = getattr(response, "status", response.getcode())
-            resumed = bool(headers) and response_status == 206
-            if headers and response_status == 206:
-                content_range = response.headers.get("Content-Range", "")
-                if not content_range.startswith(f"bytes {existing_size}-"):
+            resumed = resume_requested and response_status == 206
+            range_length = 0
+            if resumed:
+                response_total, range_length = _parse_content_range(
+                    response.headers.get("Content-Range", ""),
+                    existing_size,
+                )
+                if response_total != resume_total_size:
                     raise DownloadError(
-                        f"server returned an invalid Content-Range: {content_range!r}"
+                        "server returned a different total size while resuming: "
+                        f"{response_total} != {resume_total_size}"
                     )
-            if headers and response_status == 200:
+                response_total_size = response_total
+            elif response_status == 200:
+                if resume_requested:
+                    _clear_partial_state(partial_path, partial_metadata_path)
                 existing_size = 0
+                resume_requested = False
+                response_total_size = _content_length(response.headers)
+            else:
+                raise DownloadError(
+                    f"server returned unexpected HTTP {response_status} for {url}"
+                )
 
-            mode = "ab" if resumed else "wb"
-            with partial_path.open(mode) as handle:
-                while True:
-                    chunk = response.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    handle.write(chunk)
+            response_etag = response.headers.get("ETag", "")
+            response_last_modified = response.headers.get("Last-Modified", "")
+            stored_etag = str(resume_metadata.get("etag", ""))
+            stored_last_modified = str(resume_metadata.get("last_modified", ""))
+            if (
+                resumed
+                and resume_validator == stored_etag
+                and response_etag
+                and response_etag != stored_etag
+            ):
+                raise _ResumeRejected(
+                    "server changed the ETag in a resumed response: "
+                    f"{response_etag!r} != {stored_etag!r}"
+                )
+            if (
+                resumed
+                and resume_validator == stored_last_modified
+                and response_last_modified
+                and response_last_modified != stored_last_modified
+            ):
+                raise _ResumeRejected(
+                    "server changed the Last-Modified value in a resumed response: "
+                    f"{response_last_modified!r} != {stored_last_modified!r}"
+                )
+            etag = response_etag or (stored_etag if resumed else "")
+            last_modified = response_last_modified or (
+                stored_last_modified if resumed else ""
+            )
 
-            etag = response.headers.get("ETag", "")
-            last_modified = response.headers.get("Last-Modified", "")
-    except (urllib.error.URLError, OSError) as exc:
+            descriptor, temporary_name = tempfile.mkstemp(
+                dir=destination.parent,
+                prefix=f".{partial_path.name}.{generation}.",
+                suffix=".tmp",
+            )
+            response_path = Path(temporary_name)
+            try:
+                bytes_written = 0
+                with os.fdopen(descriptor, "wb") as handle:
+                    while True:
+                        chunk = response.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        handle.write(chunk)
+                        bytes_written += len(chunk)
+
+                if resumed and bytes_written != range_length:
+                    raise DownloadError(
+                        "server returned an incomplete resumed response: "
+                        f"{bytes_written} != {range_length} bytes"
+                    )
+                if response_total_size and (
+                    bytes_written + existing_size != response_total_size
+                ):
+                    raise DownloadError(
+                        "server returned a response with the wrong total size: "
+                        f"{bytes_written + existing_size} != {response_total_size}"
+                    )
+
+                if resumed:
+                    with partial_path.open("ab") as handle, response_path.open("rb") as source:
+                        while True:
+                            chunk = source.read(1024 * 1024)
+                            if not chunk:
+                                break
+                            handle.write(chunk)
+                    if (
+                        response_total_size
+                        and partial_path.stat().st_size != response_total_size
+                    ):
+                        raise DownloadError(
+                            "resumed partial has the wrong final size: "
+                            f"{partial_path.stat().st_size} != {response_total_size}"
+                        )
+                else:
+                    if response_total_size and bytes_written != response_total_size:
+                        raise DownloadError(
+                            "server returned an incomplete full response: "
+                            f"{bytes_written} != {response_total_size} bytes"
+                        )
+                    os.replace(response_path, partial_path)
+            finally:
+                if response_path.exists():
+                    response_path.unlink()
+
+            partial_size = partial_path.stat().st_size
+            partial_digest = sha256_file(partial_path)
+            _write_metadata(
+                partial_metadata_path,
+                {
+                    "url": url,
+                    "generation": generation,
+                    "etag": etag,
+                    "last_modified": last_modified,
+                    "total_size": response_total_size,
+                    "size_bytes": partial_size,
+                    "sha256": partial_digest,
+                },
+            )
+    except _ResumeRejected:
+        _clear_partial_state(partial_path, partial_metadata_path)
+        return _download_url_locked(
+            url,
+            destination,
+            metadata_path=metadata_path,
+            resume=False,
+            force=force,
+            timeout=timeout,
+        )
+    except (urllib.error.URLError, OSError, http.client.HTTPException) as exc:
         raise DownloadError(f"download failed for {url}: {exc}") from exc
 
+    # Recovery boundary: a crash after this rename and before metadata_path is
+    # written leaves a destination without a valid sidecar. The next run refuses
+    # to overwrite it, so recovery requires inspecting or removing that destination.
     os.replace(partial_path, destination)
+    partial_metadata_path.unlink(missing_ok=True)
     digest = sha256_file(destination)
     size_bytes = destination.stat().st_size
     metadata = {
@@ -805,6 +1171,7 @@ def download_url(
         "http_status": response_status,
         "etag": etag,
         "last_modified": last_modified,
+        "generation": generation,
     }
     _write_metadata(metadata_path, metadata)
     return DownloadResult(
