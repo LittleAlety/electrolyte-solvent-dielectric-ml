@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -83,7 +83,11 @@ def run_checks() -> list[Check]:
         "pyproject.toml",
         "docs/week0/setup.md",
         "docs/week0/thermoml/README.md",
+        "docs/week0/thermoml/data_summary.md",
         "docs/week0/literature/pnas_2023_kim.md",
+        "docs/week0/literature/reviews_battery_ai.md",
+        "docs/week0/literature/reviews_electrolyte_ai.md",
+        "docs/week0/literature/data_and_active_learning.md",
         "docs/week0/llm/README.md",
         "docs/week0/llm/prompts/data_cleaning_review.md",
         "docs/week0/llm/prompts/code_review.md",
@@ -93,11 +97,54 @@ def run_checks() -> list[Check]:
         "src/electrolyte_ml/thermoml.py",
         "tests/test_check_environment.py",
         "tests/test_thermoml.py",
+        "data/processed/thermoml_normalized.csv",
+        "data/processed/thermoml_normalized.provenance.json",
     ]
     checks = [_check_file(path) for path in required_files]
     checks.extend(_check_required_terms())
+    checks.append(_check_thermoml_batch())
     checks.append(_check_git_history())
     return checks
+
+
+def _check_thermoml_batch() -> Check:
+    path = ROOT / "data/processed/thermoml_normalized.csv"
+    if not path.is_file():
+        return Check("ThermoML batch", False, "missing normalized CSV")
+    with path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    if len(rows) < 100:
+        return Check("ThermoML batch", False, f"only {len(rows)} rows; need at least 100")
+    required_columns = {
+        "doi",
+        "primary_compound_inchi_key",
+        "property_name",
+        "property_value",
+        "temperature_value",
+        "dielectric_kind",
+        "source_sha256",
+    }
+    missing_columns = sorted(required_columns - set(rows[0]))
+    if missing_columns:
+        return Check(
+            "ThermoML batch",
+            False,
+            f"missing columns: {', '.join(missing_columns)}",
+        )
+    invalid_rows = [
+        index
+        for index, row in enumerate(rows, start=2)
+        if row["is_dielectric"] != "true" or not row["property_value"]
+    ]
+    if invalid_rows:
+        preview = ", ".join(str(index) for index in invalid_rows[:5])
+        return Check("ThermoML batch", False, f"invalid dielectric rows near {preview}")
+    source_count = len({row["source_sha256"] for row in rows})
+    return Check(
+        "ThermoML batch",
+        True,
+        f"{len(rows)} dielectric rows from {source_count} source(s)",
+    )
 
 
 def main() -> int:
@@ -128,4 +175,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
