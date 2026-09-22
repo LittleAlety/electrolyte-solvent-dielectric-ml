@@ -26,7 +26,8 @@ The parser reads:
 - root-level `Compound` records referenced by each data set, including common
   names, molecular formula, standard InChI, InChIKey, and composition values;
 - `ePropName`, `nPropValue`, `nPropDigits`, and uncertainty values;
-- temperature and frequency variables, including their original units;
+- temperature and frequency variables or constraints, including their
+  original units;
 - property phase and method metadata; and
 - every variable and constraint in compact JSON columns.
 
@@ -98,6 +99,10 @@ python scripts/normalize_thermoml.py `
   --csv data/processed/thermoml_dielectric.csv `
   --provenance data/processed/thermoml_dielectric.provenance.json `
   --dielectric-only
+
+# By default, any malformed XML prevents all normalized outputs from being
+# replaced. Use --allow-partial only when a partial diagnostic batch is wanted.
+python scripts/normalize_thermoml.py --dielectric-only --allow-partial
 ```
 
 ## Outputs
@@ -136,6 +141,7 @@ python -m unittest discover -s tests -v
 ```
 
 The tests use minimal namespaced ThermoML fixtures and cover multiple
-properties, compound identity and component-specific composition, missing
-temperature and frequency, duplicate entries, preserved property/value/unit
-text, stable CSV columns, provenance metadata, resume, and dry-run behavior.
+properties, compound identity, component-specific composition, temperature and
+frequency supplied as either variables or constraints, missing conditions,
+duplicate entries, preserved property/value/unit text, stable CSV columns,
+provenance metadata, collision-safe filenames, resume, and dry-run behavior.

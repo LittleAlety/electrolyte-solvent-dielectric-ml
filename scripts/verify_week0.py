@@ -96,7 +96,9 @@ def run_checks() -> list[Check]:
         "scripts/normalize_thermoml.py",
         "src/electrolyte_ml/thermoml.py",
         "tests/test_check_environment.py",
+        "tests/test_normalize_thermoml.py",
         "tests/test_thermoml.py",
+        "tests/test_verify_week0.py",
         "data/processed/thermoml_normalized.csv",
         "data/processed/thermoml_normalized.provenance.json",
     ]
@@ -122,6 +124,7 @@ def _check_thermoml_batch() -> Check:
         "property_value",
         "temperature_value",
         "dielectric_kind",
+        "is_dielectric",
         "source_sha256",
     }
     missing_columns = sorted(required_columns - set(rows[0]))

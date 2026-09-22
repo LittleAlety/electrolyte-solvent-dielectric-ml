@@ -260,7 +260,10 @@ def _dataset_components(
     return components
 
 
-def _constraint_definitions(data_set: ET.Element) -> list[dict[str, str]]:
+def _constraint_definitions(
+    data_set: ET.Element,
+    compound_registry: Mapping[str, Mapping[str, str]],
+) -> list[dict[str, str]]:
     constraints: list[dict[str, str]] = []
     for index, constraint in enumerate(_children(data_set, "Constraint"), start=1):
         constraint_type = _first_descendant(constraint, "ConstraintType")
@@ -269,18 +272,31 @@ def _constraint_definitions(data_set: ET.Element) -> list[dict[str, str]]:
             for child in constraint_type:
                 type_element = child
                 break
+        type_tag = _local_name(type_element.tag) if type_element is not None else ""
         raw_type = _text(type_element)
         _, unit = _split_name_and_unit(raw_type)
+        registry_number = _nested_descendant_text(
+            constraint, "ConstraintID", "RegNum", "nOrgNum"
+        )
         constraints.append(
             {
                 "number": (
                     _text(_first_child(constraint, "nConstraintNumber")) or str(index)
                 ),
+                "type_tag": type_tag,
                 "raw_type": raw_type,
                 "name": raw_type.rsplit(",", 1)[0] if "," in raw_type else raw_type,
                 "unit": unit,
                 "value": _text(_first_child(constraint, "nConstraintValue")),
                 "digits": _text(_first_child(constraint, "nConstrDigits")),
+                "kind": _variable_kind(type_tag, raw_type),
+                "registry_number": registry_number,
+                "component_name": compound_registry.get(registry_number, {}).get(
+                    "common_name", ""
+                ),
+                "phase": _nested_descendant_text(
+                    constraint, "ConstraintPhaseID", "eConstraintPhase"
+                ),
             }
         )
     return constraints
@@ -372,7 +388,7 @@ def _parse_data_set(
     data_phase = _nested_text(data_set, "PhaseID", "ePhase")
     properties = _property_definitions(data_set)
     variables = _variable_definitions(data_set, compound_registry)
-    constraints = _constraint_definitions(data_set)
+    constraints = _constraint_definitions(data_set, compound_registry)
     constraints_json = _json_compact(constraints)
     components = _dataset_components(data_set, compound_registry)
     primary_component = components[0] if components else {}
@@ -413,8 +429,50 @@ def _parse_data_set(
             ),
             None,
         )
-        temperature_value = temperature_variable["value"] if temperature_variable else ""
-        frequency_value = frequency_variable["value"] if frequency_variable else ""
+        temperature_constraint = next(
+            (
+                constraint
+                for constraint in constraints
+                if constraint["kind"] == "temperature"
+            ),
+            None,
+        )
+        frequency_constraint = next(
+            (
+                constraint
+                for constraint in constraints
+                if constraint["kind"] == "frequency"
+            ),
+            None,
+        )
+        temperature_value = (
+            temperature_variable["value"]
+            if temperature_variable
+            else temperature_constraint["value"]
+            if temperature_constraint
+            else ""
+        )
+        temperature_unit = (
+            temperature_variable["unit"]
+            if temperature_variable and temperature_value
+            else temperature_constraint["unit"]
+            if temperature_constraint and temperature_value
+            else ""
+        )
+        frequency_value = (
+            frequency_variable["value"]
+            if frequency_variable
+            else frequency_constraint["value"]
+            if frequency_constraint
+            else ""
+        )
+        frequency_unit = (
+            frequency_variable["unit"]
+            if frequency_variable and frequency_value
+            else frequency_constraint["unit"]
+            if frequency_constraint and frequency_value
+            else ""
+        )
 
         row_components = [dict(component) for component in components]
         for component in row_components:
@@ -475,17 +533,9 @@ def _parse_data_set(
                     "uncertainty_kind", ""
                 ),
                 "temperature_value": temperature_value,
-                "temperature_unit": (
-                    temperature_variable["unit"]
-                    if temperature_variable and temperature_value
-                    else ""
-                ),
+                "temperature_unit": temperature_unit,
                 "frequency_value": frequency_value,
-                "frequency_unit": (
-                    frequency_variable["unit"]
-                    if frequency_variable and frequency_value
-                    else ""
-                ),
+                "frequency_unit": frequency_unit,
                 "phase": property_definition.get("phase") or data_phase,
                 "method_name": property_definition.get("method_name", ""),
                 "is_dielectric": "true" if is_dielectric else "false",

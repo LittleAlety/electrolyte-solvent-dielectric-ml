@@ -48,6 +48,11 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Explicitly filter to dielectric-related rows; defaults to keeping all rows.",
     )
+    parser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="Write successfully parsed rows even when some XML files fail.",
+    )
     return parser.parse_args()
 
 
@@ -113,6 +118,17 @@ def main() -> int:
             "unit_conversion": "none",
         }
     )
+
+    if errors and not args.allow_partial:
+        for error in errors:
+            print(f"ERROR {error['file']}: {error['error']}", file=sys.stderr)
+        print(
+            "Refusing to overwrite normalized outputs; rerun with --allow-partial "
+            "to write successfully parsed rows.",
+            file=sys.stderr,
+        )
+        return 1
+
     write_normalized_csv(rows, args.csv)
     write_provenance(args.provenance, provenance)
 

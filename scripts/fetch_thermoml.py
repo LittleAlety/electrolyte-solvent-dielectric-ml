@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -155,6 +157,21 @@ def _destination_for_url(url: str, index: int) -> Path:
     return Path(filename)
 
 
+def _destinations_for_urls(urls: list[str]) -> list[Path]:
+    """Return deterministic, collision-free destination names for a batch."""
+
+    base_names = [_destination_for_url(url, index) for index, url in enumerate(urls)]
+    counts = Counter(path.name for path in base_names)
+    destinations: list[Path] = []
+    for url, base_name in zip(urls, base_names, strict=True):
+        if counts[base_name.name] == 1:
+            destinations.append(base_name)
+            continue
+        digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:8]
+        destinations.append(base_name.with_name(f"{base_name.stem}-{digest}.xml"))
+    return destinations
+
+
 def main() -> int:
     args = _parse_args()
     if args.limit < 1:
@@ -172,10 +189,11 @@ def main() -> int:
         )
         urls.extend(_url_from_doi(_doi_from_api_id(identifier)) for identifier in identifiers)
     urls = urls[: args.limit]
+    destinations = _destinations_for_urls(urls)
 
     failures = 0
-    for index, url in enumerate(urls):
-        destination = args.output_dir / _destination_for_url(url, index)
+    for url, destination_name in zip(urls, destinations, strict=True):
+        destination = args.output_dir / destination_name
         try:
             result = download_url(
                 url,

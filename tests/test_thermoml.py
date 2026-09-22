@@ -15,6 +15,7 @@ from electrolyte_ml.thermoml import (
     parse_thermoml_bytes,
     write_normalized_csv,
 )
+from scripts.fetch_thermoml import _destinations_for_urls
 
 THERMOML_FIXTURE = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -204,6 +205,16 @@ MIXTURE_FIXTURE = """\
         </PropertyGroup>
       </Property-MethodID>
     </Property>
+    <Constraint>
+      <nConstraintNumber>1</nConstraintNumber>
+      <ConstraintID>
+        <ConstraintType>
+          <eMiscellaneous>Frequency, MHz</eMiscellaneous>
+        </ConstraintType>
+      </ConstraintID>
+      <nConstraintValue>385</nConstraintValue>
+      <nConstrDigits>3</nConstrDigits>
+    </Constraint>
     <Variable>
       <nVarNumber>1</nVarNumber>
       <VariableID>
@@ -346,6 +357,8 @@ class ParseThermoMLTests(unittest.TestCase):
         components = json.loads(rows[0]["components_json"])
 
         self.assertEqual(rows[0]["temperature_value"], "298.15")
+        self.assertEqual(rows[0]["frequency_value"], "385")
+        self.assertEqual(rows[0]["frequency_unit"], "MHz")
         self.assertEqual(components[0]["common_name"], "ethanol")
         self.assertEqual(components[0]["composition"][0]["value"], "0.2")
         self.assertEqual(components[1]["common_name"], "water")
@@ -424,6 +437,16 @@ class DownloadTests(unittest.TestCase):
             self.assertEqual(result.status, "planned")
             self.assertFalse(destination.exists())
             self.assertEqual(_RangeHTTPRequestHandler.requests, [])
+
+    def test_duplicate_basenames_get_distinct_destinations(self) -> None:
+        urls = [
+            "https://example.test/10.1000/solvent.xml",
+            "https://example.test/10.2000/solvent.xml",
+        ]
+
+        destinations = _destinations_for_urls(urls)
+
+        self.assertEqual(len({str(path) for path in destinations}), 2)
 
 
 if __name__ == "__main__":

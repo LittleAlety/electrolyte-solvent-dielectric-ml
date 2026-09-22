@@ -13,6 +13,7 @@ Generated from the first five matches for the NIST API query
 | Primary compounds (InChIKey) | 18 |
 | Static/zero-frequency rows | 578 |
 | Frequency-dependent rows | 47 |
+| Frequency metadata | 385 MHz on all 47 frequency-dependent rows |
 | Rows with uncertainty | 625 |
 | Rows missing temperature | 133 |
 | Parse errors | 0 |
@@ -40,6 +41,8 @@ performed. The 47 frequency-dependent rows are not interchangeable with the
    The second component of a binary mixture may be implied by mass balance.
 5. No duplicate resolution, outlier detection, structure curation, or
    Clausius-Mossotti cross-check has been performed yet.
+6. A malformed source file now prevents normalized outputs from being
+   overwritten unless `--allow-partial` is explicitly supplied.
 
 ## Regenerate
 
