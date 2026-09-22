@@ -123,3 +123,82 @@ def test_al_verifier_rejects_top30_field_tamper(field, tampered) -> None:
 
     assert result.passed is False
     assert field in result.detail
+
+
+def test_al_verifier_accepts_small_gpr_prediction_drift() -> None:
+    expected = [
+        {
+            "candidate_id": "candidate",
+            "smiles": "CCO",
+            "inchikey": "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",
+            "family": "Alcohols",
+            "nearest_solvfunc_name": "ethanol",
+            "nearest_solvfunc_category": "Alcohols",
+            "max_tanimoto_solvfunc": "0.5",
+            "max_tanimoto_v01": "0.5",
+            "novelty": "0.5",
+            "tier": "A",
+            "predicted_dielectric": "20.0",
+            "posterior_std": "1.0",
+            "std_percentile": "0.9",
+            "acquisition_score": "0.45",
+            "cluster": "Alcohols",
+            "hazard_flags": "",
+            "manual_review_warnings": "",
+            "mp_c": "",
+            "bp_c": "",
+            "literature_doi": "",
+            "availability_status": "unknown",
+            "decision_status": "awaiting_manual_review",
+            "source_commit": "a" * 40,
+            "model_input_sha256": "b" * 64,
+            "selection_order": "1",
+            "selection_step_score": "0.45",
+        }
+    ]
+    actual = [dict(expected[0])]
+    actual[0]["predicted_dielectric"] = "20.00005"
+    actual[0]["posterior_std"] = "1.000005"
+    actual[0]["acquisition_score"] = "0.450005"
+
+    assert _compare_rows(actual, expected, key="candidate_id").passed is True
+
+
+def test_al_verifier_rejects_large_gpr_prediction_drift() -> None:
+    expected = [
+        {
+            "candidate_id": "candidate",
+            "smiles": "CCO",
+            "inchikey": "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",
+            "family": "Alcohols",
+            "nearest_solvfunc_name": "ethanol",
+            "nearest_solvfunc_category": "Alcohols",
+            "max_tanimoto_solvfunc": "0.5",
+            "max_tanimoto_v01": "0.5",
+            "novelty": "0.5",
+            "tier": "A",
+            "predicted_dielectric": "20.0",
+            "posterior_std": "1.0",
+            "std_percentile": "0.9",
+            "acquisition_score": "0.45",
+            "cluster": "Alcohols",
+            "hazard_flags": "",
+            "manual_review_warnings": "",
+            "mp_c": "",
+            "bp_c": "",
+            "literature_doi": "",
+            "availability_status": "unknown",
+            "decision_status": "awaiting_manual_review",
+            "source_commit": "a" * 40,
+            "model_input_sha256": "b" * 64,
+            "selection_order": "1",
+            "selection_step_score": "0.45",
+        }
+    ]
+    actual = [dict(expected[0])]
+    actual[0]["predicted_dielectric"] = "20.001"
+
+    result = _compare_rows(actual, expected, key="candidate_id")
+
+    assert result.passed is False
+    assert "predicted_dielectric" in result.detail

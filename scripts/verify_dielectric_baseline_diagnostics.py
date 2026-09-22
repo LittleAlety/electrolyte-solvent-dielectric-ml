@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from sklearn.model_selection import RepeatedKFold
 
 from electrolyte_ml.exporting import canonical_text_sha256
+from electrolyte_ml.numerics import numerical_values_close
 from probes.dielectric_baseline_diagnostics import (
     _fit_predict,
     build_size_matrix,
@@ -41,11 +42,6 @@ from probes.dielectric_gpr_baseline import (
 
 MODEL_NAMES = ("DummyMean", "SizeOnlyRidge", "MorganRBFGPR")
 TRAIN_SIZES = (20, 40, 60, 80)
-STRICT_METRIC_TOLERANCE = 1e-12
-MORGAN_GPR_RTOL = 1e-5
-MORGAN_GPR_ATOL = 1e-8
-DESCRIPTOR_GPR_RTOL = 1e-5
-DESCRIPTOR_GPR_ATOL = 1e-5
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,20 +59,18 @@ def metric_within_tolerance(
     """Compare metrics with an explicit model-aware platform tolerance."""
 
     if model_name == "DescriptorGPR":
-        return math.isclose(
-            float(actual),
-            float(expected),
-            rel_tol=DESCRIPTOR_GPR_RTOL,
-            abs_tol=DESCRIPTOR_GPR_ATOL,
+        return numerical_values_close(
+            actual,
+            expected,
+            model_family="descriptor_gpr",
         )
     if model_name == "MorganRBFGPR":
-        return math.isclose(
-            float(actual),
-            float(expected),
-            rel_tol=MORGAN_GPR_RTOL,
-            abs_tol=MORGAN_GPR_ATOL,
+        return numerical_values_close(
+            actual,
+            expected,
+            model_family="morgan_gpr",
         )
-    return abs(float(actual) - float(expected)) <= STRICT_METRIC_TOLERANCE
+    return numerical_values_close(actual, expected, model_family="strict")
 
 
 def read_csv_rows(path: Path) -> list[dict[str, str]]:

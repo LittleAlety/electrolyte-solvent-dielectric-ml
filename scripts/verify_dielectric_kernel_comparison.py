@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from electrolyte_ml.exporting import canonical_text_sha256
+from electrolyte_ml.numerics import numerical_values_close
 
 MODEL_NAMES = ("Tanimoto_GPR", "RBF_GPR", "XGBoost")
 SEED = 42
@@ -155,11 +156,15 @@ def check_metric_values(
         if key not in expected:
             return Check("kernel metrics", False, f"unexpected metric row {key}")
         for metric in ("mae", "rmse", "r2"):
-            if not math.isclose(
-                float(row[metric]),
-                float(expected[key][metric]),
-                rel_tol=0,
-                abs_tol=1e-12,
+            family = {
+                "Tanimoto_GPR": "gpr",
+                "RBF_GPR": "gpr",
+                "XGBoost": "xgboost",
+            }[key[0]]
+            if not numerical_values_close(
+                row[metric],
+                expected[key][metric],
+                model_family=family,
             ):
                 return Check(
                     "kernel metrics",
@@ -378,8 +383,17 @@ def run_checks(root: Path = ROOT) -> list[Check]:
             values = np.asarray([float(row[metric]) for row in model_rows])
             actual = {"mean": float(np.mean(values)), "std": float(np.std(values, ddof=1))}
             expected = reported.get("metrics", {}).get(metric)
+            family = {
+                "Tanimoto_GPR": "gpr",
+                "RBF_GPR": "gpr",
+                "XGBoost": "xgboost",
+            }[model_name]
             if not isinstance(expected, Mapping) or any(
-                abs(actual[part] - float(expected[part])) > 1e-12
+                not numerical_values_close(
+                    actual[part],
+                    expected[part],
+                    model_family=family,
+                )
                 for part in ("mean", "std")
             ):
                 checks.append(

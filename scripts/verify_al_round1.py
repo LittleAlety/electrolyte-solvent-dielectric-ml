@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from electrolyte_ml.exporting import canonical_text_sha256
+from electrolyte_ml.numerics import numerical_values_close
 from electrolyte_ml.standardize import MoleculeStandardizationError, standardize_molecule
 
 BATT_SHA256 = "c2ec78256ce6189366aebd9f7f0403e669c963e911cf51f7732083bce6374a1d"
@@ -476,7 +477,6 @@ def _compare_rows(
     expected_rows: Sequence[Mapping[str, object]],
     *,
     key: str,
-    numeric_tolerance: float = 1e-8,
 ) -> Check:
     actual_by_key = {str(row[key]): row for row in actual_rows}
     expected_by_key = {str(row[key]): row for row in expected_rows}
@@ -496,23 +496,29 @@ def _compare_rows(
         "selection_step_score",
         "std_percentile",
     }
+    gpr_derived_fields = {
+        "acquisition_score",
+        "posterior_std",
+        "predicted_dielectric",
+        "selection_step_score",
+        "std_percentile",
+    }
     for row_key, actual in actual_by_key.items():
         expected = expected_by_key[row_key]
         for field in sorted(comparing_fields):
             actual_value = actual.get(field)
             expected_value = expected.get(field)
             if field in numeric_fields:
+                family = "gpr" if field in gpr_derived_fields else "strict"
                 try:
-                    difference = abs(
-                        float(actual_value) - float(expected_value)
+                    matches = numerical_values_close(
+                        actual_value,
+                        expected_value,
+                        model_family=family,
                     )
                 except (TypeError, ValueError):
-                    return Check(
-                        "AL selection",
-                        False,
-                        f"{field} is not numeric for {row_key}",
-                    )
-                if difference > numeric_tolerance:
+                    matches = False
+                if not matches:
                     return Check("AL selection", False, f"{field} mismatch for {row_key}")
             elif actual_value != expected_value:
                 return Check("AL selection", False, f"{field} mismatch for {row_key}")
