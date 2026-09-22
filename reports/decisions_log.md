@@ -156,6 +156,20 @@
   and 9 final Top 30 rows. The field `model_sha256` is renamed
   `model_input_sha256` to avoid implying that the hash is a serialized model
   artifact.
+
+## 2026-09-23: P4 redox probes
+
+- RX-392 is pinned at commit
+  `a5101e30c6975552d97e34f1e93461126715c862`; its 392 rows use the upstream
+  `DIELECTRIC=18` filter and 4.44 eV redox free-energy convention.
+- The merged table contains 29,911 rows: 392 RX-392 rows with redox targets and
+  29,519 Batt-P30K rows with source-native IP/EA/HOMO/LUMO/dipole only.
+- Fixed held-out results: oxidation best MAE `0.2905 eV` and reduction best MAE
+  `0.4096 eV`; the `0.15 eV` gate fails for both targets.
+- Decision: retain the negative result. Scalar IP/EA models are substantially
+  better than Morgan fingerprint GPR on this small RX-392 set, but no redox
+  gate claim is made. The 308-solvent ECW target remains unavailable with zero
+  fabricated rows.
 - Decision: keep all 30 as `awaiting_manual_review`. They are not confirmed as
   available, room-temperature liquids, or experimental dielectric references.
   The unavailable 308-solvent ECW list was not used as a candidate pool.

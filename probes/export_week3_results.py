@@ -87,6 +87,23 @@ def export_week3_results(output_dir: Path) -> None:
         / "al_round1.md",
         REPOSITORY_ROOT / "docs" / "week3" / "al_round1.md": output_dir
         / "al_round1_docs.md",
+        REPOSITORY_ROOT / "data" / "processed" / "redox_merged.csv": output_dir
+        / "redox_merged.csv",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "p4_redox_predictions.csv": output_dir
+        / "p4_redox_predictions.csv",
+        REPOSITORY_ROOT / "probes" / "p4_redox_summary.json": output_dir
+        / "p4_redox_summary.json",
+        artifacts / "p4_redox_linear.png": output_dir / "p4_redox_linear.png",
+        artifacts / "p4_redox_parity.png": output_dir / "p4_redox_parity.png",
+        REPOSITORY_ROOT / "probes" / "p4_redox_baseline.ipynb": output_dir
+        / "p4_redox_baseline.ipynb",
+        REPOSITORY_ROOT / "reports" / "p4_redox_baseline.md": output_dir
+        / "p4_redox_baseline.md",
+        REPOSITORY_ROOT / "docs" / "week3" / "p4_redox.md": output_dir
+        / "p4_redox_docs.md",
     }
     for source, destination in copies.items():
         shutil.copy2(source, destination)
@@ -115,6 +132,14 @@ def export_week3_results(output_dir: Path) -> None:
         "al_round1_plot": "al_round1_selection.png",
         "al_round1_report": "al_round1.md",
         "al_round1_docs": "al_round1_docs.md",
+        "p4_redox_merged": "redox_merged.csv",
+        "p4_redox_predictions": "p4_redox_predictions.csv",
+        "p4_redox_summary": "p4_redox_summary.json",
+        "p4_redox_linear_plot": "p4_redox_linear.png",
+        "p4_redox_parity_plot": "p4_redox_parity.png",
+        "p4_redox_notebook": "p4_redox_baseline.ipynb",
+        "p4_redox_report": "p4_redox_baseline.md",
+        "p4_redox_docs": "p4_redox_docs.md",
     }
     (output_dir / "week3_summary.json").write_text(
         json.dumps({"outputs": outputs}, ensure_ascii=False, indent=2) + "\n",

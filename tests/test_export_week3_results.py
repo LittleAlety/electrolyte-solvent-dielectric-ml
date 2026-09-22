@@ -34,6 +34,14 @@ def test_week3_export_is_self_contained_and_manifested(tmp_path) -> None:
         "al_round1_plot",
         "al_round1_report",
         "al_round1_docs",
+        "p4_redox_merged",
+        "p4_redox_predictions",
+        "p4_redox_summary",
+        "p4_redox_linear_plot",
+        "p4_redox_parity_plot",
+        "p4_redox_notebook",
+        "p4_redox_report",
+        "p4_redox_docs",
     }.issubset(summary["outputs"])
     for relative_path in summary["outputs"].values():
         assert (tmp_path / relative_path).is_file()

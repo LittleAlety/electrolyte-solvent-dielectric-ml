@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "source_commit": "a5101e30c6975552d97e34f1e93461126715c862",
+  "sources": {
+    "rx_392": {
+      "path": "data/external/Batt-SLM-RX-392.csv",
+      "url": "https://raw.githubusercontent.com/Teoroo-CMC/Batt-SLM/a5101e30c6975552d97e34f1e93461126715c862/Redox-Pot/Redox-Ener/RX-392.csv",
+      "upstream_script_url": "https://raw.githubusercontent.com/Teoroo-CMC/Batt-SLM/a5101e30c6975552d97e34f1e93461126715c862/Redox-Pot/Redox-Ener/redox_free_ener.py",
+      "sha256": "d30ec1ffccba15538bac0b67157c14e045f1721441be23837c6195eca24a5d87",
+      "size_bytes": 248404,
+      "rows": 392,
+      "source_doi": "10.1021/acsnano.6c06255",
+      "condition": "DIELECTRIC=18.5",
+      "target_unit": "eV",
+      "status": "source_native_dft"
+    },
+    "batt_p30k": {
+      "path": "data/raw/batt/Batt-P30K.h5",
+      "sha256": "587f1490613a008b91f45ee9de607a2e057c88c301fa9e5c9d7785b1968d118d",
+      "rows": 29519,
+      "source_doi": "10.1021/acsnano.6c06255",
+      "condition": "wB97X-V/def2-TZVPPD/SMD(epsilon=18.5)",
+      "status": "source_native_dft"
+    },
+    "ecw_308": {
+      "status": "unavailable",
+      "rows": 0,
+      "reason": "Wiley/Cloudflare blocked; no open machine-readable dataset"
+    }
+  },
+  "merged": {
+    "path": "data/processed/redox_merged.csv",
+    "sha256": "7d256a83f14418794a94592c9d8caf8d355b2b3dc03159683a848a62714139fa",
+    "rows": 29911,
+    "source_counts": {
+      "RX-392": 392,
+      "Batt-P30K": 29519
+    },
+    "rx_redox_target_rows": 392
+  },
+  "units": {
+    "IP": "eV",
+    "EA": "eV",
+    "HOMO": "eV",
+    "LUMO": "eV",
+    "dipole": "atomic_units (e*bohr)",
+    "oxidation_free_energy": "eV",
+    "reduction_free_energy": "eV",
+    "note": "RX-392 free energies follow upstream redox_free_ener.py. A potential of 4.44 V vs H+/H is applied as 4.44 eV in the electron free-energy convention; the numeric gate threshold 0.15 is not mixed with a separately converted volt scale."
+  },
+  "split": {
+    "method": "deterministic permutation",
+    "seed": 42,
+    "test_fraction": 0.2,
+    "train_count": 314,
+    "test_count": 78,
+    "test_id_hash": "dba15cd8c3a99215cc3e1fd5b2a73b9a5c0275eb2ee41fba436bcf62f2d2daee"
+  },
+  "model_configs": {
+    "oxidation_free_energy:linear": "LinearRegression; coefficients=[0.9424102032707482]; intercept=-0.13090500422404627",
+    "oxidation_free_energy:scalar_gpr": "StandardScaler + GaussianProcessRegressor; initial_kernel=1**2 * RBF(length_scale=1) + WhiteKernel(noise_level=0.001); final_kernel=8.64**2 * RBF(length_scale=15.3) + WhiteKernel(noise_level=0.0893); alpha=1e-06; normalize_y=True; n_restarts_optimizer=2; random_state=42",
+    "oxidation_free_energy:fingerprint_gpr": "StandardScaler + GaussianProcessRegressor; initial_kernel=1**2 * RBF(length_scale=10) + WhiteKernel(noise_level=1); final_kernel=1.91**2 * RBF(length_scale=61.5) + WhiteKernel(noise_level=0.072); alpha=1e-06; normalize_y=True; n_restarts_optimizer=2; random_state=42",
+    "reduction_free_energy:linear": "LinearRegression; coefficients=[-0.8433398509174335]; intercept=-1.0867742439306944",
+    "reduction_free_energy:scalar_gpr": "StandardScaler + GaussianProcessRegressor; initial_kernel=1**2 * RBF(length_scale=1) + WhiteKernel(noise_level=0.001); final_kernel=3.77**2 * RBF(length_scale=6.94) + WhiteKernel(noise_level=0.203); alpha=1e-06; normalize_y=True; n_restarts_optimizer=2; random_state=42",
+    "reduction_free_energy:fingerprint_gpr": "StandardScaler + GaussianProcessRegressor; initial_kernel=1**2 * RBF(length_scale=10) + WhiteKernel(noise_level=1); final_kernel=1.99**2 * RBF(length_scale=70.7) + WhiteKernel(noise_level=0.135); alpha=1e-06; normalize_y=True; n_restarts_optimizer=2; random_state=42"
+  },
+  "metrics": {
+    "oxidation_free_energy": {
+      "linear": {
+        "mae": 0.2905180517963865,
+        "rmse": 0.37907192838596204,
+        "r2": 0.9443164629360373
+      },
+      "scalar_gpr": {
+        "mae": 0.2927353514885677,
+        "rmse": 0.3836477189732057,
+        "r2": 0.9429640334230941
+      },
+      "fingerprint_gpr": {
+        "mae": 0.6930107877581774,
+        "rmse": 1.0516560329548788,
+        "r2": 0.5714208884791027
+      }
+    },
+    "reduction_free_energy": {
+      "linear": {
+        "mae": 0.41533710484786157,
+        "rmse": 0.6597111151925864,
+        "r2": 0.7350887163209947
+      },
+      "scalar_gpr": {
+        "mae": 0.4096241620366996,
+        "rmse": 0.6538553279765984,
+        "r2": 0.7397707031412197
+      },
+      "fingerprint_gpr": {
+        "mae": 0.6698768397322199,
+        "rmse": 0.8928106440923189,
+        "r2": 0.5148102998095443
+      }
+    }
+  },
+  "gate": {
+    "threshold_mae": 0.15,
+    "unit": "eV",
+    "criterion": "best model per target has held-out MAE below threshold",
+    "best_model_mae": {
+      "oxidation_free_energy": 0.2905180517963865,
+      "reduction_free_energy": 0.4096241620366996
+    },
+    "passed": false
+  },
+  "outputs": {
+    "merged_csv": "data/processed/redox_merged.csv",
+    "predictions_csv": "data/processed/p4_redox_predictions.csv",
+    "summary_json": "probes/p4_redox_summary.json",
+    "linear_plot": "probes/artifacts/p4_redox_linear.png",
+    "parity_plot": "probes/artifacts/p4_redox_parity.png"
+  }
+}

@@ -16,6 +16,7 @@ dielectric constants and related properties of electrolyte solvents.
   gap, and experimental viscosity integration.
 - P2 Batt-P30K fingerprint-to-XGBoost baseline, including its negative R2 gate.
 - Week 3 Chodera cross-check and high-temperature dielectric extension.
+- P4 redox probes on RX-392 and Batt-P30K.
 
 ## Quick start
 
@@ -33,6 +34,7 @@ The unified property schema is in `docs/week1/data_schema.md`.
 Week 3 extension documentation is in `docs/week3/dielectric_v01_ext.md`.
 Viscosity baseline documentation is in `docs/week3/viscosity_baseline.md`.
 AL Round-1 selection documentation is in `docs/week3/al_round1.md`.
+P4 redox documentation is in `docs/week3/p4_redox.md`.
 
 ## Repository layout
 
