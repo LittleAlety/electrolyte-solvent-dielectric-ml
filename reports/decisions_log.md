@@ -92,3 +92,19 @@
 - Descriptor augmentation quick test reaches R2 `0.38059`, MAE `10.1514`, and
   RMSE `18.9240`. This is evidence for a future representation upgrade, not a
   gate pass or finalized model.
+
+## 2026-09-23: Chodera cross-check and high-temperature extension
+
+- Chodera cross-check includes all 45 common InChIKeys. Median absolute median
+  difference is `0.175`; maximum is `7.341` for N-methylacetamide.
+- Nearest-temperature pairing uses observed pairs only, with no interpolation.
+  Forty-four keys are near-isothermal, where temperature cannot explain the
+  observed difference. One key has a `10.05 K` gap where temperature may
+  contribute, but this is not proven without a temperature model.
+- The high-temperature NIST window `313.15-323.15 K` contains 205 observations
+  and 46 keys.
+- Ethylene carbonate is added only as a manual literature point: `313.15 K`,
+  `90.5`, `1 MHz`, DOI `10.1021/je050341y`, `<1.5% relative` uncertainty.
+  It remains `frequency_dependent`, single-source, and absent from main v0.1.
+- Decision: keep the main v0.1 table unchanged; the extension contains 47 keys
+  and 206 observations as supplemental evidence.

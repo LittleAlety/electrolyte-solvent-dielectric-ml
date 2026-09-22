@@ -1,4 +1,4 @@
-"""Verify SHA256SUMS manifests for the real Week 1 and Week 2 exports."""
+"""Verify SHA256SUMS manifests for the real Week 1, Week 2, and Week 3 exports."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from electrolyte_ml.exporting import verify_export_manifest
 DEFAULT_OUTPUT_DIRS = (
     Path(r"E:\Claude Code\电解质ML\成果输出\week1"),
     Path(r"E:\Claude Code\电解质ML\成果输出\week2"),
+    Path(r"E:\Claude Code\电解质ML\成果输出\week3"),
 )
 
 

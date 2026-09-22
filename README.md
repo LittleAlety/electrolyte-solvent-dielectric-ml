@@ -15,6 +15,7 @@ dielectric constants and related properties of electrolyte solvents.
 - Week 1 closure with source provenance, spot checks, a documented 308-data
   gap, and experimental viscosity integration.
 - P2 Batt-P30K fingerprint-to-XGBoost baseline, including its negative R2 gate.
+- Week 3 Chodera cross-check and high-temperature dielectric extension.
 
 ## Quick start
 
@@ -29,6 +30,7 @@ The week's acceptance criteria and artifact map are documented in
 
 Week 1 probe commands and outputs are documented in `docs/week1/README.md`.
 The unified property schema is in `docs/week1/data_schema.md`.
+Week 3 extension documentation is in `docs/week3/dielectric_v01_ext.md`.
 
 ## Repository layout
 

@@ -56,6 +56,10 @@ temperature_gate
 exclude_liquid_298K
 dipole_units_unreported
 r2_gate_failed
+high_temperature_extension
+literature_manual_entry
+single_source
+frequency_1mhz
 ```
 
 The executable enum lives in `src/electrolyte_ml/standardize.py`.
