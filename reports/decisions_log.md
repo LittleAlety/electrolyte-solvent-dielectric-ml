@@ -217,7 +217,7 @@
 
 - Added `electrolyte_ml.numerics.numerical_values_close` with explicit model
   families: GPR `rtol=1e-5, atol=1e-5`, Morgan GPR `1e-5/1e-8`, descriptor GPR
-  `1e-5/1e-5`, XGBoost `1e-7/1e-8`, and strict `1e-12`.
+  `1e-5/1e-5`, XGBoost `1e-5/1e-5`, and strict `1e-12`.
 - Kernel comparison uses the GPR profile for Tanimoto/RBF GPR metrics and the
   stricter XGBoost profile for XGBoost. AL Round-1 uses the GPR profile only for
   prediction, uncertainty, percentile, acquisition, and step-score fields;

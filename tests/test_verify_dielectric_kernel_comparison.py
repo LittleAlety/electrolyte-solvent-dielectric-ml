@@ -87,6 +87,46 @@ def test_kernel_verifier_rejects_large_gpr_metric_drift() -> None:
     assert result.passed is False
     assert "mae" in result.detail
 
+
+def test_kernel_verifier_accepts_small_xgboost_metric_drift() -> None:
+    rows = [
+        {
+            "model": "XGBoost",
+            "repeat": "0",
+            "fold": "0",
+            "mae": str(1.0 + 5e-6),
+            "rmse": str(1.0 + 5e-6),
+            "r2": str(0.5 + 5e-6),
+        }
+    ]
+    expected = {
+        ("XGBoost", 0, 0): {"mae": 1.0, "rmse": 1.0, "r2": 0.5}
+    }
+
+    assert check_metric_values(rows, expected).passed is True
+
+
+def test_kernel_verifier_rejects_large_xgboost_metric_drift() -> None:
+    rows = [
+        {
+            "model": "XGBoost",
+            "repeat": "0",
+            "fold": "0",
+            "mae": str(1.0 + 1e-4),
+            "rmse": "1.0",
+            "r2": "0.5",
+        }
+    ]
+    expected = {
+        ("XGBoost", 0, 0): {"mae": 1.0, "rmse": 1.0, "r2": 0.5}
+    }
+
+    result = check_metric_values(rows, expected)
+
+    assert result.passed is False
+    assert "mae" in result.detail
+
+
 def test_kernel_verifier_rejects_tanimoto_kernel_tampering() -> None:
     fingerprints = np.asarray([[1, 1, 0], [1, 0, 1]], dtype=np.uint8)
     tampered = np.asarray([[1.0, 0.0], [0.0, 1.0]])

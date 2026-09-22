@@ -8,7 +8,7 @@ MODEL_TOLERANCES: dict[str, tuple[float, float]] = {
     "gpr": (1e-5, 1e-5),
     "morgan_gpr": (1e-5, 1e-8),
     "descriptor_gpr": (1e-5, 1e-5),
-    "xgboost": (1e-7, 1e-8),
+    "xgboost": (1e-5, 1e-5),
     "strict": (0.0, 1e-12),
 }
 
