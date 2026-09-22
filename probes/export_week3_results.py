@@ -72,6 +72,21 @@ def export_week3_results(output_dir: Path) -> None:
         / "viscosity_baseline_docs.md",
         artifacts / "viscosity_baseline_parity.png": output_dir
         / "viscosity_baseline_parity.png",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "al_round1_longlist.csv": output_dir
+        / "al_round1_longlist.csv",
+        REPOSITORY_ROOT / "data" / "round1_candidates.csv": output_dir
+        / "round1_candidates.csv",
+        REPOSITORY_ROOT / "probes" / "al_round1_summary.json": output_dir
+        / "al_round1_summary.json",
+        artifacts / "al_round1_selection.png": output_dir
+        / "al_round1_selection.png",
+        REPOSITORY_ROOT / "reports" / "al_round1.md": output_dir
+        / "al_round1.md",
+        REPOSITORY_ROOT / "docs" / "week3" / "al_round1.md": output_dir
+        / "al_round1_docs.md",
     }
     for source, destination in copies.items():
         shutil.copy2(source, destination)
@@ -94,6 +109,12 @@ def export_week3_results(output_dir: Path) -> None:
         "viscosity_baseline_plot": "viscosity_baseline_parity.png",
         "viscosity_baseline_report": "viscosity_baseline.md",
         "viscosity_baseline_docs": "viscosity_baseline_docs.md",
+        "al_round1_longlist": "al_round1_longlist.csv",
+        "al_round1_top30": "round1_candidates.csv",
+        "al_round1_summary": "al_round1_summary.json",
+        "al_round1_plot": "al_round1_selection.png",
+        "al_round1_report": "al_round1.md",
+        "al_round1_docs": "al_round1_docs.md",
     }
     (output_dir / "week3_summary.json").write_text(
         json.dumps({"outputs": outputs}, ensure_ascii=False, indent=2) + "\n",

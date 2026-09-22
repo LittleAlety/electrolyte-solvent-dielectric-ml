@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "source_commit": "a5101e30c6975552d97e34f1e93461126715c862",
+  "batt_source": {
+    "path": "data/external/Batt-SLM.smi",
+    "url": "https://raw.githubusercontent.com/Teoroo-CMC/Batt-SLM/a5101e30c6975552d97e34f1e93461126715c862/Batt-SLM/Batt-SLM.smi",
+    "sha256": "c2ec78256ce6189366aebd9f7f0403e669c963e911cf51f7732083bce6374a1d",
+    "size_bytes": 1879361
+  },
+  "solvfunc_source": {
+    "path": "data/external/SolvFunc-87.csv",
+    "url": "https://raw.githubusercontent.com/Teoroo-CMC/Batt-SLM/a5101e30c6975552d97e34f1e93461126715c862/CPI/SolvFunc-87.csv",
+    "sha256": "1031abc49ee4f15d46211a519be6b5cdee3b68115e5e2f5141f7d155342ba493",
+    "size_bytes": 20753
+  },
+  "dielectric_input_sha256": "6f31c5b22a6a85a14954d3103a9ce5498eb4cdb265e55cfc8679adb78e4e5396",
+  "model_config": "StandardScaler + GaussianProcessRegressor; C(1)*RBF(length_scale=10)+WhiteKernel(noise_level=1); alpha=1e-6; normalize_y=True; n_restarts_optimizer=2; random_state=42",
+  "feature_config": "Morgan count fingerprint radius=2 fpSize=2048",
+  "filter_rules": {
+    "version": "al_round1_hazard_v4",
+    "hazard_smarts": {
+      "peroxide": "[OX2,OX1][OX2,OX1]",
+      "alpha_halo_ether": "[Cl,Br,I][CX4][OX2]",
+      "halogen_oxygen": "[F,Cl,Br,I]-[OX2]",
+      "thiocarbonyl": [
+        "[CX3]=[SX1]",
+        "[#6]=[#16]"
+      ],
+      "s_s_bond": "[S,s]-[S,s]",
+      "azide": "[NX2]=[NX2+]=[NX1-]",
+      "isocyanate": "[NX2]=C=O",
+      "acyl_halide": "[CX3](=O)[F,Cl,Br,I]",
+      "sulfonyl_halide": "[SX4](=O)(=O)[F,Cl,Br,I]",
+      "epoxide": "[OX2]1[CX4][CX4]1",
+      "aldehyde": "[CX3H1](=O)[#6,#1]",
+      "nitro": "[NX3+](=O)[O-]",
+      "n_x_bond": "[N,n]-[F,Cl,Br,I]",
+      "s_x_bond": "[S,s]-[F,Cl,Br,I]",
+      "p_x_bond": "[P,p]-[F,Cl,Br,I]",
+      "halogen_on_nitrile_carbon": "[NX1]#[CX2][F,Cl,Br,I]"
+    }
+  },
+  "funnel": {
+    "parsed": 115756,
+    "invalid_smiles": 0,
+    "deduplicated": 115756,
+    "excluded_v01": 27,
+    "hazard_excluded": 29808,
+    "safe_candidates": 85921,
+    "hazard_rule_counts": {
+      "acyl_halide": 3050,
+      "aldehyde": 6768,
+      "alpha_halo_ether": 1954,
+      "azide": 8,
+      "epoxide": 3207,
+      "halogen_on_nitrile_carbon": 2,
+      "halogen_oxygen": 1299,
+      "isocyanate": 1080,
+      "n_x_bond": 1500,
+      "nitro": 2011,
+      "p_x_bond": 1517,
+      "peroxide": 2393,
+      "s_s_bond": 970,
+      "s_x_bond": 2390,
+      "sulfonyl_halide": 1450,
+      "thiocarbonyl": 3274
+    }
+  },
+  "candidate_scores": {
+    "scored_candidates": 85921,
+    "tier_counts": {
+      "C": 54990,
+      "B": 17570,
+      "A": 13361
+    },
+    "longlist_rows": 300,
+    "longlist_tier_counts": {
+      "B": 232,
+      "A": 68
+    },
+    "top30_rows": 30,
+    "top30_family_counts": {
+      "Cyclic Carbonates": 6,
+      "Formates": 6,
+      "Ethers": 6,
+      "Nitriles": 2,
+      "Other Esters": 1,
+      "Sulfones/Sulfoxides": 5,
+      "Ketones": 3,
+      "Linear Carbonates": 1
+    },
+    "top30_tier_counts": {
+      "B": 14,
+      "A": 6,
+      "C": 10
+    },
+    "tier_c_fill_count": 10,
+    "top30_shortfall": 0,
+    "review_warning_counts": {
+      "polyhalogenated_alkyl": 10602
+    },
+    "acquisition_formula": "std_percentile * novelty",
+    "novelty_formula": "1 - max_binary_Morgan_Tanimoto_to_v01"
+  },
+  "selection": {
+    "longlist_rule": "Tier A/B by acquisition; fill from Tier C only if fewer than 300",
+    "top30_rule": "deterministic greedy MaxMin diversity with a hard family quota of 6, seed 42; no all-remaining fallback",
+    "tier_c_fill_rule": "only after the A/B hard-quota selection is short; use the top 6 acquisition-ranked Tier C rows per family as continuation candidates, still under the hard quota",
+    "family_quota": 6,
+    "family_quota_enforced": true,
+    "seed": 42
+  },
+  "coverage_gap_note": "The 308-solvent ECW coverage gap is unavailable and was not used as a candidate pool.",
+  "limitations": [
+    "Predicted values are model outputs, not experimental measurements.",
+    "Candidates are not confirmed to be liquid at room temperature or experimentally available.",
+    "Melting point, boiling point, and literature DOI remain empty pending manual review."
+  ],
+  "outputs": {
+    "longlist_csv": "data/processed/al_round1_longlist.csv",
+    "top30_csv": "data/round1_candidates.csv",
+    "summary_json": "probes/al_round1_summary.json",
+    "selection_plot": "probes/artifacts/al_round1_selection.png"
+  }
+}

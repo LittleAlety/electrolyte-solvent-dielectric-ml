@@ -133,3 +133,29 @@
 - Decision: random-row success primarily reflects temperature interpolation
   within known molecules. The group-holdout result is the relevant limitation
   for screening unseen molecules; no tuning is performed this round.
+
+## 2026-09-23: AL Round-1 shortlist
+
+- Inputs are pinned to Batt-SLM commit
+  `a5101e30c6975552d97e34f1e93461126715c862`; Batt-SLM SHA256 is
+  `c2ec78256ce6189366aebd9f7f0403e669c963e911cf51f7732083bce6374a1d`.
+- The 115,756-row pool yields 85,921 safe candidates after excluding 27 keys
+  present in dielectric v0.1 and 29,808 structures matching the versioned
+  `al_round1_hazard_v4` SMARTS rules. The thiocarbonyl flag uses both the
+  ordinary `[CX3]=[SX1]` rule and the complete `[#6]=[#16]` motif; the real
+  cumulated SMILES `C1=S=C=C2OCCOC=12` is excluded.
+- Acquisition is `std_percentile * novelty`; all 300 longlist rows are Tier A/B.
+  Hard family quota 6 without an all-remaining fallback selected 20 A/B rows,
+  then 10 Tier C rows were added as continuation candidates.
+- The deterministic MaxMin Top 30 contains 6 Cyclic Carbonates, 6 Ethers,
+  6 Formates, 5 Sulfones/Sulfoxides, 3 Ketones, 2 Nitriles, 1 Other Ester, and
+  1 Linear Carbonate. Tiers are A 6, B 14, and C 10. Every family count is at
+  most 6.
+- Polyhalogenated alkyl structures that do not match a hard rule are retained
+  with `manual_review_warnings=polyhalogenated_alkyl`: 10,602 safe candidates
+  and 9 final Top 30 rows. The field `model_sha256` is renamed
+  `model_input_sha256` to avoid implying that the hash is a serialized model
+  artifact.
+- Decision: keep all 30 as `awaiting_manual_review`. They are not confirmed as
+  available, room-temperature liquids, or experimental dielectric references.
+  The unavailable 308-solvent ECW list was not used as a candidate pool.

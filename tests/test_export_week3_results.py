@@ -28,4 +28,12 @@ def test_week3_export_is_self_contained_and_manifested(tmp_path) -> None:
         "viscosity_baseline_plot",
         "viscosity_baseline_report",
         "viscosity_baseline_docs",
+        "al_round1_longlist",
+        "al_round1_top30",
+        "al_round1_summary",
+        "al_round1_plot",
+        "al_round1_report",
+        "al_round1_docs",
     }.issubset(summary["outputs"])
+    for relative_path in summary["outputs"].values():
+        assert (tmp_path / relative_path).is_file()
