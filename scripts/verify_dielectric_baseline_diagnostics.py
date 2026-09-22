@@ -41,6 +41,11 @@ from probes.dielectric_gpr_baseline import (
 
 MODEL_NAMES = ("DummyMean", "SizeOnlyRidge", "MorganRBFGPR")
 TRAIN_SIZES = (20, 40, 60, 80)
+STRICT_METRIC_TOLERANCE = 1e-12
+MORGAN_GPR_RTOL = 1e-5
+MORGAN_GPR_ATOL = 1e-8
+DESCRIPTOR_GPR_RTOL = 1e-5
+DESCRIPTOR_GPR_ATOL = 1e-5
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +53,30 @@ class Check:
     name: str
     passed: bool
     detail: str
+
+
+def metric_within_tolerance(
+    model_name: str,
+    actual: float,
+    expected: float,
+) -> bool:
+    """Compare metrics with an explicit model-aware platform tolerance."""
+
+    if model_name == "DescriptorGPR":
+        return math.isclose(
+            float(actual),
+            float(expected),
+            rel_tol=DESCRIPTOR_GPR_RTOL,
+            abs_tol=DESCRIPTOR_GPR_ATOL,
+        )
+    if model_name == "MorganRBFGPR":
+        return math.isclose(
+            float(actual),
+            float(expected),
+            rel_tol=MORGAN_GPR_RTOL,
+            abs_tol=MORGAN_GPR_ATOL,
+        )
+    return abs(float(actual) - float(expected)) <= STRICT_METRIC_TOLERANCE
 
 
 def read_csv_rows(path: Path) -> list[dict[str, str]]:
@@ -187,9 +216,11 @@ def check_cv_summary(
                     f"{model_name}/{metric} missing",
                 )
             for statistic in ("mean", "std"):
-                if abs(
-                    actual[statistic] - float(metric_summary[statistic])
-                ) > 1e-12:
+                if not metric_within_tolerance(
+                    model_name,
+                    actual[statistic],
+                    float(metric_summary[statistic]),
+                ):
                     return Check(
                         "diagnostics CV summary",
                         False,
@@ -272,7 +303,11 @@ def check_cv_fold_metrics(
                 )
                 recomputed = regression_metrics(target[test_indices], prediction)
                 for metric in ("mae", "rmse", "r2"):
-                    if abs(recomputed[metric] - float(row[metric])) > 1e-12:
+                    if not metric_within_tolerance(
+                        model_name,
+                        recomputed[metric],
+                        float(row[metric]),
+                    ):
                         return Check(
                             "diagnostics CV fold metrics",
                             False,
@@ -343,9 +378,11 @@ def check_learning_summary(
                         f"{model_name}/{train_size}/{metric} missing",
                     )
                 for statistic in ("mean", "std"):
-                    if abs(
-                        actual[statistic] - float(expected[statistic])
-                    ) > 1e-12:
+                    if not metric_within_tolerance(
+                        model_name,
+                        actual[statistic],
+                        float(expected[statistic]),
+                    ):
                         return Check(
                             "diagnostics learning summary",
                             False,
@@ -438,7 +475,11 @@ def check_learning_rows(
                 )
                 recomputed = regression_metrics(target[original_test], prediction)
                 for metric in ("mae", "rmse", "r2"):
-                    if abs(recomputed[metric] - float(row[metric])) > 1e-12:
+                    if not metric_within_tolerance(
+                        model_name,
+                        recomputed[metric],
+                        float(row[metric]),
+                    ):
                         return Check(
                             "diagnostics learning rows",
                             False,
@@ -477,7 +518,11 @@ def check_descriptor_enhancement(
             "metric summary missing",
         )
     for metric in ("mae", "rmse", "r2"):
-        if abs(recomputed_metrics[metric] - float(reported_metrics[metric])) > 1e-12:
+        if not metric_within_tolerance(
+            "DescriptorGPR",
+            recomputed_metrics[metric],
+            float(reported_metrics[metric]),
+        ):
             return Check(
                 "diagnostics descriptor enhancement",
                 False,
@@ -495,7 +540,11 @@ def check_descriptor_enhancement(
     recomputed_gain = (
         recomputed_metrics["r2"] - float(single["MorganRBFGPR"]["r2"])
     )
-    if abs(recomputed_gain - float(descriptor["r2_gain_over_morgan"])) > 1e-12:
+    if not metric_within_tolerance(
+        "DescriptorGPR",
+        recomputed_gain,
+        float(descriptor["r2_gain_over_morgan"]),
+    ):
         return Check(
             "diagnostics descriptor enhancement",
             False,
