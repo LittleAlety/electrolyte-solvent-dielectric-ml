@@ -115,6 +115,8 @@ def export_week3_results(output_dir: Path) -> None:
         / "milestone_2.md",
         REPOSITORY_ROOT / "docs" / "week3" / "data_expansion_audit.md": output_dir
         / "data_expansion_audit.md",
+        REPOSITORY_ROOT / "docs" / "week3" / "manual_dielectric_entry_schema.md": output_dir
+        / "manual_dielectric_entry_schema.md",
     }
     for source, destination in copies.items():
         shutil.copy2(source, destination)
@@ -155,6 +157,7 @@ def export_week3_results(output_dir: Path) -> None:
         "data_expansion_summary": "data_expansion_summary.json",
         "milestone_2_report": "milestone_2.md",
         "data_expansion_docs": "data_expansion_audit.md",
+        "manual_dielectric_schema": "manual_dielectric_entry_schema.md",
     }
     (output_dir / "week3_summary.json").write_text(
         json.dumps({"outputs": outputs}, ensure_ascii=False, indent=2) + "\n",

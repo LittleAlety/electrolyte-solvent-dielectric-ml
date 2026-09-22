@@ -186,6 +186,22 @@
   dataset remains unavailable.
 - Decision: v0.2 requires manual literature/handbook mining. AL longlist 300
   and Top30 are the starting queue, not validated training labels.
+
+## 2026-09-23: Milestone 2 second-round source audit
+
+- Landolt-Börnstein 2015 DOI `10.1007/978-3-662-48168-4` is a closed manual
+  transcript candidate with at least 217 pure-substance chapter metadata
+  records. Quantity may be sufficient, but row-level eligibility and rights
+  handling are not yet established.
+- Landolt-Börnstein IV/17, CRC Handbook Permittivity of Liquids, DDBST's
+  no-data policy, the DTU fluorescence dataset, the binary-solvent QSPR
+  Figshare item `10.6084/m9.figshare.2802712`, and the unlicensed GitHub
+  binary-mixture repository do not provide an automatic pure-component v0.2
+  path.
+- Decision: keep the open-data automatic ceiling at 187, keep
+  `data/dielectric_v02.csv` absent, and use
+  `docs/week3/manual_dielectric_entry_schema.md` for future manual entries with
+  explicit `closed_source` and `non_redistributable` markers.
 - Decision: keep all 30 as `awaiting_manual_review`. They are not confirmed as
   available, room-temperature liquids, or experimental dielectric references.
   The unavailable 308-solvent ECW list was not used as a candidate pool.

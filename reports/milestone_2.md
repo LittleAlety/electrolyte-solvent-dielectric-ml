@@ -43,13 +43,27 @@ Key facts:
 - ChemDataExtractor: 60,804 records and 11,054 compounds, but no independent
   temperature field and insufficient precision for direct training labels.
 - The 308 ECW target remains unavailable with zero fabricated rows.
+- Landolt-Börnstein 2015 DOI `10.1007/978-3-662-48168-4` exposes at least 217
+  pure-substance chapter metadata records but is closed and requires manual
+  transcription.
+- Landolt-Börnstein IV/17 and the CRC Handbook Permittivity of Liquids page are
+  closed/login-gated manual sources. They may contain sufficient quantities,
+  but row-level eligibility and redistribution rights must be verified before
+  claiming that v0.2 can reach 200.
+- DDBST's no-data policy is an access constraint, not a dataset. The DTU
+  fluorescence dataset does not provide pure zero-frequency dielectric labels.
+  The binary-solvent QSPR Figshare item and the unlicensed GitHub binary-mixture
+  repository are mixture-focused and cannot be promoted into the pure table.
 
 ## Blocker
 
 `v0.2` requires manual literature and handbook mining. The AL longlist and Top30
 provide the starting review queue, but they are candidate hypotheses, not
 validated dielectric observations. No automatic source join reaches 200
-qualified compounds.
+qualified compounds. The second-round audit confirms an open-data automatic
+ceiling of 187. Closed subscribed sources are plausible quantity sources, but
+availability of 200 labels is still unproven until each row is manually checked
+for pure-component, near-room, zero-frequency eligibility.
 
 **Blocker:** manual curation is required to identify at least 100 additional
 distinct compounds with pure-component, near-room zero-frequency dielectric

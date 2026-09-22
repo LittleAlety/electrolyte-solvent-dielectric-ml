@@ -45,6 +45,32 @@ The machine-readable audit is
   literature measurement and remains supplemental.
 - The 308 ECW dataset remains unavailable with zero rows fabricated.
 
+### Second-round manual-source investigation
+
+- Landolt-Börnstein 2015, DOI `10.1007/978-3-662-48168-4`, has chapter
+  metadata for at least 217 pure substances. It is closed, but it is a viable
+  manual transcript candidate if each record passes the v0.2 eligibility rules.
+- Landolt-Börnstein IV/17, DOI `10.1007/978-3-540-75506-7`, is a closed
+  supplemental source with no audited machine-readable extraction path.
+- The CRC Handbook Permittivity of Liquids official page is login/subscription
+  gated. It is potentially sufficient but requires manual row-level
+  verification and rights review.
+- The DDBST no-data policy page defines an access/redistribution constraint; it
+  is not a dataset.
+- The DTU fluorescence dataset records fluorescence response, not a
+  pure-component zero-frequency dielectric label, and is not usable for direct
+  v0.2 training.
+- The binary-solvent QSPR Figshare item `10.6084/m9.figshare.2802712` is
+  mixture-focused and outside the pure-component v0.2 definition.
+- The GitHub repository
+  `https://github.com/MDMISC/Dielectric_constants_binary_mixtures` has no
+  declared license and is binary-mixture-focused, so it cannot be used directly.
+
+The second-round conclusion is unchanged for automation: the open-data ceiling
+is 187 compounds, below 200. Landolt-Börnstein and CRC are the strongest manual
+transcript candidates, but reaching 200 still depends on manual verification of
+temperature, phase, frequency, structure, and rights.
+
 ## Label rules
 
 A v0.2 compound is eligible only if it has:
@@ -70,3 +96,4 @@ at least 100 additional qualifying compounds and record the required metadata.
 - `probes/data_expansion_summary.json`
 - `data/processed/data_expansion_source_audit.csv`
 - `reports/milestone_2.md`
+- `docs/week3/manual_dielectric_entry_schema.md`
