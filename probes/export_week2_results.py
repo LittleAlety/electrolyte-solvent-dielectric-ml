@@ -5,10 +5,15 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+
+from electrolyte_ml.exporting import write_export_manifest
+
 DEFAULT_OUTPUT_DIR = Path(r"E:\Claude Code\电解质ML\成果输出\week2")
 
 
@@ -106,6 +111,7 @@ def export_week2_results(output_dir: Path) -> None:
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    write_export_manifest(output_dir)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

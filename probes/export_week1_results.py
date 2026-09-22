@@ -13,7 +13,9 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
+from electrolyte_ml.exporting import write_export_manifest
 from probes.p1_thermoml_dielectric import _identity
 
 DEFAULT_OUTPUT_DIR = Path(r"E:\Claude Code\电解质ML\成果输出\week1")
@@ -202,6 +204,7 @@ def export_week1_results(output_dir: Path) -> None:
         build_week1_report(summary),
         encoding="utf-8",
     )
+    write_export_manifest(output_dir)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
