@@ -1,4 +1,4 @@
-"""Export the important Week 1 probe results to the project output folder."""
+"""Export the important Week 1 probe and closure results."""
 
 from __future__ import annotations
 
@@ -21,6 +21,9 @@ DEFAULT_OUTPUT_DIR = Path(r"E:\Claude Code\电解质ML\成果输出\week1")
 
 def build_week1_report(summary: Mapping[str, object]) -> str:
     family_counts = summary.get("zero_frequency_family_counts_near_center", {})
+    closure = summary.get("week1_closure", {})
+    if not isinstance(closure, Mapping):
+        closure = {}
     decision_status = str(summary.get("decision_status", "provisional"))
     handbook_gate_executed = summary.get("handbook_gate_executed") is True
     gate_label = (
@@ -33,60 +36,58 @@ def build_week1_report(summary: Mapping[str, object]) -> str:
         if handbook_gate_executed
         else "P1 handbook gate: NOT formally executed"
     )
-    return f"""# Week 1 探针结果
+    return f"""# Week 1 Probe Results
 
 ## P0
 
 P0 gate: PASS
 
-- RDKit 可解析碳酸乙烯酯 `C1COC(=O)O1`
-- Morgan fingerprint 可生成
-- 分子结构图已输出
+- RDKit parses ethylene carbonate `C1COC(=O)O1`.
+- Morgan fingerprint generation succeeds.
+- A molecular structure image is exported.
 
-## P1
+## P1 And Closure
 
-- {gate_label}: `{summary.get("mainline_decision")}`
-- decision_status: `{decision_status}`
-- handbook_gate_executed: `{handbook_gate_executed}`
-- source_mode: `{summary.get("source_mode")}`
-- fallback_query_census: `{summary.get("fallback_query_census")}`
-- complete_archive_available: `{summary.get("complete_archive_available")}`
-- mainline_gate_population: `{summary.get("mainline_gate_population")}`
-- mainline_gate_component_count: {summary.get("mainline_gate_component_count")}
-- 下载/扫描文献数: {summary.get("document_count")}
-- 含介电观测的文献数: {summary.get("source_documents_with_dielectric_rows")}
-- 介电观测行数: {summary.get("observation_rows")}
-- 298.15 K ±5 K 观测行数: {summary.get("observations_near_center")}
-- 298.15 K ±5 K 零频全部组分唯一化合物: {summary.get("all_component_zero_frequency_components_near_center")}
-- 298.15 K ±5 K 纯组分零频化合物（gate population）: {summary.get("pure_zero_frequency_components_near_center")}
-- all-component target_family_components_near_center: {summary.get("target_family_components_near_center")}
-- pure-component target_family_components_near_center: {summary.get("pure_target_family_components_near_center")}
-- 目标家族分布: `{json.dumps(family_counts, ensure_ascii=False)}`
-- mainline_decision_basis: {summary.get("mainline_decision_basis")}
+- {gate_label}: `{summary.get("mainline_decision")}`.
+- mainline_decision: `{summary.get("mainline_decision")}`.
+- decision_status: `{decision_status}`.
+- handbook_gate_executed: `{handbook_gate_executed}`.
+- source_mode: `{summary.get("source_mode")}`.
+- document_count: {summary.get("document_count")}.
+- source_documents_with_dielectric_rows: {summary.get("source_documents_with_dielectric_rows")}.
+- observation_rows: {summary.get("observation_rows")}.
+- all-component zero-frequency compounds near 298 K: {summary.get("all_component_zero_frequency_components_near_center")}.
+- pure-component gate compounds: {summary.get("pure_zero_frequency_components_near_center")}.
+- target_family_components_near_center: {summary.get("target_family_components_near_center")}.
+- family counts: `{json.dumps(family_counts, ensure_ascii=False)}`.
 - source_limitation: {summary.get("source_limitation")}
+- Week 1 closure summary: `{json.dumps(closure, ensure_ascii=False, sort_keys=True)}`.
 
-## Interpretation
-
-{gate_execution}。NIST 的 2020-09-30 完整快照仍未能取得 HTTP 200 下载：
-bulk endpoint 出现重复 HTTP 504，当前 30 秒重试也未收到数据。本结果保留
-live NIST API 的 `dielectric` 与 `permittivity` 查询并集回退 census，不能冒充
-完整 2020 历史快照，也不能宣布执行手册 gate 已正式完成。
-
-按回退 census 的 provisional 统计，near-298 K 零频全部组分有 124 个唯一化合物，
-但正式 gate population 只用纯组分零频观测，为 100 个；混合物 partner 不计入。
-因此当前 `dielectric_viscosity_joint` 只是 provisional decision。目标电池溶剂家族
-覆盖仍然偏窄，后续必须在完整 archive 可用时重跑并复核。
+{gate_execution}. The fallback source remains provisional, and mixture partners
+are listed in the coverage census but do not enter the gate.
+Five spot-check anchors pass, PC is recorded as `not_found`, and EC is blocked
+by the temperature gate. The requested 308-solvent ECW target is unavailable;
+Chodera 2015 is an explicit 246-row historical fallback. Experimental viscosity
+and model predictions are stored separately. The compound-level InChIKey
+intersection is 62 compounds; 46 keys form 456 temperature-paired loose-join
+rows with `model_ready=false`.
 
 ## Files
 
-- `p0_ec_molecule.png`: P0 分子结构图
-- `00_sanity_check.ipynb`: P0 notebook
-- `dielectric_raw.csv`: P1 介电观测原始提取表
-- `p1_summary.json`: P1 机器可读统计
-- `zero_frequency_near_298_compounds.csv`: 近似室温零频唯一化合物清单
-- `dielectric_distribution.png`: NIST 介电观测分布
-- `family_coverage.png`: 溶剂家族覆盖
-- `p1_eda.ipynb`: P1 可执行 EDA notebook
+- `p0_ec_molecule.png`: P0 molecule structure.
+- `00_sanity_check.ipynb`: P0 notebook.
+- `dielectric_raw.csv`: P1 dielectric observations.
+- `p1_summary.json`: P1 and closure machine-readable summary.
+- `thermoml_source_manifest.csv`: verified source provenance.
+- `p1_spot_check.csv`: anchor checks and EC guard.
+- `coverage_gap.csv` and `coverage_gap_summary.json`: 308 gap evidence.
+- `viscosity_raw.csv`: 3,582 experimental rows.
+- `viscosity_predictions.csv`: 650 predicted rows.
+- `dielectric_viscosity_intersection.csv`: 46 paired keys and 456 rows.
+- `p3_viscosity_summary.json`: intersection method and counts.
+- `decisions_log.md`: provisional decisions and negative results.
+- `data_schema.md`: unified property schema and units.
+- `dielectric_distribution.png` and `family_coverage.png`: P1 EDA.
 """
 
 
@@ -149,13 +150,30 @@ def export_week1_results(output_dir: Path) -> None:
     summary_path = REPOSITORY_ROOT / "probes" / "p1_summary.json"
     observations_path = REPOSITORY_ROOT / "data" / "processed" / "dielectric_raw.csv"
     artifacts_dir = REPOSITORY_ROOT / "probes" / "artifacts"
+    processed_dir = REPOSITORY_ROOT / "data" / "processed"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
 
     output_dir.mkdir(parents=True, exist_ok=True)
     copies = {
         artifacts_dir / "p0_ec_molecule.png": output_dir / "p0_ec_molecule.png",
-        summary_path: output_dir / "p1_summary.json",
         observations_path: output_dir / "dielectric_raw.csv",
+        processed_dir / "thermoml_source_manifest.csv": output_dir
+        / "thermoml_source_manifest.csv",
+        processed_dir / "p1_spot_check.csv": output_dir / "p1_spot_check.csv",
+        processed_dir / "coverage_gap.csv": output_dir / "coverage_gap.csv",
+        processed_dir / "coverage_gap_summary.json": output_dir
+        / "coverage_gap_summary.json",
+        processed_dir / "viscosity_raw.csv": output_dir / "viscosity_raw.csv",
+        processed_dir / "viscosity_predictions.csv": output_dir
+        / "viscosity_predictions.csv",
+        processed_dir / "dielectric_viscosity_intersection.csv": output_dir
+        / "dielectric_viscosity_intersection.csv",
+        REPOSITORY_ROOT / "probes" / "p3_viscosity_summary.json": output_dir
+        / "p3_viscosity_summary.json",
+        REPOSITORY_ROOT / "reports" / "decisions_log.md": output_dir
+        / "decisions_log.md",
+        REPOSITORY_ROOT / "docs" / "week1" / "data_schema.md": output_dir
+        / "data_schema.md",
         artifacts_dir / "dielectric_distribution.png": output_dir
         / "dielectric_distribution.png",
         artifacts_dir / "family_coverage.png": output_dir / "family_coverage.png",
@@ -166,6 +184,16 @@ def export_week1_results(output_dir: Path) -> None:
     for source, destination in copies.items():
         shutil.copy2(source, destination)
 
+    summary["outputs"] = {
+        "dielectric_raw_csv": "dielectric_raw.csv",
+        "summary_json": "p1_summary.json",
+        "dielectric_distribution_png": "dielectric_distribution.png",
+        "family_coverage_png": "family_coverage.png",
+    }
+    (output_dir / "p1_summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     write_unique_compounds_csv(
         observations_path,
         output_dir / "zero_frequency_near_298_compounds.csv",

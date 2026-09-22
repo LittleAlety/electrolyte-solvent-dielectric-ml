@@ -49,6 +49,36 @@ to the fallback census therefore gives only the provisional decision
 `decision_status: provisional`, `handbook_gate_executed: false`, and the
 archive limitation.
 
+## Closure
+
+Run the reproducible closure builder after the P1 extraction:
+
+```powershell
+python scripts/build_week1_closure.py
+python scripts/verify_week1.py
+```
+
+It generates:
+
+- `data/processed/thermoml_source_manifest.csv` with 205 verified XML sources.
+- `data/processed/p1_spot_check.csv` with five passing anchors, PC as
+  `not_found`, and an EC temperature-gate guard.
+- `data/processed/coverage_gap.csv` and
+  `data/processed/coverage_gap_summary.json`. The requested 308-solvent ECW
+  target is explicitly unavailable; Chodera 2015 is a 246-row historical
+  fallback with 45 unique InChIKeys.
+- `data/processed/viscosity_raw.csv` with 3,582 experimental rows from Chew
+  supplement 2.
+- `data/processed/viscosity_predictions.csv` with 650 predicted rows from
+  supplement 3, kept separate from experimental data.
+- `data/processed/dielectric_viscosity_intersection.csv` and
+  `probes/p3_viscosity_summary.json`.
+
+The current compound-level intersection contains 62 InChIKeys. After applying
+the <=5 K pairing rule, 46 keys produce 456 paired rows. This is a loose
+two-table join (`model_ready=false`); use a dual-label table at matched
+temperatures or an explicit temperature model before joint modeling.
+
 ## Export
 
 ```powershell
