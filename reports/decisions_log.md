@@ -108,3 +108,15 @@
   It remains `frequency_dependent`, single-source, and absent from main v0.1.
 - Decision: keep the main v0.1 table unchanged; the extension contains 47 keys
   and 206 observations as supplemental evidence.
+
+## 2026-09-23: Dielectric kernel comparison
+
+- Tanimoto-GPR, RBF-GPR, and XGBoost were evaluated on the same 10x5 repeated
+  CV split.
+- Mean R2: Tanimoto `0.04246 +/- 0.81976`, RBF `0.02295 +/- 0.68149`,
+  XGBoost `0.03185 +/- 0.54243`.
+- Tanimoto improves mean R2 over RBF by only `0.01950`, with the best MAE and
+  RMSE among the three models.
+- Decision: the modest improvement does not pass the `0.8` gate and does not
+  justify further kernel hyperparameter tuning. Inspect fold-level failures
+  and representation/data limits next.

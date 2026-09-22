@@ -18,4 +18,9 @@ def test_week3_export_is_self_contained_and_manifested(tmp_path) -> None:
         "dielectric_ext",
         "dielectric_ext_observations",
         "dielectric_ext_summary",
+        "dielectric_kernel_comparison",
+        "dielectric_kernel_summary",
+        "dielectric_kernel_plot",
+        "dielectric_kernel_report",
+        "dielectric_kernel_docs",
     }.issubset(summary["outputs"])

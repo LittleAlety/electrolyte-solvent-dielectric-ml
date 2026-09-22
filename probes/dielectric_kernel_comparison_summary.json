@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "input_path": "data/dielectric_v01.csv",
+  "input_sha256": "6f31c5b22a6a85a14954d3103a9ce5498eb4cdb265e55cfc8679adb78e4e5396",
+  "input_hash_mode": "canonical_text_lf_utf8",
+  "compound_count": 100,
+  "split": {
+    "method": "RepeatedKFold(n_splits=5, n_repeats=10, random_state=42)",
+    "seed": 42,
+    "fold_count": 50,
+    "rows_per_model": 50
+  },
+  "models": {
+    "Tanimoto_GPR": {
+      "config": "binary Morgan r=2/2048; precomputed Tanimoto; GPR(alpha=1e-6, normalize_y=True, optimizer=None)",
+      "metrics": {
+        "mae": {
+          "mean": 10.960343385104482,
+          "std": 3.616084275285235
+        },
+        "rmse": {
+          "mean": 19.76296788404675,
+          "std": 10.370211433187754
+        },
+        "r2": {
+          "mean": 0.04245759106317955,
+          "std": 0.8197639007048697
+        }
+      }
+    },
+    "RBF_GPR": {
+      "config": "count Morgan r=2/2048; StandardScaler; C(1)*RBF(length_scale=10)+White(noise_level=1); alpha=1e-6; normalize_y=True; n_restarts=2; seed=42",
+      "metrics": {
+        "mae": {
+          "mean": 11.686521591077645,
+          "std": 3.8582744261384323
+        },
+        "rmse": {
+          "mean": 20.236125432901098,
+          "std": 10.130014089069762
+        },
+        "r2": {
+          "mean": 0.022954567349629074,
+          "std": 0.6814885299246002
+        }
+      }
+    },
+    "XGBoost": {
+      "config": "count Morgan r=2/2048; XGBoost n_estimators=800, max_depth=10, learning_rate=0.05, subsample=0.8, colsample_bytree=0.6, seed=42",
+      "metrics": {
+        "mae": {
+          "mean": 11.046926463112639,
+          "std": 3.697137992145526
+        },
+        "rmse": {
+          "mean": 20.384920415105654,
+          "std": 10.734972836079216
+        },
+        "r2": {
+          "mean": 0.03184794597481995,
+          "std": 0.5424315932357774
+        }
+      }
+    }
+  },
+  "tanimoto_vs_rbf_r2_mean_difference": 0.019503023713550473,
+  "gate": {
+    "metric": "r2_mean",
+    "threshold": 0.8,
+    "best_model": "Tanimoto_GPR",
+    "passed": false
+  },
+  "conclusion": {
+    "tanimoto_improves_over_rbf": true,
+    "improvement_margin": 0.019503023713550473,
+    "recommended_next_step": "Do not tune the kernels further; inspect fold-level failures and representation alternatives."
+  },
+  "outputs": {
+    "comparison_csv": "data/processed/dielectric_kernel_comparison.csv",
+    "summary_json": "probes/dielectric_kernel_comparison_summary.json",
+    "comparison_plot": "probes/artifacts/dielectric_kernel_comparison.png"
+  }
+}

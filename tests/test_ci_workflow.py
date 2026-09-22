@@ -95,3 +95,7 @@ def test_ci_runs_week3_verifiers() -> None:
     assert any(
         "scripts/verify_dielectric_v01_ext.py" in command for command in commands
     )
+    assert any(
+        "scripts/verify_dielectric_kernel_comparison.py" in command
+        for command in commands
+    )

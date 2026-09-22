@@ -40,6 +40,25 @@ def export_week3_results(output_dir: Path) -> None:
         / "dielectric_v01_ext_summary.json",
         REPOSITORY_ROOT / "docs" / "week3" / "dielectric_v01_ext.md": output_dir
         / "dielectric_v01_ext.md",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "dielectric_kernel_comparison.csv": output_dir
+        / "dielectric_kernel_comparison.csv",
+        REPOSITORY_ROOT
+        / "probes"
+        / "dielectric_kernel_comparison_summary.json": output_dir
+        / "dielectric_kernel_comparison_summary.json",
+        REPOSITORY_ROOT / "reports" / "dielectric_kernel_comparison.md": output_dir
+        / "dielectric_kernel_comparison.md",
+        REPOSITORY_ROOT
+        / "docs"
+        / "week3"
+        / "dielectric_kernel_comparison.md": output_dir
+        / "dielectric_kernel_comparison_docs.md",
+        artifacts
+        / "dielectric_kernel_comparison.png": output_dir
+        / "dielectric_kernel_comparison.png",
     }
     for source, destination in copies.items():
         shutil.copy2(source, destination)
@@ -52,6 +71,11 @@ def export_week3_results(output_dir: Path) -> None:
         "dielectric_ext_observations": "dielectric_v01_ext_observations.csv",
         "dielectric_ext_summary": "dielectric_v01_ext_summary.json",
         "dielectric_ext_docs": "dielectric_v01_ext.md",
+        "dielectric_kernel_comparison": "dielectric_kernel_comparison.csv",
+        "dielectric_kernel_summary": "dielectric_kernel_comparison_summary.json",
+        "dielectric_kernel_plot": "dielectric_kernel_comparison.png",
+        "dielectric_kernel_report": "dielectric_kernel_comparison.md",
+        "dielectric_kernel_docs": "dielectric_kernel_comparison_docs.md",
     }
     (output_dir / "week3_summary.json").write_text(
         json.dumps({"outputs": outputs}, ensure_ascii=False, indent=2) + "\n",
