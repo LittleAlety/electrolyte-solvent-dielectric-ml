@@ -31,6 +31,7 @@ The week's acceptance criteria and artifact map are documented in
 Week 1 probe commands and outputs are documented in `docs/week1/README.md`.
 The unified property schema is in `docs/week1/data_schema.md`.
 Week 3 extension documentation is in `docs/week3/dielectric_v01_ext.md`.
+Viscosity baseline documentation is in `docs/week3/viscosity_baseline.md`.
 
 ## Repository layout
 

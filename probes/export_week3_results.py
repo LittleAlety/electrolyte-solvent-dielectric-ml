@@ -59,6 +59,19 @@ def export_week3_results(output_dir: Path) -> None:
         artifacts
         / "dielectric_kernel_comparison.png": output_dir
         / "dielectric_kernel_comparison.png",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "viscosity_baseline_predictions.csv": output_dir
+        / "viscosity_baseline_predictions.csv",
+        REPOSITORY_ROOT / "probes" / "viscosity_baseline_summary.json": output_dir
+        / "viscosity_baseline_summary.json",
+        REPOSITORY_ROOT / "reports" / "viscosity_baseline.md": output_dir
+        / "viscosity_baseline.md",
+        REPOSITORY_ROOT / "docs" / "week3" / "viscosity_baseline.md": output_dir
+        / "viscosity_baseline_docs.md",
+        artifacts / "viscosity_baseline_parity.png": output_dir
+        / "viscosity_baseline_parity.png",
     }
     for source, destination in copies.items():
         shutil.copy2(source, destination)
@@ -76,6 +89,11 @@ def export_week3_results(output_dir: Path) -> None:
         "dielectric_kernel_plot": "dielectric_kernel_comparison.png",
         "dielectric_kernel_report": "dielectric_kernel_comparison.md",
         "dielectric_kernel_docs": "dielectric_kernel_comparison_docs.md",
+        "viscosity_baseline_predictions": "viscosity_baseline_predictions.csv",
+        "viscosity_baseline_summary": "viscosity_baseline_summary.json",
+        "viscosity_baseline_plot": "viscosity_baseline_parity.png",
+        "viscosity_baseline_report": "viscosity_baseline.md",
+        "viscosity_baseline_docs": "viscosity_baseline_docs.md",
     }
     (output_dir / "week3_summary.json").write_text(
         json.dumps({"outputs": outputs}, ensure_ascii=False, indent=2) + "\n",

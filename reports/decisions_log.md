@@ -120,3 +120,16 @@
 - Decision: the modest improvement does not pass the `0.8` gate and does not
   justify further kernel hyperparameter tuning. Inspect fold-level failures
   and representation/data limits next.
+
+## 2026-09-23: Viscosity strong baseline
+
+- Input: 3,582 experimental viscosity rows and 957 unique InChIKeys.
+- Target: `log10(viscosity_cP)`; features are Morgan count 2048 plus `T_K` and
+  `1000/T_K`.
+- Random-row XGBoost: MAE `0.06357`, RMSE `0.11868`, R2 `0.93689`; passes the
+  log10(cP) MAE `0.15` gate.
+- Group-holdout XGBoost: MAE `0.17477`, RMSE `0.24407`, R2 `0.74813`; fails
+  the same gate.
+- Decision: random-row success primarily reflects temperature interpolation
+  within known molecules. The group-holdout result is the relevant limitation
+  for screening unseen molecules; no tuning is performed this round.

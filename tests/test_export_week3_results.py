@@ -23,4 +23,9 @@ def test_week3_export_is_self_contained_and_manifested(tmp_path) -> None:
         "dielectric_kernel_plot",
         "dielectric_kernel_report",
         "dielectric_kernel_docs",
+        "viscosity_baseline_predictions",
+        "viscosity_baseline_summary",
+        "viscosity_baseline_plot",
+        "viscosity_baseline_report",
+        "viscosity_baseline_docs",
     }.issubset(summary["outputs"])
