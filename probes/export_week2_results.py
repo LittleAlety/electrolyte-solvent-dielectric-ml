@@ -28,6 +28,19 @@ def export_week2_results(output_dir: Path) -> None:
         / "p2_diagnostics_summary.json",
         REPOSITORY_ROOT / "data" / "processed" / "p2_diagnostics.csv": output_dir
         / "p2_diagnostics.csv",
+        REPOSITORY_ROOT / "data" / "dielectric_v01.csv": output_dir
+        / "dielectric_v01.csv",
+        REPOSITORY_ROOT / "data" / "viscosity_v01.csv": output_dir
+        / "viscosity_v01.csv",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "dielectric_v01_observations.csv": output_dir
+        / "dielectric_v01_observations.csv",
+        REPOSITORY_ROOT / "data" / "processed" / "dataset_v01_summary.json": output_dir
+        / "dataset_v01_summary.json",
+        REPOSITORY_ROOT / "docs" / "week2" / "dataset_v01.md": output_dir
+        / "dataset_v01.md",
         REPOSITORY_ROOT / "data" / "processed" / "p2_learning_curve.csv": output_dir
         / "p2_learning_curve.csv",
         REPOSITORY_ROOT
@@ -62,6 +75,11 @@ def export_week2_results(output_dir: Path) -> None:
         "diagnostics_csv": "p2_diagnostics.csv",
         "target_distribution_plot": "p2_target_distribution_debye.png",
         "model_comparison_plot": "p2_model_comparison.png",
+        "dataset_dielectric_v01": "dielectric_v01.csv",
+        "dataset_viscosity_v01": "viscosity_v01.csv",
+        "dataset_dielectric_observations": "dielectric_v01_observations.csv",
+        "dataset_summary": "dataset_v01_summary.json",
+        "dataset_v01_docs": "dataset_v01.md",
     }
     (output_dir / "p2_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",

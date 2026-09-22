@@ -42,3 +42,14 @@ def test_ci_keeps_a_lightweight_lint_and_test_job() -> None:
         and any("pytest" in str(step.get("run", "")) for step in job.get("steps", []))
         for job in jobs.values()
     )
+
+
+def test_ci_runs_dataset_v01_verifier() -> None:
+    workflow = _workflow()
+    commands = [
+        str(step.get("run", ""))
+        for job in workflow["jobs"].values()
+        for step in job.get("steps", [])
+    ]
+
+    assert any("scripts/verify_dataset_v01.py" in command for command in commands)

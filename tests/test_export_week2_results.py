@@ -27,6 +27,11 @@ def test_week2_export_is_self_contained(tmp_path) -> None:
         "diagnostics_csv",
         "target_distribution_plot",
         "model_comparison_plot",
+        "dataset_dielectric_v01",
+        "dataset_viscosity_v01",
+        "dataset_dielectric_observations",
+        "dataset_summary",
+        "dataset_v01_docs",
     }.issubset(exported_summary["outputs"])
     for value in exported_summary["outputs"].values():
         destination = _resolved_output_path(tmp_path, value)
