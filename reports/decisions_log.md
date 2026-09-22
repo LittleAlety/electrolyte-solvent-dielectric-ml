@@ -170,6 +170,22 @@
   better than Morgan fingerprint GPR on this small RX-392 set, but no redox
   gate claim is made. The 308-solvent ECW target remains unavailable with zero
   fabricated rows.
+
+## 2026-09-23: Milestone 2 and v0.2 expansion ceiling
+
+- v0.1 remains at 100 unique compounds. `data/dielectric_v02.csv` was not
+  created and the `>=200 compounds` acceptance item fails.
+- NIST contributes 100 near-room pure zero-frequency compounds and 103
+  all-temperature zero-frequency pure compounds.
+- ChalkLab commit `681a946669feaf6ccc13ba6e1de760385c57ce73` has five pinned
+  LFS archives totaling 411,920,425 bytes and 122,403 JSONLD entries. Its
+  zero-frequency pure set has 103 keys, 100 v0.1 overlap, 3 all-temperature new
+  keys, and 0 new near-room keys. Its broader component universe is 187.
+- ChemDataExtractor has 60,804 records and 11,054 compounds but lacks an
+  independent temperature field and is candidate discovery only. The 308 ECW
+  dataset remains unavailable.
+- Decision: v0.2 requires manual literature/handbook mining. AL longlist 300
+  and Top30 are the starting queue, not validated training labels.
 - Decision: keep all 30 as `awaiting_manual_review`. They are not confirmed as
   available, room-temperature liquids, or experimental dielectric references.
   The unavailable 308-solvent ECW list was not used as a candidate pool.

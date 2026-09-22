@@ -104,6 +104,17 @@ def export_week3_results(output_dir: Path) -> None:
         / "p4_redox_baseline.md",
         REPOSITORY_ROOT / "docs" / "week3" / "p4_redox.md": output_dir
         / "p4_redox_docs.md",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "data_expansion_source_audit.csv": output_dir
+        / "data_expansion_source_audit.csv",
+        REPOSITORY_ROOT / "probes" / "data_expansion_summary.json": output_dir
+        / "data_expansion_summary.json",
+        REPOSITORY_ROOT / "reports" / "milestone_2.md": output_dir
+        / "milestone_2.md",
+        REPOSITORY_ROOT / "docs" / "week3" / "data_expansion_audit.md": output_dir
+        / "data_expansion_audit.md",
     }
     for source, destination in copies.items():
         shutil.copy2(source, destination)
@@ -140,6 +151,10 @@ def export_week3_results(output_dir: Path) -> None:
         "p4_redox_notebook": "p4_redox_baseline.ipynb",
         "p4_redox_report": "p4_redox_baseline.md",
         "p4_redox_docs": "p4_redox_docs.md",
+        "data_expansion_audit": "data_expansion_source_audit.csv",
+        "data_expansion_summary": "data_expansion_summary.json",
+        "milestone_2_report": "milestone_2.md",
+        "data_expansion_docs": "data_expansion_audit.md",
     }
     (output_dir / "week3_summary.json").write_text(
         json.dumps({"outputs": outputs}, ensure_ascii=False, indent=2) + "\n",
