@@ -21,6 +21,13 @@ def test_week2_export_is_self_contained(tmp_path) -> None:
     exported_summary = json.loads(exported_summary_path.read_text(encoding="utf-8"))
     output_root = tmp_path.resolve()
 
+    assert {
+        "diagnostics_notebook",
+        "diagnostics_summary",
+        "diagnostics_csv",
+        "target_distribution_plot",
+        "model_comparison_plot",
+    }.issubset(exported_summary["outputs"])
     for value in exported_summary["outputs"].values():
         destination = _resolved_output_path(tmp_path, value)
         assert destination.is_relative_to(output_root)

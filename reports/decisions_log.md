@@ -48,15 +48,22 @@
   joint modeling, prefer a dual-label single table at matched temperatures or
   include an explicit temperature model.
 
-## 2026-09-22: P2 baseline does not pass
+## 2026-09-22: P2 failure diagnosed
 
 - Batt-P30K SHA256:
   `587f1490613a008b91f45ee9de607a2e057c88c301fa9e5c9d7785b1968d118d`.
 - Dataset: 29,519 groups and 0 invalid SMILES.
 - Morgan count fingerprint radius 2, 2048 bits, plus XGBoost.
-- Final test metrics: MAE `0.360058308`, RMSE `0.489559393`, R2
-  `0.563648641`.
-- `pass_r2_gt_0_8=false`. The dipole vector unit is not declared by the source.
-- Decision: do not hide this negative result. Morgan count plus XGBoost is
-  insufficient. The next model step is descriptor-augmented features, a
-  3D/GNN representation, or D-MPNN rather than deeper Morgan+XGBoost tuning.
+- Unit: PiNN source/docs and Batt-SLM `params.yml` establish high-confidence
+  atomic-unit semantics for the dipole target; HDF5 itself has no unit metadata.
+  Final MAE/RMSE are `0.3601/0.4896 a.u.` or `0.9152/1.2444 D`.
+- Dummy R2 is `-0.0000026`; MW+heavy-atom Ridge R2 is `0.00679`;
+  Morgan+XGBoost R2 remains `0.56365`, below 0.8.
+- The diagnostic independently retrains Morgan+XGBoost and audits it against the
+  formal metrics. Maximum absolute differences are MAE `4.73e-8`,
+  RMSE `7.47e-9`, and R2 `3.92e-9`, below the `1e-7` numerical tolerance.
+- Only `4.24%` of targets are below `1 D`, so near-zero target compression is
+  not the primary explanation for the R2 result.
+- Decision: the pipeline is GREEN but the model gate is FAILED. The evidence
+  supports insufficient 3D/conformational representation rather than a unit
+  mismatch or simple code bug. Move next to Chemprop/D-MPNN or a 3D/GNN.

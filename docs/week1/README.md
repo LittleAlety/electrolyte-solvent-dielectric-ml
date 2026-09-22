@@ -79,6 +79,17 @@ the <=5 K pairing rule, 46 keys produce 456 paired rows. This is a loose
 two-table join (`model_ready=false`); use a dual-label table at matched
 temperatures or an explicit temperature model before joint modeling.
 
+## P2 Diagnostics
+
+`probes/p2_diagnostics.py` and the executed `probes/p2_diagnostics.ipynb` resolve
+the Batt-P30K dipole unit from PiNN source-code evidence, quantify the Debye
+target distribution, recompute stratified held-out errors, and compare Dummy,
+MW+heavy-atom Ridge, and Morgan+XGBoost under the same 80/20 split.
+
+The R2 gate remains failed. The diagnostic artifacts are
+`probes/p2_diagnostics_summary.json`,
+`data/processed/p2_diagnostics.csv`, and the two `p2_*` diagnostic plots.
+
 ## Export
 
 ```powershell

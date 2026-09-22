@@ -22,6 +22,12 @@ def export_week2_results(output_dir: Path) -> None:
         / "p2_battp30k_baseline.ipynb",
         REPOSITORY_ROOT / "reports" / "p2_battp30k_report.md": output_dir
         / "p2_battp30k_report.md",
+        REPOSITORY_ROOT / "probes" / "p2_diagnostics.ipynb": output_dir
+        / "p2_diagnostics.ipynb",
+        REPOSITORY_ROOT / "probes" / "p2_diagnostics_summary.json": output_dir
+        / "p2_diagnostics_summary.json",
+        REPOSITORY_ROOT / "data" / "processed" / "p2_diagnostics.csv": output_dir
+        / "p2_diagnostics.csv",
         REPOSITORY_ROOT / "data" / "processed" / "p2_learning_curve.csv": output_dir
         / "p2_learning_curve.csv",
         REPOSITORY_ROOT
@@ -33,6 +39,10 @@ def export_week2_results(output_dir: Path) -> None:
         artifacts
         / "p2_dipole_learning_curve.png": output_dir
         / "p2_dipole_learning_curve.png",
+        artifacts
+        / "p2_target_distribution_debye.png": output_dir
+        / "p2_target_distribution_debye.png",
+        artifacts / "p2_model_comparison.png": output_dir / "p2_model_comparison.png",
         artifacts / "p2_dipole_model.json": output_dir / "p2_dipole_model.json",
     }
     for source, destination in copies.items():
@@ -47,6 +57,11 @@ def export_week2_results(output_dir: Path) -> None:
         "learning_curve_csv": "p2_learning_curve.csv",
         "test_predictions_csv": "p2_test_predictions.csv",
         "model_json": "p2_dipole_model.json",
+        "diagnostics_notebook": "p2_diagnostics.ipynb",
+        "diagnostics_summary": "p2_diagnostics_summary.json",
+        "diagnostics_csv": "p2_diagnostics.csv",
+        "target_distribution_plot": "p2_target_distribution_debye.png",
+        "model_comparison_plot": "p2_model_comparison.png",
     }
     (output_dir / "p2_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",

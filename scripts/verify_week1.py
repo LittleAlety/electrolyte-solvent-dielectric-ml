@@ -31,6 +31,11 @@ REPO_P2_ARTIFACTS = {
     "learning_curve_plot": "probes/artifacts/p2_dipole_learning_curve.png",
     "learning_curve_csv": "data/processed/p2_learning_curve.csv",
     "test_predictions_csv": "data/processed/p2_test_predictions.csv",
+    "diagnostics_notebook": "probes/p2_diagnostics.ipynb",
+    "diagnostics_summary": "probes/p2_diagnostics_summary.json",
+    "diagnostics_csv": "data/processed/p2_diagnostics.csv",
+    "target_distribution_plot": "probes/artifacts/p2_target_distribution_debye.png",
+    "model_comparison_plot": "probes/artifacts/p2_model_comparison.png",
 }
 OPTIONAL_REPO_P2_ARTIFACTS = {
     "model_json": "probes/artifacts/p2_dipole_model.json",
@@ -270,7 +275,84 @@ def check_p2_summary(summary: Mapping[str, object]) -> Check:
     ]
     if invalid:
         return Check("P2 summary", False, f"non-finite metrics: {invalid}")
-    return Check("P2 summary", True, "R2 gate false; metrics are finite")
+    if summary.get("target_units") != "atomic_units (e*bohr)":
+        return Check("P2 summary", False, "target_units must be atomic_units (e*bohr)")
+    debye_metrics = summary.get("final_metrics_debye")
+    if not isinstance(debye_metrics, Mapping):
+        return Check("P2 summary", False, "final_metrics_debye is missing")
+    return Check(
+        "P2 summary",
+        True,
+        "atomic units resolved; R2 gate false; both-unit metrics are finite",
+    )
+
+
+def check_p2_diagnostics(summary: Mapping[str, object]) -> Check:
+    target_unit = summary.get("target_unit")
+    if isinstance(target_unit, Mapping):
+        target_unit = target_unit.get("unit")
+    if target_unit != "atomic_units (e*bohr)":
+        return Check(
+            "P2 diagnostics",
+            False,
+            "target_unit must be atomic_units (e*bohr)",
+        )
+    distribution = summary.get("target_distribution")
+    if not isinstance(distribution, Mapping) or int(distribution.get("count", 0)) <= 0:
+        return Check("P2 diagnostics", False, "target distribution is missing")
+    fractions = distribution.get("fractions")
+    if not isinstance(fractions, Mapping) or set(fractions) != {
+        "lt_0_5D",
+        "0_5D_to_1D",
+        "1D_to_3D",
+        "gt_3D",
+    }:
+        return Check("P2 diagnostics", False, "invalid Debye distribution bins")
+    models = summary.get("model_comparison")
+    required_models = {
+        "dummy",
+        "size_only_ridge",
+        "morgan_xgboost",
+    }
+    if not isinstance(models, Mapping) or not required_models.issubset(models):
+        return Check("P2 diagnostics", False, "model comparison is incomplete")
+    for name in required_models:
+        result = models[name]
+        if not isinstance(result, Mapping):
+            return Check("P2 diagnostics", False, f"{name} metrics are not an object")
+        metrics = result.get("metrics_au")
+        if not isinstance(metrics, Mapping):
+            return Check("P2 diagnostics", False, f"{name} metrics_au is missing")
+        if any(
+            not isinstance(metrics.get(metric), (int, float))
+            or not math.isfinite(float(metrics[metric]))
+            for metric in ("mae", "rmse", "r2")
+        ):
+            return Check("P2 diagnostics", False, f"{name} has invalid metrics")
+    stratified = summary.get("stratified_test_metrics")
+    if not isinstance(stratified, Mapping) or not isinstance(
+        stratified.get("strata"), Mapping
+    ):
+        return Check("P2 diagnostics", False, "stratified metrics are missing")
+    if set(stratified["strata"]) != {
+        "lt_0_5D",
+        "0_5D_to_1D",
+        "1D_to_3D",
+        "gt_3D",
+    }:
+        return Check("P2 diagnostics", False, "stratified bins are incomplete")
+    audit = summary.get("morgan_retraining_audit")
+    if not isinstance(audit, Mapping) or audit.get("passed") is not True:
+        return Check(
+            "P2 diagnostics",
+            False,
+            "independent Morgan retraining audit did not pass",
+        )
+    return Check(
+        "P2 diagnostics",
+        True,
+        "atomic units; Morgan retrain audit passed; distribution and strata present",
+    )
 
 
 def check_p2_artifacts(root: Path) -> Check:
@@ -293,17 +375,18 @@ def check_p2_artifacts(root: Path) -> Check:
 
 
 def check_notebook(path: Path) -> Check:
+    check_name = f"notebook:{path.name}"
     try:
         notebook = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        return Check("P2 notebook", False, f"cannot read notebook: {exc}")
+        return Check(check_name, False, f"cannot read notebook: {exc}")
     code_cells = [
         cell
         for cell in notebook.get("cells", [])
         if isinstance(cell, dict) and cell.get("cell_type") == "code"
     ]
     if not code_cells:
-        return Check("P2 notebook", False, "notebook has no code cells")
+        return Check(check_name, False, "notebook has no code cells")
     unexecuted = [
         index
         for index, cell in enumerate(code_cells, start=1)
@@ -320,11 +403,15 @@ def check_notebook(path: Path) -> Check:
     ]
     if unexecuted or errors:
         return Check(
-            "P2 notebook",
+            check_name,
             False,
             f"unexecuted cells: {unexecuted}; error cells: {errors}",
         )
-    return Check("P2 notebook", True, f"{len(code_cells)} code cells executed without errors")
+    return Check(
+        check_name,
+        True,
+        f"{len(code_cells)} code cells executed without errors",
+    )
 
 
 def _read_json(path: Path) -> dict[str, object]:
@@ -354,6 +441,7 @@ def run_checks(root: Path = ROOT) -> list[Check]:
         processed / "dielectric_viscosity_intersection.csv"
     )
     p2_summary = _read_json(root / "probes" / "p2_summary.json")
+    p2_diagnostics = _read_json(root / "probes" / "p2_diagnostics_summary.json")
 
     checks.extend(
         [
@@ -363,8 +451,10 @@ def run_checks(root: Path = ROOT) -> list[Check]:
             check_viscosity_rows(viscosity_rows, prediction_rows),
             check_intersection_rows(intersection_rows),
             check_p2_summary(p2_summary),
+            check_p2_diagnostics(p2_diagnostics),
             check_p2_artifacts(root),
             check_notebook(root / "probes" / "p2_battp30k_baseline.ipynb"),
+            check_notebook(root / "probes" / "p2_diagnostics.ipynb"),
         ]
     )
     return checks
