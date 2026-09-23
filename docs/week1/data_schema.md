@@ -60,6 +60,17 @@ high_temperature_extension
 literature_manual_entry
 single_source
 frequency_1mhz
+nbs514_circular_514
+crosscheck_only
 ```
+
+`nbs514_circular_514` marks a row transcribed from the public NBS Circular 514
+table (DOI `10.6028/nbs.circ.514`). `crosscheck_only` marks a row that exists to
+cross-verify another source and must never be promoted to a training label.
+
+Provenance restrictions such as `closed_source` and `non_redistributable` are
+deliberately *not* gate flags: they are dedicated columns in
+`docs/week3/manual_dielectric_entry_schema.md`. Keeping one source of truth for
+them avoids a row disagreeing with itself.
 
 The executable enum lives in `src/electrolyte_ml/standardize.py`.

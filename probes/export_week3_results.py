@@ -122,6 +122,36 @@ def export_week3_results(output_dir: Path) -> None:
         / "processed"
         / "landolt_boernstein_2015_pure_liquid_queue.csv": output_dir
         / "landolt_boernstein_2015_pure_liquid_queue.csv",
+        REPOSITORY_ROOT / "data" / "dielectric_v02.csv": output_dir
+        / "dielectric_v02.csv",
+        REPOSITORY_ROOT / "probes" / "dielectric_v02_summary.json": output_dir
+        / "dielectric_v02_summary.json",
+        REPOSITORY_ROOT / "reports" / "dielectric_v02.md": output_dir
+        / "dielectric_v02.md",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "nbs514_structure_candidates.csv": output_dir
+        / "nbs514_structure_candidates.csv",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "dielectric_v02_learning_curve.csv": output_dir
+        / "dielectric_v02_learning_curve.csv",
+        REPOSITORY_ROOT
+        / "probes"
+        / "dielectric_v02_learning_curve_summary.json": output_dir
+        / "dielectric_v02_learning_curve_summary.json",
+        artifacts / "dielectric_v02_learning_curve.png": output_dir
+        / "dielectric_v02_learning_curve.png",
+        REPOSITORY_ROOT / "data" / "interim" / "nbs514_organic_part1.csv": output_dir
+        / "nbs514_organic_part1.csv",
+        REPOSITORY_ROOT / "data" / "interim" / "nbs514_organic_part2.csv": output_dir
+        / "nbs514_organic_part2.csv",
+        REPOSITORY_ROOT / "data" / "interim" / "nbs514_organic_part3.csv": output_dir
+        / "nbs514_organic_part3.csv",
+        REPOSITORY_ROOT / "data" / "interim" / "nbs514_organic_part4.csv": output_dir
+        / "nbs514_organic_part4.csv",
     }
     for source, destination in copies.items():
         shutil.copy2(source, destination)
@@ -166,6 +196,19 @@ def export_week3_results(output_dir: Path) -> None:
         "landolt_boernstein_2015_queue": (
             "landolt_boernstein_2015_pure_liquid_queue.csv"
         ),
+        "dielectric_v02": "dielectric_v02.csv",
+        "dielectric_v02_summary": "dielectric_v02_summary.json",
+        "dielectric_v02_report": "dielectric_v02.md",
+        "nbs514_structure_candidates": "nbs514_structure_candidates.csv",
+        "dielectric_v02_learning_curve": "dielectric_v02_learning_curve.csv",
+        "dielectric_v02_learning_curve_summary": (
+            "dielectric_v02_learning_curve_summary.json"
+        ),
+        "dielectric_v02_learning_curve_plot": "dielectric_v02_learning_curve.png",
+        "nbs514_organic_part1": "nbs514_organic_part1.csv",
+        "nbs514_organic_part2": "nbs514_organic_part2.csv",
+        "nbs514_organic_part3": "nbs514_organic_part3.csv",
+        "nbs514_organic_part4": "nbs514_organic_part4.csv",
     }
     (output_dir / "week3_summary.json").write_text(
         json.dumps({"outputs": outputs}, ensure_ascii=False, indent=2) + "\n",

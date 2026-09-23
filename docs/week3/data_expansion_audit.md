@@ -2,10 +2,11 @@
 
 ## Decision
 
-`data/dielectric_v02.csv` was **not created**. Current v0.1 contains 100 unique
-compound keys. No audited automatic source path reaches the 200-compound
-minimum, and padding with mixtures, frequency-dependent values, missing
-temperatures, or low-precision text records is not allowed.
+`data/dielectric_v02.csv` was created with **210 unique compounds**: the 100
+unchanged v0.1 rows plus 110 NBS Circular 514 additions. The additions pass the
+near-room, pure-liquid, structure, temperature, precision, and hazard/frequency
+filters. Mixtures, frequency-dependent values, missing temperatures, and
+low-precision text records remain excluded.
 
 ## Source inventory
 
@@ -28,6 +29,23 @@ The machine-readable audit is
 - Adding various-frequency pure records would reach 161 keys, but those labels
   are not interchangeable with zero-frequency near-room training values.
 - The broader component universe is 187 keys, still below 200.
+
+### NBS Circular 514
+
+- Maryott and Smith, NBS Circular 514 (1951), DOI `10.6028/nbs.circ.514`, is a
+  public NIST PDF containing critically evaluated static dielectric constants
+  for more than 800 pure liquids.
+- PDF SHA256:
+  `cb3fa9239fd977d7fa85389fbc219baea69667d5cc7c9e5382b09157fda40683`.
+- Table pages 13-47 were manually extracted. Pages 13-32 supplied all 110 rows
+  selected into v0.2; pages 33-47 remain a larger candidate pool for later
+  expansion.
+- The selected 110 rows contain 88 three-figure estimates and 22 four-figure
+  estimates.
+- Structures were resolved through PubChem with CACTUS fallback, canonicalized
+  with RDKit, formula-checked against the source row, and deduplicated by
+  InChIKey.
+- Frequency-footnoted rows and reactive/hazardous motifs were excluded.
 
 ### Other sources
 
@@ -93,13 +111,70 @@ The Landolt-Börnstein 2015 Crossref metadata query produces
 pure-substance chapter entries. This file contains bibliographic identifiers
 only: no dielectric value, temperature, phase, SMILES, or InChIKey has been
 transcribed, and none of these rows enters v0.2.
-The next work is to search the literature, handbooks, and primary sources for
-at least 100 additional qualifying compounds and record the required metadata.
+The initial 100-compound expansion target is satisfied by the open NBS
+Circular 514 path. The remaining closed-source queue is now used for later
+expansion, cross-checks, and coverage rather than the Milestone 2 size blocker.
+
+## Anchor cross-check
+
+`data/processed/anchor_crosscheck.csv` holds one row per `(anchor, evidence
+source)` pair for the seven v0.2 anchors across six in-repo sources: 23 rows of
+13 `agree`, 3 `disagree`, 6 `not_comparable`, and 1 `no_data`.
+
+Comparability is decided before agreement. A value measured at a different
+temperature or frequency is `not_comparable` rather than scored, so a 1 MHz
+datum is never matched against a static reference and a 293.15 K datum is never
+matched against a 298.15 K one. Nothing is averaged and no side is chosen: an
+anchor whose sources disagree keeps every disagreeing row and is marked
+`promotion_blocked`.
+
+Results by anchor:
+
+- **Methanol is `promotion_blocked`.** The spot check (`32.72`) and the NBS 514
+  transcription (`32.63`) agree with the `32.6` reference, but the promoted v0.1
+  and v0.2 value `33.6` is off by `1.0` at tolerance `0.2`, and Chodera gives
+  `33.1`. The Week 1 spot check passes while the promoted value does not match
+  the reference. Seven rows attributed to pure methanol at 298.15 K from
+  `10.1021/je060248p` span `32.72-39.25`, which is implausible for one pure
+  solvent and is the likely cause.
+- **Benzene agrees** from NBS 514 and v0.2 (`2.284` at 293.15 K). All 45 of its
+  NIST zero-frequency rows are binary mixtures, so its near-room pure value
+  rests on a single source.
+- **Acetonitrile** agrees at 1 MHz (`35.88`), but its v0.2 NBS 514 entry
+  (`37.5` static at 293.15 K) is `not_comparable` to the 1 MHz / 298.15 K
+  reference.
+- **DMC and DEC agree** from up to four sources. The DMC reference `3.09` sits
+  `0.044` below both v0.1 and Chodera, at the edge of its `0.05` tolerance.
+- **Ethylene carbonate** rests on one manual source at 313.15 K / 1 MHz.
+- **Propylene carbonate** is `no_data`: re-verified against every in-repo
+  artifact, it appears nowhere.
+
+## Gate flags and provenance
+
+`nbs514_circular_514` was used by all 110 NBS rows while being absent from
+`GATE_FLAGS`. No check compared a dataset's flags against the enum, so the drift
+was invisible. The label is now registered along with `crosscheck_only`, the
+v0.2 verifier checks every used label against the enum, and
+`tests/test_gate_flag_enum.py` guards the vocabulary against recurrence.
+
+`closed_source` and `non_redistributable` remain dedicated columns in
+`docs/week3/manual_dielectric_entry_schema.md` and are deliberately not gate
+flags.
+
+The NBS Circular 514 redistribution status stays `unclear` until a copyright
+determination is recorded in `data/processed/data_expansion_source_audit.csv`.
+A US Government publication is usually public domain, but that is not assumed
+here.
 
 ## Deliverables
 
 - `probes/data_expansion_summary.json`
+- `data/dielectric_v02.csv`
+- `probes/dielectric_v02_summary.json`
 - `data/processed/data_expansion_source_audit.csv`
 - `data/processed/landolt_boernstein_2015_pure_liquid_queue.csv`
+- `data/processed/nbs514_structure_candidates.csv`
+- `data/processed/anchor_crosscheck.csv`
+- `probes/anchor_crosscheck_summary.json`
 - `reports/milestone_2.md`
 - `docs/week3/manual_dielectric_entry_schema.md`

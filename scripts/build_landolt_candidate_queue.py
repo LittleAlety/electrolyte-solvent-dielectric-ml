@@ -63,7 +63,7 @@ def fetch_crossref_items(*, timeout: float) -> list[dict[str, Any]]:
         payload = json.load(response)
     items = payload.get("message", {}).get("items", [])
     if not isinstance(items, list):
-        raise ValueError("Crossref response has no message.items list")
+        raise TypeError("Crossref response has no message.items list")
     return [item for item in items if isinstance(item, dict)]
 
 

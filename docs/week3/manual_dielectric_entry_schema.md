@@ -65,8 +65,10 @@ notes
 3. Record the row with all required fields.
 4. Run the structure and unit checks before promoting the row to v0.2.
 5. Do not fill missing temperature, phase, or frequency by assumption.
-6. Do not create `data/dielectric_v02.csv` until the promoted row count reaches
-   at least 200 and the provenance checks pass.
+6. Do not promote new rows into `data/dielectric_v02.csv` until the promoted
+   row count remains at least 200 and the provenance checks pass. The current
+   v0.2 file is built from the open NBS Circular 514 additions and remains
+   independently verified.
 
 ## Closed-source marker example
 

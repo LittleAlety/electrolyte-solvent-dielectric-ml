@@ -40,6 +40,8 @@ GATE_FLAGS = (
     "literature_manual_entry",
     "single_source",
     "frequency_1mhz",
+    "nbs514_circular_514",
+    "crosscheck_only",
 )
 
 

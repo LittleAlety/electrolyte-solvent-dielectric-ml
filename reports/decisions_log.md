@@ -237,3 +237,151 @@
 - Decision: keep all 30 as `awaiting_manual_review`. They are not confirmed as
   available, room-temperature liquids, or experimental dielectric references.
   The unavailable 308-solvent ECW list was not used as a candidate pool.
+
+## 2026-09-23: dielectric v0.2 from NBS Circular 514
+
+- Added 110 near-room pure-liquid compounds from NBS Circular 514
+  `10.6028/nbs.circ.514`, a public US Government publication containing more
+  than 800 evaluated liquids. The 100 v0.1 rows are unchanged.
+- Retained only three- or four-figure estimates with no frequency footnote.
+  Excluded known hazard motifs, reactive aliphatic halides, alkynes, vinyl
+  heteroatom motifs, and hydrogen cyanide before ranking by SolvFunc similarity,
+  polarity-related groups, and reduced size penalty.
+- Structures were resolved through PubChem with CACTUS fallback, canonicalized
+  with RDKit, formula-checked against the source row, and deduplicated by
+  InChIKey.
+- An independent 20-row PDF audit found one quality-label error: carbon
+  disulfide `2.641` is four figures, not three. The label was corrected and all
+  dependent artifacts were regenerated.
+- Decision: `data/dielectric_v02.csv` now contains 210 unique compounds and
+  passes the v0.2 verifier `8/8`.
+
+## 2026-09-23: restricted SpringerMaterials cross-check
+
+- Captured 25 Thermophysical Property datasets and 61 name-matched Interactive
+  pure-substance datasets through the user's authenticated Edge session.
+- The Interactive capture contains 3,263 rows, including 933 near-room rows.
+- A ±5 K comparison matched 60 v0.2 compounds. Median absolute difference is
+  `0.05`, p90 is `0.669`, and maximum is `10.2`.
+- `Ethyl isothiocyanate` is the maximum outlier and is marked for manual source
+  review; v0.2 remains unchanged until the conflict is resolved.
+- Decision: keep raw and row-level restricted data under
+  `data/restricted/springer_materials/`; only aggregate cross-check statistics
+  enter public reports.
+
+## 2026-09-23: Anchor cross-check across every in-repo source
+
+- New `data/processed/anchor_crosscheck.csv` covers all seven v0.2 anchors
+  against six in-repo evidence sources (`p1_spot_check`, `dielectric_v01`,
+  `dielectric_v02`, `dielectric_v01_ext`, `chodera_crosscheck`,
+  `nbs514_transcript`), 23 rows total: 13 `agree`, 3 `disagree`,
+  6 `not_comparable`, 1 `no_data`.
+- Comparability is decided before agreement. A 1 MHz datum is not scored
+  against a static reference and a 293.15 K datum is not scored against a
+  298.15 K one; such rows are `not_comparable`, which is evidence that the
+  compound was measured rather than evidence about the reference value.
+- Methanol is `promotion_blocked`. The p1 spot check (`32.72`) and the NBS 514
+  transcription (`32.63`) both agree with the `32.6` reference at tolerance
+  `0.2`, but the promoted v0.1 and v0.2 value `33.6` is off by `1.0` and the
+  Chodera compilation gives `33.1`. The Week 1 spot check therefore passes while
+  the promoted training value does not match the reference.
+- Likely cause: seven rows attributed to pure methanol at 298.15 K from
+  `10.1021/je060248p` span `32.72-39.25`, which is not physically plausible for
+  a single pure solvent's static constant. If they are mixture points, the
+  `is_pure` label is wrong and the v0.1 aggregate is biased high. Recorded as
+  acquisition request `req004`.
+- Benzene agrees from NBS 514 and v0.2 (`2.284` at 293.15 K). Its 45 NIST
+  zero-frequency rows are all binary mixtures, so the near-room pure static
+  value rests on a single source.
+- Acetonitrile's 1 MHz datum (`35.88`) agrees, but the v0.2 NBS 514 entry
+  (`37.5` static at 293.15 K) is `not_comparable` to a 1 MHz / 298.15 K
+  reference. DMC and DEC agree from up to four sources; the DMC reference
+  `3.09` sits `0.044` below both v0.1 and Chodera, at the edge of its `0.05`
+  tolerance. EC rests on one manual source. PC is `no_data`, re-verified
+  against every artifact.
+- Decision: keep all 23 rows and choose no side. Methanol stays blocked pending
+  `req004`.
+
+## 2026-09-23: v0.2 provenance hash corrected and gate-flag drift closed
+
+- `probes/dielectric_v02_summary.json` recorded
+  `candidate_sha256=504b1ec2...` while the committed
+  `data/processed/nbs514_structure_candidates.csv` hashes to `a787c39f...`.
+  The candidate was regenerated after the build and committed without
+  rebuilding the summary.
+- The dataset itself is sound: rebuilding from the committed inputs reproduces
+  `data/dielectric_v02.csv` byte for byte (hash `3f18e41a...`). Only the
+  recorded input hash was stale. Rebuilding in place corrected the summary; the
+  v0.2 table is unchanged.
+- `nbs514_circular_514` was used by all 110 NBS rows but was absent from
+  `GATE_FLAGS`. Nothing compared a dataset's flags against the enum, so the
+  drift was invisible to every validator that tests membership in it.
+- Registered `nbs514_circular_514` and `crosscheck_only`, added a gate-flag
+  check to the v0.2 verifier, and added `tests/test_gate_flag_enum.py` as the
+  regression guard. The verifier now reports `9/9`, and it is wired into CI,
+  where it previously was not run at all.
+- Decision: `closed_source` and `non_redistributable` stay out of `GATE_FLAGS`.
+  They are dedicated columns in `docs/week3/manual_dielectric_entry_schema.md`,
+  and duplicating them as flags would create a second source of truth for the
+  same fact.
+
+## 2026-09-23: Search-material intake and acquisition list
+
+- `搜索资料` lives outside the repository and now carries
+  `manifest/search_material_registry.csv` plus a root `SHA256SUMS`, written by
+  `scripts/register_search_material.py`. The registrar refuses a root inside the
+  repository, defaults every artifact to `closed_source=true`,
+  `non_redistributable=true`, `redistribution_status=unclear`, and treats
+  screenshots, PDFs and anything under a `public_metadata`/`preview` path as
+  never-data. It is deliberately not wired into CI.
+- `搜索资料/acquisition_requests.csv` lists four open items. Dataset coverage is
+  already satisfied for benzene and acetonitrile by NBS 514; PC lacks only a
+  traceable source, and EC is recorded as structurally blocked because its
+  melting point near 309.5 K places it outside the near-room liquid window
+  rather than as a search target.
+- NBS Circular 514 redistribution remains `unclear` until a copyright
+  determination is recorded in `data/processed/data_expansion_source_audit.csv`.
+
+## 2026-09-23: Week 4 physical-feature representation ablation
+
+- Completed GFN2-xTB physical features for 205 of 210 v0.2 compounds. Four
+  calculations failed and one conflicting source value is excluded, so no
+  missing physics was imputed.
+- The fixed 10x5 repeated-CV comparison gives mean R2 `0.203` for Morgan,
+  `0.283` for pure physical features, and `0.320` for a true 0.5/0.5
+  Morgan+Physical prediction ensemble. Mean MAE is `7.654`, `7.238`, and
+  `6.726`, respectively.
+- Spearman correlation rises from `0.697` for Morgan to `0.830` for the
+  ensemble. Pure physical features remain better at `epsilon > 30` AUC
+  (`0.928` versus `0.915`).
+- Decision: promote physics-informed features as the Week 5 direction. Do not
+  claim a full-range model: the `epsilon > 60` stratum still has mean MAE
+  `63.8-81.3`.
+- Decision: reserve one controlled transformed-target experiment
+  (`log(epsilon - 1)` or Onsager/Clausius-Mossotti linearization) before any
+  additional data expansion. No target transform was selected post hoc in
+  Week 4.
+- Independent verifier `scripts/verify_dielectric_representation_ablation.py`
+  reproduces all 150 fold metrics, 30 repeat metrics, and summary means from
+  6,150 OOF predictions (`12/12` checks). Cold xTB timing is `0.134-0.235 s`
+  per representative molecule.
+
+## 2026-09-23: Week 5 target transform, scaffold holdout, and database recheck
+
+- The pre-registered `log(epsilon - 1)` test is accepted only for the pure
+  Physical representation under random CV: R2 `0.283 -> 0.303` and MAE
+  `7.238 -> 6.066`. It is rejected for Morgan and raw-scale Morgan+Physical.
+- A scaffold/cluster holdout now groups ring molecules by Murcko scaffold and
+  acyclic molecules by ECFP4 Butina clusters, repeated over five balanced
+  partitions. Physical with `log(epsilon - 1)` has the best mean R2
+  (`0.267 +/- 0.014`) and MAE (`6.718 +/- 0.316`).
+- Do not deploy a single target transform universally. Keep raw and transformed
+  heads and choose by screening objective: raw-scale hybrid for R2, log
+  Physical for MAE/ranking, and log hybrid for high-permittivity AUC.
+- Database recheck finds no automatic path from 210 to 300-400 compounds.
+  NBS Circular 514 has only four additional eligible records pending manual
+  review; NIST/ChalkLab add no new near-room keys; Landolt remains manual;
+  SpringerMaterials remains restricted cross-check data.
+- Independent verifier `scripts/verify_dielectric_target_scaffold.py` passes
+  `11/11`, reconstructs scaffold/cluster labels and folds independently from
+  SMILES, and reproduces 90 metric rows plus 18,450 predictions.

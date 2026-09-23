@@ -48,6 +48,17 @@ def test_week3_export_is_self_contained_and_manifested(tmp_path) -> None:
         "data_expansion_docs",
         "manual_dielectric_schema",
         "landolt_boernstein_2015_queue",
+        "dielectric_v02",
+        "dielectric_v02_summary",
+        "dielectric_v02_report",
+        "nbs514_structure_candidates",
+        "dielectric_v02_learning_curve",
+        "dielectric_v02_learning_curve_summary",
+        "dielectric_v02_learning_curve_plot",
+        "nbs514_organic_part1",
+        "nbs514_organic_part2",
+        "nbs514_organic_part3",
+        "nbs514_organic_part4",
     }.issubset(summary["outputs"])
     for relative_path in summary["outputs"].values():
         assert (tmp_path / relative_path).is_file()
