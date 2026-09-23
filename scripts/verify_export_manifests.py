@@ -1,4 +1,4 @@
-"""Verify SHA256SUMS manifests for the real Week 1, Week 2, and Week 3 exports."""
+"""Verify SHA256SUMS manifests for default or explicitly selected exports."""
 
 from __future__ import annotations
 
@@ -12,11 +12,33 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
 from electrolyte_ml.exporting import verify_export_manifest
 
-DEFAULT_OUTPUT_DIRS = (
-    Path(r"E:\Claude Code\电解质ML\成果输出\week1"),
-    Path(r"E:\Claude Code\电解质ML\成果输出\week2"),
-    Path(r"E:\Claude Code\电解质ML\成果输出\week3"),
-)
+DEFAULT_OUTPUT_ROOT = REPOSITORY_ROOT.parent / "成果输出"
+WEEK_DIRECTORIES = tuple(f"week{week}" for week in range(1, 7))
+
+
+def default_output_dirs(output_root: Path) -> tuple[Path, ...]:
+    """Return the conventional week output directories without requiring them."""
+
+    return tuple(output_root / week for week in WEEK_DIRECTORIES)
+
+
+def select_output_dirs(
+    *,
+    output_root: Path,
+    explicit_output_dirs: tuple[Path, ...] = (),
+    allow_missing: bool = False,
+) -> tuple[Path, ...]:
+    """Select explicit directories or all six conventional week directories."""
+
+    if explicit_output_dirs:
+        selected = explicit_output_dirs
+    else:
+        selected = default_output_dirs(output_root)
+    if allow_missing:
+        selected = tuple(output_dir for output_dir in selected if output_dir.is_dir())
+    if not selected:
+        raise ValueError("no output directories selected")
+    return selected
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -28,9 +50,41 @@ def main(argv: list[str] | None = None) -> int:
         default=[],
         help="Export directory to verify. May be repeated.",
     )
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=DEFAULT_OUTPUT_ROOT,
+        help="Root containing conventional week1-week6 output directories.",
+    )
+    parser.add_argument(
+        "--allow-missing",
+        action="store_true",
+        help="Skip missing selected directories instead of reporting them as errors.",
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
-    output_dirs = args.output_dir or list(DEFAULT_OUTPUT_DIRS)
+    try:
+        output_dirs = select_output_dirs(
+            output_root=args.output_root,
+            explicit_output_dirs=tuple(args.output_dir),
+            allow_missing=args.allow_missing,
+        )
+    except ValueError as exc:
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "passed": False,
+                        "error": str(exc),
+                        "results": {},
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+        else:
+            print(f"[FAIL] {exc}")
+        return 2
     results = {
         str(output_dir): verify_export_manifest(output_dir) for output_dir in output_dirs
     }

@@ -5,10 +5,15 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import sys
+import unicodedata
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
+from typing import NamedTuple
+from urllib.parse import unquote, urlsplit
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
@@ -17,6 +22,140 @@ from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
 
 PUBLIC_REDISTRIBUTION_STATUSES = {"allowed", "public_domain"}
+REVIEW_LICENSE_FIELDS = (
+    "source_license",
+    "license_url",
+    "redistribution_conditions",
+)
+REVIEW_METADATA_FIELDS = (*REVIEW_LICENSE_FIELDS, "redistribution_status")
+SOURCE_DOI_SEPARATOR = ";"
+DOI_RESOLVER_HOSTS = frozenset({"doi.org", "dx.doi.org", "www.doi.org"})
+DOI_PREFIX_PATTERN = re.compile(r"10\.\d{4,9}/")
+PERCENT_ESCAPE_PATTERN = re.compile(r"%[0-9A-Fa-f]{2}")
+DOI_ASCII_CHARACTER = re.compile(r"[a-z0-9./:_-]")
+MAX_UNQUOTE_PASSES = 8
+
+
+def decode_percent_sequences(value: str) -> tuple[str, bool]:
+    """Decode nested URL encoding and report unresolved percent escapes."""
+
+    decoded = str(value)
+    for _ in range(MAX_UNQUOTE_PASSES):
+        decoded_next = unquote(decoded)
+        if decoded_next == decoded:
+            break
+        decoded = decoded_next
+    malformed = bool(PERCENT_ESCAPE_PATTERN.search(decoded))
+    return decoded, malformed
+
+
+def normalized_detection_text(value: str) -> str:
+    """Normalize text for DOI containment detection."""
+
+    decoded, _ = decode_percent_sequences(value)
+    normalized = unicodedata.normalize(
+        "NFKC",
+        decoded,
+    ).casefold()
+    return "".join(
+        character
+        for character in normalized
+        if DOI_ASCII_CHARACTER.fullmatch(character)
+    )
+
+
+def _without_doi_prefix(value: str) -> str:
+    candidate = str(value).strip()
+    if candidate[:4].casefold() == "doi:":
+        candidate = candidate[4:].lstrip()
+    return candidate
+
+
+def _parsed_hostname(parsed) -> str:
+    try:
+        return (parsed.hostname or "").rstrip(".").casefold()
+    except ValueError:
+        return ""
+
+
+def _url_like_parts(value: str) -> tuple[bool, str, str]:
+    candidate = _without_doi_prefix(value)
+    parsed = urlsplit(candidate)
+    scheme = parsed.scheme.casefold()
+    if scheme in {"http", "https"}:
+        return True, _parsed_hostname(parsed), parsed.path
+    if candidate.startswith("//"):
+        network = urlsplit(candidate)
+        return True, _parsed_hostname(network), network.path
+    if DOI_PREFIX_PATTERN.match(normalized_detection_text(candidate)):
+        return False, "", ""
+
+    network = urlsplit(f"//{candidate}")
+    host = _parsed_hostname(network)
+    if "." in host and "/" in candidate:
+        return True, host, network.path
+    return False, "", ""
+
+
+def canonicalize_doi(token: str) -> str:
+    """Normalize DOI tokens and resolver URLs into a comparison key."""
+
+    candidate = _without_doi_prefix(token)
+    url_like, host, path = _url_like_parts(candidate)
+    if url_like and host in DOI_RESOLVER_HOSTS:
+        decoded_path, _ = decode_percent_sequences(path)
+        candidate = decoded_path.strip("/")
+    return normalized_detection_text(candidate)
+
+
+class ReviewLicenseMetadata(NamedTuple):
+    source_license: str
+    license_url: str
+    redistribution_conditions: str
+    redistribution_status: str
+
+
+REVIEW_LICENSE_METADATA = MappingProxyType(
+    {
+        "10.1002/smll.202504276": ReviewLicenseMetadata(
+            "CC BY 4.0",
+            "https://creativecommons.org/licenses/by/4.0/",
+            "allowed_with_attribution",
+            "allowed",
+        ),
+        "10.1002/smtd.202400183": ReviewLicenseMetadata(
+            "CC BY-NC-ND 4.0",
+            "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+            "allowed_noncommercial_no_derivatives",
+            "allowed",
+        ),
+        "10.1039/d5sc06221g": ReviewLicenseMetadata(
+            "CC BY 3.0",
+            "https://creativecommons.org/licenses/by/3.0/",
+            "allowed_with_attribution",
+            "allowed",
+        ),
+        "10.1002/cssc.202402091": ReviewLicenseMetadata(
+            "CC BY-NC 4.0",
+            "https://creativecommons.org/licenses/by-nc/4.0/",
+            "allowed_noncommercial",
+            "allowed",
+        ),
+        "10.1016/j.isci.2026.115778": ReviewLicenseMetadata(
+            "CC BY-NC 4.0",
+            "https://creativecommons.org/licenses/by-nc/4.0/",
+            "allowed_noncommercial",
+            "allowed",
+        ),
+        "10.1002/adma.73388": ReviewLicenseMetadata(
+            "CC BY 4.0",
+            "https://creativecommons.org/licenses/by/4.0/",
+            "allowed_with_attribution",
+            "allowed",
+        ),
+    }
+)
+
 ROOM_TEMPERATURE_RANGE_K = (293.15, 303.15)
 EXTENDED_TEMPERATURE_RANGE_K = (313.15, 323.15)
 ADDITION_REQUIRED_FIELDS = (
@@ -43,6 +182,9 @@ V03_FIELDS = (
     "source_citation",
     "source_table",
     "redistribution_status",
+    "source_license",
+    "license_url",
+    "redistribution_conditions",
     "notes",
 )
 
@@ -59,18 +201,20 @@ def write_csv_rows(
     rows: Sequence[Mapping[str, object]],
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=fieldnames,
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
 
 
 def write_json(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
 
 
 def temperature_band(temperature_k: float) -> str:
@@ -81,6 +225,143 @@ def temperature_band(temperature_k: float) -> str:
     if extended_min <= temperature_k <= extended_max:
         return "extended_temperature"
     raise ValueError(f"unsupported v0.3 temperature: {temperature_k} K")
+
+
+def source_dois(row: Mapping[str, str]) -> tuple[str, ...]:
+    """Return unique DOIs from source_doi and semicolon-separated source_dois_all."""
+
+    values = (
+        str(row.get("source_doi", "")),
+        str(row.get("source_dois_all", "")),
+    )
+    dois = []
+    for value in values:
+        for doi in value.split(SOURCE_DOI_SEPARATOR):
+            canonical_doi = canonicalize_doi(doi)
+            if canonical_doi:
+                dois.append(canonical_doi)
+    return tuple(dict.fromkeys(dois))
+
+
+def source_doi_format_errors(row: Mapping[str, str]) -> list[str]:
+    """Reject hidden multi-DOI values and non-whitelisted resolver URLs."""
+
+    raw_value = str(row.get("source_dois_all", ""))
+    if not raw_value.strip():
+        return []
+
+    errors = []
+    for token_index, token in enumerate(
+        raw_value.split(SOURCE_DOI_SEPARATOR),
+        start=1,
+    ):
+        stripped_token = token.strip()
+        if not stripped_token:
+            errors.append(f"source_dois_all token {token_index} is empty")
+            continue
+        if "," in stripped_token or "|" in stripped_token:
+            errors.append(
+                f"source_dois_all token {token_index} uses an unsupported separator"
+            )
+
+        detection_text = normalized_detection_text(stripped_token)
+        if len(DOI_PREFIX_PATTERN.findall(detection_text)) > 1:
+            errors.append(
+                f"source_dois_all token {token_index} contains multiple DOI values"
+            )
+
+        url_like, host, _ = _url_like_parts(stripped_token)
+        if url_like and host not in DOI_RESOLVER_HOSTS:
+            errors.append(
+                f"source_dois_all token {token_index} uses a non-whitelisted "
+                f"DOI resolver URL: {host or stripped_token}"
+            )
+    return errors
+
+
+def source_doi_encoding_errors(row: Mapping[str, str]) -> list[str]:
+    """Report unresolved percent escapes in either DOI source field."""
+
+    errors = []
+    for field in ("source_doi", "source_dois_all"):
+        _, malformed = decode_percent_sequences(str(row.get(field, "")))
+        if malformed:
+            errors.append(f"{field} contains unresolved percent-encoded octets")
+    return errors
+
+
+def review_license_errors(row: Mapping[str, str]) -> list[str]:
+    """Return mapped-license and unsupported-review errors for one final row."""
+
+    errors = source_doi_encoding_errors(row)
+    errors.extend(source_doi_format_errors(row))
+    detection_text = normalized_detection_text(
+        " ".join(
+            (
+                str(row.get("source_doi", "")),
+                str(row.get("source_dois_all", "")),
+            )
+        )
+    )
+    mapped_dois = [
+        doi
+        for doi in REVIEW_LICENSE_METADATA
+        if doi in detection_text
+    ]
+    dois = source_dois(row)
+    unknown_dois = []
+    for doi in dois:
+        expected = REVIEW_LICENSE_METADATA.get(doi)
+        if expected is None:
+            unknown_dois.append(doi)
+            continue
+        if doi not in mapped_dois:
+            mapped_dois.append(doi)
+
+    for doi in mapped_dois:
+        expected = REVIEW_LICENSE_METADATA[doi]
+        for field, expected_value in zip(
+            REVIEW_METADATA_FIELDS,
+            expected,
+            strict=True,
+        ):
+            actual_value = str(row.get(field, ""))
+            if not actual_value:
+                errors.append(f"missing {field} for {doi}")
+            elif actual_value != expected_value:
+                errors.append(
+                    f"{field} mismatch for {doi}: "
+                    f"{actual_value!r} != expected {expected_value!r}"
+                )
+
+    is_review_addition = str(row.get("source_quality", "")).startswith(
+        "open_access"
+    ) or any(row.get(field) for field in REVIEW_LICENSE_FIELDS)
+    if is_review_addition:
+        if unknown_dois:
+            errors.extend(
+                f"unsupported review source_doi: {doi}"
+                for doi in unknown_dois
+            )
+        elif not mapped_dois:
+            errors.append("unsupported review source_doi: missing")
+    return errors
+
+
+def v03_license_errors(rows: Sequence[Mapping[str, str]]) -> list[str]:
+    """Validate mapped DOI metadata across the complete final v0.3 row set."""
+
+    errors = []
+    for index, row in enumerate(rows, start=1):
+        row_errors = review_license_errors(row)
+        if not row_errors:
+            continue
+        row_label = str(row.get("inchikey", "")).strip() or f"row {index}"
+        errors.extend(
+            f"{row_label}: {error}"
+            for error in row_errors
+        )
+    return errors
 
 
 def _normalized_addition(row: Mapping[str, str]) -> dict[str, str]:
@@ -146,6 +427,12 @@ def build_v03_rows(
             raise ValueError(f"duplicate InChIKey in v0.3: {normalized['inchikey']}")
         keys.append(normalized["inchikey"])
         rows.append(normalized)
+    final_license_errors = v03_license_errors(rows)
+    if final_license_errors:
+        raise ValueError(
+            "invalid v0.3 license metadata: "
+            f"{'; '.join(final_license_errors)}"
+        )
     return rows
 
 

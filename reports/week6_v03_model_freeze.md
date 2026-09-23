@@ -10,6 +10,8 @@ upgrades without weakening the evidence standard.
   23 open-access article/table additions.
 - Thirty additions are model-ready; three review-source additions remain
   explicit conflicts and four rows in total are excluded from fitting.
+- Every review-source addition retains its DOI, citation, table, license, and
+  explicit redistribution condition; no row is labelled unrestricted.
 - The independent v0.3 verifier passes 6/6.
 - Experimental density does not improve the fixed-fold model.
 - Applicability domain flags are materialized for all existing OOF

@@ -20,7 +20,7 @@ from scripts.verify_dielectric_v03 import (
     verify_v03_rows,
 )
 
-DEFAULT_OUTPUT_ROOT = Path(r"E:\Claude Code\电解质ML\成果输出")
+DEFAULT_OUTPUT_ROOT = REPOSITORY_ROOT.parent / "成果输出"
 WEEK = "week6"
 ARTIFACTS = (
     ("reports/week6_v03_model_freeze.md", "week6_report.md"),
@@ -214,6 +214,12 @@ def export_results(
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=DEFAULT_OUTPUT_ROOT,
+        help="Directory under which the week6 export directory is created.",
+    )
     return parser.parse_args()
 
 
@@ -221,7 +227,7 @@ def main() -> int:
     args = _parse_args()
     result = export_results(
         source_root=REPOSITORY_ROOT,
-        output_root=DEFAULT_OUTPUT_ROOT,
+        output_root=args.output_root,
         overwrite=args.overwrite,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -102,6 +102,23 @@ def test_ci_runs_week3_verifiers() -> None:
     assert any("scripts/verify_viscosity_baseline.py" in command for command in commands)
 
 
+def test_ci_runs_v03_and_week6_export_manifest_verifiers() -> None:
+    workflow = _workflow()
+    commands = [
+        str(step.get("run", ""))
+        for job in workflow["jobs"].values()
+        for step in job.get("steps", [])
+    ]
+
+    assert any("scripts/verify_dielectric_v03.py" in command for command in commands)
+    assert any("scripts/verify_export_manifests.py" in command for command in commands)
+    assert any(
+        "probes/export_week6_results.py" in command
+        and "--output-root" in command
+        for command in commands
+    )
+
+
 def test_ci_uses_python_312_and_validated_dependency_pins() -> None:
     jobs = _workflow()["jobs"]
     python_versions = []

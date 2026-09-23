@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import csv
 import hashlib
+from pathlib import Path
 
 from electrolyte_ml.exporting import (
     canonical_text_sha256,
     verify_export_manifest,
     write_export_manifest,
 )
+from probes.export_week6_results import export_results
 
 
 def _write(path, content: bytes) -> None:
@@ -99,3 +102,65 @@ def test_canonical_text_sha256_detects_real_content_change(tmp_path) -> None:
     path.write_bytes(b"a,b\n1,3\n")
 
     assert canonical_text_sha256(path) != before
+
+
+def test_week6_export_preserves_license_metadata_and_manifest(tmp_path) -> None:
+    source_root = Path(__file__).resolve().parents[1]
+    result = export_results(
+        source_root=source_root,
+        output_root=tmp_path,
+        overwrite=True,
+    )
+
+    week6 = tmp_path / "week6"
+    assert result["verification"]["passed"] is True
+    assert verify_export_manifest(week6) == []
+    with (
+        source_root
+        / "data"
+        / "processed"
+        / "modern_solvent_public_review_observations.csv"
+    ).open(
+        encoding="utf-8",
+        newline="",
+    ) as handle:
+        source_review_rows = list(csv.DictReader(handle))
+    with (week6 / "modern_solvent_public_review_observations.csv").open(
+        encoding="utf-8",
+        newline="",
+    ) as handle:
+        exported_review_rows = list(csv.DictReader(handle))
+    assert source_review_rows
+    assert len(exported_review_rows) == len(source_review_rows)
+
+    with (week6 / "dielectric_v03.csv").open(
+        encoding="utf-8",
+        newline="",
+    ) as handle:
+        v03_rows = list(csv.DictReader(handle))
+    additions = [
+        row for row in v03_rows if row["dataset_origin"] == "v0.3_addition"
+    ]
+    additions_by_inchikey = {row["inchikey"]: row for row in additions}
+    source_by_inchikey = {
+        row["inchikey"]: row for row in source_review_rows
+    }
+    exported_by_inchikey = {
+        row["inchikey"]: row for row in exported_review_rows
+    }
+    assert set(source_by_inchikey) == set(exported_by_inchikey)
+    assert set(source_by_inchikey).issubset(additions_by_inchikey)
+
+    compared_fields = (
+        "source_license",
+        "license_url",
+        "redistribution_conditions",
+        "redistribution_status",
+    )
+    for inchikey in sorted(source_by_inchikey):
+        source_row = source_by_inchikey[inchikey]
+        exported_row = exported_by_inchikey[inchikey]
+        addition_row = additions_by_inchikey[inchikey]
+        for field in compared_fields:
+            assert source_row[field] == exported_row[field]
+            assert source_row[field] == addition_row[field]

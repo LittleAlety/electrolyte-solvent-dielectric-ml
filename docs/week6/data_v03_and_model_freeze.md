@@ -18,15 +18,17 @@ The primary additions are:
 
 The review-table additions include modern carbonates, cyclic ethers, glymes,
 phosphates, nitriles, fluorinated ethers, and chlorinated diluents. Every row
-retains its review DOI, table, and temperature-source status. Of the 33
-additions, 30 are model-ready and three are retained only as explicit
+retains its review DOI, table, temperature-source status, license, license URL,
+and explicit redistribution condition. The source metadata distinguishes
+CC BY, CC BY-NC, and CC BY-NC-ND reuse from unrestricted redistribution. Of
+the 33 additions, 30 are model-ready and three are retained only as explicit
 conflicts (`FEC`, `TEP`, `TMP`). `Ethyl isothiocyanate` remains excluded from
-model fitting because its NBS and restricted cross-check values differ by
-10.2.
+model fitting because its NBS and restricted cross-check values differ by 10.2.
 
 The build rejects any addition whose `redistribution_status` is not `allowed`
-or `public_domain`. SpringerMaterials values remain restricted cross-check
-evidence and are not promoted.
+or `public_domain`, and rejects review additions with missing, unknown,
+restricted, or unrestricted `redistribution_conditions`. SpringerMaterials
+values remain restricted cross-check evidence and are not promoted.
 
 Build and verify:
 

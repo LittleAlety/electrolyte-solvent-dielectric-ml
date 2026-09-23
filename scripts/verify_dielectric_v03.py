@@ -21,6 +21,7 @@ from scripts.build_dielectric_v03 import (
     PUBLIC_REDISTRIBUTION_STATUSES,
     build_v03_rows,
     temperature_band,
+    v03_license_errors,
 )
 
 
@@ -82,6 +83,7 @@ def verify_v03_rows(
             errors.append(
                 f"excluded model row is marked ready: {row.get('inchikey')}"
             )
+    errors.extend(v03_license_errors(rows))
     return errors
 
 
