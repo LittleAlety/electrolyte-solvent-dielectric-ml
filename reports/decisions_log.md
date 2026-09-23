@@ -427,3 +427,8 @@
   however, the Physical MLP reaches mean Spearman `0.884` versus `0.830` for
   the XGBoost hybrid. Decision: treat neural models as ranking diagnostics,
   not as a replacement for the frozen regression model.
+- Completed the Chemprop 2.1.0 D-MPNN baseline in an isolated environment
+  because its NumPy<2 constraint conflicts with the project pin. With the same
+  10x5 outer folds, mean R2 is `0.237`, MAE `7.887`, and Spearman `0.665`.
+  Decision: retain Chemprop as the required benchmark row, but do not promote
+  a neural model over the frozen XGBoost hybrid.
