@@ -34,8 +34,10 @@ def verify_v03_rows(
     rows: Sequence[Mapping[str, str]],
     *,
     minimum_additions: int,
+    excluded_model_keys: set[str] | None = None,
 ) -> list[str]:
     errors: list[str] = []
+    excluded_model_keys = excluded_model_keys or set()
     additions = [
         row for row in rows if row.get("dataset_origin") == "v0.3_addition"
     ]
@@ -72,6 +74,14 @@ def verify_v03_rows(
                     f"addition {index} temperature band mismatch: "
                     f"{row.get('temperature_band')} != {expected_band}"
                 )
+    for row in rows:
+        if (
+            row.get("inchikey") in excluded_model_keys
+            and row.get("model_ready") != "false"
+        ):
+            errors.append(
+                f"excluded model row is marked ready: {row.get('inchikey')}"
+            )
     return errors
 
 
@@ -85,6 +95,18 @@ def _parse_args() -> argparse.Namespace:
         default=data_dir
         / "processed"
         / "modern_solvent_public_observations.csv",
+    )
+    parser.add_argument(
+        "--review-additions",
+        type=Path,
+        default=data_dir
+        / "processed"
+        / "modern_solvent_public_review_observations.csv",
+    )
+    parser.add_argument(
+        "--model-exclusions",
+        type=Path,
+        default=data_dir / "processed" / "dielectric_v03_exclusions.csv",
     )
     parser.add_argument("--output", type=Path, default=data_dir / "dielectric_v03.csv")
     parser.add_argument(
@@ -100,17 +122,23 @@ def main() -> int:
     args = _parse_args()
     _, v02_rows = read_csv_rows(args.v02)
     _, addition_rows = read_csv_rows(args.additions)
+    _, review_addition_rows = read_csv_rows(args.review_additions)
+    all_addition_rows = [*addition_rows, *review_addition_rows]
+    _, exclusion_rows = read_csv_rows(args.model_exclusions)
+    excluded_model_keys = {row["inchikey"] for row in exclusion_rows}
     _, output_rows = read_csv_rows(args.output)
     summary = json.loads(args.summary.read_text(encoding="utf-8"))
     expected_rows = build_v03_rows(
         v02_rows,
-        addition_rows,
+        all_addition_rows,
         minimum_additions=args.minimum_additions,
+        excluded_model_keys=excluded_model_keys,
     )
 
     errors = verify_v03_rows(
         output_rows,
         minimum_additions=args.minimum_additions,
+        excluded_model_keys=excluded_model_keys,
     )
     fields = set(expected_rows[0]) | set(output_rows[0])
     for field in sorted(fields):
@@ -146,6 +174,24 @@ def main() -> int:
             "summary additions hash mismatch: "
             f"{recorded_additions_hash} != {expected_additions_hash}"
         )
+    expected_review_additions_hash = canonical_text_sha256(args.review_additions)
+    recorded_review_additions_hash = summary.get("inputs", {}).get(
+        "review_additions_sha256"
+    )
+    if recorded_review_additions_hash != expected_review_additions_hash:
+        errors.append(
+            "summary review additions hash mismatch: "
+            f"{recorded_review_additions_hash} != {expected_review_additions_hash}"
+        )
+    expected_exclusions_hash = canonical_text_sha256(args.model_exclusions)
+    recorded_exclusions_hash = summary.get("inputs", {}).get(
+        "model_exclusions_sha256"
+    )
+    if recorded_exclusions_hash != expected_exclusions_hash:
+        errors.append(
+            "summary model exclusions hash mismatch: "
+            f"{recorded_exclusions_hash} != {expected_exclusions_hash}"
+        )
 
     report = {
         "passed": not errors,
@@ -153,7 +199,7 @@ def main() -> int:
         "passed_count": 6 if not errors else 0,
         "errors": errors,
         "row_count": len(output_rows),
-        "addition_count": len(addition_rows),
+        "addition_count": len(all_addition_rows),
         "output": portable_relative_path(args.output, root=REPOSITORY_ROOT),
         "output_sha256": expected_output_hash,
     }

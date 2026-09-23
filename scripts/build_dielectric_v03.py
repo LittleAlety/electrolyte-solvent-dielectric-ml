@@ -35,6 +35,10 @@ ADDITION_REQUIRED_FIELDS = (
 V03_FIELDS = (
     "dataset_origin",
     "temperature_band",
+    "evidence_level",
+    "temperature_source",
+    "model_ready",
+    "conflict_status",
     "source_url",
     "source_citation",
     "source_table",
@@ -95,6 +99,10 @@ def _normalized_addition(row: Mapping[str, str]) -> dict[str, str]:
     output = dict(row)
     output["dataset_origin"] = "v0.3_addition"
     output["temperature_band"] = temperature_band(temperature_k)
+    output.setdefault("evidence_level", "primary")
+    output.setdefault("temperature_source", "reported")
+    output.setdefault("model_ready", "true")
+    output.setdefault("conflict_status", "")
     return output
 
 
@@ -103,23 +111,37 @@ def build_v03_rows(
     additions: Sequence[Mapping[str, str]],
     *,
     minimum_additions: int,
+    excluded_model_keys: set[str] | None = None,
 ) -> list[dict[str, str]]:
     if len(additions) < minimum_additions:
         raise ValueError(
             f"v0.3 needs at least {minimum_additions} additions; found {len(additions)}"
         )
 
-    rows = [
-        {
-            **row,
-            "dataset_origin": "v0.2",
-            "temperature_band": temperature_band(float(row["T_K"])),
-        }
-        for row in v02_rows
-    ]
+    excluded_model_keys = excluded_model_keys or set()
+    rows = []
+    for row in v02_rows:
+        excluded = row["inchikey"] in excluded_model_keys
+        rows.append(
+            {
+                **row,
+                "dataset_origin": "v0.2",
+                "temperature_band": temperature_band(float(row["T_K"])),
+                "evidence_level": "v0.2_primary_or_critical_compilation",
+                "temperature_source": "reported",
+                "model_ready": "false" if excluded else "true",
+                "conflict_status": (
+                    "excluded_model_conflict" if excluded else ""
+                ),
+            }
+        )
     keys = [row["inchikey"] for row in rows]
     for addition in additions:
         normalized = _normalized_addition(addition)
+        if normalized["inchikey"] in excluded_model_keys:
+            normalized["model_ready"] = "false"
+            if not normalized["conflict_status"]:
+                normalized["conflict_status"] = "excluded_model_conflict"
         if normalized["inchikey"] in keys:
             raise ValueError(f"duplicate InChIKey in v0.3: {normalized['inchikey']}")
         keys.append(normalized["inchikey"])
@@ -138,13 +160,25 @@ def _parse_args() -> argparse.Namespace:
         / "processed"
         / "modern_solvent_public_observations.csv",
     )
+    parser.add_argument(
+        "--review-additions",
+        type=Path,
+        default=data_dir
+        / "processed"
+        / "modern_solvent_public_review_observations.csv",
+    )
+    parser.add_argument(
+        "--model-exclusions",
+        type=Path,
+        default=data_dir / "processed" / "dielectric_v03_exclusions.csv",
+    )
     parser.add_argument("--output", type=Path, default=data_dir / "dielectric_v03.csv")
     parser.add_argument(
         "--summary",
         type=Path,
         default=REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json",
     )
-    parser.add_argument("--minimum-additions", type=int, default=1)
+    parser.add_argument("--minimum-additions", type=int, default=30)
     return parser.parse_args()
 
 
@@ -152,10 +186,15 @@ def main() -> int:
     args = _parse_args()
     v02_fields, v02_rows = read_csv_rows(args.v02)
     _, addition_rows = read_csv_rows(args.additions)
+    _, review_addition_rows = read_csv_rows(args.review_additions)
+    all_addition_rows = [*addition_rows, *review_addition_rows]
+    _, exclusion_rows = read_csv_rows(args.model_exclusions)
+    excluded_model_keys = {row["inchikey"] for row in exclusion_rows}
     rows = build_v03_rows(
         v02_rows,
-        addition_rows,
+        all_addition_rows,
         minimum_additions=args.minimum_additions,
+        excluded_model_keys=excluded_model_keys,
     )
     fields = list(v02_fields)
     fields.extend(field for field in V03_FIELDS if field not in fields)
@@ -163,13 +202,29 @@ def main() -> int:
 
     source_counts = Counter(row["dataset_origin"] for row in rows)
     band_counts = Counter(row["temperature_band"] for row in rows)
+    evidence_counts = Counter(
+        row.get("evidence_level", "v0.2") for row in rows
+    )
+    model_ready_count = sum(
+        row.get("dataset_origin") == "v0.3_addition"
+        and row.get("model_ready", "true").lower() == "true"
+        for row in rows
+    )
+    conflict_count = sum(
+        bool(row.get("conflict_status"))
+        and row.get("dataset_origin") == "v0.3_addition"
+        for row in rows
+    )
     summary = {
         "schema_version": 3,
         "dataset_version": "0.3",
         "compound_count": len(rows),
         "v02_compound_count": len(v02_rows),
-        "addition_count": len(addition_rows),
+        "addition_count": len(all_addition_rows),
+        "model_ready_addition_count": model_ready_count,
+        "conflict_addition_count": conflict_count,
         "source_counts": dict(sorted(source_counts.items())),
+        "evidence_counts": dict(sorted(evidence_counts.items())),
         "temperature_band_counts": dict(sorted(band_counts.items())),
         "temperature_ranges_K": {
             "room_temperature": list(ROOM_TEMPERATURE_RANGE_K),
@@ -178,6 +233,12 @@ def main() -> int:
         "inputs": {
             "v02_sha256": canonical_text_sha256(args.v02),
             "additions_sha256": canonical_text_sha256(args.additions),
+            "review_additions_sha256": canonical_text_sha256(
+                args.review_additions
+            ),
+            "model_exclusions_sha256": canonical_text_sha256(
+                args.model_exclusions
+            ),
         },
         "output": {
             "path": portable_relative_path(args.output, root=REPOSITORY_ROOT),

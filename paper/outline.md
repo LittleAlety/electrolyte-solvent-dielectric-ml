@@ -57,7 +57,9 @@ holdout performance, and poor transfer to associated liquids.
 - `data/dielectric_v01.csv`
 - `data/dielectric_v02.csv`
 - `data/dielectric_v03.csv`
+- `data/processed/modern_solvent_public_review_observations.csv`
 - `data/processed/dielectric_physical_features_density.csv`
+- `data/processed/dielectric_physical_features_v03.csv`
 - `data/processed/dielectric_applicability_flags.csv`
 - Source manifests, exclusion tables, and verification reports
 
@@ -67,6 +69,8 @@ holdout performance, and poor transfer to associated liquids.
 - SpringerMaterials restricted cross-check with median absolute delta `0.05`.
 - Ethyl isothiocyanate conflict remains explicitly unresolved.
 - Deterministic builders and independent verifiers.
+- v0.3 model sensitivity: broader modern-solvent coverage without an accuracy
+  gain (`R2 0.310` hybrid on 235 rows versus `0.320` on 205 v0.2 rows).
 - Cross-platform CI over all committed artifacts.
 
 ## Benchmark Tables

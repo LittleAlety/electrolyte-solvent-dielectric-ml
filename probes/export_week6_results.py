@@ -32,6 +32,18 @@ ARTIFACTS = (
         "modern_solvent_public_observations.csv",
     ),
     (
+        "data/processed/modern_solvent_public_review_observations.csv",
+        "modern_solvent_public_review_observations.csv",
+    ),
+    (
+        "data/processed/dielectric_v03_exclusions.csv",
+        "dielectric_v03_exclusions.csv",
+    ),
+    (
+        "data/processed/dielectric_physical_features_v03.csv",
+        "dielectric_physical_features_v03.csv",
+    ),
+    (
         "data/processed/dielectric_applicability_flags.csv",
         "dielectric_applicability_flags.csv",
     ),
@@ -59,6 +71,14 @@ ARTIFACTS = (
         "data/processed/dielectric_chemprop_predictions.csv",
         "chemprop_predictions.csv",
     ),
+    (
+        "data/processed/dielectric_v03_representation_ablation_repeats.csv",
+        "v03_representation_ablation_repeats.csv",
+    ),
+    (
+        "data/processed/dielectric_v03_representation_ablation_predictions.csv",
+        "v03_representation_ablation_predictions.csv",
+    ),
     ("probes/dielectric_v03_summary.json", "dielectric_v03_summary.json"),
     (
         "probes/dielectric_density_feature_summary.json",
@@ -67,11 +87,19 @@ ARTIFACTS = (
     ("probes/dielectric_mlp_probe_summary.json", "mlp_probe_summary.json"),
     ("probes/dielectric_chemprop_summary.json", "chemprop_summary.json"),
     (
+        "probes/dielectric_v03_representation_ablation_summary.json",
+        "v03_representation_ablation_summary.json",
+    ),
+    (
         "probes/artifacts/dielectric_density_feature_comparison.png",
         "density_feature_comparison.png",
     ),
     ("probes/artifacts/dielectric_mlp_probe.png", "mlp_probe.png"),
     ("probes/artifacts/model_comparison.png", "model_comparison.png"),
+    (
+        "probes/artifacts/dielectric_v03_representation_ablation.png",
+        "v03_representation_ablation.png",
+    ),
 )
 
 
@@ -127,7 +155,7 @@ def export_results(
         written.append(destination_path.relative_to(output_root).as_posix())
 
     _, v03_rows = read_v03_rows(source_root / "data" / "dielectric_v03.csv")
-    verification_errors = verify_v03_rows(v03_rows, minimum_additions=10)
+    verification_errors = verify_v03_rows(v03_rows, minimum_additions=30)
     verification = {
         "passed": not verification_errors,
         "errors": verification_errors,
@@ -149,6 +177,13 @@ def export_results(
             source_root / "probes" / "dielectric_chemprop_summary.json"
         ).read_text(encoding="utf-8")
     )
+    v03_model = json.loads(
+        (
+            source_root
+            / "probes"
+            / "dielectric_v03_representation_ablation_summary.json"
+        ).read_text(encoding="utf-8")
+    )
     write_json(
         week_root / "week6_summary.json",
         {
@@ -159,6 +194,8 @@ def export_results(
             "mlp_best": mlp["comparison"]["best_mlp"],
             "mlp_go_kill": mlp["comparison"]["go_kill"],
             "chemprop_summary": chemprop["summary"]["Chemprop_DMPNN_raw"],
+            "v03_representation_summary": v03_model["summary"],
+            "v03_compound_count_fitted": v03_model["compound_count"],
         },
     )
     write_sha256s(week_root)

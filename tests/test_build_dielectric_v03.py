@@ -70,3 +70,20 @@ def test_verify_v03_rejects_restricted_output_row() -> None:
     errors = verify_v03_rows(rows, minimum_additions=1)
 
     assert any("restricted" in error for error in errors)
+
+
+def test_build_v03_marks_conflicted_v02_row_not_model_ready() -> None:
+    rows = build_v03_rows(
+        [
+            {
+                "inchikey": "HBNYJWAFDZLWRS-UHFFFAOYSA-N",
+                "T_K": "294.15",
+            }
+        ],
+        [],
+        minimum_additions=0,
+        excluded_model_keys={"HBNYJWAFDZLWRS-UHFFFAOYSA-N"},
+    )
+
+    assert rows[0]["model_ready"] == "false"
+    assert rows[0]["conflict_status"] == "excluded_model_conflict"

@@ -5,15 +5,24 @@
 `data/dielectric_v03.csv` is built from:
 
 - the 210 rows in `data/dielectric_v02.csv`; and
-- 10 independently public additions in
-  `data/processed/modern_solvent_public_observations.csv`.
+- 33 public additions across:
+  - `data/processed/modern_solvent_public_observations.csv`; and
+  - `data/processed/modern_solvent_public_review_observations.csv`.
 
-The additions are:
+The primary additions are:
 
 - six n-nitriles at 298.15 K from the public Pramana article
   `10.1007/BF02848094`;
 - four NBS Circular 514 records that were eligible in v0.2 but had remained
   below the selection cutoff.
+
+The review-table additions include modern carbonates, cyclic ethers, glymes,
+phosphates, nitriles, fluorinated ethers, and chlorinated diluents. Every row
+retains its review DOI, table, and temperature-source status. Of the 33
+additions, 30 are model-ready and three are retained only as explicit
+conflicts (`FEC`, `TEP`, `TMP`). `Ethyl isothiocyanate` remains excluded from
+model fitting because its NBS and restricted cross-check values differ by
+10.2.
 
 The build rejects any addition whose `redistribution_status` is not `allowed`
 or `public_domain`. SpringerMaterials values remain restricted cross-check
@@ -27,9 +36,10 @@ Build and verify:
 .\.venv\Scripts\python.exe scripts\verify_dielectric_v03.py
 ```
 
-This is an incremental v0.3 candidate, not the final 30-50 compound modern
-solvent target. The remaining gap is represented by
-`data/processed/modern_battery_solvent_candidate_queue.csv`.
+The v0.3 table now contains 243 compounds and satisfies the count target. It
+remains a candidate release because many review-table values do not state an
+independent temperature and still require primary-source confirmation before
+v1.0.
 
 ## Experimental-density feature test
 
@@ -49,6 +59,19 @@ improve the model:
 Decision: retain the original xTB-estimated `mu_sq_over_Vm` for the frozen
 v1.0 feature set. Keep the experimental-density variant as a documented
 negative result and robustness check.
+
+## v0.3 model sensitivity
+
+The frozen Morgan, Physical, and equal-weight hybrid models were rerun on the
+235 v0.3 rows with physical features available:
+
+- Morgan: R2 `0.190`, MAE `7.879`, Spearman `0.697`;
+- Physical: R2 `0.273`, MAE `7.429`, Spearman `0.803`;
+- Morgan+Physical: R2 `0.310`, MAE `6.970`, Spearman `0.816`.
+
+The hybrid R2 is slightly lower than the v0.2 result (`0.320`). The expansion
+therefore improves domain coverage but not predictive accuracy. This must be
+described as a coverage result, not a performance improvement.
 
 ## Applicability domain
 

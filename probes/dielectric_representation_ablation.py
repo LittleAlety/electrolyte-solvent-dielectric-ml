@@ -31,6 +31,7 @@ from sklearn.model_selection import RepeatedKFold
 from xgboost import XGBRegressor
 
 from electrolyte_ml.exporting import canonical_text_sha256
+from electrolyte_ml.pathing import portable_relative_path
 
 SEED = 42
 N_SPLITS = 5
@@ -494,13 +495,16 @@ def run_experiment(
     write_csv_rows(repeat_path, REPEAT_COLUMNS, repeat_rows)
     payload: dict[str, object] = {
         "schema_version": 1,
-        "input_path": input_path.relative_to(REPOSITORY_ROOT).as_posix(),
+        "input_path": portable_relative_path(input_path, root=REPOSITORY_ROOT),
         "input_sha256": canonical_text_sha256(input_path),
         "source_count": len(source_rows),
         "compound_count": len(rows),
         "excluded_count": len(excluded_keys),
         "excluded_inchikeys": sorted(excluded_keys),
-        "exclusions_path": exclusions_path.relative_to(REPOSITORY_ROOT).as_posix(),
+        "exclusions_path": portable_relative_path(
+            exclusions_path,
+            root=REPOSITORY_ROOT,
+        ),
         "exclusions_sha256": (
             canonical_text_sha256(exclusions_path)
             if exclusions_path.is_file()
@@ -557,11 +561,20 @@ def run_experiment(
         "predictions_clipped": True,
         "summary": summary,
         "outputs": {
-            "cv_csv": cv_path.relative_to(REPOSITORY_ROOT).as_posix(),
-            "repeat_csv": repeat_path.relative_to(REPOSITORY_ROOT).as_posix(),
-            "predictions_csv": predictions_path.relative_to(REPOSITORY_ROOT).as_posix(),
-            "summary_json": summary_path.relative_to(REPOSITORY_ROOT).as_posix(),
-            "plot": plot_path.relative_to(REPOSITORY_ROOT).as_posix(),
+            "cv_csv": portable_relative_path(cv_path, root=REPOSITORY_ROOT),
+            "repeat_csv": portable_relative_path(
+                repeat_path,
+                root=REPOSITORY_ROOT,
+            ),
+            "predictions_csv": portable_relative_path(
+                predictions_path,
+                root=REPOSITORY_ROOT,
+            ),
+            "summary_json": portable_relative_path(
+                summary_path,
+                root=REPOSITORY_ROOT,
+            ),
+            "plot": portable_relative_path(plot_path, root=REPOSITORY_ROOT),
         },
     }
     write_csv_rows(cv_path, CV_COLUMNS, cv_rows)

@@ -13,6 +13,20 @@ ten repeat-level out-of-fold metric values.
 | MLP Morgan+Physical | log(epsilon - 1) | -0.458 | 12.885 | 0.228 | 0.646 |
 | Chemprop D-MPNN | raw | 0.237 | 7.887 | 0.665 | 0.857 |
 
+## v0.3 coverage sensitivity
+
+The same XGBoost representations on the expanded 235-row v0.3 feature set:
+
+| model | R2 | MAE | Spearman | AUC >30 |
+|---|---:|---:|---:|---:|
+| Morgan | 0.190 | 7.879 | 0.697 | 0.823 |
+| Physical | 0.273 | 7.429 | 0.803 | 0.935 |
+| Morgan+Physical | 0.310 | 6.970 | 0.816 | 0.927 |
+
+The hybrid R2 decreases slightly from the 205-row v0.2 result (`0.320`).
+The expansion therefore addresses chemical-domain coverage, not predictive
+accuracy.
+
 Interpretation:
 
 - Chemprop is worse than the frozen XGBoost hybrid on every headline metric,

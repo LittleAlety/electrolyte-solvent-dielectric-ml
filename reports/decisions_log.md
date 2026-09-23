@@ -432,3 +432,20 @@
   10x5 outer folds, mean R2 is `0.237`, MAE `7.887`, and Spearman `0.665`.
   Decision: retain Chemprop as the required benchmark row, but do not promote
   a neural model over the frozen XGBoost hybrid.
+
+## 2026-09-23: v0.3 public coverage expansion
+
+- Expanded `dielectric_v03.csv` from 220 to 243 rows using 23 additional public
+  CC-BY/PMC review-table and article values. These cover EMC, DOL, THF,
+  2-MeTHF, GVL, fluorinated ethers, phosphates, esters, difluorobenzene,
+  chlorinated diluents, and related electrolyte solvents.
+- Thirty additions are marked `model_ready=true`. FEC, TEP, and TMP are kept
+  in the public table but marked `model_ready=false` because independent public
+  sources disagree materially. `Ethyl isothiocyanate` remains excluded from
+  model fitting because the NBS and restricted cross-check values differ by
+  `10.2`.
+- Rebuilt all 239 eligible physical-feature rows with GFN2-xTB. On the 235
+  successfully featurized rows, Morgan+Physical mean R2 is `0.310` versus
+  `0.320` on the 205-row v0.2 set; Physical R2 is `0.273` versus `0.283`.
+  Decision: treat v0.3 expansion as a coverage and domain-relevance result,
+  not as evidence of improved predictive accuracy.
