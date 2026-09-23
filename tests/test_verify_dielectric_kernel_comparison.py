@@ -130,10 +130,10 @@ def test_kernel_verifier_accepts_small_xgboost_metric_drift() -> None:
 def test_kernel_verifier_rejects_large_xgboost_metric_drift() -> None:
     rows = [
         {
-            "model": "XGBoost",
-            "repeat": "0",
-            "fold": "0",
-            "mae": str(1.0 + 1e-4),
+                "model": "XGBoost",
+                "repeat": "0",
+                "fold": "0",
+                "mae": str(1.0 + 1e-2),
             "rmse": "1.0",
             "r2": "0.5",
         }

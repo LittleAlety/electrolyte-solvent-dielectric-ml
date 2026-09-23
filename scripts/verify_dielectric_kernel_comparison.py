@@ -168,7 +168,10 @@ def check_metric_values(
                 return Check(
                     "kernel metrics",
                     False,
-                    f"{metric} mismatch for {key}",
+                    (
+                        f"{metric} mismatch for {key}: "
+                        f"actual={row[metric]} expected={expected[key][metric]}"
+                    ),
                 )
     return Check("kernel metrics", True, "all metrics match independent recomputation")
 
