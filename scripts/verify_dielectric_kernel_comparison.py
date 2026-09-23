@@ -248,7 +248,7 @@ def _xgboost_model() -> XGBRegressor:
         subsample=0.8,
         colsample_bytree=0.6,
         reg_lambda=1.0,
-        tree_method="hist",
+        tree_method="exact",
         n_jobs=1,
         random_state=42,
     )

@@ -227,13 +227,13 @@
 ## 2026-09-23: kernel XGBoost single-thread reproducibility
 
 - The kernel comparison builder and verifier now construct XGBoost with
-  `n_jobs=1`; the per-row and summary configuration strings record that value.
-- This removes the cross-platform histogram-reduction drift that exceeded the
-  shared XGBoost tolerance instead of further relaxing numerical checks.
-- Regenerated XGBoost CV metrics are MAE `11.0123615`, RMSE `20.3295967`, and
-  R2 `0.0413486`. Two consecutive builder runs produced identical
-  CSV/summary/plot hashes, and two consecutive verifier runs produced the same
-  JSON hash.
+  `tree_method="exact"` and `n_jobs=1`; the per-row and summary configuration
+  strings record both values.
+- Exact trees replace the histogram reduction that produced cross-platform
+  drift, instead of further relaxing numerical checks.
+- Regenerated XGBoost CV metrics are MAE `11.1547071`, RMSE `20.4628613`, and
+  R2 `-0.0019521`. Two consecutive builder runs produced identical
+  CSV/summary/plot hashes.
 - Decision: keep all 30 as `awaiting_manual_review`. They are not confirmed as
   available, room-temperature liquids, or experimental dielectric references.
   The unavailable 308-solvent ECW list was not used as a candidate pool.

@@ -30,7 +30,10 @@ def test_kernel_verifier_rejects_missing_grid_combination() -> None:
 
 
 def test_kernel_verifier_xgboost_is_single_threaded() -> None:
-    assert _xgboost_model().n_jobs == 1
+    model = _xgboost_model()
+
+    assert model.n_jobs == 1
+    assert model.tree_method == "exact"
 
 
 def test_kernel_summary_records_single_threaded_xgboost() -> None:
@@ -43,6 +46,7 @@ def test_kernel_summary_records_single_threaded_xgboost() -> None:
     )
 
     assert "n_jobs=1" in summary["models"]["XGBoost"]["config"]
+    assert "tree_method=exact" in summary["models"]["XGBoost"]["config"]
 
 
 def test_kernel_verifier_rejects_metric_tampering() -> None:

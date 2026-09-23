@@ -13,8 +13,9 @@ is used.
 
 RBF-GPR uses count Morgan fingerprints, StandardScaler, and the existing
 `C(1)*RBF(length_scale=10)+WhiteKernel(noise_level=1)` configuration.
-XGBoost uses the existing 800-tree configuration with `n_jobs=1`, fixing the
-histogram reduction to a single thread for cross-platform reproducibility.
+XGBoost uses the existing 800-tree configuration with `tree_method="exact"` and
+`n_jobs=1`. Exact tree construction removes the histogram-reduction source of
+cross-platform drift while retaining single-threaded execution.
 
 ## Results
 
@@ -22,12 +23,12 @@ histogram reduction to a single thread for cross-platform reproducibility.
 |---|---:|---:|---:|
 | Tanimoto-GPR | 10.9603 +/- 3.6161 | 19.7630 +/- 10.3702 | 0.04246 +/- 0.81976 |
 | RBF-GPR | 11.6865 +/- 3.8583 | 20.2361 +/- 10.1300 | 0.02295 +/- 0.68149 |
-| XGBoost | 11.0124 +/- 3.7248 | 20.3296 +/- 10.7854 | 0.04135 +/- 0.52577 |
+| XGBoost | 11.1547 +/- 3.7056 | 20.4629 +/- 10.6067 | -0.00195 +/- 0.65324 |
 
 Tanimoto-GPR improves the RBF-GPR mean R2 by `0.01950`. Its mean MAE
-`10.9603` remains slightly better than XGBoost `11.0124`. The revision changes
-XGBoost's mean R2 from the earlier multithreaded value `0.03185` to `0.04135`,
-but does not change the conclusion: this is a modest improvement, not a
+`10.9603` remains better than XGBoost `11.1547`. With exact trees, XGBoost's
+mean R2 is `-0.00195`, so the earlier histogram result is not retained. This
+does not change the conclusion: the Tanimoto improvement is modest, not a
 meaningful gate pass. All models remain far below `R2 > 0.8`, and fold-level
 variance remains very large.
 

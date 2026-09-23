@@ -150,7 +150,7 @@ def _xgboost_model() -> XGBRegressor:
         subsample=0.8,
         colsample_bytree=0.6,
         reg_lambda=1.0,
-        tree_method="hist",
+        tree_method="exact",
         n_jobs=1,
         random_state=SEED,
     )
@@ -221,7 +221,7 @@ def _model_config(model_name: str) -> str:
     return (
         "count Morgan r=2/2048; XGBoost n_estimators=800, max_depth=10, "
         "learning_rate=0.05, subsample=0.8, colsample_bytree=0.6, "
-        "n_jobs=1, seed=42"
+        "tree_method=exact, n_jobs=1, seed=42"
     )
 
 

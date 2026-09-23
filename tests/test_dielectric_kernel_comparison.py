@@ -45,4 +45,6 @@ def test_xgboost_comparison_model_and_config_are_single_threaded() -> None:
     model = _xgboost_model()
 
     assert model.n_jobs == 1
+    assert model.tree_method == "exact"
     assert "n_jobs=1" in _model_config("XGBoost")
+    assert "tree_method=exact" in _model_config("XGBoost")
