@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
+import sys
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+
+from electrolyte_ml.exporting import canonical_text_sha256
+
 NBS514_DOI = "10.6028/nbs.circ.514"
 NBS514_URL = "https://nvlpubs.nist.gov/nistpubs/Legacy/circ/nbscircular514.pdf"
 NBS514_SHA256 = "cb3fa9239fd977d7fa85389fbc219baea69667d5cc7c9e5382b09157fda40683"
@@ -51,14 +55,6 @@ def write_json(path: Path, payload: Mapping[str, object]) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _nbs_row(candidate: Mapping[str, str]) -> dict[str, str]:
@@ -213,12 +209,12 @@ def main() -> int:
             ),
         },
         "inputs": {
-            "v01_sha256": sha256_file(args.v01),
-            "candidate_sha256": sha256_file(args.candidates),
+            "v01_sha256": canonical_text_sha256(args.v01),
+            "candidate_sha256": canonical_text_sha256(args.candidates),
         },
         "output": {
             "path": args.output.relative_to(REPOSITORY_ROOT).as_posix(),
-            "sha256": sha256_file(args.output),
+            "sha256": canonical_text_sha256(args.output),
         },
         "status": "built; independent verification required",
     }

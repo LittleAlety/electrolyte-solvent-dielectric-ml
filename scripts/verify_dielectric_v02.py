@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import sys
 from collections import Counter
@@ -18,6 +17,7 @@ from rdkit import Chem
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
+from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.standardize import GATE_FLAGS
 
 NBS514_SCOPE = "nbs514_manual_static_293.15_303.15K"
@@ -38,14 +38,6 @@ def read_csv_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         return list(reader.fieldnames or ()), list(reader)
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _load_json(path: Path) -> Mapping[str, object]:
@@ -277,9 +269,9 @@ def check_summary_hashes(
         "output": output.get("sha256"),
     }
     actual = {
-        "v01": sha256_file(v01_path),
-        "candidate": sha256_file(candidate_path),
-        "output": sha256_file(v02_path),
+        "v01": canonical_text_sha256(v01_path),
+        "candidate": canonical_text_sha256(candidate_path),
+        "output": canonical_text_sha256(v02_path),
     }
     if expected != actual:
         return Check("v0.2 summary hashes", False, f"expected={expected}, actual={actual}")
