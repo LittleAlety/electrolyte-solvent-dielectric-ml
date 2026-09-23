@@ -385,3 +385,25 @@
 - Independent verifier `scripts/verify_dielectric_target_scaffold.py` passes
   `11/11`, reconstructs scaffold/cluster labels and folds independently from
   SMILES, and reproduces 90 metric rows plus 18,450 predictions.
+
+## 2026-09-23: Week 6 density audit and applicability boundary
+
+- ThermoML density observations within `10 K` of each row's target temperature
+  replace the xTB-estimated molar volume for 66 of 205 successful physical-feature
+  compounds. The remaining 139 rows explicitly retain `molar_volume_source =
+  xtb_estimated`; they are not silently imputed with a near-room value.
+- Experimental density is a feature-source upgrade, not a target correction. The
+  resulting `mu_sq_over_Vm_experimental` column is stored separately from the
+  original estimate so target-transform comparisons can be rerun without
+  changing the experimental labels.
+- The conservative applicability rule flags `HBD >= 1` and predicted
+  dielectric `> 60` as `outside_associated_liquid`. On the fixed 6,150 OOF
+  predictions, 6,120 rows remain inside the domain and 30 are marked outside.
+  This is a disclosure boundary, not a new model score.
+- SpringerMaterials Interactive supplied restricted near-room evidence for 30
+  modern-solvent candidates. Only candidate metadata and reference names enter
+  public outputs; numeric values remain under `data/restricted/springer_materials/`
+  and `public_trainable_value_count` stays zero.
+- Decision: do not promote restricted values into v0.3. Build the public v0.3
+  table only after independently resolving the original literature and its
+  redistribution status.
