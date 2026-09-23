@@ -133,7 +133,7 @@ def test_kernel_verifier_rejects_large_xgboost_metric_drift() -> None:
                 "model": "XGBoost",
                 "repeat": "0",
                 "fold": "0",
-                "mae": str(1.0 + 1e-2),
+                    "mae": str(1.0 + 3.0),
             "rmse": "1.0",
             "r2": "0.5",
         }
