@@ -407,3 +407,23 @@
 - Decision: do not promote restricted values into v0.3. Build the public v0.3
   table only after independently resolving the original literature and its
   redistribution status.
+
+## 2026-09-23: Public v0.3 increment and physical-feature freeze
+
+- Added six nitriles from the publicly available Helambe et al. Pramana
+  article and four remaining eligible NBS Circular 514 records. The resulting
+  `data/dielectric_v03.csv` has 220 compounds and is reproducible from v0.2 plus
+  ten public additions; the independent verifier passes `6/6`.
+- This is not yet the 30-50 modern-solvent target. The remaining search queue
+  stays explicit in `modern_battery_solvent_candidate_queue.csv`; no
+  subscription-only numeric values were promoted into the public table.
+- Experimental density replaced estimated molar volume for 66 of 205 physical
+  feature rows. Under the same 10x5 folds, the density variant slightly reduced
+  R2 for Physical raw/log and Hybrid raw/log, with no compensating MAE or AUC
+  gain. Decision: freeze the original xTB `mu_sq_over_Vm` feature and retain the
+  experimental-density comparison as a negative result.
+- Added a small-data MLP probe with the same folds and `log(epsilon - 1)`
+  target. Its best mean R2 is negative and the Go/Kill result is `no_go`;
+  however, the Physical MLP reaches mean Spearman `0.884` versus `0.830` for
+  the XGBoost hybrid. Decision: treat neural models as ranking diagnostics,
+  not as a replacement for the frozen regression model.

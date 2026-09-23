@@ -1,0 +1,165 @@
+"""Independently verify the public dielectric v0.3 table."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import sys
+from collections import Counter
+from collections.abc import Mapping, Sequence
+from pathlib import Path
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT))
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+
+from electrolyte_ml.exporting import canonical_text_sha256
+from electrolyte_ml.pathing import portable_relative_path
+from scripts.build_dielectric_v03 import (
+    ADDITION_REQUIRED_FIELDS,
+    PUBLIC_REDISTRIBUTION_STATUSES,
+    build_v03_rows,
+    temperature_band,
+)
+
+
+def read_csv_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
+    with path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        return list(reader.fieldnames or ()), list(reader)
+
+
+def verify_v03_rows(
+    rows: Sequence[Mapping[str, str]],
+    *,
+    minimum_additions: int,
+) -> list[str]:
+    errors: list[str] = []
+    additions = [
+        row for row in rows if row.get("dataset_origin") == "v0.3_addition"
+    ]
+    if len(additions) < minimum_additions:
+        errors.append(
+            f"fewer than {minimum_additions} v0.3 additions: {len(additions)}"
+        )
+
+    keys = [str(row.get("inchikey", "")) for row in rows]
+    duplicates = sorted(
+        key for key, count in Counter(keys).items() if key and count > 1
+    )
+    if duplicates:
+        errors.append(f"duplicate InChIKeys: {', '.join(duplicates)}")
+
+    for index, row in enumerate(additions, start=1):
+        missing = [
+            field for field in ADDITION_REQUIRED_FIELDS if not row.get(field)
+        ]
+        if missing:
+            errors.append(
+                f"addition {index} missing fields: {', '.join(missing)}"
+            )
+        status = str(row.get("redistribution_status", ""))
+        if status not in PUBLIC_REDISTRIBUTION_STATUSES:
+            errors.append(f"restricted addition {index}: {status or 'missing status'}")
+        try:
+            expected_band = temperature_band(float(row["T_K"]))
+        except (KeyError, ValueError) as exc:
+            errors.append(f"addition {index} has invalid T_K: {exc}")
+        else:
+            if row.get("temperature_band") != expected_band:
+                errors.append(
+                    f"addition {index} temperature band mismatch: "
+                    f"{row.get('temperature_band')} != {expected_band}"
+                )
+    return errors
+
+
+def _parse_args() -> argparse.Namespace:
+    data_dir = REPOSITORY_ROOT / "data"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--v02", type=Path, default=data_dir / "dielectric_v02.csv")
+    parser.add_argument(
+        "--additions",
+        type=Path,
+        default=data_dir
+        / "processed"
+        / "modern_solvent_public_observations.csv",
+    )
+    parser.add_argument("--output", type=Path, default=data_dir / "dielectric_v03.csv")
+    parser.add_argument(
+        "--summary",
+        type=Path,
+        default=REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json",
+    )
+    parser.add_argument("--minimum-additions", type=int, default=10)
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = _parse_args()
+    _, v02_rows = read_csv_rows(args.v02)
+    _, addition_rows = read_csv_rows(args.additions)
+    _, output_rows = read_csv_rows(args.output)
+    summary = json.loads(args.summary.read_text(encoding="utf-8"))
+    expected_rows = build_v03_rows(
+        v02_rows,
+        addition_rows,
+        minimum_additions=args.minimum_additions,
+    )
+
+    errors = verify_v03_rows(
+        output_rows,
+        minimum_additions=args.minimum_additions,
+    )
+    fields = set(expected_rows[0]) | set(output_rows[0])
+    for field in sorted(fields):
+        if field not in output_rows[0]:
+            errors.append(f"output is missing field: {field}")
+    if len(output_rows) != len(expected_rows):
+        errors.append(
+            f"row count mismatch: {len(output_rows)} != {len(expected_rows)}"
+        )
+    else:
+        for index, (actual, expected) in enumerate(
+            zip(output_rows, expected_rows, strict=True),
+            start=1,
+        ):
+            if any(
+                actual.get(field, "") != expected.get(field, "")
+                for field in fields
+            ):
+                errors.append(f"row {index} does not reproduce from pinned inputs")
+                break
+
+    expected_output_hash = canonical_text_sha256(args.output)
+    recorded_output_hash = summary.get("output", {}).get("sha256")
+    if recorded_output_hash != expected_output_hash:
+        errors.append(
+            "summary output hash mismatch: "
+            f"{recorded_output_hash} != {expected_output_hash}"
+        )
+    expected_additions_hash = canonical_text_sha256(args.additions)
+    recorded_additions_hash = summary.get("inputs", {}).get("additions_sha256")
+    if recorded_additions_hash != expected_additions_hash:
+        errors.append(
+            "summary additions hash mismatch: "
+            f"{recorded_additions_hash} != {expected_additions_hash}"
+        )
+
+    report = {
+        "passed": not errors,
+        "check_count": 6,
+        "passed_count": 6 if not errors else 0,
+        "errors": errors,
+        "row_count": len(output_rows),
+        "addition_count": len(addition_rows),
+        "output": portable_relative_path(args.output, root=REPOSITORY_ROOT),
+        "output_sha256": expected_output_hash,
+    }
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0 if not errors else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
