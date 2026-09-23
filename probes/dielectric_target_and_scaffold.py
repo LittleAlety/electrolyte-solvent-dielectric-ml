@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import random
 import sys
@@ -28,6 +27,7 @@ from rdkit.ML.Cluster import Butina
 from sklearn.model_selection import RepeatedKFold
 from xgboost import XGBRegressor
 
+from electrolyte_ml.exporting import canonical_text_sha256
 from probes.dielectric_representation_ablation import (
     XGB_PARAMS,
     evaluate_repeat,
@@ -599,7 +599,7 @@ def run(
     payload: dict[str, object] = {
         "schema_version": 1,
         "input_path": input_path.relative_to(REPOSITORY_ROOT).as_posix(),
-        "input_sha256": hashlib.sha256(input_path.read_bytes()).hexdigest(),
+        "input_sha256": canonical_text_sha256(input_path),
         "compound_count": len(rows),
         "failed_physical_feature_count": len(failed),
         "target_modes": list(TARGET_MODES),

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import math
+import sys
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
@@ -17,6 +17,10 @@ from scipy.stats import rankdata
 from sklearn.metrics import roc_auc_score
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+
+from electrolyte_ml.exporting import canonical_text_sha256
+
 REPRESENTATIONS = ("Morgan", "Physical", "Morgan+Physical")
 METRICS = (
     "mae",
@@ -148,7 +152,7 @@ def verify(root: Path) -> dict[str, object]:
             "summary counts match source/feature/exclusion artifacts",
         )
     )
-    feature_sha = hashlib.sha256(paths["features"].read_bytes()).hexdigest()
+    feature_sha = canonical_text_sha256(paths["features"])
     checks.append(
         Check(
             "feature hash",
@@ -156,7 +160,7 @@ def verify(root: Path) -> dict[str, object]:
             f"recorded={summary.get('input_sha256')} actual={feature_sha}",
         )
     )
-    exclusion_sha = hashlib.sha256(paths["exclusions"].read_bytes()).hexdigest()
+    exclusion_sha = canonical_text_sha256(paths["exclusions"])
     checks.append(
         Check(
             "exclusion hash",

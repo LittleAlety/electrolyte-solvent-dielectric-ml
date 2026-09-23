@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import sys
 from collections import defaultdict
@@ -30,6 +29,8 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import RepeatedKFold
 from xgboost import XGBRegressor
+
+from electrolyte_ml.exporting import canonical_text_sha256
 
 SEED = 42
 N_SPLITS = 5
@@ -494,14 +495,14 @@ def run_experiment(
     payload: dict[str, object] = {
         "schema_version": 1,
         "input_path": input_path.relative_to(REPOSITORY_ROOT).as_posix(),
-        "input_sha256": hashlib.sha256(input_path.read_bytes()).hexdigest(),
+        "input_sha256": canonical_text_sha256(input_path),
         "source_count": len(source_rows),
         "compound_count": len(rows),
         "excluded_count": len(excluded_keys),
         "excluded_inchikeys": sorted(excluded_keys),
         "exclusions_path": exclusions_path.relative_to(REPOSITORY_ROOT).as_posix(),
         "exclusions_sha256": (
-            hashlib.sha256(exclusions_path.read_bytes()).hexdigest()
+            canonical_text_sha256(exclusions_path)
             if exclusions_path.is_file()
             else None
         ),

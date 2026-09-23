@@ -7,6 +7,7 @@ import csv
 import json
 import math
 import random
+import sys
 from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
@@ -21,6 +22,10 @@ from scipy.stats import rankdata
 from sklearn.metrics import roc_auc_score
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+
+from electrolyte_ml.exporting import canonical_text_sha256
+
 METRICS = (
     "mae",
     "rmse",
@@ -350,8 +355,7 @@ def verify(root: Path) -> dict[str, object]:
     checks.append(
         Check(
             "input hash",
-            summary["input_sha256"]
-            == __import__("hashlib").sha256(feature_path.read_bytes()).hexdigest(),
+            summary["input_sha256"] == canonical_text_sha256(feature_path),
             "summary input hash matches physical-feature artifact",
         )
     )
