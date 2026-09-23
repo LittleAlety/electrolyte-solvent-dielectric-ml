@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import shutil
@@ -70,6 +71,7 @@ ARTIFACTS = (
         "density_feature_comparison.png",
     ),
     ("probes/artifacts/dielectric_mlp_probe.png", "mlp_probe.png"),
+    ("probes/artifacts/model_comparison.png", "model_comparison.png"),
 )
 
 
@@ -109,9 +111,10 @@ def export_results(
     *,
     source_root: Path,
     output_root: Path,
+    overwrite: bool = False,
 ) -> dict[str, object]:
     week_root = output_root / WEEK
-    if week_root.exists():
+    if week_root.exists() and not overwrite:
         raise FileExistsError(f"refusing to overwrite existing output: {week_root}")
     written: list[str] = []
     for source, destination in ARTIFACTS:
@@ -167,10 +170,18 @@ def export_results(
     }
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--overwrite", action="store_true")
+    return parser.parse_args()
+
+
 def main() -> int:
+    args = _parse_args()
     result = export_results(
         source_root=REPOSITORY_ROOT,
         output_root=DEFAULT_OUTPUT_ROOT,
+        overwrite=args.overwrite,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
