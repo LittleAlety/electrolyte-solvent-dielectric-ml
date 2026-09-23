@@ -117,6 +117,11 @@ def export_week3_results(output_dir: Path) -> None:
         / "data_expansion_audit.md",
         REPOSITORY_ROOT / "docs" / "week3" / "manual_dielectric_entry_schema.md": output_dir
         / "manual_dielectric_entry_schema.md",
+        REPOSITORY_ROOT
+        / "data"
+        / "processed"
+        / "landolt_boernstein_2015_pure_liquid_queue.csv": output_dir
+        / "landolt_boernstein_2015_pure_liquid_queue.csv",
     }
     for source, destination in copies.items():
         shutil.copy2(source, destination)
@@ -158,6 +163,9 @@ def export_week3_results(output_dir: Path) -> None:
         "milestone_2_report": "milestone_2.md",
         "data_expansion_docs": "data_expansion_audit.md",
         "manual_dielectric_schema": "manual_dielectric_entry_schema.md",
+        "landolt_boernstein_2015_queue": (
+            "landolt_boernstein_2015_pure_liquid_queue.csv"
+        ),
     }
     (output_dir / "week3_summary.json").write_text(
         json.dumps({"outputs": outputs}, ensure_ascii=False, indent=2) + "\n",

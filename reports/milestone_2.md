@@ -45,6 +45,9 @@ Key facts:
 - The 308 ECW target remains unavailable with zero fabricated rows.
 - Landolt-Börnstein 2015 DOI `10.1007/978-3-662-48168-4` exposes at least 217
   pure-substance chapter metadata records but is closed and requires manual
+  transcription. A metadata-only queue is stored in
+  `data/processed/landolt_boernstein_2015_pure_liquid_queue.csv`; it contains
+  zero transcribed dielectric values and does not count toward v0.2.
   transcription.
 - Landolt-Börnstein IV/17 and the CRC Handbook Permittivity of Liquids page are
   closed/login-gated manual sources. They may contain sufficient quantities,

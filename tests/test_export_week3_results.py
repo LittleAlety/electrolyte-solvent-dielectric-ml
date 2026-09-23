@@ -47,6 +47,7 @@ def test_week3_export_is_self_contained_and_manifested(tmp_path) -> None:
         "milestone_2_report",
         "data_expansion_docs",
         "manual_dielectric_schema",
+        "landolt_boernstein_2015_queue",
     }.issubset(summary["outputs"])
     for relative_path in summary["outputs"].values():
         assert (tmp_path / relative_path).is_file()

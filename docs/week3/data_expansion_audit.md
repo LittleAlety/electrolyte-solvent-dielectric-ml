@@ -88,6 +88,11 @@ A v0.2 compound is eligible only if it has:
 
 The AL Round-1 longlist has 300 rows and the Top30 has 30 rows. They provide
 candidate structures and families, but not validated dielectric observations.
+The Landolt-Börnstein 2015 Crossref metadata query produces
+`data/processed/landolt_boernstein_2015_pure_liquid_queue.csv` with 217
+pure-substance chapter entries. This file contains bibliographic identifiers
+only: no dielectric value, temperature, phase, SMILES, or InChIKey has been
+transcribed, and none of these rows enters v0.2.
 The next work is to search the literature, handbooks, and primary sources for
 at least 100 additional qualifying compounds and record the required metadata.
 
@@ -95,5 +100,6 @@ at least 100 additional qualifying compounds and record the required metadata.
 
 - `probes/data_expansion_summary.json`
 - `data/processed/data_expansion_source_audit.csv`
+- `data/processed/landolt_boernstein_2015_pure_liquid_queue.csv`
 - `reports/milestone_2.md`
 - `docs/week3/manual_dielectric_entry_schema.md`
