@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
+from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.standardize import standardize_molecule
 
 RX_SHA256 = "d30ec1ffccba15538bac0b67157c14e045f1721441be23837c6195eca24a5d87"
@@ -71,7 +72,7 @@ def check_source_file(
             False,
             f"size {path.stat().st_size} != {expected_size}",
         )
-    actual = _sha256_file(path)
+    actual = canonical_text_sha256(path)
     if actual != expected_sha256:
         return Check("P4 RX source", False, f"SHA256 {actual} != {expected_sha256}")
     return Check("P4 RX source", True, "size and SHA256 match pinned source")
@@ -169,7 +170,7 @@ def check_merged_hash(summary: Mapping[str, object], path: Path) -> Check:
     merged = summary.get("merged")
     if not isinstance(merged, Mapping):
         return Check("P4 merged hash", False, "summary merged section is missing")
-    actual = _sha256_file(path)
+    actual = canonical_text_sha256(path)
     if merged.get("sha256") != actual:
         return Check(
             "P4 merged hash",

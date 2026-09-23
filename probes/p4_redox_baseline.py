@@ -25,6 +25,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
+from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.standardize import standardize_molecule
 from probes.dielectric_gpr_baseline import deterministic_split
 
@@ -553,7 +554,7 @@ def run_baseline(
         },
         "merged": {
             "path": merged_path.relative_to(REPOSITORY_ROOT).as_posix(),
-            "sha256": sha256_file(merged_path),
+            "sha256": canonical_text_sha256(merged_path),
             "rows": len(merged_rows),
             "source_counts": dict(Counter(row["source"] for row in merged_rows)),
             "rx_redox_target_rows": len(numeric_rows),
