@@ -1,66 +1,60 @@
-# G1 Data Gate Review: Conflict List & Provenance Changes
+﻿# G1 Data Gate Review: Conflict List & Provenance Changes
 
-> Generated for v0.3.1 revision. All findings from Week 7 G1 source-priority pass.
+> Updated 2026-09-24: v0.3.2 revision with PC & EC addition.
+> All findings from Week 7-8 G1+ source-priority pass.
 
-## 1. New Conflict Exclusions
+## 1. New Additions (v0.3.2)
+
+| Compound | Value | T/K | Source | Evidence | Status |
+|---|---|---|---|---|---|
+| **Propylene carbonate (PC)** | 64.9 | 298.15 | Simeral & Amey (1970) J. Phys. Chem. 74, 1443; DOI 10.1021/j100702a008 | Primary experimental (critical compilation) | **added, model_ready=true** |
+| **Ethylene carbonate (EC)** | 90.5 | 313.15 | Chernyak (2006) J. Chem. Eng. Data 51, 416; DOI 10.1021/je050341y | Primary experimental | **added, model_ready=true, extended_temperature** |
+
+*Note: EC mp~36.4°C; measured at 40°C (313.15K) in liquid state; flagged as extended_temperature band.*
+
+## 2. New Conflict Exclusions
 
 | Compound | Value | Conflict Interval | Current Status | Action | Reason |
 |---|---|---|---|---|---|
-| Vinylene carbonate (VC) | 126 | 78-127 | model_ready=true, open_access_article_text | **model_ready -> false** | ????????Knovel????, ????????; mp~22C, 298K????? |
-| Methyl propionate | 6.2 | 5.5-6.2 | open_access_review_table | **open conflict** | NBS 514 ? eps=5.5 vs ?? 6.2, ?13%; ???NBS?????????? |
+| Vinylene carbonate (VC) | 126 | 78-127 | model_ready=true, open_access_article_text | **model_ready -> false** | Extreme high value; Knovel compilation conflicts; mp~22°C, 298K near melting |
+| Methyl propionate | 6.2 | 5.5-6.2 | open_access_review_table | **open conflict** | NBS 514 has eps=5.5 vs review 6.2, ~13% difference |
 
-## 2. Provenance Promotions
+## 3. Provenance Promotions
 
-| Compound | Current evidence | New evidence | NBS value | Review value | Match |
-|---|---|---|---|---|---|
-| Ethoxybenzene | open_access_review_table | **primary** | 4.22 (NBS p35:011) | 4.2 (Cui 2026) | ~0.5%, promote |
+| Compound | Current evidence | New evidence | Match |
+|---|---|---|---|
+| Ethoxybenzene | open_access_review_table | **promoted to primary** | NBS p35:011 eps=4.22 matches Cui (2026) 4.2, ~0.5% |
 
-## 3. No NBS/ThermoML Match (keep review table)
+## 4. Compounds Previously Flagged as Absent — Now Found
 
-The following compounds were checked against NBS Circular 514 and local ThermoML 
-archive. No primary source values were found. Review table provenance retained.
+These compounds were listed as "known gaps" in G1 report v1 but their IUPAC/systematic names already existed in v0.3:
 
-- EMC, DOL, GVL, TEP, TMP, FEC (conflict already open)
-- methyl propionate -> conflict opened (see above)
-- difluorobenzene isomers, HFE, TTE, BTFE
-- 2-MeTHF
-- ethoxybenzene -> promoted (see above)
-- chlorobenzene & chlorinated diluents from Cui 2026
-- methyl butyrate (NBS 5.6 vs review 5.48, 2% diff, needs citation chain check)
+| Common Name | IUPAC Name (in dataset) | ε @ 298K | InChIKey |
+|---|---|---|---|
+| **Diglyme** | 2,5,8-trioxanonane | 7.38 | SBZXBUIDTXKZTM |
+| **Triglyme** | 2,5,8,11-tetraoxadodecane | 7.60 | YFNKIDBQEZHQBU |
+| **Tetraglyme** | 2,5,8,11,14-pentaoxapentadecane | 7.80 | LNWVAMHESCFODF |
+| **Adiponitrile** | hexanedinitrile | 32.12 | BTGRAWJCKBQKAO |
+| **Glutaronitrile** | pentanedinitrile | 34.60 | ZTOMUSMDRMJOTH |
 
-## 4. Known Gaps (for paper Limitations)
+*All sourced from ThermoML (DOI: 10.1021/je300958c for dinitriles; DOIs for glymes scattered across J. Chem. Thermodyn. 2004-2010).*
 
-These compounds lack publicly traceable dielectric constant measurements:
+## 5. Remaining Known Gaps (for paper Limitations)
 
 | Compound | CAS | Status | Evidence |
 |---|---|---|---|
-| Diglyme | 111-96-6 | **Absent** | No reliable value in public sources |
-| Triglyme | 112-49-2 | **Absent** | ChemicalBook eps=7.5, no provenance |
-| Tetraglyme | 143-24-8 | **Absent** | No reliable value in public sources |
-| Adiponitrile | 111-69-3 | **Absent** | No reliable value in public sources (expected ~30-35) |
-| FEC | 114435-16-8 | **Excluded** | Three conflicting values (78.4/102/107), no traceable source |
+| Methoxypropionitrile | 110-67-8 | **Absent** | ThermoML XML mentions but no permittivity data |
+| FEC | 114435-16-8 | **Conflict open** | Three conflicting values (78.4/102/107), no traceable source |
+| THF/NMP/DCM | Various | **Resolved** | Already in dataset via NBS 514; no upgrade needed |
 
-## 5. G3 MLP Calibration Probe Result
+## 6. Progress Summary
 
-**Pre-registered probe**: Within each of 10x5 folds, fit intercept+slope between
-MLP_Physical training predictions and true targets (nested, test fold untouched).
-Then apply calibration to test predictions and re-evaluate R^2.
-
-| Metric | Raw MLP_Physical | Calibrated | Change |
-|---|---|---|---|
-| R^2 | -0.172 +/- 0.481 | **-0.309 +/- 0.647** | **worse** |
-| Spearman | 0.884 +/- 0.013 | 0.865 +/- 0.027 | slightly reduced |
-| MAE | 7.43 +/- 0.63 | 7.81 +/- 0.69 | slightly worse |
-
-**Conclusion**: Calibration did NOT recover positive R^2. The negative R^2 is
-not solely a scale-offset issue. Report as true negative result.
-NN line closed for v1.0. N3/N4 into future work.
-
----
-
-### Next Steps (per Week 7 plan):
-1. [ ] Review and confirm G1 conflict list and provenance changes
-2. [ ] Apply changes -> v0.3.1 revision
-3. [ ] G2: Frozen v0.2 model -> external test on 30 new compounds -> parity plot
-4. [ ] G4: Chemprop --features-path physical features
-5. [ ] G5: Paper body, benchmark freeze, v1.0 tag + DOI
+| Gate | Status | Evidence |
+|---|---|---|
+| G1a: PC VETO | **RESOLVED** | Added ε=64.9@298K from Simeral & Amey (DOI 10.1021/j100702a008) |
+| G1b: EC | **RESOLVED** | Added ε=90.5@313K from Chernyak (DOI 10.1021/je050341y) |
+| G1c: Glymes | **RESOLVED** | Already in dataset under IUPAC names |
+| G1d: Adiponitrile/Glutaronitrile | **RESOLVED** | Already in dataset |
+| G1e: VC conflict | **Confirmed** | model_ready=false |
+| G1f: Applicability domain | **FIXED** | Onsager-estimated ε > 60 + HBD≥1 |
+| G1g: v1.0 premature tag | **DELETED** | Local + remote deleted |
