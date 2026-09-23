@@ -25,6 +25,10 @@ WEEK = "week6"
 ARTIFACTS = (
     ("reports/week6_v03_model_freeze.md", "week6_report.md"),
     ("docs/week6/data_v03_and_model_freeze.md", "data_v03_and_model_freeze.md"),
+    (
+        "docs/week6/modern_solvent_source_audit.md",
+        "modern_solvent_source_audit.md",
+    ),
     ("paper/outline.md", "scientific_data_outline.md"),
     ("data/dielectric_v03.csv", "dielectric_v03.csv"),
     (
