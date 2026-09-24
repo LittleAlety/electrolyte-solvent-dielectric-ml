@@ -328,7 +328,7 @@ would have hidden. They were fixed at the root rather than by adjusting expectat
 
 | Defect | Evidence | Fix |
 | --- | --- | --- |
-| Two row pitches (24.6 pt / 48.7 pt) left the formula of wrapped rows 36.3 pt below the label, past the 35 pt cap | rows 88 (DFEME) and 89 (TFEME) had no formula | Per-line clustering (2.5 pt gap) plus a 45 pt cap whose real bound is the next row label |
+| Two row pitches (24.6 pt / 48.7 pt) put a wrapped row's formula 36.3 pt below its label; no fixed dy window can separate it from the neighbour row | rows 88 (DFEME) and 89 (TFEME) had no formula | Per-line clustering (2.5 pt gap); the block is bounded by the next row label, with no dy window |
 | Names were read from the label line only | row 88 was `1,1 - Difluoro 2 (2` | Names are reassembled line by line down to the formula line; continuation lines must start in the name column (x<=250) and value tokens are refused |
 | The block was bounded per page | rows 43 (MOPN) and 116 print their formula at the top of the following page | Block boundaries moved to document order `(page, -y)`; both formulas recovered |
 | The duplicate guard dropped a token whenever it appeared inside an earlier one | `1` inside `91.` and `Me` inside `Methyl` were deleted | Only same-coordinate duplicates are dropped, with a word-boundary test for multi-character chunks |
