@@ -115,6 +115,39 @@ ARTIFACTS = (
         "g1plus_citation_trace_evidence.json",
     ),
     ("probes/artifacts/domain_gap_parity.png", "g2_domain_gap_parity.png"),
+    (
+        "reports/manual_appendix_reconciliation.md",
+        "manual_appendix_reconciliation.md",
+    ),
+    (
+        "probes/manual_appendix_reconciliation.py",
+        "manual_appendix_reconciliation.py",
+    ),
+    (
+        "probes/manual_appendix_reconciliation.json",
+        "manual_appendix_reconciliation.json",
+    ),
+    (
+        "data/reference/dielectric_molecule_aliases.csv",
+        "dielectric_molecule_aliases.csv",
+    ),
+    ("reports/nbs514_frequency_gate_audit.md", "nbs514_frequency_gate_audit.md"),
+    (
+        "probes/nbs514_frequency_gate_audit.py",
+        "nbs514_frequency_gate_audit.py",
+    ),
+    (
+        "probes/nbs514_frequency_gate_audit.json",
+        "nbs514_frequency_gate_audit.json",
+    ),
+    (
+        "reports/g1plus_crawl_round2_findings.md",
+        "g1plus_crawl_round2_findings.md",
+    ),
+    (
+        "probes/g1plus_crawl_round2_evidence.json",
+        "g1plus_crawl_round2_evidence.json",
+    ),
 )
 VERIFIERS = (
     "scripts/verify_dielectric_v02.py",
@@ -203,6 +236,24 @@ def export_results(
                 "train_count": g2["train_count"],
                 "test_count": g2["test_count"],
                 "metrics": g2["metrics"],
+            },
+            "roster_reconciliation": {
+                "manual_artifact": "reports/manual_appendix_reconciliation.md",
+                "summary_artifact": "probes/manual_appendix_reconciliation.json",
+                "alias_registry": "data/reference/dielectric_molecule_aliases.csv",
+                "claims_re_derived": 6,
+                "claims_confirmed_and_closed": 4,
+                "claims_false_negative": 2,
+                "false_negative_claims": [
+                    "diglyme/triglyme/tetraglyme reported absent; present in every version since v0.1 under IUPAC-type names",
+                    "glutaronitrile reported absent; present in every version since v0.1 as pentanedinitrile",
+                ],
+                "guard": (
+                    "tests/test_manual_appendix_reconciliation.py fails if a glyme or "
+                    "dinitrile leaves any dataset version, if the alias registry drifts "
+                    "from the stored names, or if the working manual re-asserts the "
+                    "false negative"
+                ),
             },
             "g1plus": {
                 "tier0_local_sources": "242/242 ThermoML dielectric XML; 636 NBS rows",

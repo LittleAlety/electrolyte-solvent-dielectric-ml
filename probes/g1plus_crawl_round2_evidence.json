@@ -1,0 +1,190 @@
+{
+  "schema_version": "g1plus_crawl_round2_evidence/v1",
+  "generated_at_utc": "2026-09-24T14:48:58+00:00",
+  "scope": {
+    "task": "G1+ crawl round 2 - open primary sources for the modern battery-solvent candidate queue",
+    "network_used_by_coordinator": false,
+    "coordinator_adjudication": "local only; every agent claim was re-checked against a tracked cache before being accepted",
+    "external_http_calls": 39,
+    "external_http_call_budget_per_hour": 500,
+    "agents": [
+      {
+        "nickname": "Kant",
+        "assignment": "vinylene carbonate and fluoroethylene carbonate conflict closure",
+        "http_calls": 12
+      },
+      {
+        "nickname": "Averroes",
+        "assignment": "sulfones, sulfoxides and hydrofluoroethers",
+        "http_calls": 15
+      },
+      {
+        "nickname": "Aquinas",
+        "assignment": "nitriles, carbonates and fluorinated esters",
+        "http_calls": 12
+      }
+    ],
+    "rate_limit_notes": [
+      "Two OpenAlex requests returned HTTP 429 during the round; no retry storm was issued.",
+      "Crossref was reachable throughout; Europe PMC full-text XML was reachable for open-access records."
+    ]
+  },
+  "outcome": {
+    "new_ingestable_static_values": 0,
+    "claims_rejected_after_local_adjudication": 3,
+    "independent_corroborations": 2,
+    "sources_blocked_on_access": 1,
+    "candidates_still_restricted_only": 19
+  },
+  "findings": [
+    {
+      "finding_id": "crawl2_isobutyronitrile_frequency_gate",
+      "molecule": "isobutyronitrile",
+      "queue_candidate": "modern:013",
+      "agent_claim": "NBS Circular 514 gives an open value 20.4 at 297.15 K",
+      "verdict": "rejected_frequency_gated",
+      "reason": "The transcript records f=3.6x10^8 cycles/sec, a 360 MHz measurement inside the dispersion region. The NBS Circular 514 import rule excludes rows carrying an explicit frequency note; this is not a project-wide zero-frequency-only contract, and 360 MHz is not a justifiable static_low_frequency protocol.",
+      "local_evidence": {
+        "path": "data/interim/nbs514_organic_part1.csv",
+        "line": 147,
+        "record": "nbs514:p20:009,20,C. ORGANIC LIQUIDS,C4H7N,Isobutyronitrile,20.4,24,297.15,,,,13,f=3.6x10^8 cycles/sec,three_figures,candidate_near_room"
+      },
+      "machine_check": "probes/nbs514_frequency_gate_audit.json: All 127 frequency-noted transcript rows are absent from data/dielectric_v03.csv."
+    },
+    {
+      "finding_id": "crawl2_butyronitrile_frequency_gate_precedent",
+      "molecule": "butyronitrile",
+      "queue_candidate": "modern:009",
+      "agent_claim": "the neighbour row is p20:008, 20.3 at 294.15 K",
+      "verdict": "rejected_frequency_gated_precedent",
+      "reason": "The same frequency note applies. The dataset instead carries butanenitrile at 22.0 at 298.15 K from an independent primary source, so the frequency-gated NBS route was already declined once.",
+      "local_evidence": {
+        "path": "data/interim/nbs514_organic_part1.csv",
+        "line": 146,
+        "record": "nbs514:p20:008,20,C. ORGANIC LIQUIDS,C4H7N,Butyronitrile,20.3,21,294.15,,,,13,f=3.6x10^8 cycles/sec,three_figures,candidate_near_room",
+        "dataset_row": "data/dielectric_v03.csv, butanenitrile (KVNRLNFWIYMESJ-UHFFFAOYSA-N), 22.0 at 298.15 K, source 10.1007/BF02848094"
+      }
+    },
+    {
+      "finding_id": "crawl2_methyl_trifluoromethyl_ether_identity_conflict",
+      "molecule": "methyl trifluoromethyl ether",
+      "queue_candidate": "modern:024",
+      "agent_claim": "open primary value 9.28 at 302.8 K from ThermoML 10.1021/je7000446",
+      "verdict": "rejected_identity_and_pressure",
+      "reason": "The deposited compound 1 (which owns the 9.28 series) is not the queue candidate, and the record contains no ambient-pressure measurement. The XML also deposits a second, oxygen-bearing compound (C3H3F5O, methyl pentafluoroethyl ether), but the 9.28 series does not belong to it.",
+      "local_evidence": {
+        "path": "data/raw/thermoml/10.1021__je7000446-d4038df0df10.xml",
+        "citation_title": "Relative Permittivity Measurements of Trifluoromethyl Methyl Ether and Pentafluoroethyl Methyl Ether",
+        "citation_abstract_quote": "The relative permittivities ( r) of trifluoromethyl methyl ether (HFE 143a) and pentafluoroethyl methyl ether (HFE 245mc) were measured as a function of temperature and pressure: (303 to 383) K and (1.5 to 31.6) MPa for HFE 143a and (313 to 323) K and (1.5 to 28.4) MPa for HFE 245mc.",
+        "deposited_compound_1": {
+          "inchikey": "UJPMYEOUBPIPHQ-UHFFFAOYSA-N",
+          "formula": "C2H3F3",
+          "common_names": [
+            "1,1,1-trifluoroethane",
+            "CFC 143A",
+            "Freon 143a",
+            "R-143a",
+            "methylfluoroform"
+          ]
+        },
+        "deposited_compound_2": {
+          "inchikey": "GCDWNCOAODIANN-UHFFFAOYSA-N",
+          "formula": "C3H3F5O",
+          "common_names": [
+            "methyl pentafluoroethyl ether"
+          ]
+        },
+        "extracted_rows": "data/processed/dielectric_raw.csv carries 174 rows for this DOI as frequency_dependent: 136 for 1,1,1-trifluoroethane and 38 for methyl pentafluoroethyl ether. There is no methyl trifluoromethyl ether row.",
+        "condition_check": "The 14 near-303 K rows are all at pressures from 1600 to 30700 kPa at 0.06 MHz; the lowest-pressure value is 9.28 at 302.8 K and 1600 kPa. No ambient-pressure value exists in the record.",
+        "raw_sha256": "30a145c4f0c4dafec0f2a6ff2f79b597fce2314c0baeb5b393ad5ba8165d737c",
+        "tracked_extraction_binding": {
+          "path": "data/processed/dielectric_raw.csv",
+          "statement": "The tracked extraction for DOI 10.1021/je7000446 binds the 9.28 value to compound 1: temperature_k=302.8, pressure_kpa=1600, frequency_mhz=0.06, primary_name=1,1,1-trifluoroethane, primary_inchi_key=UJPMYEOUBPIPHQ-UHFFFAOYSA-N. The 14 rows at 302.8 K span 1600-30700 kPa, so no ambient-pressure observation exists for this record.",
+          "near_303K_rows": 14,
+          "pressure_range_kpa": [
+            1600,
+            30700
+          ]
+        }
+      },
+      "interpretation": "The NIST deposition assigns compound 1 the formula C2H3F3 (an HFC, R-143a) while the paper title and abstract name an ether (HFE 143a, which would contain oxygen). The identity conflict is upstream of this repository: the local extractor faithfully carried the deposited compound. Either way the row cannot supply an ambient static permittivity for modern:024, and the candidate stays restricted-only."
+    },
+    {
+      "finding_id": "crawl2_propanenitrile_corroboration",
+      "molecule": "propanenitrile",
+      "queue_candidate": "modern:008",
+      "agent_claim": "NBS Circular 514 p17:014 gives 27.2 at 293.15 K",
+      "verdict": "corroborates_existing_row",
+      "reason": "The dataset already carries propionitrile at 27.2 at 293.15 K from the same source, so no change is needed. NBS 514 does not list Vuks, so this is a value-level corroboration, not proof of a shared primary measurement.",
+      "local_evidence": {
+        "dataset_row": "data/dielectric_v03.csv, Propionitrile (FVSKHRXBFJPNKK-UHFFFAOYSA-N), 293.15 K, 27.2, source 10.6028/nbs.circ.514"
+      }
+    },
+    {
+      "finding_id": "crawl2_fec_78_40_relay_named",
+      "molecule": "fluoroethylene carbonate",
+      "agent_claim": "ECW-308 Table S3 row 166 gives 78.40 and cites Flamme 2017 and Deng 2020",
+      "verdict": "corroborated_locally",
+      "reason": "The 78.40 leg and its two upstream citations are now verifiable in the cached supplement text. The upstream tables themselves remain unretrieved, so the leg stays a compilation relay.",
+      "local_evidence": {
+        "path": "data/external/g1plus/compilations/adfm202212342-sup-0001-SuppMat.txt",
+        "line": 5879,
+        "record": "C3H3FO3 17.30 210.00/249.50 4.10 78.40 5.00 130.00 [16, 42]",
+        "citations": "[16] B. Flamme et al.; [42] K. Deng et al. (Energy Storage Materials)"
+      }
+    },
+    {
+      "finding_id": "crawl2_fec_102_relay_unverified",
+      "molecule": "fluoroethylene carbonate",
+      "agent_claim": "the iScience Table 3 value 102 relays to Xie et al. 2023, Angew. Chem. Int. Ed., DOI 10.1002/anie.202216934",
+      "verdict": "reported_unverified_locally",
+      "reason": "The relay was read by the agent from the open-access Europe PMC XML but was not re-verified against a tracked cache, and no evidence establishes that the upstream paper is an original measurement. The 102 leg therefore stays unresolved and the row stays excluded.",
+      "local_evidence": {
+        "dataset_row": "data/dielectric_v03.csv, fluoroethylene carbonate, 102 at 298.15 K, source 10.1016/j.isci.2026.115778 Table 3, conflict_status public_values_78.4_102_107"
+      }
+    },
+    {
+      "finding_id": "crawl2_vc_primary_blocked",
+      "molecule": "vinylene carbonate",
+      "agent_claim": "no legitimate open route to the Saadi & Lee 1966 numeric value",
+      "verdict": "blocked_on_publisher_access",
+      "reason": "The 1966 abstract states only that the dielectric constant was measured; it carries no number, temperature, table or digit count. Semantic Scholar reports the PDF as CLOSED, and NBS Circular 514 does not contain vinylene carbonate. This is an access block, not 'no value exists'.",
+      "local_evidence": {
+        "dataset_row": "data/dielectric_v03.csv, vinylene carbonate, 126 at 298.0 K, conflict_status conflict_open, not promoted to primary",
+        "dois": [
+          "10.1039/j29660000005",
+          "10.1149/2.1351810jes",
+          "10.6028/nbs.circ.514"
+        ]
+      }
+    },
+    {
+      "finding_id": "crawl2_candidates_still_restricted_only",
+      "molecule": "succinonitrile, cyclopentanecarbonitrile, and the sulfone / sulfoxide / hydrofluoroether families",
+      "verdict": "restricted_only_after_this_budget",
+      "reason": "No open primary measurement was located within this round's call budget. Each has a named primary lead or an explicit absence of one; none was retired as 'no data'.",
+      "primary_leads": [
+        "succinonitrile - Lafontaine 1958; local NBS 514 index has no row",
+        "cyclopentanecarbonitrile - Philippe 1955",
+        "dimethyl sulfone - Casteel 1974 and Borovikov 1973 leads only",
+        "methyl propyl sulfone and butyl methyl sulfone - Kolosnitsyn et al., Elektrokhimiya 27 (1991) 940",
+        "methyl trifluoromethyl sulfone - Egorov 1978",
+        "dipropyl sulfone and dipropyl sulfoxide - Casteel 1974",
+        "diethyl sulfoxide - Gabrielian 2004 and Markarian 2011",
+        "perfluorobutyl propyl ether, ethyl perfluoropentyl ether and the tetrafluoro ethers - Nakazawa et al., Trans. Jpn. Soc. Refrig. Air Cond. Eng. 18 (2001) 263 (journal paper, not a conference paper or patent; open full text not verified)",
+        "oxybis[(difluoromethoxy)difluoromethane] and 1,2-bis(difluoromethoxy)-1,1,2,2-tetrafluoroethane - Marchionni et al., J. Fluorine Chem. 98 (1999) 41; also Fontana et al., Fluid Phase Equilib. 174 (2000) 41"
+      ]
+    }
+  ],
+  "dataset_impact": {
+    "rows_before": 246,
+    "rows_after": 246,
+    "canonical_sha256": "57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab",
+    "statement": "No dielectric value, temperature, evidence level, model_ready flag or conflict status changed in this round."
+  },
+  "honest_boundary": [
+    "'Not found in this budget' is not 'no value exists': most of the restricted candidates were searched through Crossref, OpenAlex and Europe PMC metadata only.",
+    "Agent-reported citations were accepted only when re-checked against a tracked local cache; unverified relays are marked as such.",
+    "The compressed-liquid hydrogen-bonding-free ether values are a pressure-driven observable the dataset has no column for; the zero_frequency-or-static_low_frequency rule does not by itself admit them."
+  ]
+}

@@ -1065,3 +1065,98 @@ initially, now 14) after
   4.75 GB `GSDS_Prior_Finetune.zip` 未下载未解包。
 - **预算。** 本轮外部调用共 3 次（Crossref 1 / OpenAlex 1 / ACS 403 探测 1），其余全部为本地
   重算，远低于每小时 500 次上限。
+
+## 2026-09-24（续四）：附录 I/J 名册对账——三种 glyme 与戊二腈是假阴性，不是缺口
+
+- **决定。** 不再把「diglyme/triglyme/tetraglyme 与 glutaronitrile 缺席」当作补录任务或
+  v1.0 冻结理由；同时确认附录 I §A 的另外三条（PC、EC、MOPN 缺席）是**真缺口且已闭合**。
+- **触发原因。** 附录 I §A 第 1 条把五个分子列为"三版本全部缺席"，但附录 J 的回执（第 0 梯队）
+  又写明三种 glyme 在本地 ThermoML 里有 298.15 K 观测。同一份手册内部自相矛盾，且在派发任务前
+  我用俗名（"glyme"）检索名册时也复现了同一个假阴性，因此决定用 InChIKey 口径整条重算。
+- **证据（可复算）。** 新探针 `probes/manual_appendix_reconciliation.py` 对
+  v0.1 / v0.2 / v0.3.1 / v0.3.2 / v0.3 五个冻结版本按 InChIKey 重算 6 条子断言：
+  - 成立且已闭合 4 条：PC（v0.1–v0.3.1 缺席，v0.3.2 加入）、EC（同上）、
+    `extended_temperature` 扩展带（v0.3.1 为 0 行 → v0.3.2 起 1 行）、MOPN（v0.3.2 前缺席，
+    v0.3 加入且维持 `model_ready=false`）；
+  - **假阴性 2 条**：三种 glyme 与 glutaronitrile（adiponitrile 同理）**自 v0.1 起就在库**。
+    库内存储名为 `2,5,8-trioxanonane` / `2,5,8,11-tetraoxadodecane` /
+    `2,5,8,11,14-pentaoxapentadecane` / `hexanedinitrile` / `pentanedinitrile`，
+    与文献俗名**零 token 重叠**，故任何按俗名或按错误 InChIKey 的检索都必然落空。
+  - 同类错误此前已发生过一次：`probes/g1plus_tier0_evidence.json` 的
+    `method.incorrect_prior_keys_not_used` 记录过 triglyme 的错键 `YFNKIDBQEZHQBU-…`
+    与 tetraglyme 的错键 `LNWVAMHESCFODF-…`。错键检索与俗名检索的失败模式完全相同，
+    都会给出一个自信的"缺席"。
+- **产物。** `reports/manual_appendix_reconciliation.md`、
+  `probes/manual_appendix_reconciliation.json`（schema `manual_appendix_reconciliation/v1`）、
+  `data/reference/dielectric_molecule_aliases.csv`（23 分子 / 87 别名，含存储名、文献俗名、
+  缩写与系统同义词）、`tests/test_manual_appendix_reconciliation.py`（13 项）。
+- **防复发装置（这是本条的主要价值）。** 注册表以**数据集为权威**校验存储名；探针逐分子报告
+  "按俗名检索是否会命中"，并给出恰好 5 个 token 不相交的分子；回归测试在三类回归上失败：
+  任何 glyme/dinitrile 离开任一版本、注册表与存储名漂移、**或工作手册重新出现被推翻的断言**。
+  最后一条已实际生效：测试先在手册上判 FAIL（第 336 行三处过期句），修正手册后才转绿。
+- **手册同步。** `执行手册_探针与周计划.md` 第 336/337/357 行已就地更正（保留原判文字 +
+  `【已对账更正】` 标记）：① 三种 glyme 与 glutaronitrile 假阴性；② 适用域修复的原拟方案
+  （Onsager ε>60 + HBD≥1）**已被实测否决**（ε>60 覆盖率 0/150），实际采用结构给体判据；
+  ③ 两项一票否决均已闭合，冻结前真正的剩余项改为 VC/FEC/MOPN 与 tier 3–4 权限阻断。
+  备份 `执行手册_探针与周计划.md.bak-20260924-recon`。
+- **未变的部分（复核过，不是假设）。** 无任何 `dielectric`、`T_K`、`evidence_level`、
+  `model_ready`、`conflict_status` 或数据集字节变化；`data/dielectric_v03.csv` 仍为
+  246 行 × 38 列，canonical SHA-256 仍为
+  `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`。
+  这是溯源与 QA 更正，不是数据修订。
+- **诚实边界。** `name_search_would_miss` 是注册别名上的**有界词法**启发式：仅当俗名为存储名
+  字符串的子串，或双方共享一个 ≥4 字符且**不在通用词禁用表**（methyl/carbonate/sulfone 等）中的 token 时，
+  才判为可检索；未注册俗名时记 `null`（无法判断），不默认为 miss。它对底层测量正确性不发言。
+- **预算。** 本轮外部调用 **0 次**（全部为本地重算），未触碰每小时 500 次上限。
+
+## 2026-09-24（续五）：G1+ 第二轮爬取——三条"新增值"全部被本地核实否决
+
+- **决定。** 本轮三个只读 agent 的爬取结果**一条都不入库**：三条看似新增的静态值各自因
+  不同原因不成立，另有两条经核实只是佐证。数据集保持 246 行不变。
+- **并行编排与预算。** 三个只读 agent（Kant = VC/FEC；Averroes = 砜/亚砜/氢氟醚；
+  Aquinas = 腈/碳酸酯/氟化酯）共 **39 次外部 HTTP 调用**（12/15/12），远低于每小时 500 次上限；
+  两次 OpenAlex 返回 429，未做重试风暴。**所有 agent 声称的引文在采纳前都回到本地缓存复核过。**
+- **被否决的三条（每条都会以不同方式污染数据集）。**
+  1. **isobutyronitrile 20.4 @ 297.15 K（NBS 514 p20:009）**——转写行同时带
+     `f=3.6x10^8 cycles/sec`（360 MHz 频散区）。**真正起作用的规则是 NBS 导入规则，不是全项目
+     zero-frequency 契约**：`scripts/resolve_nbs514_structures.py` 对任何非空 `frequency_note` 记
+     `frequency_dependent` 排除，`scripts/build_dielectric_v02.py` 拒绝导入此类行；而 schema 本身
+     允许**显式论证的 `static_low_frequency`**（EC 的 1 MHz 测量即由此进主表，见
+     `docs/week3/manual_dielectric_entry_schema.md`）。实测：**127/127 带微波频率标注的转写行
+     全部不在数据集中**，而数据集内 **110 条** NBS 继承行带 `zero_frequency` 门旗；同页
+     `p20:008` butyronitrile 正是先例（未采用 20.3 @ 294.15 K，改用独立 primary 22.0 @ 298.15 K）。
+     产物 `probes/nbs514_frequency_gate_audit.json` / `reports/nbs514_frequency_gate_audit.md`。
+  2. **methyl trifluoromethyl ether 9.28 @ 302.8 K（ThermoML `10.1021/je7000446`）**——
+     本地 XML 显示，**9.28 系列所属的 compound 1 是 `C2H3F3` / `UJPMYEOUBPIPHQ-UHFFFAOYSA-N` /
+     "1,1,1-trifluoroethane, CFC 143A, Freon 143a, R-143a"**，即不含氧的 HFC，与标题所称的醚
+     （HFE 143a 应含氧）不是同一物质；且记录自述条件为 **1.5–31.6 MPa、303–383 K**，近 303 K 的
+     14 行压力从 1.6 MPa（9.28）到 30.7 MPa（10.51），**没有任何常压值**。身份与条件各自独立致命；
+     数据集没有压力列，压缩液测量不是常压静态介电常数。同一 XML 另有 **compound 2 = `C3H3F5O` /
+     `GCDWNCOAODIANN-UHFFFAOYSA-N`（methyl pentafluoroethyl ether）**，但 9.28 系列不属于它。
+     身份冲突在**上游 NIST 沉积**，本地抽取器
+     忠实转写了它。`modern:024` 维持 restricted-only。
+  3. **其余 19 个候选（succinonitrile、cyclopentanecarbonitrile、7 个砜/亚砜、10 个氢氟醚）**——
+     本预算内未找到开放一次来源，**全部保留具名 primary 线索**（Nakazawa 2001、Marchionni 1999、
+     Casteel 1974、Kolosnitsyn 1991、Egorov 1978、Markarian 2011 等），**一条都没有写成"无数据"**。
+- **两条佐证（不构成数据变更）。** ① propanenitrile：NBS 514 `p17:014` = 27.2 @ 293.15 K，
+  与库内同一 record_id 的行完全一致（但 NBS 未列 Vuks，不能证明同一次测量）；
+  ② FEC 78.40 段：ECW-308 补充材料第 5879 行逐字复核为
+  `C3H3FO3 17.30 210.00/249.50 4.10 78.40 5.00 130.00 [16, 42]`，其上游 relay 现已具名
+  （[16] Flamme 等、[42] Deng 等 `Energy Storage Materials`），但上游表格仍未取得，故该段仍是汇编转引。
+- **仍未闭环（未静默关闭）。** VC 维持 `conflict_open`：1966 摘要只有"已测量"而无数值、温度、
+  表号与位数，Semantic Scholar 标记 PDF 为 CLOSED，NBS 514 未收录该物质——属**出版商访问阻断**，
+  不是"查无此值"，也未升级为 primary。FEC 维持 `model_ready=false`：78.4/107 两段已有具名 relay，
+  102 段被 agent 报为转引 Xie et al. 2023（`10.1002/anie.202216934`）**但未经本地缓存复核**，
+  且无证据表明其为原始测量；三个值条件不明或各自名义 25 °C，不构成同条件比较。
+- **产物。** `probes/g1plus_crawl_round2_evidence.json`、
+  `reports/g1plus_crawl_round2_findings.md`、`reports/nbs514_frequency_gate_audit.md`、
+  `probes/nbs514_frequency_gate_audit.py`、`tests/test_g1plus_crawl_round2.py`、
+  `tests/test_nbs514_frequency_gate_audit.py`。
+- **未变的部分（复核过，不是假设）。** 数据集仍 246 行 × 38 列，canonical SHA-256 仍为
+  `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`；
+  无任何数值、温度、证据等级、`model_ready` 门控或冲突状态变化。本轮的产出是**裁定**：
+  三条各自会以"频散测量 / 错配化合物 / 压缩液条件"污染数据集，现已连理由一起留档。
+- **审查收口。** 本轮提交包经对抗式复审（Hubble）两轮检查：首轮 4 Important + 4 Minor
+  全部修复；差异复审 **PASS（Critical 0 / Important 0）**。收口门禁为全量 `pytest` **640 passed**、
+  `ruff check .` **All checks passed**；数据集 canonical SHA-256 仍为
+  `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`。

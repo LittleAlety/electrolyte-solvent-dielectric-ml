@@ -1,0 +1,86 @@
+{
+  "schema_version": "nbs514_frequency_gate_audit/v1",
+  "generated_at_utc": "2026-09-24T15:08:40+00:00",
+  "scope": {
+    "question": "Are NBS Circular 514 rows with an explicit microwave frequency note inside the static dielectric dataset?",
+    "network_used": false,
+    "rule_applied": "The NBS Circular 514 import path excludes every row carrying an explicit frequency note.",
+    "rule_sources": [
+      "scripts/resolve_nbs514_structures.py: exclusion reason 'frequency_dependent' for any non-empty frequency_note",
+      "scripts/build_dielectric_v02.py: raises when a selected NBS row carries a frequency_note",
+      "docs/week3/manual_dielectric_entry_schema.md: frequency_type must be zero_frequency or an explicitly justified static_low_frequency protocol"
+    ],
+    "why_360_mhz_is_not_static_low_frequency": "3.6x10^8 cycles/sec sits inside the dispersion region; it is not a low-frequency protocol that could be justified the way the 1 MHz ethylene carbonate measurement is.",
+    "transcript_files": [
+      "data/interim/nbs514_organic_part1.csv",
+      "data/interim/nbs514_organic_part2.csv",
+      "data/interim/nbs514_organic_part3.csv",
+      "data/interim/nbs514_organic_part4.csv"
+    ],
+    "static_dataset": "data/dielectric_v03.csv"
+  },
+  "transcript": {
+    "rows": 636,
+    "distinct_compounds": 626,
+    "frequency_noted_rows": 127,
+    "frequency_note_values": {
+      "f = 3.6x10^8 cycles/sec": 2,
+      "f = 4x10^8 cycles/sec": 1,
+      "f = 5x10^8 cycles/sec": 4,
+      "f=3.6x10^8 cycles/sec": 27,
+      "f=4x10^8 cycles/sec": 35,
+      "f=5x10^8 cycles/sec": 57,
+      "f=5x10^8 cycles/sec (reference 60)": 1
+    },
+    "frequency_noted_eligibility_statuses": {
+      "candidate_exception": 2,
+      "candidate_near_room": 125
+    }
+  },
+  "static_dataset": {
+    "path": "data/dielectric_v03.csv",
+    "canonical_sha256": "57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab",
+    "rows": 246,
+    "nbs_sourced_rows": 114,
+    "nbs_rows_carrying_zero_frequency_gate": 110,
+    "nbs_rows_without_gate_flags": 4
+  },
+  "cross_check": {
+    "frequency_noted_rows_present_in_static_dataset": 0,
+    "frequency_noted_rows_absent_from_static_dataset": 127,
+    "frequency_noted_rows_also_modern_queue_candidates": 1,
+    "modern_queue_candidates_gated_by_frequency": [
+      {
+        "source_id": "nbs514:p20:009",
+        "compound_name": "Isobutyronitrile",
+        "dielectric": "20.4",
+        "T_K": "297.15",
+        "frequency_note": "f=3.6x10^8 cycles/sec",
+        "eligibility_status": "candidate_near_room"
+      }
+    ]
+  },
+  "crawl_targets": [
+    {
+      "source_id": "nbs514:p20:008",
+      "compound_name": "Butyronitrile",
+      "formula": "C4H7N",
+      "dielectric": "20.3",
+      "T_K": "294.15",
+      "frequency_note": "f=3.6x10^8 cycles/sec",
+      "eligibility_status": "candidate_near_room",
+      "present_in_static_dataset": false
+    },
+    {
+      "source_id": "nbs514:p20:009",
+      "compound_name": "Isobutyronitrile",
+      "formula": "C4H7N",
+      "dielectric": "20.4",
+      "T_K": "297.15",
+      "frequency_note": "f=3.6x10^8 cycles/sec",
+      "eligibility_status": "candidate_near_room",
+      "present_in_static_dataset": false
+    }
+  ],
+  "conclusion": "Every NBS Circular 514 row carrying an explicit microwave frequency note is outside the static dataset, and the two p20 butyronitrile / isobutyronitrile entries are no exception. The isobutyronitrile crawl hit is therefore a frequency-gated observation, not an ingestable static permittivity: importing it would overrule the NBS frequency-note exclusion applied to all 127 frequency-noted transcript rows, and 360 MHz is not a justifiable static low-frequency protocol. This is not a claim that the project admits zero-frequency data only: the schema also allows an explicitly justified static_low_frequency protocol."
+}
