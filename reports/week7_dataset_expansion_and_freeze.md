@@ -10,10 +10,12 @@ conditions in Appendix I are met.
 > "78.4 / 102 / 107" statements below record the state at the Week-7 freeze.
 > The dataset at the v0.3.11 re-pin was **v0.3.11** (`765fd8e0...646b60`): the
 > stored 102 was shown to be the flash point, leaving 78.4 vs 107 as the
-> dielectric legs. As of v0.3.12 the current dataset is **v0.3.12**
+> dielectric legs. As of v0.3.12 the dataset was **v0.3.12**
 > (`1b285fe8...22456`): FEC now stores 78.4 at 296.15 K from its primary
 > measurement, and vinylene carbonate carries primary-source metadata. Both
-> rows remain `model_ready=false`, so no benchmark row moved.
+> rows remain `model_ready=false`, so no benchmark row moved. v0.3.13 changes
+> only FEC's `conflict_status` and `notes` (the 107-leg compilation read plus the addendum registering the downstream 40 C restatement of the 78.4 leg) and moves the current digest to
+> `a446c216...c01085`; no `model_ready=true` row moved.
 
 ## Outcome
 
@@ -87,9 +89,10 @@ Playwright, i.e. the same route a human reader takes.
   `conflict_status=knovel_78_127_interval_contains_primary_value` and remains
   excluded from the model-ready set.
 - **FEC**: v0.3.12 moved the stored value from 102 to the primary 78.4
-  measurement (Kobayashi 2003 Table 2, 296.15 K). Only the 107 leg
-  (Ue 2014 Table 2.3 read through Hall 2018; Hagiyama 2008 blocked) remains
-  unread, so the row stays excluded from the model-ready set.
+  measurement (Kobayashi 2003 Table 2, 296.15 K). v0.3.13 then read the 107
+  value at compilation level in Ue 2014 Table 2.3 (printed p.101), whose body
+  text attributes the FEC data to Hagiyama 2008 [25]; Hagiyama 2008 itself
+  remains unread, so the row stays excluded from the model-ready set.
 - **3-methoxypropionitrile**: the value and its 25 C condition are both
   citable to the open-access thesis (Tableau 4 and Tableau 14). The row still
   stays out of the model-ready set for two independent reasons, neither of them
@@ -112,12 +115,13 @@ Playwright, i.e. the same route a human reader takes.
 ## Verification
 
 - `scripts/verify_dielectric_v03.py`: 7/7 checks, 246 rows,
-  sha256 `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456` (v0.3.11 was `765fd8e0...646b60`;
-  re-pinned in v0.3.6 by the PubChem tier-1 cross-check notes on acetonitrile
-  and sulfolane, then in v0.3.10 by the 3-methoxypropionitrile temperature
-  correction, then in v0.3.11 by the FEC flash-point conflict correction, then
-  in v0.3.12 by the FEC primary-value promotion; no revision has moved a
-  numeric value in a `model_ready=true` row)
+  sha256 `a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085` (v0.3.11 was `765fd8e0...646b60`;
+  v0.3.12 was `1b285fe8...22456`; re-pinned in v0.3.6 by the PubChem tier-1
+  cross-check notes on acetonitrile and sulfolane, then in v0.3.10 by the
+  3-methoxypropionitrile temperature correction, then in v0.3.11 by the FEC
+  flash-point conflict correction, then in v0.3.12 by the FEC primary-value
+  promotion, then in v0.3.13 by the FEC compilation-read metadata update and its downstream 40 C temperature-attribution addendum; no
+  revision has moved a numeric value in a `model_ready=true` row)
 - `scripts/verify_dielectric_v032.py`: 7/7 checks, 245 rows, 243/243
   field-by-field superset of v0.3.1
 - `scripts/verify_dielectric_v02.py`: 9/9 checks

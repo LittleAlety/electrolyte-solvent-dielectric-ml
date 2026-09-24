@@ -158,6 +158,10 @@ ROUND5_VERBATIM_LABEL = "Table 1 entry 21 逐字"
 DEFAULT_MANUAL = Path(
     "E:/大二/d2qc/电解液（长期项目）/文献调研/执行手册_探针与周计划.md"
 )
+# The dataset digest the manual's appendix is supposed to pin.  The round-5
+# guards prove the excerpt matches the manual; they cannot prove the manual is
+# current.  This constant lets the probe say so explicitly.
+CANONICAL_DATASET = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 
 # The working manual is external to this repository, so CI (which never sees it)
 # verifies this committed excerpt of the appendix the round-5 guards inspect.
@@ -702,11 +706,14 @@ def _probe_manual(manual_path: Path | None) -> dict[str, object]:
                 ],
             }
         )
+    current_digest = canonical_text_sha256(CANONICAL_DATASET)
     return {
         "available": True,
         "path": str(manual_path),
         "line_count": len(lines),
         "char_count": len(text),
+        "current_canonical_sha256": current_digest,
+        "current_digest_pinned": current_digest in text,
         "stale_phrase_hits": hits,
         "stale_phrase_hit_count": sum(len(hit["line_numbers"]) for hit in hits),
         "corrected_phrase_hit_count": sum(
@@ -734,7 +741,8 @@ def manual_fixture_text(manual_text: str) -> str:
     )
     if start is None:
         raise ValueError(f"{MANUAL_FIXTURE_SECTION} not found in the manual")
-    return MANUAL_FIXTURE_HEADER + "\n" + "\n".join(lines[start:]) + "\n"
+    excerpt = "\n".join(lines[start:]).rstrip("\n")
+    return MANUAL_FIXTURE_HEADER + "\n" + excerpt + "\n"
 
 def _summarize(
     claims: list[dict[str, object]],

@@ -23,7 +23,7 @@ WEEK = "week8"
 
 README_TEXT = """# Week 8 交付包
 
-数据血缘: v0.3.12（规范数据集 dielectric_v03.csv，246 行 x 38 列）
+数据血缘: v0.3.13（规范数据集 dielectric_v03.csv，246 行 x 38 列）
 生成脚本: probes/export_week8_results.py
 
 ## 入口
@@ -49,8 +49,8 @@ python scripts/verify_v032_benchmarks.py
 
 ## 仍未闭环
 - VC 与 FEC 两行仍 model_ready=false；
-- 主基准的 236 行拟合集与 240 行 model-ready 行未被 v0.3.12 改动；
-- FEC 107 腿与 MOPN 独立确认仍需访问权限或新证据。
+- 主基准的 236 行拟合集与 240 行 model-ready 行未被 v0.3.12 / v0.3.13 改动；
+- FEC 107 腿已在汇编层读到（Ue et al. 2014 Table 2.3），但其具名上游 Hagiyama 2008 原文仍未读到；FEC 78.4 的 40 °C 转述冲突已登记，T_K 维持 296.15 K；MOPN 独立确认仍需访问权限或新证据。
 """
 ARTIFACTS = (
     ("reports/week8_benchmark_freeze.md", "week8_report.md"),

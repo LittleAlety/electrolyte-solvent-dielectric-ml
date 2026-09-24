@@ -91,7 +91,9 @@ are recorded and the row is flagged; conflicts are never averaged. Nine rows
 carry an explicit conflict_status and six are flagged model_ready=false. The
 benchmark withholds five rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
-competing 107 claim unread), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
+107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
+Hagiyama et al. 2008 still unread, and a 2007 downstream paper restating the
+same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
 (NBS 19.5 at 294.15 K vs.
 restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308
 secondary compilation 36.0, awaiting primary confirmation). A sixth row,
@@ -254,7 +256,7 @@ eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
 ## Known gaps (for v1.1)
 
 **Fluoroethylene carbonate (FEC).** Withheld from model fitting through the
-curated exclusion list because the competing 107 claim remains unread. The
+curated exclusion list because the competing 107 is available only through the Ue et al. 2014 compilation (Table 2.3), while its named primary source (Hagiyama et al. 2008) remains unread. The
 stored value is now a primary 78.4 at 296.15 K (Kobayashi et al. 2003, Table 2);
 the previously stored 102 was its flash point, not a permittivity.
 

@@ -11,7 +11,7 @@ flagged. Every row carries deterministic
 source provenance, gate-flag metadata, and conflict status, with license and
 redistribution metadata recorded wherever the source supplies it. Conflicting public values are recorded rather than
 averaged: nine rows carry an explicit conflict or unverified-provenance
-record, six are flagged model_ready=false, and the benchmark withholds four
+record, six are flagged model_ready=false, and the benchmark withholds five
 rows through a curated exclusion list.
 
 A companion benchmark evaluates three representations (Morgan fingerprints,
@@ -80,7 +80,7 @@ The primary contribution is the curated, auditable dataset itself, not a claim
 that small-data models solve static permittivity prediction. The remaining
 public-data gaps are narrow and explicit: 3-methoxypropionitrile rests on a
 secondary compilation with no traceable primary measurement, and
-fluoroethylene carbonate now carries a primary 78.4 measurement at 296.15 K (Kobayashi et al. 2003, Table 2) and only the competing 107 claim remains unread; the previously stored 102 was its flash point, not a permittivity. The glyme diethers
+fluoroethylene carbonate now carries a primary 78.4 measurement at 296.15 K (Kobayashi et al. 2003, Table 2) while the competing 107 is now read at compilation level in Ue et al. (2014, Table 2.3) and its named primary source (Hagiyama et al. 2008) remains unread; the previously stored 102 was its flash point, not a permittivity. The glyme diethers
 and the dinitriles (adiponitrile, glutaronitrile) that earlier internal reports
 listed as absent are present in the table under their IUPAC names. These open
 gaps are explicit targets for the v1.1 revision.

@@ -11,7 +11,7 @@ flagged. Every row carries deterministic
 source provenance, gate-flag metadata, and conflict status, with license and
 redistribution metadata recorded wherever the source supplies it. Conflicting public values are recorded rather than
 averaged: nine rows carry an explicit conflict or unverified-provenance
-record, six are flagged model_ready=false, and the benchmark withholds four
+record, six are flagged model_ready=false, and the benchmark withholds five
 rows through a curated exclusion list.
 
 A companion benchmark evaluates three representations (Morgan fingerprints,
@@ -80,7 +80,7 @@ The primary contribution is the curated, auditable dataset itself, not a claim
 that small-data models solve static permittivity prediction. The remaining
 public-data gaps are narrow and explicit: 3-methoxypropionitrile rests on a
 secondary compilation with no traceable primary measurement, and
-fluoroethylene carbonate now carries a primary 78.4 measurement at 296.15 K (Kobayashi et al. 2003, Table 2) and only the competing 107 claim remains unread; the previously stored 102 was its flash point, not a permittivity. The glyme diethers
+fluoroethylene carbonate now carries a primary 78.4 measurement at 296.15 K (Kobayashi et al. 2003, Table 2) while the competing 107 is now read at compilation level in Ue et al. (2014, Table 2.3) and its named primary source (Hagiyama et al. 2008) remains unread; the previously stored 102 was its flash point, not a permittivity. The glyme diethers
 and the dinitriles (adiponitrile, glutaronitrile) that earlier internal reports
 listed as absent are present in the table under their IUPAC names. These open
 gaps are explicit targets for the v1.1 revision.
@@ -178,7 +178,9 @@ are recorded and the row is flagged; conflicts are never averaged. Nine rows
 carry an explicit conflict_status and six are flagged model_ready=false. The
 benchmark withholds five rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
-competing 107 claim unread), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
+107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
+Hagiyama et al. 2008 still unread, and a 2007 downstream paper restating the
+same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
 (NBS 19.5 at 294.15 K vs.
 restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308
 secondary compilation 36.0, awaiting primary confirmation). A sixth row,
@@ -341,7 +343,7 @@ eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
 ## Known gaps (for v1.1)
 
 **Fluoroethylene carbonate (FEC).** Withheld from model fitting through the
-curated exclusion list because the competing 107 claim remains unread. The
+curated exclusion list because the competing 107 is available only through the Ue et al. 2014 compilation (Table 2.3), while its named primary source (Hagiyama et al. 2008) remains unread. The
 stored value is now a primary 78.4 at 296.15 K (Kobayashi et al. 2003, Table 2);
 the previously stored 102 was its flash point, not a permittivity.
 
@@ -394,7 +396,9 @@ grades), the selection rank and figure quality determine the preferred record.
 conflict_status and six carry model_ready=false. Five of them are withheld from
 model fitting through the curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
-competing 107 claim unread), TEP (10, 13), TMP (10, 21.6), ethyl
+107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
+Hagiyama et al. 2008 still unread, and a 2007 downstream paper restating the
+same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl
 isothiocyanate, whose NBS value
 (19.5 at 294.15 K) and restricted cross-check value (29.7 at 293.2 K) differ by
 10.2, and 3-methoxypropionitrile, whose 36.0 rests on a secondary compilation
@@ -616,7 +620,7 @@ correlation effects in these systems require multi-body or explicit-solvent
 descriptions that are beyond the scope of the current candidate model.
 
 **Known data gaps.** FEC (fluoroethylene carbonate) is withheld through the
-curated exclusion list because the competing 107 claim remains unread; the
+curated exclusion list because the competing 107 is available only through the Ue et al. 2014 compilation (Table 2.3), while its named primary source (Hagiyama et al. 2008) remains unread; the
 stored value is now a primary 78.4 at 296.15 K (Kobayashi et al. 2003, Table 2)
 and the previously stored 102 was its flash point. 3-Methoxypropionitrile rests
 on the

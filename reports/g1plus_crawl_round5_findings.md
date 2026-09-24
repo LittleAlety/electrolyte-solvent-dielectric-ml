@@ -187,7 +187,7 @@ Saadi & Lee 1966、Reaxys 抓取、Flamme 2017 HZDR 副本。清单见 `probes/g
 
 ## 11. 仍未闭环（按优先级）
 
-1. **FEC 107 腿**：Hagiyama 2008（OUP/Cloudflare 403）与 Ue et al. 2014 章节（Springer 身份认证）。
+1. **FEC 107 腿**：107 已在 Ue et al. 2014 Table 2.3（印刷页 101）汇编层读到；具名原始源 Hagiyama 2008 仍受 OUP/Cloudflare 403 阻断。
 2. **MOPN 介电值**：Ue, Ida & Mori 1994（IOPscience 付费摘要页）。Repo 侧已确认 Reaxys 无该分类。
 3. **受限目录 4 个未取值目标**：需要 SpringerMaterials 恢复可达。
 4. ~~**v0.3.12 数据修订**：把上面两条字段级补丁落地并重跑级联。~~ **已结清（2026-09-25）。**

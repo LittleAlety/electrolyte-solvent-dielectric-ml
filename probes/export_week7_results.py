@@ -23,13 +23,13 @@ WEEK = "week7"
 
 README_TEXT = """# Week 7 交付包
 
-数据血缘: v0.3.12（规范数据集 dielectric_v03.csv，246 行 x 38 列）
+数据血缘: v0.3.13（规范数据集 dielectric_v03.csv，246 行 x 38 列）
 生成脚本: probes/export_week7_results.py
 
 ## 入口
 - week7_report.md - Week 7 主报告（数据扩展、G1+ 与冻结）
 - week7_summary.json - 机器可读摘要、版本注记与 open items
-- dielectric_v03.csv - 规范数据集（sha256 1b285fe8...22456）
+- dielectric_v03.csv - 规范数据集（sha256 a446c216...c01085）
 - verification.json - 四个 verifier 的退出码与报告
 - SHA256SUMS - 本目录全部文件的清单
 
@@ -49,7 +49,8 @@ python scripts/verify_dielectric_v03.py
 python scripts/verify_v032_benchmarks.py
 
 ## 仍未闭环（不要误读为已解决）
-- FEC 107 腿: Ue et al. 2014 Table 2.3 / Hagiyama 2008 受限，尚未读到。
+- FEC 107 腿: Ue et al. 2014 Table 2.3 已在汇编层读到 107（印刷页 101），正文归源 Hagiyama 2008；Hagiyama 原文仍未读到。
+- FEC 78.4 腿温度归属: Nanbu 2007 把同一 Kobayashi 值转述为 40 °C，一手表脚注为 23 °C，故 T_K 维持 296.15 K（冲突已登记，不平均）。
 - MOPN: 缺独立一手确认与 GFN2-xTB 特征行。
 - Tier 4 印刷/订阅来源: 访问受限，记录为 limitation，不是"查无此值"。
 """
@@ -216,7 +217,7 @@ def export_results(
     write_json(
         week_root / "week7_summary.json",
         {
-            "dataset_version": "0.3.12",
+            "dataset_version": "0.3.13",
             "dataset_version_note": (
                 "the 246-row set was frozen at v0.3.3; v0.3.4 fixed the "
                 "model_ready modelling gate; v0.3.5-v0.3.6 revised provenance; "
@@ -237,7 +238,13 @@ def export_results(
                 "Lee 1966 Table 2 for the vinylene carbonate 126 leg); v0.3.12 then "
                 "landed the two field-level revisions it enabled: it moved the stored "
                 "FEC dielectric from 102 to 78.4 and adopted the VC primary identity "
-                "fields, while releasing neither row into the modelling set."
+                "fields, while releasing neither row into the modelling set. "
+                "v0.3.13 then read the FEC 107 leg at compilation level (Ue et al. "
+                "2014, Table 2.3, printed page 101) and registered a second "
+                "provenance finding on the same row: a downstream 2007 restatement "
+                "of the 78.4 leg as 40 C, which the primary footnote (23 C) "
+                "overrides. Neither v0.3.13 edit moved a dielectric value, a T_K "
+                "or a model_ready flag."
             ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),
@@ -320,10 +327,14 @@ def export_results(
                     "recorded as a flash point, not a permittivity. The 78.4 leg "
                     "(Kobayashi 2003 "
                     "Table 2, 'Our data', 23 C) was promoted to the row's primary "
-                    "measurement in v0.3.12; the 107 leg (Ue et al. 2014 Table 2.3 "
-                    "read through Hall 2018 Table I, with Hagiyama 2008 Chem. Lett. "
-                    "37 210 blocked) is still unread, so the two legs stay "
-                    "unreconciled and the row stays withheld (model_ready = false)"
+                    "measurement in v0.3.12; v0.3.13 then read the 107 leg at "
+                    "compilation level (Ue et al. 2014 Table 2.3, printed page 101, "
+                    "whose body text routes it to Hagiyama 2008 Chem. Lett. 37 "
+                    "210-211) and registered that a 2007 downstream paper restates "
+                    "the same 78.4 leg as 40 C while the primary footnote says "
+                    "23 C. Hagiyama itself is still unread and the two dielectric "
+                    "legs stay unreconciled, so the row stays withheld "
+                    "(model_ready = false)"
                 ),
                 "3-methoxypropionitrile still needs its primary-confirmation exclusion cleared and a GFN2-xTB feature row run (value and 25 C condition are now corroborated)",
                 "tier 4 print and subscription sources unverified",

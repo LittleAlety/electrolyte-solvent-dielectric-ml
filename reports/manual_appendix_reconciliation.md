@@ -43,7 +43,7 @@ Dataset versions re-read (canonical LF-normalized SHA-256):
 | v0.2 | 210 | absent | 24 | `569cebdf...3cc28a` |
 | v0.3.1 | 243 | present, all `room_temperature` | 38 | `08941a76...938d78` |
 | v0.3.2 | 245 | 244 room + 1 extended | 38 | `39d15e16...75b30be` |
-| v0.3 | 246 | 245 room + 1 extended | 38 | `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456` |
+| v0.3 | 246 | 245 room + 1 extended | 38 | `a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085` |
 
 The v0.1/v0.2 files predate the `temperature_band` column, so "the extended
 band was empty" is only meaningful from v0.3.1 on. The probe records the column
@@ -105,10 +105,11 @@ separate v0.3.11 revision, which changed only fluoroethylene carbonate's
 correction: it prevents a reviewer-facing document from spending its first three
 resource tiers rediscovering data the repository has shipped since v0.1.
 
-> **v0.3.12 re-pin (2026-09-25):** the current canonical digest is
-> `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456`.
-> The `57387b98...` and `765fd8e0...` values above are the historical
-> v0.3.3 and v0.3.11 pins; this reconciliation probe itself still wrote no cell.
+> **v0.3.13 re-pin (2026-09-25):** the current canonical digest is
+> `a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085`.
+> The `57387b98...`, `765fd8e0...`, and v0.3.12 `1b285fe8...` values are the
+> historical v0.3.3, v0.3.11, and v0.3.12 pins; this reconciliation probe itself
+> still wrote no cell.
 
 ## 6. Reproducing
 

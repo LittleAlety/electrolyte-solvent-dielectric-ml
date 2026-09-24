@@ -30,7 +30,7 @@ from probes.manual_appendix_reconciliation import (
 ARTIFACT = REPOSITORY_ROOT / "probes" / "manual_appendix_reconciliation.json"
 
 CURRENT_DATASET_SHA256 = (
-    "1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456"
+    "a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085"
 )
 
 GLYME_KEYS = TARGET_GROUPS["glymes"]
@@ -127,6 +127,26 @@ def test_committed_manual_fixture_still_carries_the_round5_guards() -> None:
     assert probe["round5_verbatim"]["ok"] is True, json.dumps(
         probe["round5_verbatim"], ensure_ascii=False
     )
+
+
+def test_committed_manual_fixture_pins_the_current_canonical_digest() -> None:
+    """A self-consistent appendix can still pin a superseded digest.
+
+    The round-5 guards prove the excerpt matches the working manual; they say
+    nothing about whether the digest the manual pins is the live one.  Without
+    this check a dataset revision would keep pointing readers at the old hash
+    on any runner that never sees the manual.
+    """
+
+    text = MANUAL_FIXTURE.read_text(encoding="utf-8")
+    assert CURRENT_DATASET_SHA256 in text, (
+        "the committed appendix excerpt no longer pins the live canonical "
+        "digest; re-pin the manual and regenerate the fixture with "
+        "--write-manual-fixture"
+    )
+    probe = _probe_manual(MANUAL_FIXTURE)
+    assert probe["current_canonical_sha256"] == CURRENT_DATASET_SHA256
+    assert probe["current_digest_pinned"] is True
 
 
 def test_every_registered_molecule_is_in_the_current_dataset(

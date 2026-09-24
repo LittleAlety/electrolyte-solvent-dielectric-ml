@@ -50,7 +50,7 @@ def test_a_stale_recorded_dataset_hash_is_rejected(tmp_path: Path) -> None:
     summary = root / "probes" / "v032_ablation_summary.json"
     summary.write_text(
         summary.read_text(encoding="utf-8").replace(
-            "1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456",
+            "a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085",
             "0" * 64,
         ),
         encoding="utf-8",
@@ -177,7 +177,7 @@ def test_the_known_bad_v032_lineage_state_is_rejected(tmp_path: Path) -> None:
     payload["excluded_not_in_source"] = []
     payload["source_path"] = "data/dielectric_v03.csv"
     payload["source_sha256"] = (
-        "1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456"
+        "a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085"
     )
     summary.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",

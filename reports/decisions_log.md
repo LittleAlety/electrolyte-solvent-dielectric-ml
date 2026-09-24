@@ -1704,3 +1704,102 @@ test fixture 与外部手册附录 J-补记三逐字节一致、历史哈希未�
 - **Re-review verdict**：Turing 对 `024be15..dd2a37d` 判
   `No Critical or Important findings; Ready.`；最终 7 个 verifier 与两个 manifest 均 PASS。
 - 完整记录见 `reports/v0312_adversarial_review_round.md`。**本轮 v0.3.12 收口完成。**
+
+## 2026-09-25（续十二）v0.3.13：FEC 107 腿在汇编层读到 + 78.4 的 40 °C 转述冲突
+
+- 触发：用户要求继续推进 G1+ 的溯源收口。三名只读研究者（Popper 等）与主线程唯一写者并行，
+  数据库侧 Materials Project / ECW-308 / Zenodo 均不在本轮重打；外部 API 调用 < 20 次。
+- 前置约束：不改 `data/raw/*`；受限源数值不进可分发数据集；冲突值不平均；同源转述不写成独立互证。
+
+### A. 两处真实发现
+
+**发现 A —— FEC 的 107 腿在汇编层读到（仍未到原始测量层）。**
+Ue, M.; Sasaki, Y.; Tanaka, M.; Morita, M. 的 Springer 章节
+*Electrolytes for Lithium and Lithium-Ion Batteries* 第 2 章
+（DOI `10.1007/978-1-4939-0302-3_2`）Table 2.3（印刷页 101）逐字含
+`4-Fluoro-1,3-dioxolan-2-one (FEC) 106 1.50 107 4.1 -13.30 1.45`；
+印刷页 105 的正文把 FEC 的介电数据归到该章 ref `[25]`，即
+Hagiyama, K. 等，*Chem. Lett.* **37**, 210-211 (2008)。Table 2.3 本身在印刷页 100 被声明为
+两篇 Sasaki 综述（refs `[4]`、`[5]`）的汇编，**FEC 行没有任何逐行脚注**，
+所以 107 是**汇编层转述 Hagiyama 线**，不是独立一手测量。
+Hagiyama 2008 本地仍无 PDF（OUP 403 / J-STAGE 404），该行保持 `model_ready=false`。
+
+**发现 B —— 78.4 的 40 °C 版本是下游转述，不是第二组测量。**
+Nanbu, N. 等，*Electrochemistry* **2007**, 75(8), 607-610
+（DOI `10.5796/electrochemistry.75.607`）印刷页 608 逐字写
+`The dynamic viscosity of FEC (4.1 mPa s at 40 C)4) ... the relative permittivity of FEC (78.4 at 40 C)4)`，
+其 ref `4)` 逐字就是 Kobayashi 2003 —— 数据集已引的同一篇。
+一手表 Kobayashi 2003 Table 2 的 FEC 行在 **印刷页 108**（见 §B 的 C1 更正）三个上标均为 `e`，
+脚注 `e At 23 C.`；EC 行用 `c`(40 °C)、PC 行用 `d`(20 °C)，说明脚注字母确有区分作用。
+Nanbu 把**介电与黏度两个量同时**从 23 °C 移到 40 °C，属系统性温度移位，不是孤立笔误。
+**裁决：`T_K` 维持 296.15 K（23 °C），不改 313.15 K，不平均。**
+
+**107 腿的温度。** 两篇开放 J-STAGE 2013 通讯（*Electrochemistry* 81(10), 817-819 与 820-822）
+都写 `about 107 at 25 C`，ref 均指向 Hagiyama 2008。两条腿因此**近乎同温**
+（23 °C vs 25 °C，**差 2.00 K**），**不能**用温度解释掉 78.4-vs-107 的分裂，仍是未决数值冲突。
+
+**数据影响：只改 FEC 一行两字段。**
+`conflict_status` → `primary_78.4_landed_107_leg_read_in_ue2014_compilation_plus_40C_temp_conflict`，
+`notes` 追加 107 腿汇编层归源与 40 °C 转述冲突说明；
+`dielectric` 仍 `78.4`、`T_K` 仍 `296.15`、`model_ready` 仍 `false`。
+`data/processed/dielectric_v03_exclusions.csv` 的 FEC 行 `reason`/`evidence_b` 同步。
+另修一处**既有回归**：该 exclusion 行的 `evidence_b` 原先含未加引号的逗号，裸 split 会读成 9 列；
+已按最小引号规则重写为 6 列，5 条排除 InChIKey 集合不变。
+
+### B. 提交前的只读对抗复审（Popper）与 1 Critical + 3 Important + 4 Minor
+
+| 级别 | 对象 | 缺陷 | 处理 |
+| --- | --- | --- | --- |
+| Critical | `probes/g1plus_fec_temperature_attribution_evidence.json`、数据集 FEC `notes`、findings 报告、回归测试 | Kobayashi 2003 的 FEC 行页码写成 **印刷页 107 / PDF 第 9 页**；实测该 PDF 只有 6 页（标签 105-110），`78.4e` 行在 **页索引 3 = 印刷页 108 = PDF 第 4 页**，本地根本没有第 9 页。错误页码还被回归测试固定 | 已改 `printed_page=108`、`pdf_page=4`（另加 `pdf_page_index=3` 消歧）、数据集 `notes`、报告与测试断言；重跑全量产物 |
+| Important | 同一证据链 | `gap_K` 写成 `1.85`；23→25 °C 的正确差值是 **2.00 K**（`1.85` 误把 23 °C 当成 23.15 °C） | 5 处（证据 JSON、报告、fixture、测试、外部手册）改为 `2.00`，重生成 fixture |
+| Important | `reports/decisions_log.md` | 无 v0.3.13 小节，最新决策仍停在 v0.3.12 | 追加本节 |
+| Important | `成果输出\数据结果汇总.md` | 仍停在 v0.3.12 / 旧 digest | 已更新到 v0.3.13 与新 digest |
+| Minor | `probes/export_week8_results.py` | README 措辞只提 v0.3.12 | 改为「未被 v0.3.12 / v0.3.13 改动」 |
+| Minor | `probes/dielectric_v03_representation_ablation_summary.json` | 较 HEAD 多出 `source_path`/`source_sha256` 两个字段 | 属 v0.3.12 续十一的 schema 补全，本轮重跑后保留，此处登记 |
+| Minor | 新增 FEC 测试 | 只比对 JSON 里的 PDF 哈希字符串，未重算本地缓存 | 新增「缓存存在时才跑」的本地 SHA256 校验（absent 则 skip），CI 不依赖 git-ignored 缓存 |
+| Minor | 2013_817 逐字引文 | 原文 `(about\n107 at 25°C)` 跨行，证据 JSON 写成单行 | 在证据 JSON 增 `verbatim_note` 说明已做空白/换行归一化 |
+| Important（第二路复审 Zeno） | 手册闸门 | 「手册与 fixture 逐字节一致」无法发现手册把**过期 digest** 写成最终钉点（自洽 ≠ 最新） | 探针新增 `current_canonical_sha256` / `current_digest_pinned`；测试新增「committed fixture 必须钉住当前规范 digest」断言（定向用例 24 → **25**） |
+| Minor | `probes/dielectric_target_scaffold_summary.json` | 重跑后较 HEAD 多出 `withheld_not_model_ready_count` / `withheld_not_model_ready_names` 两个键，另有键顺序调整 | 属 schema 补全（`verify_dielectric_target_scaffold` 仍 11/11 PASS、数值与预测未变），在此登记 |
+
+Popper 同时**逐项复现为真**：数据集只动 FEC 一行两字段、240 条 `model_ready=true` 行逐字节未变、
+exclusion CSV 结构合法且 5 条 InChIKey 不变、各探针 hash 与数据集自洽、
+「重跑而非重钉」成立、无过度声称（107 全流程只写作 compilation level）。
+注入验证：把 `printed_page` 改成实际值会让旧测试变红，证明测试非恒真——也正因此两条错误断言才被固定住、必须修。
+
+### C. 钉点（钉点全量重跑，不是重钉）
+
+| 项 | 旧值（v0.3.13 首稿） | 新值（终值） |
+| --- | --- | --- |
+| `data/dielectric_v03.csv` sha256 | `1a6b6bad…ed55` | `a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085` |
+| 行 × 列 | 246 × 38（不变） | 246 × 38（不变） |
+| 变化单元格 | 无（首稿） | 仅 FEC 的 `conflict_status`、`notes` 两格 |
+| `model_ready=true` 行 | 240，逐字节未变 | 240，逐字节未变（`FROZEN BENCHMARK VIOLATIONS: []`） |
+| `data/processed/dielectric_v03_exclusions.csv` | — | 仅 FEC 行 `reason`/`evidence_b` 变化，5 条排除键不变 |
+
+**重跑清单（真重跑，非重钉）**：`build_dielectric_v03.py`；三个轻量探针
+（`nbs514_frequency_gate_audit`、`manual_appendix_reconciliation`、`nbs514_alpha_harmonization_probe`）
+与 `g1plus_round5_crosscheck`；三个 ML 摘要
+（`v032_ablation_summary`、`dielectric_v03_representation_ablation_summary`、`dielectric_onsager_delta_summary`）。
+ML 摘要 diff **按文件**为：`v032_ablation_summary` 只有 `dataset_sha256`/`exclusions_sha256`；
+`dielectric_v03_representation_ablation_summary` 为 `dataset_sha256`/`exclusions_sha256` 并新增 `source_path`/`source_sha256`；
+`dielectric_onsager_delta_summary` 为 `dataset_sha256`/`generated_at`。**所有指标、折与预测逐字节未变**
+——这是「FEC 不参与拟合」的独立证明。
+⚠️ `v032_ablation_summary` 必须显式 `--source data/dielectric_v032.csv`，
+否则默认取到 v0.3 roster 会导致 lineage accounting 失配（与 v0.3.12 §H 同型陷阱）。
+
+### D. 本轮验证
+
+`pytest -q -p no:cacheprovider` **741 passed**（含新增 FEC 温度归属 5 项与 Ue 2014 汇编层 5 项，
+以及本地缓存哈希校验）；`ruff check .` 全绿；7 个 verifier 全绿
+（`verify_dielectric_v03` digest = `a446c216…c01085`）；week7/week8 manifest 双 PASS；
+`build_paper_full_draft` `--check` 与 `check_paper_artifact_consistency` 均通过。
+注意：全量 pytest **不要加 `-X utf8`**，否则子进程 GBK 输出会令 25 个 DOI 注入测试假失败。
+
+### E. Still open（不要误记为已解决）
+
+- **Hagiyama et al. 2008**（DOI `10.1246/cl.2008.210`）本地仍无 PDF；只有汇编层与下游转述。
+  曾有 agent 报告 OUP PDF 路径可读并给出 25 °C ≈ 107.4 / 40 °C ≈ 99，但**无任何可复核产物**，
+  故未采纳入库；若后续采信必须先落盘 PDF 并复现。
+- **MOPN**：缺独立一手确认 + GFN2-xTB 特征行。
+- 受限目录 4 个未取值目标（EC/GVL/DME/环丁砜）；DC-200 成员表未接入；EC 的温度带决策（extended 313.15 K）。
+- 环境现状：SpringerMaterials、上海有机所数据库打不开；RSC/ScienceDirect 部分刊无权限。

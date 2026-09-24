@@ -115,7 +115,7 @@ ImportError: cannot import name 'README_TEXT' from 'probes.export_week7_results'
 
 ## 6. Remaining Minor findings / residual risks
 
-- FEC 107 腿（Hagiyama 2008 / Ue 2014）仍受访问权限限制；这是**数据缺口**，不是代码缺陷。
+- 截至 v0.3.12 收口时，FEC 107 腿（Hagiyama 2008 / Ue 2014）受访问权限限制；这是**数据缺口**，不是代码缺陷。v0.3.13 已直接读取 Ue 2014 Table 2.3（汇编层），仅 Hagiyama 2008 原始测量仍未读。
 - MOPN 仍缺独立一手确认与 GFN2-xTB 特征行。
 - VC 存 `T_K=298.0` 而源文写 25 °C（298.15 K）；行内 notes 已声明 0.15 K 在报告精度内。
 - Kobayashi Table 2 的 FEC 行归属依赖 mp/bp/η/ε 指纹对齐，不是行内文字标签；当前未证伪。
