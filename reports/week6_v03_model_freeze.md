@@ -37,7 +37,8 @@ The three explicit boundaries remain:
 
 - representation ceiling: random-CV R2 approximately 0.32;
 - extrapolation ceiling: scaffold/cluster R2 approximately 0.26;
-- associated-liquid boundary: `HBD >= 1` and predicted dielectric `> 60`.
+- associated-liquid boundary: at least one structural hydrogen-bond donor
+  site (`[O,S,N;!H0]`); triggers on 2,070 of 6,150 out-of-fold rows (33.66%).
 
 ## Evidence files
 

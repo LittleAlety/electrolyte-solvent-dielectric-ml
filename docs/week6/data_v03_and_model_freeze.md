@@ -78,8 +78,12 @@ described as a coverage result, not a performance improvement.
 ## Applicability domain
 
 `src/electrolyte_ml/applicability.py` marks a prediction as
-`outside_associated_liquid` when `HBD >= 1` and predicted dielectric `> 60`.
-This is a disclosure boundary, not a post-hoc model improvement.
+`outside_associated_liquid` when the compound carries at least one
+hydrogen-bond donor site (`[O,S,N;!H0]`, counted from the structure, so the
+boundary never reads the model output) and as `outside_nonphysical` when the
+prediction falls below 1.0. The rule triggers on 2,070 of the 6,150 out-of-fold
+rows (33.66%). This is a disclosure boundary, not a post-hoc model
+improvement.
 
 ## Neural-network probes
 

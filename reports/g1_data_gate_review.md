@@ -58,7 +58,7 @@ These compounds were listed as "known gaps" in G1 report v1 but their IUPAC/syst
 | G1c: Glymes | **RESOLVED** | Already in dataset under IUPAC names |
 | G1d: Adiponitrile/Glutaronitrile | **RESOLVED** | Already in dataset |
 | G1e: VC conflict | **Confirmed** | model_ready=false |
-| G1f: Applicability domain | **FIXED** | Onsager-estimated ε > 60 + HBD≥1 |
+| G1f: Applicability domain | **FIXED** | Structural HBD≥1 (`[O,S,N;!H0]`); Onsager variant measured and rejected (0/150 coverage of ε>60) |
 | G1g: v1.0 premature tag | **DELETED** | Local + remote deleted |
 | G1h: reproducible provenance | **RESOLVED (v0.3.3)** | 4 hand-edited rows absorbed into a 19-patch checked-in layer; verifier now applies it |
 | G1i: `model_ready` is advisory only | **OPEN - P0** | The modelling path filters on the exclusions file and feature success, never on `model_ready`. Vinylene carbonate (`model_ready=false`, `conflict_open`, eps=126) is nevertheless trained on. Fixing it changes the +0.0265 controlled benchmark, so it needs a deliberate decision; guarded by `test_only_known_non_model_ready_rows_reach_the_modelling_feature_file`. |

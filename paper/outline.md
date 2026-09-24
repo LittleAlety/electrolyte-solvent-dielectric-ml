@@ -105,9 +105,11 @@ stratum MAE.
 
 ## Applicability Domain
 
-Predictions with `HBD >= 1` and predicted dielectric `> 60` are marked
-`outside_associated_liquid`. The dataset paper should state that Kirkwood
-correlation effects require multi-body descriptions outside the candidate model.
+Predictions for compounds with at least one hydrogen-bond donor site
+(`[O,S,N;!H0]`, counted from the structure rather than from the model output)
+are marked `outside_associated_liquid`; the rule triggers on 33.66% of
+out-of-fold rows. The dataset paper should state that Kirkwood correlation
+effects require multi-body descriptions outside the candidate model.
 
 ## Figures
 

@@ -92,6 +92,16 @@ STALE_PHRASES = (
     ("immutable release commit", "call the commit a candidate, not immutable"),
     # Superseded conflict accounting that a previous draft hard-coded.
     ("Five compounds with unresolved", "the conflict accounting is 7 / 6 / 4"),
+    # The applicability trigger is structural. A predicted-dielectric threshold
+    # reads the model output the boundary exists to qualify, so it is circular.
+    (
+        "predicted dielectric `> 60`",
+        "the applicability trigger is structural, not a predicted-dielectric threshold",
+    ),
+    (
+        "Onsager-estimated static dielectric above 60 are flagged",
+        "the Onsager variant was measured and rejected; the adopted trigger is structural",
+    ),
 )
 
 
@@ -336,6 +346,53 @@ def check_scaffold_table(paper_dir: Path) -> list[str]:
     return errors
 
 
+def check_applicability_trigger_rate(paper_dir: Path) -> list[str]:
+    """The quoted trigger rate and coverage must equal the recorded summary.
+
+    The applicability boundary was re-derived once already, and the prose kept
+    quoting the retired rule. This check re-reads
+    `probes/applicability_domain_summary.json` and fails when a paper section
+    quotes a different trigger rate or a different flagged-row count than the
+    artifact records.
+    """
+
+    summary = read_json(PROBES_DIR / "applicability_domain_summary.json")
+    rate = float(summary["trigger_rate"])
+    outside = int(summary["outside_count"])
+    total = int(summary["row_count"])
+
+    errors: list[str] = []
+    for name, text in paper_texts(paper_dir).items():
+        flat = re.sub(r"\s+", " ", text)
+        for match in re.finditer(r"(\d+(?:\.\d+)?)%", flat):
+            window = flat[max(0, match.start() - 220) : match.end() + 220]
+            if "out-of-fold" not in window or "trigger" not in window:
+                continue
+            claimed = float(match.group(1))
+            if abs(claimed - rate * 100.0) > 0.01:
+                errors.append(
+                    f"{name}: claims a {claimed:.2f}% applicability trigger rate, "
+                    f"but the summary records {rate * 100.0:.2f}%"
+                )
+        for match in re.finditer(
+            r"([\d,]+) of (?:the )?([\d,]+) out-of-fold rows",
+            flat,
+        ):
+            claimed_rows = int(match.group(1).replace(",", ""))
+            claimed_total = int(match.group(2).replace(",", ""))
+            if claimed_total != total:
+                errors.append(
+                    f"{name}: claims {claimed_total} out-of-fold rows, "
+                    f"but the summary records {total}"
+                )
+            elif claimed_rows != outside:
+                errors.append(
+                    f"{name}: claims {claimed_rows} rows outside the domain, "
+                    f"but the summary records {outside}"
+                )
+    return errors
+
+
 def check_release_version(paper_dir: Path) -> list[str]:
     text = (paper_dir / "code_and_data.md").read_text(encoding="utf-8-sig")
     marker = f"**Release:** v{CURRENT_DATASET_VERSION}"
@@ -372,6 +429,7 @@ def verify_paper(paper_dir: Path = PAPER_DIR) -> list[str]:
         check_main_benchmark_table,
         check_scaffold_table,
         check_release_version,
+        check_applicability_trigger_rate,
         check_full_draft,
         check_stale_phrases,
     ):

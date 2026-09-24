@@ -113,8 +113,9 @@ R2 under random CV vs. scaffold/cluster holdout for each representation,
 demonstrating the extrapolation advantage of physical features.
 
 **Figure 7. Applicability domain boundary.**
-Prediction reliability (absolute error) as a function of HBD count and
-predicted permittivity, with the outside_associated_liquid region marked.
+Absolute error split by applicability domain, with the
+outside_associated_liquid region marked. The structural donor rule triggers on
+2,070 of the 6,150 out-of-fold rows (33.66%).
 
 **Figure 8. Cross-source agreement.**
 Scatter plot of NBS Circular 514 values vs. ThermoML values for overlapping

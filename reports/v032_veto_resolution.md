@@ -21,7 +21,7 @@ the controlled experiment supports.
 | Finding | Raised by | Status | Evidence |
 |---|---|---|---|
 | PC (and EC) absent from every earlier revision | Appendix I veto | RESOLVED | PC 64.9 @ 298.15 K; EC 90.5 @ 313.15 K |
-| Applicability-domain rule idle / circular | Appendix I veto | RESOLVED | Onsager estimate now passed by the production caller |
+| Applicability-domain rule idle / circular | Appendix I veto | RESOLVED (re-derived 2026-09-24) | Onsager variant measured and rejected; structural HBD rule adopted, 33.66% trigger |
 | Benchmark gain not attributable to the added data | audit P0 | CORRECTED | paired control: **+0.0265** R2, not +0.056 |
 | v0.3.2 broke v0.3.1 provenance | audit P0 | RESOLVED | 243/243 shared rows byte-identical to v0.3.1 |
 | v0.3.2 verifier was a smoke test | audit P1 | RESOLVED | 7 named checks; VC absence now fails |
@@ -72,26 +72,47 @@ All five derive from ThermoML (dinitriles: DOI 10.1021/je300958c).
 
 The previous rule triggered on `predicted_dielectric > 60`, a circular
 condition: the flag depended on the same model output it was meant to police.
+It fired on 30 of the 6,150 out-of-fold rows (0.49%) only because the model
+cannot reproduce the compounds the rule exists to catch.
 
-`src/electrolyte_ml/applicability.py` now accepts an `onsager_epsilon`
-argument, and -- this is the part the audit found missing -- the only
-production caller actually passes it. `_onsager_epsilon()` in
-`probes/build_applicability_flags.py` derives a model-independent estimate
-from GFN2-xTB and RDKit quantities already in the feature table:
+The review prescribed a model-independent repair: flag `HBD >= 1` together
+with an Onsager-estimated dielectric above 60. That variant was implemented,
+wired into the production caller, and run. The measurement rejected it. The
+reaction-field estimate is
 
-1. the high-frequency permittivity is estimated from the molecular
-   polarizability with the Lorentz-Lorenz relation,
-   `(n^2 - 1)/(n^2 + 2) = N_A alpha / (3 V_m)`;
-2. the static permittivity solves the Onsager reaction-field equation,
-   `(eps - n^2)(2 eps + n^2) / (eps (n^2 + 2)^2) = N_A mu^2 / (9 eps_0 k_B T V_m)`.
+1. **low for exactly the associated liquids it should catch.** Estimated
+   1.6-40 against measured values of 61-178, because the Kirkwood correlation
+   factor `g` is much greater than 1 for hydrogen-bonded networks and the
+   single-molecule cavity picture does not apply;
+2. **high for ionic liquids.** Estimated 82-153 against measured 12-30;
+3. **blind to the failure zone.** It covers **0 of the 150** rows whose
+   measured permittivity exceeds 60, and the one compound it flags,
+   `1-(2-hydroxyethyl)-3-methylimidazolium tetrafluoroborate`, has a measured
+   dielectric of 23.3.
 
-Rows whose inputs are missing or non-physical fall back to the legacy
-model-based path and are **counted explicitly** in the summary JSON
-(`onsager_available`, `onsager_fallback`) rather than silently skipped. On a
-full production run: `onsager_available=6150`, `onsager_fallback=0`.
+The adopted rule is therefore structural rather than electrostatic. A compound
+carrying at least one hydrogen-bond donor site, counted from its structure with
+the SMARTS pattern `[O,S,N;!H0]`, is flagged `outside_associated_liquid`; a
+prediction below 1.0 is flagged `outside_nonphysical`. The count is computed
+from SMILES and never from the model output, so the boundary is not circular.
+It also avoids RDKit's `NumHDonors`, which is a drug-likeness heuristic and
+returns zero donors for water.
 
-The estimate deliberately ignores hydrogen bonding and association, so it is
-used only as a screening threshold, never as a data value.
+Measured on the frozen 6,150 out-of-fold rows:
+
+| Quantity | Adopted structural rule | Rejected: predicted > 60 | Rejected: Onsager > 60 |
+|---|---|---|---|
+| Rows flagged | 2,070 (33.66%) | 30 (0.49%) | 30 (0.49%) |
+| MAE outside domain | 11.51 | 22.32 | 1.97 |
+| MAE inside domain | 5.02 | -- | -- |
+| Measured eps>60 covered | **150/150** | 30/150 | **0/150** |
+
+Both rejected variants remain in `probes/applicability_domain_summary.json`
+under `rejected_variants`, with their rules, row counts, MAE and reasons, so the
+veto is closed by measurement rather than by assertion. The Onsager estimate
+survives only as a recorded diagnostic column (`onsager_epsilon`);
+`onsager_available=6150`, `onsager_fallback=0` on the production run. A full
+write-up is in `reports/applicability_domain_veto_fix.md`.
 
 ## Audit P0: the benchmark gain was not controlled
 

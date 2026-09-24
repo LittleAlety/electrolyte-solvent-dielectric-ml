@@ -151,10 +151,18 @@ best mean R2 (0.267 +/- 0.014) under this holdout.
 
 ## Applicability domain
 
-A prediction is flagged outside_associated_liquid when its hydrogen-bond donor
-count is >= 1 and the predicted dielectric exceeds 60. This is a disclosure
-boundary: these conditions indicate that Kirkwood correlation effects, which
-require multi-body or explicit-solvent descriptions, are likely dominant.
+A prediction is flagged outside_associated_liquid when the compound carries at
+least one hydrogen-bond donor site, counted with the SMARTS pattern
+`[O,S,N;!H0]` directly from the structure; a prediction below 1.0 is flagged
+outside_nonphysical. The donor count is structural, so the boundary is
+independent of any model output. The rule triggers on 2,070 of the 6,150
+out-of-fold rows (33.66%). This is a disclosure boundary: donor sites indicate
+that Kirkwood correlation effects, which require multi-body or
+explicit-solvent descriptions, are likely dominant. Two alternative
+formulations -- the original `predicted dielectric > 60` rule and a
+model-independent Onsager estimate -- were measured and rejected; both are
+recorded with their numbers in `probes/applicability_domain_summary.json` and
+`reports/applicability_domain_veto_fix.md`.
 
 # Data Records
 

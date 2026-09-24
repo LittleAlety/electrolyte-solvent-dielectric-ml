@@ -54,7 +54,7 @@ read-only evidence was gathered.
 | --- | --- | --- |
 | PC absent | Added epsilon=64.9 at 298.15 K | DOI 10.1021/j100702a008, Crossref-verified |
 | EC absent | Added epsilon=90.5 at 313.15 K | DOI 10.1021/je050341y |
-| Applicability rule circular | Added `onsager_epsilon` parameter | `src/electrolyte_ml/applicability.py`, 3 tests pass |
+| Applicability rule circular | Superseded: Onsager variant measured and rejected; structural donor rule adopted | `src/electrolyte_ml/applicability.py`, `probes/applicability_domain_summary.json` |
 | Premature v1.0 tag | Deleted local + remote | Release candidate renamed to v0.3.2 |
 | Glymes/dinitriles mis-reported absent | Corrected; already present under IUPAC names | `reports/g1_data_gate_review.md` |
 | Benchmark stale | Re-ran on 237 rows; v0.3 baseline reproduced exactly | `probes/v032_ablation_summary.json` |
@@ -69,7 +69,7 @@ read-only until it received an explicit, non-overlapping write scope.
 | Agent | Bounded scope | Write set | Outcome |
 | --- | --- | --- | --- |
 | Dirac | adversarial audit of the first VETO fix | none (read-only) | 3 P0 + 2 P1 findings |
-| Lorentz | P0-1: wire the Onsager threshold into the production caller | `probes/build_applicability_flags.py`, `src/electrolyte_ml/xtb_features.py`, `tests/test_applicability.py` | `onsager_dielectric_estimate` + explicit fallback counters; 8 tests |
+| Lorentz | P0-1: wire the Onsager threshold into the production caller | `probes/build_applicability_flags.py`, `src/electrolyte_ml/xtb_features.py`, `tests/test_applicability.py` | `onsager_dielectric_estimate` + explicit fallback counters; **superseded in round 3** -- the wired threshold was measured and rejected (0/150 coverage) |
 | Jason | P0-3 + P1: restore provenance, harden the verifier | `data/dielectric_v032.csv`, `data/dielectric_v03.csv`, `scripts/verify_dielectric_v032.py`, `tests/test_verify_dielectric_v032.py` | 243/243 strict superset; 7 named checks; 11 tests |
 | Averroes | Appendix J resource ladder | execution manual, outside the repository | Appendix J in both copies |
 | Linnaeus | v1.0 wording and section sync in the paper | `paper/abstract_and_intro.md`, `paper/benchmark_and_figures.md`, `paper/code_and_data.md`, `paper/outline.md`, `paper/technical_validation.md` | 13 wording/number alignments; flagged 12 further inconsistencies, one of which the main thread also fixed; the rest are listed under remaining gaps |
@@ -83,6 +83,23 @@ the data addition; 1272 of 2350 compound x repeat fold assignments (54.1%)
 had silently changed between the two splits. The independently computed churn
 fraction from the audit reviewer and from the main-thread probe agree to three
 significant figures. The paper no longer cites +0.056 as a gain.
+
+### Applicability-domain veto re-derived (2026-09-24, round 3)
+
+The Appendix I veto on the applicability rule was reopened after measurement
+showed the round-2 repair did not work. The Onsager-threshold variant the
+review prescribed was implemented and run in production, and it is physically
+inverted: it covers **0 of the 150** rows whose measured permittivity exceeds
+60 and instead flags a low-permittivity ionic liquid (measured 23.3). The
+adopted trigger is structural -- at least one hydrogen-bond donor site counted
+from SMILES with `[O,S,N;!H0]` -- which is independent of every model output
+and covers 150/150 of that zone. On the 6,150 out-of-fold rows the trigger rate
+is 33.66% (2,070 rows), with MAE 11.51 outside the domain against 5.02 inside.
+Both rejected variants are kept, with their numbers, in
+`probes/applicability_domain_summary.json` under `rejected_variants`, and the
+rule now carries a pinned trigger-rate check in
+`scripts/check_paper_artifact_consistency.py` so the figure cannot drift again.
+See `reports/applicability_domain_veto_fix.md`.
 
 ### Paper draft inconsistencies: closed (2026-09-24, v0.3.3 round)
 

@@ -236,10 +236,18 @@ best mean R2 (0.267 +/- 0.014) under this holdout.
 
 ## Applicability domain
 
-A prediction is flagged outside_associated_liquid when its hydrogen-bond donor
-count is >= 1 and the predicted dielectric exceeds 60. This is a disclosure
-boundary: these conditions indicate that Kirkwood correlation effects, which
-require multi-body or explicit-solvent descriptions, are likely dominant.
+A prediction is flagged outside_associated_liquid when the compound carries at
+least one hydrogen-bond donor site, counted with the SMARTS pattern
+`[O,S,N;!H0]` directly from the structure; a prediction below 1.0 is flagged
+outside_nonphysical. The donor count is structural, so the boundary is
+independent of any model output. The rule triggers on 2,070 of the 6,150
+out-of-fold rows (33.66%). This is a disclosure boundary: donor sites indicate
+that Kirkwood correlation effects, which require multi-body or
+explicit-solvent descriptions, are likely dominant. Two alternative
+formulations -- the original `predicted dielectric > 60` rule and a
+model-independent Onsager estimate -- were measured and rejected; both are
+recorded with their numbers in `probes/applicability_domain_summary.json` and
+`reports/applicability_domain_veto_fix.md`.
 
 # Data Records
 
@@ -572,14 +580,21 @@ lowest-energy conformer only. Conformer-aware averaging (Boltzmann-weighted
 dipole across the conformational ensemble) could improve the physical-feature
 quality for flexible molecules at modest computational cost.
 
-**Associated liquids.** Compounds with hydrogen-bond donors and an
-Onsager-estimated static dielectric above 60 are flagged as outside the
-model's applicability domain. The Onsager estimate is computed from the
-gas-phase dipole moment, refractive index, and molar volume, so the threshold
-is model-independent and not a circular function of the model's own
-prediction. Kirkwood correlation effects in these systems require multi-body
-or explicit-solvent descriptions that are beyond the scope of the current
-candidate model.
+**Associated liquids.** Compounds that carry at least one hydrogen-bond donor
+site, counted from the structure with the SMARTS pattern `[O,S,N;!H0]` and
+never from the model output, are flagged as outside the model's applicability
+domain. The rule triggers on 2,070 of the 6,150 out-of-fold rows (33.66%):
+mean absolute error is 11.51 outside the domain against 5.02 inside, and it
+covers all 150 rows whose measured permittivity exceeds 60. A model-independent
+variant that thresholds an Onsager-estimated static dielectric at 60 was
+implemented, wired into the production caller, and then rejected: the
+reaction-field estimate is *low* for associated liquids (1.6-40 estimated
+against measured 61-178, because the Kirkwood correlation factor `g` is much
+greater than 1) and *high* for ionic liquids (82-153 estimated against measured
+12-30), so it covered 0 of those 150 rows. Both rejected variants are recorded
+with their numbers in `probes/applicability_domain_summary.json`. Kirkwood
+correlation effects in these systems require multi-body or explicit-solvent
+descriptions that are beyond the scope of the current candidate model.
 
 **Known data gaps.** FEC (fluoroethylene carbonate) is withheld through the
 curated exclusion list because reported values (78.4, 102, 107) disagree;
@@ -727,8 +742,9 @@ R2 under random CV vs. scaffold/cluster holdout for each representation,
 demonstrating the extrapolation advantage of physical features.
 
 **Figure 7. Applicability domain boundary.**
-Prediction reliability (absolute error) as a function of HBD count and
-predicted permittivity, with the outside_associated_liquid region marked.
+Absolute error split by applicability domain, with the
+outside_associated_liquid region marked. The structural donor rule triggers on
+2,070 of the 6,150 out-of-fold rows (33.66%).
 
 **Figure 8. Cross-source agreement.**
 Scatter plot of NBS Circular 514 values vs. ThermoML values for overlapping

@@ -84,3 +84,45 @@ def test_constant_baseline_is_deterministic_and_matches_the_paper() -> None:
     assert first["mae"] == pytest.approx(12.3329, abs=5e-4)
     assert first["r2"] == pytest.approx(-0.0101, abs=5e-4)
     assert first["mae_lt20"] == pytest.approx(8.1998, abs=5e-4)
+
+def test_applicability_trigger_rate_drift_is_rejected(paper_copy: Path) -> None:
+    path = paper_copy / "benchmark_and_figures.md"
+    text = path.read_text(encoding="utf-8")
+    assert "33.66%" in text
+    path.write_text(text.replace("33.66%", "31.66%"), encoding="utf-8")
+    errors = verify_paper(paper_copy)
+    assert any("applicability trigger rate" in error for error in errors), errors
+
+
+def test_applicability_flagged_row_count_drift_is_rejected(paper_copy: Path) -> None:
+    path = paper_copy / "methods_data_records.md"
+    text = path.read_text(encoding="utf-8")
+    # the claim wraps across a line, so drift is injected on the number alone
+    assert "2,070" in text
+    path.write_text(text.replace("2,070", "2,000"), encoding="utf-8")
+    errors = verify_paper(paper_copy)
+    assert any("rows outside the domain" in error for error in errors), errors
+
+
+def test_the_retired_circular_rule_is_rejected(paper_copy: Path) -> None:
+    path = paper_copy / "outline.md"
+    path.write_text(
+        path.read_text(encoding="utf-8")
+        + "\nThe rule is HBD >= 1 and predicted dielectric `> 60`.\n",
+        encoding="utf-8",
+    )
+    errors = verify_paper(paper_copy)
+    assert any("predicted dielectric" in error for error in errors), errors
+
+
+def test_the_rejected_onsager_wording_is_rejected(paper_copy: Path) -> None:
+    path = paper_copy / "technical_validation.md"
+    path.write_text(
+        path.read_text(encoding="utf-8")
+        + "\nOnsager-estimated static dielectric above 60 are flagged.\n",
+        encoding="utf-8",
+    )
+    errors = verify_paper(paper_copy)
+    assert any(
+        "Onsager variant was measured and rejected" in error for error in errors
+    ), errors

@@ -1,12 +1,49 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "predictions_path": "data/processed/dielectric_representation_ablation_predictions.csv",
   "features_path": "data/processed/dielectric_physical_features_density.csv",
   "output_path": "data/processed/dielectric_applicability_flags.csv",
   "row_count": 6150,
   "domain_counts": {
-    "inside_domain": 6120,
-    "outside_associated_liquid": 30
+    "inside_domain": 4080,
+    "outside_associated_liquid": 2070
   },
-  "rule": "HBD >= 1 and predicted dielectric > 60 => outside_associated_liquid"
+  "inside_domain_count": 4080,
+  "outside_associated_liquid_count": 2070,
+  "outside_count": 2070,
+  "trigger_rate": 0.33658536585365856,
+  "rule": "predicted_dielectric < 1.0 => outside_nonphysical; hbond_donor_count >= 1 => outside_associated_liquid",
+  "rule_smarts": "[O,S,N;!H0]",
+  "rule_basis": "Textbook hydrogen-bond donor count computed from SMILES, so the boundary is independent of any model output.",
+  "mean_absolute_error_by_domain": {
+    "inside_domain": 5.020327637800247,
+    "outside_associated_liquid": 11.514580709226362
+  },
+  "high_permittivity_zone": {
+    "definition": "target dielectric > 60",
+    "row_count": 150,
+    "mean_absolute_error": 72.44963150787487,
+    "covered_by_adopted_rule": 150,
+    "coverage": 1.0
+  },
+  "rejected_variants": {
+    "legacy_prediction_threshold": {
+      "rule": "hbd >= 1 and predicted dielectric > 60",
+      "mean_absolute_error": 22.31668919372,
+      "row_count": 30,
+      "reason": "Circular: the trigger reads the model output the boundary is supposed to qualify, and the model cannot predict the compounds the boundary exists to catch."
+    },
+    "onsager_threshold": {
+      "rule": "hbond_donor_count >= 1 and onsager_epsilon > 60",
+      "mean_absolute_error": 1.9742576980600002,
+      "row_count": 30,
+      "flagged_compounds": [
+        "1-(2-hydroxyethyl)-3-methylimidazolium tetrafluoroborate"
+      ],
+      "high_permittivity_zone_covered": 0,
+      "reason": "Model-independent but physically inverted: the Onsager reaction-field estimate is low for hydrogen-bonded associated liquids (Kirkwood g much greater than 1) and high for ionic liquids, so it misses the failure zone and flags low-permittivity ionic liquids instead."
+    }
+  },
+  "onsager_available": 6150,
+  "onsager_fallback": 0
 }

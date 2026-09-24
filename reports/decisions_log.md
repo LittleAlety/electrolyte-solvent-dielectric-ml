@@ -396,10 +396,10 @@
   resulting `mu_sq_over_Vm_experimental` column is stored separately from the
   original estimate so target-transform comparisons can be rerun without
   changing the experimental labels.
-- The conservative applicability rule flags `HBD >= 1` and predicted
-  dielectric `> 60` as `outside_associated_liquid`. On the fixed 6,150 OOF
-  predictions, 6,120 rows remain inside the domain and 30 are marked outside.
-  This is a disclosure boundary, not a new model score.
+- **Superseded 2026-09-24** (see the applicability-domain entry at the end of
+  this log). The first applicability rule flagged `HBD >= 1` and predicted
+  dielectric `> 60` as `outside_associated_liquid`. It fired on only 30 of the
+  6,150 OOF predictions and was circular; it is no longer in force.
 - SpringerMaterials Interactive supplied restricted near-room evidence for 30
   modern-solvent candidates. Only candidate metadata and reference names enter
   public outputs; numeric values remain under `data/restricted/springer_materials/`
@@ -449,3 +449,29 @@
   `0.320` on the 205-row v0.2 set; Physical R2 is `0.273` versus `0.283`.
   Decision: treat v0.3 expansion as a coverage and domain-relevance result,
   not as evidence of improved predictive accuracy.
+
+## 2026-09-24: applicability-domain veto re-derived (structural donor rule)
+
+- The Appendix I veto required a trigger that does not read the model output.
+  The prescribed Onsager variant (`HBD >= 1` and Onsager-estimated dielectric
+  `> 60`) was wired into the production caller and measured. It is physically
+  inverted: the reaction-field estimate is *low* for associated liquids
+  (1.6-40 against measured 61-178, since the Kirkwood factor `g` is much
+  greater than 1) and *high* for ionic liquids (82-153 against measured
+  12-30). It covers **0 of the 150** rows whose measured permittivity exceeds
+  60 and flags one low-permittivity ionic liquid (measured 23.3) instead.
+- Decision: adopt a structural trigger. A compound with at least one
+  hydrogen-bond donor site, counted from its SMILES with the SMARTS pattern
+  `[O,S,N;!H0]`, is flagged `outside_associated_liquid`; a prediction below
+  1.0 is flagged `outside_nonphysical`. This is model-independent and
+  textbook, unlike RDKit `NumHDonors`, which is a drug-likeness heuristic and
+  returns zero donors for water.
+- Measured on the frozen 6,150 out-of-fold rows: trigger rate 33.66%
+  (2,070/6,150); mean absolute error 11.51 outside versus 5.02 inside;
+  measured-epsilon>60 coverage 150/150 (100%), against 30/150 for the original
+  circular rule and 0/150 for the Onsager variant.
+- Both rejected variants are recorded with their rules, row counts, MAE and
+  reasons in `probes/applicability_domain_summary.json`. The write-up is
+  `reports/applicability_domain_veto_fix.md`. No `dielectric`, `T_K` or
+  `model_ready` value changes, so the datasets and the controlled benchmark
+  are untouched.
