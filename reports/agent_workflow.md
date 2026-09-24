@@ -147,8 +147,8 @@ by the withheld row: PC and EC are structural analogues of vinylene carbonate,
 so appending them to the training folds mostly improved the prediction of that
 one contested compound. Fold churn between the two splits is now 1224 of 2340
 compound x repeat assignments (52.3%). `data/dielectric_v03.csv` was unchanged in
-that round (sha256 `2cd58144...a1b` as of v0.3.4; the current revision is
-`f5256d16...a853c`): no `dielectric`, `T_K` or `model_ready` value moved,
+that round (sha256 `2cd58144...a1b` as of v0.3.4; the current revision is `57387b98...26fab` as
+of v0.3.10): no `dielectric`, `T_K` or `model_ready` value moved,
 and the v0.3.2 and v0.3.3 lineages now fit the *same* 236 rows and return
 identical metrics, so the old row-wise v0.3 -> v0.3.2 "coverage gain" was fold
 churn plus the ungated row.
@@ -223,7 +223,7 @@ conflict occurred, and the integration made zero external API calls.
 | Noether | ECW-308 Table S3 line-level re-extraction | Complete | Re-ran pypdf from the PDF; confirmed 8/8 target rows (page/value/reference) and the tetraglyme no-hit; classified ECW as a secondary compilation | None |
 | Franklin | Provenance-patch and modelling-path audit | Complete | Confirmed the patch layer can update `source_dois_all`, `notes`, and `conflict_status`, cannot update `model_ready`, and does not move the benchmark (round 4 later took the fitted set to 236 rows); identified the review-license gate for FEC/VC | None |
 | Euler | Paper/report consistency audit | Complete | Found the FEC/VC overstatements, nitrile conflict accounting, MOPN licence wording, patch-count drift, and stale agent status | None |
-| Main | Patch integration and freeze | Complete | 32 patches / 17 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`; full suite `553 passed` (as of the final freeze); Ruff clean; all four dataset verifiers pass | None |
+| Main | Patch integration and freeze | Complete | 32 patches / 17 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c` (superseded by v0.3.10: `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`); full suite `553 passed` (as of the final freeze); Ruff clean; all four dataset verifiers pass | None |
 
 The integration audit also found that `data/processed/*` had been ignoring
 `dielectric_v03_provenance_patches.csv`: the patch layer was present locally
@@ -308,7 +308,9 @@ claim about scope. CatalystHub could not be reached at any plausible endpoint, a
 recorded as inaccessible rather than as empty.
 
 No dataset value moved in this round: `data/dielectric_v03.csv` is still
-`f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`.
+`f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`. v0.3.10 later re-pinned it to `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab` with a
+provenance-notes-only revision (the MOPN temperature correction); no numeric
+value moved then either.
 
 
 ## ECW-308 second adversarial round: identity gate and extractor precision (round 3, 2026-09-24)

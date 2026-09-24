@@ -124,8 +124,9 @@ unchanged -- Physical with `log(eps-1)` remains best (R2 0.276 +/- 0.044, MAE
   unrelated artifacts. The gate, not the inventory, decides fitness.
 - No `dielectric`, `T_K`, `source_doi` or `model_ready` value changes;
   `data/dielectric_v03.csv` was byte-identical in that round (sha256
-  `2cd58144...` as of v0.3.4; the current revision is `f5256d16...a853c`, whose
-  later revisions touched `notes` only).
+  `2cd58144...` as of v0.3.4; the current revision is
+  `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab` as of
+  v0.3.10, every revision since having touched `notes` only).
 - Historical reports keep their v0.3.1-era numbers as records of what was
   reported then; each is annotated where it conflicts with the current state.
 

@@ -24,7 +24,8 @@ first author** could:
   (cached under `data/external/g1plus/mopn/`, git-ignored; never redistributed).
 
 **Chapitre II, page 65, Tableau 12 ("Proprietes physico-chimiques des
-solvants")** lists the two nitriles the chapter compares:
+solvants")** lists the two nitriles the chapter compares (this table carries
+no temperature note):
 
 | Solvant | Structure | Teb (C) | FP (C) | eta (mPa.s) | eps_r | Toxicite |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -36,13 +37,31 @@ original author, independently of the ECW-308 compilation chain. The 165 C
 boiling point and 66 C flash point in the same row match handbook values for
 3-methoxypropionitrile, which anchors the row to the correct compound.
 
-## What is still missing
+## The temperature (corrected in v0.3.10)
 
-**The temperature.** Tableau 12 carries neither a temperature footnote nor a
-per-value reference. Tableau 6 of the same thesis, by contrast, is captioned
-"a 25 C sauf precision contraire" with reference letters a-e - a reminder that
-this author does state conditions when they are known. ECW-308 asserts 25 C;
-the public source does not confirm it.
+**The temperature is stated, not missing.** The thesis gives 25 C for this
+value in two tables:
+
+- **Tableau 4** (printed page 28, "Caracteristiques des principaux solvants
+  ... famille des carbonates, esters, ethers et nitriles") heads the
+  permittivity column verbatim **"eps_r a 25 C"**; the Methoxypropionitrile row
+  reads `- 57 | 165 | 66 | 1,1 | 36` against `Tfu | Teb | FP | eta a 25 C |
+  eps_r a 25 C`, with no per-cell temperature override.
+- **Tableau 14** (printed page 77, "Proprietes des solvants utilises") is a
+  transposed matrix whose property row is headed verbatim **"Constante
+  dielectrique a 25 C"** and gives **36** in the `MP` column. Its neighbouring
+  `a 40 C` annotation belongs to the *viscosity* row, not to permittivity.
+
+Tableau 12 (printed page 65), which the v0.3.5 pass read on its own, also lists
+`eps_r = 36` but carries neither a temperature note nor a reference letter -
+that single table is why the temperature was first recorded as unstated. The
+v0.3.10 revision corrects the provenance note, the probe and this report.
+
+Three other cells in Tableau 14's permittivity row anchor the column alignment:
+sulfolane 43 (30 C), propylene carbonate 64,4 and ethylene carbonate 90 all
+match values this thesis states elsewhere.
+
+## Independence
 
 **Independence.** The thesis and the 2013 paper belong to the same research
 line, so this is a *document* check, not a second measurement lineage. It
@@ -54,14 +73,21 @@ does not answer "was the number measured twice by different groups?"
 - No numeric value changes. The row keeps `dielectric = 36.0`,
   `T_K = 298.15`, `model_ready = false`, and stays on the curated exclusion
   list; the fitted set and every benchmark metric are unaffected.
-- The provenance text for the row is now out of date in one respect: it says the
-  value could not be verified because the cited paper is closed. A provenance
-  patch adds the thesis to `source_dois_all` and rewrites the note to record
-  what the thesis does and does not establish. See the v0.3.5 entry in
-  `reports/decisions_log.md`.
-- The row still has **no GFN2-xTB physical-feature row**, which alone keeps it
-  out of every fit. Running `COCCC#N` through the feature pipeline is the
-  prerequisite for using the value in v1.1, and is independent of this finding.
+- A provenance patch adds the thesis to `source_dois_all` and records the
+  thesis in the note. The v0.3.5 version of that note said the temperature was
+  unstated; the v0.3.10 revision corrects it to 25 C per Tableau 4 and
+  Tableau 14. See the v0.3.5 and v0.3.10 entries in `reports/decisions_log.md`.
+- Two **independent** blockers keep the row out of every fit, and neither is
+  the temperature. Its `model_ready=false` comes from the curated exclusion
+  (`data/processed/dielectric_v03_exclusions.csv`: *secondary compilation
+  awaiting primary confirmation*), which is what `conflict_status =
+  awaiting_primary_confirmation` also records. Separately, the row has **no
+  GFN2-xTB physical-feature row at all**: it is simply absent from
+  `data/processed/dielectric_physical_features_v03.csv`, so it is an independent
+  precondition and does *not* appear among the `failed_physical_feature_*` rows
+  (that bucket only holds feature rows that exist with `status=error`). A confirmed primary
+  value would therefore still need `COCCC#N` run through the feature pipeline
+  before it could be fitted.
 
 ## Retrieval method (and why it is recorded)
 

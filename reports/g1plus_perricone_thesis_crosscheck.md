@@ -23,7 +23,7 @@ reference letters, which is the evidence discipline the dataset asks for.
 | Ethyl acetate | 6.02 @ 298.15 K (NBS 514) | 6 @ 25 C (Tableau 8) | -0.02 | corroborated |
 | Ethyl methyl carbonate | 2.96 @ 298.15 K (review table) | 3 @ 25 C (Tableau 8) | +0.04 | corroborated |
 | **gamma-Valerolactone** | **36.1 @ 298.15 K (iScience 2026 review)** | **32 @ 25 C (Tableau 8, ref [87])** | **-4.1** | **CONFLICT OPEN** |
-| 3-Methoxypropionitrile | 36.0 @ 298.15 K (ECW-308) | 36 (Tableau 12) | 0.0 | value corroborated, temperature unstated |
+| 3-Methoxypropionitrile | 36.0 @ 298.15 K (ECW-308) | 36 @ 25 C (Tableau 4; Tableau 14 column MP) | 0.0 | value and temperature corroborated |
 
 ## What the pass establishes
 
@@ -37,6 +37,11 @@ reference letters, which is the evidence discipline the dataset asks for.
   `temperature_band=extended_temperature`.
 - The nitrile/ester values in the dataset agree with an independent document to
   rounding.
+- **The 3-methoxypropionitrile temperature is stated, not missing.** Tableau
+  4's permittivity column is headed "eps_r a 25 C" and Tableau 14's permittivity
+  row is headed "Constante dielectrique a 25 C"; Tableau 12, which the v0.3.5
+  pass read on its own, carries no temperature note. The v0.3.10 revision
+  corrected the provenance text.
 
 ## The one conflict: gamma-valerolactone
 
@@ -68,7 +73,7 @@ primary measurement.
 ## Method and limits
 
 - Text was extracted with `pypdf` (214 pages, 341,433 characters) from the
-  open-access PDF; Tableaux 5, 7, 8 and 12 were read directly, and the
+  open-access PDF; Tableaux 4, 5, 7, 8, 12 and 14 were read directly, and the
   extraction was checked against the surrounding prose, which restates several
   values (for example "epsilon_r = 43 contre epsilon_r = 90 pour l'EC").
 - A thesis is a **document**, not an independent measurement lineage: where the

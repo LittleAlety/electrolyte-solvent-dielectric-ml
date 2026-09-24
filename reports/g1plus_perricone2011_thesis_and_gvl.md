@@ -96,6 +96,9 @@ Europe PMC 检索端点本轮返回 **HTTP 500**（`tetraglyme`、`triglyme` 两
 3. GVL 的 36.1 vs 32/34 仍是一条**未裁决**的跨文献冲突，写任何一侧进数据集都是替用户做决定。
 4. 因此本轮只产出证据与更正，数据集哈希保持
    `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`。
+5. **v0.3.10 已按本节 §7.1 的建议执行该 provenance patch**：MOPN 的 notes 改写为
+   Tableau 4（印刷页 28）与 Tableau 14（印刷页 77）明示 25 °C，数据集哈希随之更新为
+   `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`；数值、`model_ready` 与冲突状态均未变。
 
 ## 八、请求与预算（诚实记录）
 

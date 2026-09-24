@@ -28,7 +28,7 @@ REVIEW_OBSERVATIONS_PATH = (
 V03_PATH = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 V03_SUMMARY_PATH = REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json"
 EXPECTED_V03_SHA256 = (
-    "f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c"
+    "57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab"
 )
 NONCANONICAL_CASSC_DOIS = (
     "10.1002/CSSC.202402091",
@@ -893,15 +893,62 @@ def test_mopn_gap_row_is_recorded_but_held_out_of_the_model() -> None:
     assert mopn["evidence_level"] == "secondary_compilation_unverified"
     assert mopn["conflict_status"] == "awaiting_primary_confirmation"
     # v0.3.5 adds the open-access companion thesis (HAL tel-00630049) to the
-    # citation chain; the numeric value and the withheld status are unchanged.
+    # citation chain; v0.3.10 corrects the temperature claim. Neither revision
+    # changes the numeric value or the withheld status.
     assert mopn["source_dois_all"] == (
         "10.1016/j.electacta.2013.01.084;10.1002/adfm.202212342;tel-00630049"
     )
     notes = mopn["notes"]
     assert "Perricone 2011" in notes
     assert "tel-00630049" in notes
-    assert "document-level corroboration" in notes
+    assert "corroborated at document level" in notes
+    # The thesis states the condition in two tables, so the earlier
+    # "temperature unstated" reading must not come back in any form.
+    assert "eps_r a 25 C" in notes
+    assert "Constante dielectrique a 25 C" in notes
+    assert "The thesis states no temperature" not in notes
+    assert "temperature question is no longer part of this row's blocker list" in notes
+    # Two independent blockers, and the temperature is neither. The direct
+    # cause of model_ready=false is the curated exclusion, not the missing
+    # feature row (reports/v034_model_ready_gate.md, design decision 2).
+    assert "curated exclusion" in notes
+    assert "no GFN2-xTB physical-feature row at all" in notes
+    assert "not part of the failed_physical_feature_* bucket" in notes
     assert "25.00" in notes, "the ECW-308 stacked-value warning must survive"
+
+
+def test_mopn_thesis_probes_record_the_corrected_temperature() -> None:
+    """The v0.3.10 fix must live in the evidence probes, not only in the CSV."""
+
+    evidence = json.loads(
+        (
+            REPOSITORY_ROOT / "probes" / "g1plus_mopn_thesis_evidence.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert evidence["evidence"]["temperature_stated_in_source"] == "25 C"
+    assert "curated exclusion" in evidence["decision"]["model_ready"]
+    assert "no GFN2-xTB physical-feature row" in evidence["decision"]["model_ready"]
+    convention = evidence["source"]["extracted_text_sha256_convention"]
+    assert "CRLF" in convention and "LF" in convention
+    assert (
+        "d48e684c0081a79f203664b995d0fbbc4ba17425fc557fcaa26754b7afb9e70d" in convention
+    )
+    assert evidence["source"]["extracted_text_sha256"] == (
+        "dc2272fe98b15fed89ba00b9c43aa8472ff0e93e7561cdea78bc3e9900be3fa7"
+    )
+
+    crosscheck = json.loads(
+        (
+            REPOSITORY_ROOT / "probes" / "g1plus_perricone_thesis_crosscheck.json"
+        ).read_text(encoding="utf-8")
+    )
+    mopn = next(
+        row
+        for row in crosscheck["comparisons"]
+        if row["compound"] == "3-methoxypropionitrile"
+    )
+    assert mopn["verdict"] == "value_and_temperature_corroborated"
+    assert mopn["thesis_temperature"] == "25 C"
 
 
 def test_mopn_secondary_compilation_row_claims_no_open_licence() -> None:

@@ -57,7 +57,7 @@ MOPN 身份不是只靠名字判断：PubChem PUG REST 查询 CAS `110-67-8` 返
 1. **SI 不含数据表。** 50 页 SI 只在 pp. S22-S23 讨论 LF-MLR-DC-200 和作图，没有 200 分子的名单、实验值或计算值。
 2. **GitHub 不含 DC-200。** `Teoroo-CMC/Batt-SLM` 递归树共 207 项，只有 Batt-SLM、Batt-P30K、Redox-Pot、CPI 和 RX-392 类资产；没有 DC-200、dielectric 或 dielectric-constant 数据文件。
 3. **Zenodo 配套记录经清单核对后仍不含 DC-200。** DataCite 搜索找到 `10.5281/zenodo.21061161` 与 `10.5281/zenodo.21061162`（两者指向同一记录），许可证为 CC-BY-4.0 + MIT，且 IsSupplementTo 该论文。首轮探测时 `zenodo.org` 在本环境 DNS 不可达；后续复核把主机名钉到已解析 IP（`137.138.52.235`）后记录 API 可访问，清单实际为 1 个文件 `GSDS_Prior_Finetune.zip`（4,746,199,417 字节，md5 `f1736827b1a9f31e85587ca2eae913a7`），描述为 fine-tuning results 与 final generators，**没有**逐分子 DC-200 表。结论不变，但依据由“端点不可达”升级为“清单已核对”。
-4. **原始组装来源不可直接获得。** 正文说明 DC-200 来自“literature and public databases”，对应参考文献为 He et al. 2025 (`10.1063/5.0267184`) 与 Minnesota Solvation Database 2012。MNSOL 官网当前连接超时；没有下载或使用未核验镜像。
+4. **DC-200 的原始组装来源在已取得材料中不可判定。** 正文只写 “curated 200 aprotic samples measured experimentally at room temperature from the literature and public databases”；该句句尾的引文角标在 Europe PMC 全文 XML 中被整体丢弃（全文 `ref-type="bibr"` 的 xref 数为 0），原始 ACS 页面返回 HTTP 403，因此这句实际引用了哪些文献**无法判定**。参考文献列表中相邻的 ref82 = He et al. 2025 (`10.1063/5.0267184`) 与 ref83 = Minnesota Solvation Database (MNSOL) Version 2012 只是**落在该句引文区间内**，不足以断言二者是 DC-200 的组装来源；且 ref82 经 Crossref/OpenAlex 核验为闭源的分子动力学论文（*J. Chem. Phys.* 2025, 162, 194706，主题是纳米限域下 EC 基二元混合体系的介电常数），**不应被表述为 DC-200 的实验数据来源**。MNSOL 官网当前连接超时；没有下载或使用未核验镜像。
 5. **因此 10 个目标的 DC-200 字段全部为 `found=false`。** 这不是“查无此分子”的结论，而是“在已取得的论文资产与**已核对清单**的 Zenodo 记录中都没有逐分子 DC-200 表”。注意：4.75 GB 的 `GSDS_Prior_Finetune.zip` **未下载、未解包**，因此不能据此外推“包内没有该表”或“该资产未发布”。
 
 ## 与现有 dielectric v0.3.2 的对照

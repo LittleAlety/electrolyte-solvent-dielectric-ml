@@ -540,9 +540,11 @@
   `2011GRENI032`, HAL `tel-00630049`), Tableau 12 on page 65, states
   `epsilon_r = 36` for methoxypropionitrile.
 - Decision: add `tel-00630049` to `source_dois_all` and rewrite the note to
-  record exactly what the thesis does and does not establish. The thesis gives
-  no temperature (ECW-308 asserts 25 C) and belongs to the same research line,
-  so this is **document-level corroboration, not a second measurement**: the
+  record exactly what the thesis does and does not establish. The thesis was
+  read as giving no temperature (ECW-308 asserts 25 C) - **（v0.3.10 已更正：
+  论文 Tableau 4 与 Tableau 14 明示 25 °C，见下方 v0.3.10 条目）**. It belongs
+  to the same research line, so this is **document-level corroboration, not a
+  second measurement**: the
   evidence level is unchanged and the row stays out of the model-ready set. The
   ECW-308 Table S3 stacked `25.00` warning is preserved in the same note - not
   averaged and not promoted.
@@ -840,9 +842,9 @@ initially, now 14) after
   openAccess，不是绕过付费墙）；上一轮 tier3"无法读取 PDF 文本"的结论由此取代。
   下载物只留在系统临时目录，未入仓库。
 - **MOPN 溯源前移**：论文 Tableau 4（PDF p.41/印刷 p.28，表头 `εr à 25°C`）、
-  Tableau 12（PDF p.78）、Tableau 14（PDF p.90）三处均为 **36 @25 °C**。论文只写整数
+  Tableau 12（PDF p.78，**无温度列**）、Tableau 14（PDF p.90，**25 °C**）三处均为 **36**（温度由 Tableau 4/14 明示；v0.3.10 更正）。论文只写整数
   **36**，故**不得**据此把它"确认成 36.00"；三张表都是文献汇编表（Tableau 4 引 [43]），
-  证据等级仍为二次汇编。MOPN 仍因缺 GFN2-xTB 特征行而 `model_ready=false`。
+  证据等级仍为二次汇编。MOPN 仍 `model_ready=false`——**（v0.3.10 更正：直接原因是 exclusion 表的“待一次来源确认”，缺 GFN2-xTB 特征行是另一套机制）**。
 - **GVL 冲突描述更正（重要）**：手册里"论文内部 36.1 vs 32/34"的说法不成立。论文全文
   检索 `36.1`/`36,1` **无命中**；论文内部实际是 **34 vs 32**（Tableau 4 与 Tableau 14
   给 34、Tableau 8 给 32）。**36.1 来自数据集自引的开放综述表**（Sun et al. 2026,
@@ -940,7 +942,7 @@ initially, now 14) after
   `--check` 复现为真。
 - **仍然开放（未静默关闭）。** VC `conflict_open`（Saadi & Lee 付费墙，且与 ECW-308 是
   不同证据线）；FEC 78.4/102/107；GVL 36.1 vs 32/34（跨文献）；MOPN 仍 `model_ready=false`
-  （无 GFN2-xTB 特征行）；tetraglyme 7.816 的 arXiv↔DOI 对应关系待复核；tier 3-4
+  （待一次来源确认的 exclusion，外加缺 GFN2-xTB 特征行）；tetraglyme 7.816 的 arXiv↔DOI 对应关系待复核；tier 3-4
   （Riddick 4th ed. 纸质、CRC "Permittivity of Liquids"、Reaxys/SciFinder-n、DIPPR 801）仍受阻。
 - **预算。** 本轮 0 次外部 API 调用（全部本地重算）；三条同物异名核验沿用上一轮已取回的
   PubChem 结果。
@@ -982,3 +984,84 @@ initially, now 14) after
   仅作本地审计）。
 - **仍然开放。** 4.75 GB 归档内部内容未核（未下载）；DC-200 逐分子表仍**未定位**，不是“不存在”。
 - **预算。** 本轮修复 0 次外部 API 调用。
+
+## 2026-09-24（续三）：MOPN 温度取证更正 + DC-200 归因收紧 (v0.3.10)
+
+- **触发。** 用户要求“数据爬取更准确”，主线程据此逐字重读本地缓存的 Perricone 2011 论文抽取
+  文本，发现 v0.3.5 的一条结论有事实错误；同时派两个只读 agent 分别独立复核该结论与
+  DC-200 的归因。
+- **Important（已修）：MOPN 的“论文未给温度”是错的。**
+  `data/dielectric_v03.csv` 中 `OOWFYDWAMOKVSF-UHFFFAOYSA-N`（3-甲氧基丙腈）的 notes 原写
+  “The thesis states no temperature”，该判断来自**只读了 Tableau 12**。原文逐字复核结果是：
+  **Tableau 4**（印刷页 28）介电列表头为 `εr à 25°C`，MOPN 行为
+  `Méthoxypropionitrile [43] - 57 165 66 1,1 36`，无逐格温度覆盖；
+  **Tableau 14**（印刷页 77，转置矩阵）属性行为 `Constante diélectrique à 25°C`，`MP` 列 = 36；
+  **Tableau 12**（印刷页 65）确无温度列——旧结论只对这一张表成立。Tableau 14 同行其余三格可
+  锚定列对齐：sulfolane 43(30 °C)、PC 64,4、EC 90。因此温度改为 **25 °C**；**证据等级仍为
+  二次汇编**（该论文与 2013 年论文同属一条研究线，不是第二次测量），`model_ready=false` 的
+  **直接**原因是 exclusion 表的“待一次来源确认”（`data/processed/dielectric_v03_exclusions.csv`），
+  **不是**缺特征行——缺特征行是**独立前置条件**（MOPN 根本不在特征表里，**不属于** `failed_physical_feature_*`
+  桶，该桶只统计已存在且 `status=error` 的行），但它同样是真实阻塞项。这与
+  `reports/g1plus_perricone2011_thesis_and_gvl.md` 第三节早已记录的 Tableau 4/14 表头一致——
+  那份报告本来就是对的，是 v0.3.5 的 notes 与 probe 与之矛盾。
+- **同步修复的产物（6 处）。** `data/processed/dielectric_v03_provenance_patches.csv` 第 21 行
+  notes（就地改写，非追加）、`probes/g1plus_mopn_thesis_evidence.json`
+  （`temperature_stated_in_source`、`evidence_level`、`model_ready`，并新增 `correction` 字段）、
+  `probes/g1plus_perricone_thesis_crosscheck.json`（verdict 改为
+  `value_and_temperature_corroborated`，并记录 Tableau 14 给出 GVL=34、使该论文自相矛盾更明确）、
+  `reports/g1plus_mopn_thesis_findings.md`（原 “What is still missing / The temperature” 一节重写为
+  “The temperature (corrected in v0.3.10)”）、`reports/g1plus_perricone_thesis_crosscheck.md`
+  （交叉核对表 MOPN 行与表列覆盖范围）、`probes/export_week7_results.py`
+  （`tier3_finding` 与 `open_items` 文案）。
+- **Important（已修）：DC-200 的归因站不住脚。** 仓库两处（`probes/g1plus_tier2_evidence.json` 的
+  `paper_text`、`reports/g1plus_tier2_findings.md` 第 4 条）把 DC-200 的组装来源写成
+  “He et al. 2025 (`10.1063/5.0267184`) 与 MNSOL 2012”。只读 agent（Mendel，3 次 HTTP）核验：
+  该 DOI 是 He et al., *J. Chem. Phys.* 2025, 162, 194706，研究**纳米限域下 EC 基二元混合体系**
+  的**分子动力学**论文、闭源，**不是** 200 溶剂实验汇编；且在 GSDS 全文 XML 中该 DOI **只出现在
+  参考文献列表**（ref82，紧邻 ref83 = MNSOL 2012），正文出现 **0** 次。全文
+  `ref-type="bibr"` 的 xref 数为 **0**（PMC 转换丢弃了全部角标），ACS 原文返回 HTTP 403，故该句
+  实际引文**不可判定**。两处措辞已收紧为“不可判定”，并明确 ref82 不应被表述为 DC-200 的
+  实验数据来源；**“SI / GitHub / Zenodo 已核对清单中均无逐分子 DC-200 表”这一结论一字未弱化**，
+  4.75 GB 归档未解包的限制保留。
+- **附带的取证口径澄清。** `probes/g1plus_mopn_thesis_evidence.json` 的
+  `extracted_text_sha256` 记录的是 **LF 归一化后的文本内容哈希**（`dc2272fe…`）；工作区
+  `.txt` 因 Windows 换行存为 CRLF，其原始字节哈希是 `d48e684c…`，两者并不矛盾。probe 已新增
+  `extracted_text_sha256_convention` 写明该口径。
+- **哈希与连带钉点。** `data/dielectric_v03.csv` 由 `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c` 变为 `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`（仅 1 行
+  notes 变化）。已同步：`probes/dielectric_v03_summary.json`（构建脚本重写）、
+  `probes/v032_ablation_summary.json`、`probes/dielectric_v03_representation_ablation_summary.json`、
+  `tests/test_build_dielectric_v03.py`、`tests/test_verify_v032_benchmarks.py`、
+  `reports/agent_workflow.md`、`reports/v033_provenance_upgrade.md`、
+  `reports/week7_dataset_expansion_and_freeze.md`、`reports/g1plus_materials_project_findings.md`、
+  `reports/g1plus_perricone2011_thesis_and_gvl.md`。`reports/decisions_log.md` 内历史版本章节（v0.3.6-v0.3.9）的旧哈希按惯例**原样保留**、不逐处加注，其取代关系由本节统一声明；其余报告文件中作为“现行钉点”出现的旧哈希已就地标注“已被 v0.3.10 取代”。
+- **未变的部分（复核过，不是假设）。** 两个 ablation 的 236 行拟合集、27 项 summary 均值与标准差、
+  `model_ready` 门控、conflict 状态均未变；`scripts/verify_v032_benchmarks.py` 重跑后仅两个
+  `dataset_sha256` 钉点失配，其余 24 项（含 “all 27 summary means and standard deviations
+  reproduced”）全部通过——这正是“只改 notes”的机器证据。
+- **对抗性审查（第六轮，独立只读审查员）。** 对本次未提交 diff 判 **FAIL：1 Important + 3 Minor，无 Critical**，
+  四条全部成立并已修：(1) **Important**——我把 `model_ready=false` 的“唯一理由”写成缺 GFN2 特征行，
+  但机制上直接原因是 exclusion 表的“待一次来源确认”（`scripts/build_dielectric_v03.py` 只依据
+  exclusion 集合设 `model_ready=false`，见 `reports/v034_model_ready_gate.md`），缺特征是独立前置条件
+  （其归因在第七轮被进一步纠正）；现已在 notes、两个 probe、两份报告、测试与本节统一改正为“两个独立阻塞项”。
+  (2) `probes/export_week7_results.py` 的 `dataset_version` 仍写 0.3.9，已升为 0.3.10 并补版本说明。
+  (3) 本节原称历史条目旧哈希“就地标注”，与 `decisions_log` 内 6 处未加注的事实不符，已按实际改写。
+  (4) MOPN 的两个 probe 字段此前无回归测试，已新增
+  `test_mopn_thesis_probes_record_the_corrected_temperature`。审查员同时独立复核通过：数据集字段级 diff
+  （246 行仅 1 行 `notes` 变）、现行哈希钉点、Perricone 三处原文（含字符偏移）、以及 DC-200 收紧未削弱结论。
+- **第七轮复审（同一位独立只读审查员）。** 仍判 **FAIL：2 Important + 2 Minor**，四条全部成立并已修：
+  (1) 我把缺特征行归入 `failed_physical_feature_*`，但该桶只统计**已存在于特征表且 `status=error`**
+  的行（`probes/dielectric_representation_ablation.py` 的 `successful/failed` 划分），而 MOPN **根本不在**
+  `data/processed/dielectric_physical_features_v03.csv` 里，故它是**独立前置条件、不属于该桶**；
+  已在 notes / 两个 probe / 报告 / 测试中改正。
+  (2) `reports/v034_model_ready_gate.md` 与 `reports/agent_workflow.md` 各有一处把 `f5256d…` 称作
+  "the current revision"，已更新为当前值 `57387b98…`。
+  (3) 新增的 `extracted_text_sha256_convention` 断言原本只查键是否存在，已加强为对 CRLF/LF 口径与
+  两个哈希值的实质性断言。
+  (4) 测试里 `assert "failed_physical_feature_*" in notes` 固化了错误归因，已随第 (1) 条改写。
+- **仍然开放（未静默关闭）。** VC `conflict_open`（Saadi & Lee 1966 付费墙）；FEC
+  78.4/102/107；GVL 36.1 vs 32/34（同一论文 Tableau 8=32、Tableau 14=34，跨文献未裁决）；
+  tetraglyme 7.816 的 arXiv↔DOI 对应关系待复核；tier 3-4（Riddick 4th ed.、CRC
+  “Permittivity of Liquids”、Reaxys/SciFinder-n、DIPPR 801）仍受阻；DC-200 逐分子表仍未定位；
+  4.75 GB `GSDS_Prior_Finetune.zip` 未下载未解包。
+- **预算。** 本轮外部调用共 3 次（Crossref 1 / OpenAlex 1 / ACS 403 探测 1），其余全部为本地
+  重算，远低于每小时 500 次上限。

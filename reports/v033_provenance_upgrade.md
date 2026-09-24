@@ -224,8 +224,9 @@ primary value, an xTB feature row and a re-run of the controlled benchmark.
   `b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f` after the
   3-methoxypropionitrile provenance patch) and then by v0.3.6 (which re-pinned it
   to `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c` after the
-  PubChem tier-1 cross-check notes on acetonitrile and sulfolane; see
-  `reports/decisions_log.md`).
+  PubChem tier-1 cross-check notes on acetonitrile and sulfolane) and then by
+  v0.3.10 (re-pinned to `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab` after the 3-methoxypropionitrile temperature
+  correction; see `reports/decisions_log.md`).
 - Frozen hash re-pinned in `tests/test_build_dielectric_v03.py`.
 - Raw fetch caches for the tier 0-3 passes live in `data/external/g1plus/`, which is
   git-ignored: it contains the text extraction of a closed-access publisher
@@ -307,7 +308,7 @@ Verification after the round: `pytest -q` **490 passed**, Ruff clean,
 `verify_dielectric_v032.py` 7/7, and
 `check_paper_artifact_consistency.py` reports that the paper drafts agree with
 the frozen artifacts. Frozen hashes re-pinned: dataset
-`2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b` (superseded by `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`), patches
+`2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b` (superseded by `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`, then by `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`), patches
 `76070535fb51eb64f50facc7501f617f052e26feda775dc7b2c40c776bae3a47`.
 
 Open items after this round: the Saadi & Lee 1966 two-page full text is still

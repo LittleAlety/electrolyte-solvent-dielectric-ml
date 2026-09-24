@@ -72,7 +72,8 @@ the same way the Materials Project one was.
 
 - Nothing in the dataset. **No row, number, `model_ready` flag or `conflict_status` changes**;
   `data/dielectric_v03.csv` stays at
-  `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`.
+  `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c` (later re-pinned by v0.3.10 to `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab` by a
+  provenance-notes-only revision; again, no value moved).
 - Appendix J gains a recorded outcome for both sources, so the next round does not re-litigate
   them: the Materials Project is out of scope, CatalystHub is pending a usable endpoint.
 - The five targets with no tier-1 or tier-2 primary value (PC, VC, FEC, GVL, MOPN) still need

@@ -76,9 +76,12 @@ Playwright, i.e. the same route a human reader takes.
   measurement. The 1966 paper that first measured it (Saadi & Lee) is paywalled.
 - **FEC**: reported values 78.4, 102 and 107 disagree; the row is excluded
   pending primary review.
-- **3-methoxypropionitrile**: the value is now citable to an open-access
-  document, but the thesis states no temperature, and the row still has no
-  GFN2-xTB physical-feature row.
+- **3-methoxypropionitrile**: the value and its 25 C condition are both
+  citable to the open-access thesis (Tableau 4 and Tableau 14). The row still
+  stays out of the model-ready set for two independent reasons, neither of them
+  the temperature: it is a curated exclusion awaiting primary confirmation
+  (`data/processed/dielectric_v03_exclusions.csv`), and it has no GFN2-xTB
+  physical-feature row.
 - **Tier 4 access**: every print or subscription resource remains unverified
   rather than absent.
 
@@ -95,8 +98,10 @@ Playwright, i.e. the same route a human reader takes.
 ## Verification
 
 - `scripts/verify_dielectric_v03.py`: 7/7 checks, 246 rows,
-  sha256 `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c` (re-pinned in v0.3.6 by the PubChem tier-1
-  cross-check notes on acetonitrile and sulfolane; no numeric value is changed)
+  sha256 `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab` (re-pinned in v0.3.6 by the PubChem tier-1 cross-check
+  notes on acetonitrile and sulfolane, then in v0.3.10 by the
+  3-methoxypropionitrile temperature correction; neither revision changed a
+  numeric value)
 - `scripts/verify_dielectric_v032.py`: 7/7 checks, 245 rows, 243/243
   field-by-field superset of v0.3.1
 - `scripts/verify_dielectric_v02.py`: 9/9 checks

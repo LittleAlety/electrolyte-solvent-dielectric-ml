@@ -150,7 +150,7 @@ def export_results(
     write_json(
         week_root / "week7_summary.json",
         {
-            "dataset_version": "0.3.9",
+            "dataset_version": "0.3.10",
             "dataset_version_note": (
                 "the 246-row set was frozen at v0.3.3; v0.3.4 fixed the "
                 "model_ready modelling gate; v0.3.5-v0.3.6 revised provenance; "
@@ -161,7 +161,9 @@ def export_results(
                 "pairs moved the cross-check to 27 gated comparisons, and four "
                 "ECW-308 extraction defects were fixed (41 rows gained a formula, "
                 "130 rows had their name repaired). No dielectric value moved in "
-                "any of those revisions."
+                "any of those revisions; v0.3.10 corrected the 3-methoxypropionitrile "
+                "temperature in the row's provenance notes and tightened the DC-200 "
+                "attribution, again without moving a value."
             ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),
@@ -207,15 +209,15 @@ def export_results(
                 "tier1_verdict": "PubChem and NIST WebBook carry no structured dielectric field",
                 "tier2_verdict": "ECW-308 is a secondary compilation",
                 "tier3_finding": (
-                    "Perricone 2011 open-access thesis reports eps_r = 36 for "
-                    "3-methoxypropionitrile (temperature not stated)"
+                    "Perricone 2011 open-access thesis reports eps_r = 36 at 25 C for "
+                    "3-methoxypropionitrile (Tableau 4 and Tableau 14)"
                 ),
                 "tier4_status": "blocked on institutional access, recorded as a limitation",
             },
             "open_items": [
                 "vinylene carbonate conflict_open (Saadi & Lee 1966 paywalled)",
                 "fluoroethylene carbonate values 78.4 / 102 / 107 unresolved",
-                "3-methoxypropionitrile temperature unstated in the public source",
+                "3-methoxypropionitrile still needs its primary-confirmation exclusion cleared and a GFN2-xTB feature row run (value and 25 C condition are now corroborated)",
                 "tier 4 print and subscription sources unverified",
             ],
             "verification": verification["passed"],
