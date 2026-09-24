@@ -807,16 +807,80 @@ initially, now 14) after
   显式同义词表）。只有分子式相同的行记为 `formula_only_candidate`，不计入冲突。这条
   规则排除了初版两个假阳性：甲酸甲酯↔乙酸、甲基丙基碳酸酯↔碳酸二乙酯。
   最终 16 条通过门控：5 条 ≤1%、6 条 ≤5%、5 条分歧。
+  **（v0.3.8 修订）** 这组计数基于首版抽取器；对抗审查随后发现两个 Critical 缺陷
+  （裸整数回退让表头与化学式下标抢占行号、公式窗口无下界导致 26 行公式丢失），修复后
+  权威计数为 **24 条门控：8 条 ≤1%、10 条 ≤5%、6 条分歧**，见 v0.3.8 条目。
 - **FEC 维持开放。** 78.4（引 Deng 2020）vs 数据集 102（开放综述表），−23.1%；两侧
   原文本轮均未取得，不收敛，既有 `public_values_78.4_102_107` 票据不变。
 - **未改动数据集。** `data/dielectric_v03.csv` 仍为
   `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`；本次是交叉核对，
   没有写入任何介电数值或 `conflict_status`。
-- **证据。** `probes/g1plus_ecw308_evidence.json`（sha256
-  `ac890473f4a07e68c5f04b93d4f30472a30d1d118bf69e417a0606e0966f75fb`）、
-  `probes/g1plus_ecw308_crosscheck.json`（sha256
-  `a1bed4df36227c2da58867e54338a5b8b833a0a487db760619bf87efbdd6ab01`），两份均为纯 LF；
+- **证据。** `probes/g1plus_ecw308_evidence.json` 与
+  `probes/g1plus_ecw308_crosscheck.json`，两份均为纯 LF；**（v0.3.8 修订）** 此处原记的
+  `ac890473…` / `a1bed4df…` 两个哈希已随缺陷修复失效，现行哈希见 v0.3.8 条目。
   写于 `reports/g1plus_ecw308_crosscheck.md`。源 SI PDF 哈希固定在脚本内，不匹配即中止。
 - **预算。** 0 次外部 API 调用（全部基于已落地的 SI PDF）；`--check` 可验证可复现性。
 - **仍然开放。** PC / VC / FEC / GVL / MOPN 的 tier 3-4 实体书与机构库路径；FEC、VC、
   GVL 冲突票据。
+
+## 2026-09-24: 引文链补全、Perricone 论文取证与 GVL 冲突更正 (v0.3.8)
+
+- **ECW-308 编号补上 DOI 与文献类型。** [2] `10.1149/1.2083323`、[3]
+  `10.1149/2.1351810jes`、[16] `10.1039/c7gc00252a`、[34] `10.1149/2.088306jes`、
+  [36] `10.1016/j.electacta.2013.01.084`、[40] `10.1002/adma.201808393`、[42]
+  `10.1016/j.ensm.2020.07.018`。
+- **重要限定（防止越界引用）**：[16] Flamme 2017、[40] Huang 2019、[42] Deng 2020 是
+  **综述**，不是原始测量。因此 ECW-308 链闭合的是"值 → 引文"，**未**闭合"值 → 一手测量"；
+  VC / FEC / diglyme / triglyme 的一手上游仍是开放项。此限定已写入
+  `reports/g1plus_ecw308_crosscheck.md`。
+- **Perricone 2011 论文全文已取得**（HAL `tel-00630049`，214 页，2,829,426 bytes，
+  HTTP 200 application/pdf）。命令行取件经 Anubis 工作量证明后放行（该文件本身是
+  openAccess，不是绕过付费墙）；上一轮 tier3"无法读取 PDF 文本"的结论由此取代。
+  下载物只留在系统临时目录，未入仓库。
+- **MOPN 溯源前移**：论文 Tableau 4（PDF p.41/印刷 p.28，表头 `εr à 25°C`）、
+  Tableau 12（PDF p.78）、Tableau 14（PDF p.90）三处均为 **36 @25 °C**。论文只写整数
+  **36**，故**不得**据此把它"确认成 36.00"；三张表都是文献汇编表（Tableau 4 引 [43]），
+  证据等级仍为二次汇编。MOPN 仍因缺 GFN2-xTB 特征行而 `model_ready=false`。
+- **GVL 冲突描述更正（重要）**：手册里"论文内部 36.1 vs 32/34"的说法不成立。论文全文
+  检索 `36.1`/`36,1` **无命中**；论文内部实际是 **34 vs 32**（Tableau 4 与 Tableau 14
+  给 34、Tableau 8 给 32）。**36.1 来自数据集自引的开放综述表**（Sun et al. 2026,
+  *iScience*, `10.1016/j.isci.2026.115778`, Table 3），其一手测量上游未回溯。
+  因此这是**跨文献冲突**而非论文内部矛盾；GVL 的 36.1 仍未获任何一手支撑，票据保持开放，
+  不适合当作已裁决。
+- **tetraglyme 取得独立一手值**：7.816 @298.15 K、**1 MHz**、Agilent 16452A 液池 +
+  4294A 阻抗分析仪，来源 arXiv:2402.05989 Table 1（PDF p.16；方法见 p.4）。与数据集
+  ThermoML 值 7.798 @298.15 K 相差 **+0.23%**，并补上数据集缺失的频率条件。
+  **保留意见**：agent 把该表归到 DOI `10.1016/j.tca.2012.10.024`，但 arXiv↔DOI 的对应
+  关系本轮未复核，故在复核前不得写入 `source_doi`。
+- **醚/腈族其余项**：diglyme/triglyme 的一手候选 `10.1016/j.jct.2010.09.008` 为 closed；
+  adiponitrile 候选 `10.1149/1.3023084` 被 Radware 拦截；glutaronitrile 的 NRC 开放稿
+  返回 **HTTP 410**。Europe PMC 检索端点本轮 **HTTP 500**，按纪律记 **blocked 而非
+  not_found**。
+- **未改动数据集**：MOPN 的 provenance note 属 notes 级变更，会改动
+  `data/dielectric_v03.csv` 哈希并牵动多处固定哈希，故留作**独立的 provenance patch**
+  （同 v0.3.5/v0.3.6 的做法）；tetraglyme 值待 DOI 复核；GVL 冲突未裁决。数据集哈希仍为
+  `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`。
+- **请求预算（诚实记录）**：Kierkegaard 59/80 未超支；Ramanujan **≥87 次 HTTP + 约 12 次
+  文档导航（约 99）**，**超出 80 次预算**，失败/阻断至少 16 次。已取得的题录均经 DOI
+  元数据匹配，但下一轮应把预算门控做在工具层而非提示层。
+- **写于** `reports/g1plus_perricone2011_thesis_and_gvl.md`。
+- **对抗审查（skill: adversarial-review-optimize）与两处 Critical 修复。** 只读审查员用
+  独立的 pypdf 扫描（不复用被测解析函数）把 v0.3.7 判为 **FAIL**，抓到两个真缺陷：
+  1. `row_starts()` 的裸整数回退过宽——表头 `Category 1` 的 `1` 抢占了第 1 行（第 1 行
+     实际丢失），化学式下标 `3/4/9` 抢占了第 3/4/9 行；
+  2. `_formula_for()` 的 35 pt 固定窗口没有下界，把**下一行的名称**拼进公式，26 个有值的
+     行被误判为 `ecw_no_formula`（Acetonitrile、Diglyme、VC、2-Butanone 全部中招）。
+  修法：裸整数回退**钉死到第 279 行**（`BARE_INDEX_ROWS`）；公式窗口改以**下一行行标签为
+  下界**。修正后第 1 行恢复 `Formamide`（CH3NO），第 3/4/9 行恢复
+  `Dimethyl acetamide`/`N-methylacetamide`/`Urea`，第 38 行恢复公式 `C2H3N`。
+- **更正后的权威计数（v0.3.8）。** 无公式行 26 → **4**；门控比较 16 → **24**
+  （8 条 ≤1%、10 条 ≤5%、**6 条分歧**）。新增的一致项包括 **VC 126.00 = 126（0%）**、
+  Diglyme 7.40 vs 7.3815（+0.3%）、DMF、ACN、1,3-dioxolane、2-butanone；新增的分歧项是
+  **i-butyl acetate 5.00 vs 5.29（−5.5%）**。
+- **报告笔误一并更正**：首版引文作用表把 Acetonitrile 挂在 `[2]`，实测第 38 行 Refs. 是
+  `[34]`；"一致（8 条）"与随后列出的 11 条自相矛盾，现已按 JSON summary 重算。
+- **测试强度补强**：锚点断言由"字符串包含"改为**精确相等 + 数值比较**（原断言连
+  `137.00` 都能通过），并新增第 1/3/4/9/38/96/163 行的身份回归、以及"游离裸整数不得开行"
+  与"公式窗口必须被下一行截断"两项回归测试；测试数 33 → 36。
+- **v0.3.8 证据哈希**：evidence `ad1d54346a889926ecca86859248ec4bd37d8afa3a2a0c57de3206e59698ab3d`、
+  crosscheck `869c12790b3644bf9ae5ccbbb30bbac31cbe87424a6ea9be4dda9901c5d08326`，均纯 LF。

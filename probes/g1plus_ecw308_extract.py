@@ -88,6 +88,11 @@ DEFAULT_DATASET = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 EXPECTED_PDF_SHA256 = "19f1166e2aba6834f0cccb1d751b618dded5c80f97ab5b9957b2d15046bdbc76"
 
 TABLE_ROWS = 308
+# Row 279 is printed without its full stop. The fallback below must stay pinned
+# to that single index: a blanket "any bare integer equal to the expected index"
+# rule lets the header word "Category 1" open row 1 and lets formula subscripts
+# (the "3" of C3H7NO) open rows 3, 4 and 9.
+BARE_INDEX_ROWS = frozenset({279})
 ROW_INDEX = re.compile(r"^(?P<index>\d{1,3})\.")
 NUMERIC = re.compile(r"^[\u2212-]?\d+(?:\.\d+)?$")
 FORMULA = re.compile(r"^(?:[A-Z][a-z]?\d*){2,}$")
@@ -145,6 +150,10 @@ SYNONYM_NAMES = {
     # The SI prints a few names with the substituent spacing split across the
     # word ("1,2 - Dimethoxy ethane"); the key is the canonical form.
     "1 2 dimethoxy ethane": "1,2-dimethoxyethane",
+    "dimethyl formamide": "dimethylformamide",
+    "dimethyl acetamide": "n n dimethylethanamide",
+    "dioxolane": "1,3-dioxolane",
+    "i butyl acetate": "isobutyl acetate",
 }
 
 AGREEMENT_BANDS = ((0.01, "agree_within_1pct"), (0.05, "agree_within_5pct"))
@@ -233,8 +242,7 @@ def row_starts(tokens: Sequence[Token], page_range: tuple[int, int]) -> tuple[li
         match = ROW_INDEX.match(token.text)
         if match:
             value = int(match.group("index"))
-        elif token.text == str(expected):
-            # Row 279 is printed without its full stop in the SI.
+        elif expected in BARE_INDEX_ROWS and token.text == str(expected):
             value = expected
         else:
             continue
@@ -270,13 +278,25 @@ def _name_for(start: Token, scoped: Sequence[Token]) -> str:
     return ROW_INDEX.sub("", " ".join(pieces), count=1).strip()
 
 
-def _formula_for(start: Token, scoped: Sequence[Token]) -> str | None:
+def _formula_for(
+    start: Token, scoped: Sequence[Token], next_row_y: float | None = None
+) -> str | None:
+    """Read the printed formula that sits under this row's name.
+
+    The window is bounded below by the *next* row label, not by a fixed depth:
+    on a 24.5 pt row pitch the next row's own name falls inside any fixed 35 pt
+    window and gets glued onto the formula, which is how Acetonitrile, Diglyme
+    and Vinylene carbonate previously came back as formula-less rows.
+    """
+    max_dy = FORMULA_MAX_DY
+    if next_row_y is not None:
+        max_dy = min(max_dy, start.y - next_row_y - 0.5)
     cells = [
         token
         for token in scoped
         if token.page == start.page
         and FORMULA_MIN_X <= token.x <= FORMULA_MAX_X
-        and FORMULA_MIN_DY <= start.y - token.y <= FORMULA_MAX_DY
+        and FORMULA_MIN_DY <= start.y - token.y <= max_dy
         and FORMULA_TOKEN.match(token.text)
     ]
     # Order by x, not by y: element symbols and their subscripts sit at slightly
@@ -363,6 +383,12 @@ def extract_rows(
     starts, reached = row_starts(tokens, page_range)
     band = dielectric_band(scoped)
     cells, unclaimed = band_cells(starts, scoped, band)
+    next_y: dict[tuple[int, float], float | None] = {}
+    for position, start in enumerate(starts):
+        follower = starts[position + 1] if position + 1 < len(starts) else None
+        next_y[(start.page, start.y)] = (
+            follower.y if follower is not None and follower.page == start.page else None
+        )
     rows: list[dict] = []
     for start in starts:
         raw_cells = sorted(cells.get((start.page, start.y), []), key=lambda token: token.x)
@@ -376,7 +402,7 @@ def extract_rows(
                 "index": _row_index(start),
                 "page": start.page,
                 "name": _name_for(start, scoped),
-                "formula": _formula_for(start, scoped),
+                "formula": _formula_for(start, scoped, next_y[(start.page, start.y)]),
                 "dielectric_cell": cell,
                 "dielectric_status": status,
                 "dielectric_value": value,
@@ -702,4 +728,3 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

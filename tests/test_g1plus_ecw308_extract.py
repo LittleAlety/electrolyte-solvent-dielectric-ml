@@ -35,7 +35,6 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 # reading of the other 297 rows is not trustworthy either.
 HAND_READ_ANCHORS = {
     38: "37.00",
-    51: "36.00",
     52: "37.00",
     53: "30.00",
     96: "7.40",
@@ -45,6 +44,22 @@ HAND_READ_ANCHORS = {
     163: "126.00",
     166: "78.40",
     209: "43.00",
+}
+
+# Row 51 (MOPN) prints two stacked values, so it is asserted separately: the
+# cell must keep both numbers and must not be collapsed into a value.
+STACKED_ANCHOR = (51, ("36.00", "25.00"))
+
+# Rows whose identity the extractor previously got wrong: rows 1, 3, 4 and 9
+# had their labels taken over by the header word and by formula subscripts.
+ROW_IDENTITY = {
+    1: ("formamide", "CH3NO"),
+    3: ("dimethyl acetamide", "C4H9NO"),
+    4: ("methylacetamide", "C3H7NO"),
+    9: ("urea", "CH4N2O"),
+    38: ("acetonitrile", "C2H3N"),
+    96: ("diglyme", "C6H14O3"),
+    163: ("vinylene carbonate", "C3H2O3"),
 }
 
 
@@ -80,17 +95,37 @@ def test_row_numbers_must_arrive_in_order() -> None:
     assert reached == 2
 
 
-def test_row_without_a_full_stop_is_still_numbered() -> None:
-    # Row 279 of the SI prints its number without the trailing period, so the
-    # sequence check must accept a bare integer when it is the expected index.
-    tokens = [
-        Token(9, 100.0, 500.0, "1."),
-        Token(9, 100.0, 474.0, "2."),
-        Token(9, 88.0, 448.0, "3"),
-    ]
+def test_row_279_without_a_full_stop_is_still_numbered() -> None:
+    # Row 279 of the SI prints its number without the trailing period.
+    tokens = [Token(9, 100.0, 500.0 - 24.0 * (index - 1), f"{index}.") for index in range(1, 279)]
+    tokens.append(Token(9, 88.0, 500.0 - 24.0 * 279, "279"))
     starts, reached = row_starts(tokens, (1, 10))
-    assert reached == 3
-    assert [start.text for start in starts] == ["1.", "2.", "3"]
+    assert reached == 279
+    assert starts[-1].text == "279"
+
+
+def test_a_stray_bare_integer_never_opens_a_row() -> None:
+    # The header prints "Category 1" and formulas print subscripts such as the
+    # "3" of C3H7NO. Neither may be mistaken for a row label.
+    tokens = [Token(1, 100.0, 500.0, "1."), Token(1, 188.0, 474.0, "2")]
+    starts, reached = row_starts(tokens, (1, 2))
+    assert reached == 1
+    assert [start.text for start in starts] == ["1."]
+
+
+def test_formula_window_is_bounded_by_the_next_row_label() -> None:
+    start = Token(2, 120.3, 230.3, "38.")
+    scoped = [
+        start,
+        Token(2, 154.5, 218.3, "C"),
+        Token(2, 161.5, 217.4, "2"),
+        Token(2, 165.0, 218.3, "H"),
+        Token(2, 172.7, 217.4, "3"),
+        Token(2, 176.1, 218.3, "N"),
+        Token(2, 147.3, 204.4, "Propanenitrile"),
+    ]
+    assert _formula_for(start, scoped, 204.4) == "C2H3N"
+    assert _formula_for(start, scoped, None) is None
 
 
 def test_a_number_far_to_the_right_never_opens_a_row() -> None:
@@ -264,8 +299,24 @@ def test_crosscheck_reports_a_stacked_cell_without_matching_it(tmp_path: Path) -
 def test_committed_evidence_reproduces_the_hand_read_anchors() -> None:
     rows = {row["index"]: row for row in _evidence()["rows"]}
     for index, expected in HAND_READ_ANCHORS.items():
-        cell = rows[index]["dielectric_cell"] or ""
-        assert expected in cell, f"row {index} lost the hand-read value {expected}"
+        row = rows[index]
+        assert row["dielectric_cell"] == expected, f"row {index} cell drifted"
+        assert row["dielectric_value"] == pytest.approx(float(expected))
+        assert row["dielectric_status"] == "value"
+    index, values = STACKED_ANCHOR
+    stacked = rows[index]
+    assert stacked["dielectric_status"] == "stacked"
+    assert stacked["dielectric_value"] is None
+    for value in values:
+        assert value in (stacked["dielectric_cell"] or "")
+
+
+def test_committed_evidence_keeps_row_identity() -> None:
+    rows = {row["index"]: row for row in _evidence()["rows"]}
+    for index, (name, formula) in ROW_IDENTITY.items():
+        row = rows[index]
+        assert name in row["name"].lower(), f"row {index} name drifted: {row['name']!r}"
+        assert row["formula"] == formula, f"row {index} formula drifted"
 
 
 def test_committed_evidence_covers_every_row_of_table_s3() -> None:
@@ -334,4 +385,3 @@ def test_dataset_still_carries_the_rows_the_crosscheck_reads() -> None:
     text = DEFAULT_DATASET.read_text(encoding="utf-8")
     assert "fluoroethylene carbonate" in text
     assert REPOSITORY_ROOT / "data" / "dielectric_v03.csv" == DEFAULT_DATASET
-
