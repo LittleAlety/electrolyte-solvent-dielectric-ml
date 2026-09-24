@@ -30,7 +30,7 @@ from probes.manual_appendix_reconciliation import (
 ARTIFACT = REPOSITORY_ROOT / "probes" / "manual_appendix_reconciliation.json"
 
 CURRENT_DATASET_SHA256 = (
-    "765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60"
+    "1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456"
 )
 
 GLYME_KEYS = TARGET_GROUPS["glymes"]

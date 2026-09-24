@@ -8,8 +8,12 @@ conditions in Appendix I are met.
 
 > **Historical snapshot (2026-09-24).** The v0.3.3/v0.3.4 wording and the FEC
 > "78.4 / 102 / 107" statements below record the state at the Week-7 freeze.
-> The current dataset is **v0.3.11** (`765fd8e0...646b60`): the stored 102 was
-> shown to be the flash point, leaving 78.4 vs 107 as the dielectric legs.
+> The dataset at the v0.3.11 re-pin was **v0.3.11** (`765fd8e0...646b60`): the
+> stored 102 was shown to be the flash point, leaving 78.4 vs 107 as the
+> dielectric legs. As of v0.3.12 the current dataset is **v0.3.12**
+> (`1b285fe8...22456`): FEC now stores 78.4 at 296.15 K from its primary
+> measurement, and vinylene carbonate carries primary-source metadata. Both
+> rows remain `model_ready=false`, so no benchmark row moved.
 
 ## Outcome
 
@@ -105,10 +109,12 @@ Playwright, i.e. the same route a human reader takes.
 ## Verification
 
 - `scripts/verify_dielectric_v03.py`: 7/7 checks, 246 rows,
-  sha256 `765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60` (re-pinned in v0.3.6 by the PubChem tier-1 cross-check
-  notes on acetonitrile and sulfolane, then in v0.3.10 by the
-  3-methoxypropionitrile temperature correction, then in v0.3.11 by the FEC
-  flash-point conflict correction; no revision changed a numeric value)
+  sha256 `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456` (v0.3.11 was `765fd8e0...646b60`;
+  re-pinned in v0.3.6 by the PubChem tier-1 cross-check notes on acetonitrile
+  and sulfolane, then in v0.3.10 by the 3-methoxypropionitrile temperature
+  correction, then in v0.3.11 by the FEC flash-point conflict correction, then
+  in v0.3.12 by the FEC primary-value promotion; no revision has moved a
+  numeric value in a `model_ready=true` row)
 - `scripts/verify_dielectric_v032.py`: 7/7 checks, 245 rows, 243/243
   field-by-field superset of v0.3.1
 - `scripts/verify_dielectric_v02.py`: 9/9 checks

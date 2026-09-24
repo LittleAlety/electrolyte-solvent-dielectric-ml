@@ -97,15 +97,20 @@ Tesla 40 / Peirce 40 / Ampere 40 / Pasteur 10，**合计 130 次**；四个 agen
 3. **Hagiyama et al. 2008**（`10.1246/cl.2008.210`）：FEC **107** 腿候选原始测量，OUP 403 / J-STAGE 404。
 4. **Ue et al. 2014 专著章节**（`10.1007/978-1-4939-0302-3_2`）：107 腿另一条候选，Springer 身份认证。
 5. **Ue, Ida & Mori 1994**（`10.1149/1.2059270`）：MOPN 具名主来源候选；Reaxys 侧已确认无介电分类。
-6. **v0.3.12 数据修订**：把两条字段级补丁落地并重跑全部哈希钉点（补丁全文见证据文件 `backlog`）。
-   FEC 补丁为 `dielectric 102 → 78.4`、`T_K 298.15 → 296.15`、`temperature_source → reported`、
+6. ~~**v0.3.12 数据修订**：把两条字段级补丁落地并重跑全部哈希钉点（补丁全文见证据文件 `backlog`）。~~
+   **已结清（2026-09-25，v0.3.12）。** 落地结果：
+   FEC 存值 `dielectric 102 → 78.4`、`T_K 298.15 → 296.15`、`temperature_source → reported`、
    `evidence_level → primary`、`source_quality → primary_experimental`、
    `source_doi → 10.1016/S0022-1139(02)00317-2`、`source_table → Table 2`、`notes` 按原始测量重写，
-   `model_ready` 保持 false；
-   VC 补丁只改身份字段（`evidence_level → primary`、`source_quality → primary_experimental`、
+   `conflict_status → primary_78.4_landed_107_leg_unread`，`model_ready` 保持 false；
+   VC 数值不动，只改身份字段（`evidence_level → primary`、`source_quality → primary_experimental`、
    `temperature_source → reported`、`source_doi → 10.1039/j29660000005`、`source_table → Table 2`、
-   `uncertainty_kind → reported` + `uncertainty_value 1.0`、`notes` 按原始测量重写）与 `conflict_status`，数值不动。
-   **枚举必须是仓库既有取值 `primary` / `primary_experimental`；每条补丁的逐字替换 `notes` 见证据文件 `backlog`。**
+   `uncertainty_kind → reported` + `uncertainty_value 1.0`、`notes` 按原始测量重写）与
+   `conflict_status → knovel_78_127_interval_contains_primary_value`，`model_ready` 保持 false。
+   两行的 license 三列按付费原始源清空、`redistribution_status` 保持 `allowed`（与既有 PC/EC primary 行同形）。
+   钉点：规范哈希 `765fd8e0…646b60` → `1b285fe8…22456`；246 行 × 38 列不变，
+   240 条 `model_ready=true` 行**逐字节未变**，变化仅 FEC 与 VC 两行；补丁文件 33 → 30 行。
+   **枚举沿用仓库既有取值 `primary` / `primary_experimental`；每条补丁的逐字替换 `notes` 见证据文件 `backlog`。**
 7. **受限目录 4 个未取值目标**：EC（`SMI_SC_31657`）、GVL（`SMI_SC_31853`）、DME（`SMI_SC_31827`）、
    环丁砜（`SMI_SC_31784`）——有目录记录、无抓取值，需 SpringerMaterials 恢复可达。
 8. **温度带决策**：33 条 A 类零频候选（18-crown-6、butanedinitrile）全在近室温带之上。
@@ -116,3 +121,7 @@ Tesla 40 / Peirce 40 / Ampere 40 / Pasteur 10，**合计 130 次**；四个 agen
 `tests/test_g1plus_crawl_round5.py` **12 项断言全通过**；
 `probes/g1plus_round5_crosscheck.py` 可复跑并复现 tracked summary；
 规范数据集仍 246 行、`changed_fields = []`、sha256 `765fd8e0…646b60`（本轮未改任何单元格）。
+
+> **v0.3.12 后续修订（2026-09-25，已落地）。** 上面这一行是**第五轮当时**的快照；随后独立的 v0.3.12 数据修订把 FEC 与 VC 两条字段级补丁落地，
+> 当前规范哈希为 `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456`（v0.3.11 的 `765fd8e0…646b60` 为历史值），
+> 246 行 × 38 列不变，其余 244 行（含全部 240 条 `model_ready=true` 行）逐字节未变。

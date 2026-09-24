@@ -1552,3 +1552,133 @@ Springer 303 跳转身份认证、HAL `numFound=0`、Google Books / Internet Arc
 - Still open: FEC 107 腿（Hagiyama 2008 OUP 403；Ue 2014 章节 Springer 身份认证）、
   MOPN 介电值（Ue 1994 IOPscience 付费页；Reaxys 已确认无该分类）、受限目录 4 个未取值目标
   （需 SpringerMaterials 恢复可达）、v0.3.12 数据修订落地、温度带决策、DC-200 成员表。
+
+## 2026-09-25（续十）v0.3.12：两条 primary 值落地 + 哈希钉点全量重跑
+
+把第五轮 backlog 里的两条字段级补丁原样落地为一次**独立数据修订**。本轮唯一的写者是主线程；
+两个只读审计 agent（Godel 审 paper/、Hegel 审 reports/ 与手册快照）只产出清单，不写文件，
+避免并行写冲突。
+
+### A. 改了什么
+
+| 行 | 字段 | 旧 | 新 |
+|---|---|---|---|
+| FEC | `dielectric` | 102（实为闪点） | **78.4**（Kobayashi 2003 Table 2，脚注 e = "At 23 °C."） |
+| FEC | `T_K` | 298.15 | **296.15**（23 °C） |
+| FEC | `source_doi` / `source_url` / `source_citation` / `source_table` | `10.1002/cssc.202402091` 等 | `10.1016/S0022-1139(02)00317-2` / Table 2 / Kobayashi et al. (2003) J. Fluorine Chem. 120(2) 105-110 |
+| FEC | `source_quality` / `evidence_level` / `temperature_source` | open_access_review_table / review | **primary_experimental / primary / reported** |
+| FEC | `conflict_status` | stored_value_102_is_flash_point_not_permittivity | `primary_78.4_landed_107_leg_unread` |
+| VC | `source_doi` / `source_url` / `source_citation` / `source_table` | `10.1002/cssc.202402091` 等 | `10.1039/j29660000005` / Table 2 / Saadi & Lee (1966) J. Chem. Soc. B 5-6 |
+| VC | `uncertainty_value` / `uncertainty_kind` | 空 | **1.0 / reported** |
+| VC | `source_quality` / `evidence_level` / `temperature_source` | open_access_review_table / review | **primary_experimental / primary / reported** |
+| VC | `conflict_status` | conflict_open | `knovel_78_127_interval_contains_primary_value` |
+
+**受保护字段**：VC 的 `dielectric` 仍 126、`T_K` 仍 298.0；两行 `model_ready` 均保持 `false`。
+行数仍 246、列数仍 38。`data/processed/dielectric_v03_exclusions.csv` 的 FEC 行改写为
+`competing_107_leg_unread` / `exclude_from_model_pending_107_leg_review`（5 行、InChIKey 集合不变）。
+
+### B. 三个致命约束（决定了实现路径）
+
+1. `apply_provenance_patches()` 要求补丁 `value` 非空 → **不能用补丁清空字段**；而
+   `review_license_errors()` 会把「license 仍非空 + DOI 不在开放许可白名单」判为
+   `unsupported review source_doi` 并直接 `ValueError`。
+   → 解法：**就地改 base review 行**（`modern_solvent_public_review_observations.csv`），
+   既不走补丁通道，也不移表。
+2. `scripts/verify_v032_benchmarks.py` 硬性要求 `withheld_not_model_ready_count == 1` 且名单恰为
+   `["vinylene carbonate"]` → **VC 不能移出 review 表**（该表才有 `model_ready` 列）；
+   移表会让 VC 从 withheld 变成 excluded，verifier 立即失败。
+3. license 四列的唯一可行组合：`source_quality=primary_experimental` + `source_license=''` +
+   `license_url=''` + `redistribution_conditions=''` + `redistribution_status=allowed`，
+   与既有 PC/EC primary 行完全同形。
+
+### C. 钉点
+
+| 项目 | 值 |
+|---|---|
+| 新规范哈希 | `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456` |
+| 旧规范哈希（v0.3.11） | `765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60` |
+| 行 × 列 | 246 × 38 |
+| `model_ready=true` 行 | 240，**与 HEAD 逐字节一致**（`FROZEN BENCHMARK VIOLATIONS: []`） |
+| 变化行 | 仅 FEC 与 VC |
+| 补丁文件 | 33 → **30** 行（删掉 3 条已被就地值取代的补丁） |
+| evidence_counts | primary 15→17、open_access_review_table 21→20、open_access_article_text 1→0、secondary_compilation_unverified 1、v0.2 208 |
+
+**重跑而不是重钉**：三个轻量探针（`nbs514_frequency_gate_audit`、`manual_appendix_reconciliation`、
+`nbs514_alpha_harmonization_probe`）重跑重生成；三个 ML 摘要
+（`v032_ablation_summary`、`dielectric_v03_representation_ablation_summary`、`dielectric_onsager_delta_summary`）
+也**全部真正重跑**——其 diff 只有 `dataset_sha256` / `exclusions_sha256` / `generated_at` 三处，
+**所有指标、折与预测逐字节未变**。这正是「FEC 与 VC 都不参与拟合」的独立证明，
+比上一轮的「重钉 + 声明」更强。4 个静态证据 JSON 重钉 `canonical_sha256` 并改写
+`canonical_sha256_revision_note`；6 个测试常量、报告与论文侧叙述同步。
+
+### D. 只读对抗复审（agent 集群）
+
+- **Godel（paper/）** 逐行列出因 v0.3.12 变成事实错误的语句；已按最小替换落地，
+  并**保留**两处明确的历史叙述：`paper/methods_data_records.md` 的 v0.3.1 小节、
+  `paper/technical_validation.md:268` 的 "Until v0.3.4 ... yet still fitted"。
+- **Hegel（reports/ 与手册快照）** 把 17 处旧哈希分类：7 处判为「当前值」必须重钉，
+  10 处判为历史必须保留；并证明 `tests/fixtures/manual_appendix_j_snapshot.md` 与外部手册
+  「附录 J-补记三」的派生快照逐字节一致（fixture sha256 `531083aa…38ad4e`）。
+- **主线程驳回 Godel 的一项建议**：`paper/abstract_and_intro.md:14` 的 "four rows" 与 exclusion 文件的
+  5 行**不矛盾**——v0.3.2 lineage 的 `probes/v032_ablation_summary.json` 记录 `source_count=245`、
+  `excluded_count=4`、`exclusion_file_count=5`，MOPN 不在 v0.3.2 roster 内所以落在 `excluded_not_in_source`，
+  **不改**。（该 artifact 必须用 `--source data/dielectric_v032.csv` 复跑；第一次用错 `--source` 时它被写成
+  246/5/[]，已由只读复审员 Nash 证伪并回滚复跑——见 §H。）
+
+### E. 有意做的语义修复
+
+- 论文原写 "no subscription-only numeric values were promoted into the public dataset"，v0.3.12 后按字面已假。
+  已限定为 `no subscription-restricted SpringerMaterials value`，并明写 FEC 78.4 与 VC 126 是**付费原始文献里的
+  单个测量事实**、源 PDF 存入 git-ignored 的 `data/restricted/` 且不随数据集再分发。
+- 原写 "ECW-308 independently supports 78.4" 已改：ECW-308 → Flamme 2017 → Kobayashi 2003 是**同源链**，
+  不是独立互证（VC 的 Flamme 2017 entry 26 同理，引用的是同一篇 Saadi & Lee 1966）。
+- VC 的 `paper/methods_data_records.md` 段落原本还写「pipeline 只认 exclusion list 不认 `model_ready`」，
+  该陈述在 v0.3.4 后即已漂移，本轮一并修正为 gate 已扣留。
+
+### F. 本轮验证
+
+`pytest -q` **726 passed**（新增 `SHIPPED_REVIEW_DOIS` 与 `REVIEW_LICENSE_METADATA_UNDER_TEST` 拆分的回归测试）；
+`ruff check .` All checks passed；7 个 verifier 全通过，`verify_dielectric_v03.py` 报
+output_sha256 = `1b285fe8…22456`；week7 / week8 成果包已重导并各自自校验通过
+（`verify_export_manifests.py` 默认只覆盖 week1–week6，week7/8 必须显式给 `--output-dir` 才会被它校验）。
+
+### G. Still open
+
+FEC 107 腿（Hagiyama 2008 OUP 403；Ue 2014 Springer 认证墙）、MOPN 的 primary 确认与 GFN2-xTB 特征行、
+
+### H. 提交前的只读对抗复审（Nash）与一处 Critical 回滚
+
+把全部 staged 文件的完整 diff 交给一名只读复审员（Nash），要求逐条证伪。结论：**1 Critical、3 Important、4 Minor**。
+
+**Critical（已修）**：`probes/v032_ablation_summary.json` 的 v0.3.2 lineage 第一次复跑时误用了
+`--source data/dielectric_v03.csv`（246 行）而不是 `data/dielectric_v032.csv`（245 行），
+导致 `source_count 245→246`、`excluded_count 4→5`、`excluded_not_in_source [MOPN]→[]`，
+即 v0.3.2 与 v0.3.3 两个 lineage 的记录被写成完全重合。
+`verify_v032_benchmarks.py`（只校验 digest、withheld 名单与指标）与
+`check_paper_artifact_consistency.py`（只校验会计恒等式 236+5+4+1=246）**都不会拦住它**，两条都实测 PASS。
+→ 修复：用正确的 `--source data/dielectric_v032.csv` 重跑该 lineage，`source_count=245`、`excluded_count=4`、
+`excluded_not_in_source=['OOWFYDWAMOKVSF-UHFFFAOYSA-N']` 已恢复；该文件的 staged diff 回到**只有**
+`dataset_sha256` 与 `exclusions_sha256` 两行。**这是一次真实的可复现性缺口，不是措辞问题。**
+
+**Important（已修）**：三份跨版本维护的报告里仍有被 v0.3.12 证伪的现在时陈述——
+`reports/week8_benchmark_freeze.md`（"VC remains conflict_open"、"neither leg has a readable primary measurement"）、
+`reports/g1_data_gate_review.md`（"stored 102"、"78.4 (ECW-308)"、"neither has a readable primary measurement"）、
+`reports/v033_provenance_upgrade.md`（78.4/107 两腿、VC 的 CC BY-NC 许可、以及「Saadi 全文仍需读到」）。
+三者都会被 `export_week7/week8_results.py` 复制进交付包，不一起修就会让交付包自相矛盾。
+
+**Minor（已修）**：`reports/g1plus_crawl_round5_findings.md` 的「仍未闭环」第 4 项补上结清标记；
+本记录 §D 原先引用的 `excluded_count=4` 一度被上述 Critical 污染，已改为引用 `source_count=245` 的 v0.3.2 lineage；
+§F 关于 `verify_export_manifests.py` 的覆盖范围已限定为 week1–week6 + 显式 `--output-dir`。
+
+**留档的 4 条「未能证伪但存疑」**：① `v032_ablation_summary.json` 不记录 `source_path`，lineage 输入无法自证；
+② Kobayashi Table 2 的 FEC 行归属靠 mp/bp/η/ε 四值指纹与 Flamme entry 21 对齐，不是行内文字标签；
+③ `paper/code_and_data.md` 的 "Two rows need explicit qualification" 只点名了 MOPN；
+④ VC 存 `T_K=298.0` 而源文写 25 °C（298.15 K），行内 `notes` 已声明 0.15 K 差在报告精度内。
+
+**复审已核实为真的关键声明**：数据集只有 VC / FEC 两行不同、canonical 哈希
+`765fd8e0…646b60 → 1b285fe8…22456`、`build_dielectric_v03.py` **幂等**（前后 SHA256 完全相同）、
+补丁层 33→30 且 FEC/VC 不再有任何补丁、FEC/VC 的 `notes` 与 round-5 `backlog` 的 VERBATIM 串逐字相等（476 / 518 字符）、
+另外两个 ML 摘要只变哈希与 `generated_at`、三个轻量探针只差 `generated_at_utc`、
+test fixture 与外部手册附录 J-补记三逐字节一致、历史哈希未被误改（`decisions_log.md` 为 +91/-0 纯追加）。
+
+温度带决策、DC-200 成员表、受限目录 4 个未取值目标。**v0.3.12 这一节已结清。**

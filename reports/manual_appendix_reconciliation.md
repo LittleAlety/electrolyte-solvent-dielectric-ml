@@ -43,7 +43,7 @@ Dataset versions re-read (canonical LF-normalized SHA-256):
 | v0.2 | 210 | absent | 24 | `569cebdf...3cc28a` |
 | v0.3.1 | 243 | present, all `room_temperature` | 38 | `08941a76...938d78` |
 | v0.3.2 | 245 | 244 room + 1 extended | 38 | `39d15e16...75b30be` |
-| v0.3 | 246 | 245 room + 1 extended | 38 | `765fd8e0...646b60` |
+| v0.3 | 246 | 245 room + 1 extended | 38 | `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456` |
 
 The v0.1/v0.2 files predate the `temperature_band` column, so "the extended
 band was empty" is only meaningful from v0.3.1 on. The probe records the column

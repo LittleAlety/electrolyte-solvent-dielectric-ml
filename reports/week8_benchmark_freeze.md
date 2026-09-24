@@ -115,16 +115,21 @@ the generated draft. Superseded number strings fail the build.
 | `scripts/check_paper_artifact_consistency.py` | paper drafts agree with the frozen artifacts |
 | `scripts/verify_dielectric_representation_ablation.py` | all fold, repeat and summary metrics recomputed |
 | `scripts/verify_dielectric_target_scaffold.py` | scaffold balance and input hash verified |
-| `scripts/verify_dielectric_v03.py` | 7/7 checks, 246 rows; the dataset digest is `765fd8e0...646b60` (re-pinned by the separate v0.3.11 FEC revision; no benchmark row moved) |
+| `scripts/verify_dielectric_v03.py` | 7/7 checks, 246 rows; the dataset digest is `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456` (v0.3.11 was `765fd8e0...646b60`; re-pinned by the separate v0.3.12 FEC/VC revision; no benchmark row moved) |
 | `scripts/verify_dielectric_v032.py` | 7/7 checks, 245 rows |
 
 ## What is not frozen
 
-- Vinylene carbonate remains `conflict_open` and is now withheld from every
-  fit; the paper must keep saying so.
+- Vinylene carbonate is withheld from every fit and its primary 126 +/- 1.0
+  measurement (Saadi & Lee 1966, Table 2) landed in v0.3.12; the competing
+  Knovel 78-127 interval is unresolved, so the paper must keep saying that the
+  row is `model_ready=false` with
+  `conflict_status=knovel_78_127_interval_contains_primary_value`.
 - FEC stays excluded. The stored 102 was shown to be the flash point in
-  v0.3.11, so the two surviving dielectric legs are 78.4 and 107 and neither
-  has a readable primary measurement.
+  v0.3.11, and v0.3.12 promoted the 78.4 primary measurement (Kobayashi et al.
+  2003, Table 2, 296.15 K) to the stored value. Only the competing 107 claim
+  (Ue et al. 2014 Table 2.3 read through Hall 2018; Hagiyama 2008 blocked) is
+  still unread.
 - The dataset is still a **candidate**: `model_ready` is a protected field and
   the release line says so.
 

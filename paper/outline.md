@@ -128,7 +128,7 @@ effects require multi-body descriptions outside the candidate model.
 - Associated liquids remain outside the model boundary.
 - Some modern-solvent targets still require public primary-source resolution;
   3-methoxypropionitrile (secondary compilation) and fluoroethylene carbonate
-  (conflicting values) are the two named open items.
+  (competing 107 claim unread) are the two named open items.
 
 ## Code and Data Availability
 

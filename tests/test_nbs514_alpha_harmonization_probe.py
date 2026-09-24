@@ -126,5 +126,5 @@ def test_frozen_dataset_is_not_modified_by_the_probe() -> None:
     # The probe is analysis-only; the canonical dataset hash must stay frozen.
     digest = canonical_text_sha256(REPOSITORY_ROOT / DIELECTRIC_V03)
     assert digest == (
-        "765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60"
+        "1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456"
     )

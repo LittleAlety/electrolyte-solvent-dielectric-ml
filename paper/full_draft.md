@@ -8,8 +8,8 @@ compounds), and open-access review tables and primary literature covering
 modern battery solvents (v0.3.3, 246 compounds), plus one non-redistributable
 publisher-compilation value retained only as a numeric fact and explicitly
 flagged. Every row carries deterministic
-source provenance, gate-flag metadata, license and redistribution conditions,
-and conflict status. Conflicting public values are recorded rather than
+source provenance, gate-flag metadata, and conflict status, with license and
+redistribution metadata recorded wherever the source supplies it. Conflicting public values are recorded rather than
 averaged: nine rows carry an explicit conflict or unverified-provenance
 record, six are flagged model_ready=false, and the benchmark withholds four
 rows through a curated exclusion list.
@@ -80,7 +80,7 @@ The primary contribution is the curated, auditable dataset itself, not a claim
 that small-data models solve static permittivity prediction. The remaining
 public-data gaps are narrow and explicit: 3-methoxypropionitrile rests on a
 secondary compilation with no traceable primary measurement, and
-fluoroethylene carbonate stays conflicted (78.4, 102, 107); ECW-308 independently supports the 78.4 branch, but the cited original table was not retrieved. The glyme diethers
+fluoroethylene carbonate now carries a primary 78.4 measurement at 296.15 K (Kobayashi et al. 2003, Table 2) and only the competing 107 claim remains unread; the previously stored 102 was its flash point, not a permittivity. The glyme diethers
 and the dinitriles (adiponitrile, glutaronitrile) that earlier internal reports
 listed as absent are present in the table under their IUPAC names. These open
 gaps are explicit targets for the v1.1 revision.
@@ -151,14 +151,18 @@ source-priority decisions and conflict records that earlier hand-edits had
 lost.
 
 Every v0.3 addition records its source DOI, table or section identifier,
-license and redistribution conditions, and temperature-source status. Review-
+temperature-source status, and any license or redistribution metadata the
+source supplies. Review-
 table values that do not state an independent measurement temperature are
 flagged with review_table_standard_room_temperature and are distinguished from
 primary-literature values.
 
 The restricted SpringerMaterials Interactive database (Landolt-Bornstein
-series) was used as cross-check evidence only. No subscription-only numeric
-values were promoted into the public dataset.
+series) was used as cross-check evidence only, and no subscription-restricted
+SpringerMaterials value was promoted into the public dataset. The two values
+that do come from paywalled primary articles (FEC 78.4 and vinylene carbonate
+126) are individual measurement facts; their source PDFs are kept outside the
+repository and are not redistributed.
 
 ECW-308 (Wang et al., Adv. Funct. Mater. 2023, DOI
 10.1002/adfm.202212342) was retrieved from a non-redistributable publisher
@@ -173,8 +177,9 @@ When independent public sources disagree materially, the conflicting values
 are recorded and the row is flagged; conflicts are never averaged. Nine rows
 carry an explicit conflict_status and six are flagged model_ready=false. The
 benchmark withholds five rows through a curated exclusion list
-(data/processed/dielectric_v03_exclusions.csv): FEC (values 78.4, 102, 107),
-TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate (NBS 19.5 at 294.15 K vs.
+(data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
+competing 107 claim unread), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
+(NBS 19.5 at 294.15 K vs.
 restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308
 secondary compilation 36.0, awaiting primary confirmation). A sixth row,
 vinylene carbonate, is withheld by the `model_ready` gate itself. Methyl propionate (NBS 5.5 vs. review
@@ -182,14 +187,13 @@ vinylene carbonate, is withheld by the `model_ready` gate itself. Methyl propion
 their ThermoML primary values (32.12 and 34.6); ECW-308 compilation values
 (30.00 and 37.00) are recorded as disagreements, not replacements.
 
-One flagged row is not yet withheld. Vinylene carbonate (literature range
-78-127; ECW-308 lists 126.00 and includes Hall et al. 2018 among its source
-refs, so independence from Hall is not established, and this study did not
-trace 126 to an original measurement) carries model_ready=false and conflict_open but
-still reaches the feature table, because the modelling pipeline currently
-honours only the exclusion list and not the model_ready flag. The discrepancy is
-recorded as a known issue rather than smoothed over; 3-methoxypropionitrile has
-no physical-feature row, so it is absent from the fitted set for that reason
+Vinylene carbonate now carries a primary measurement of 126 +/- 1.0 at 25 C
+(Saadi & Lee 1966, Table 2; stored as 298.0 K) with the conflict recorded as
+knovel_78_127_interval_contains_primary_value. Flamme et al. 2017 repeats the
+same primary source, so it is same-source repetition rather than independent
+corroboration. Since the v0.3.4 revision the modelling gate honours the
+model_ready flag, so this row is withheld from every fit. 3-methoxypropionitrile
+has no physical-feature row, so it is absent from the fitted set for that reason
 alone.
 
 ## Physical features
@@ -337,9 +341,9 @@ eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
 ## Known gaps (for v1.1)
 
 **Fluoroethylene carbonate (FEC).** Withheld from model fitting through the
-curated exclusion list because public sources disagree (78.4, 102, 107).
-ECW-308 independently supports the low endpoint 78.4, but its cited original
-table was not retrieved and 102/107 remain unresolved.
+curated exclusion list because the competing 107 claim remains unread. The
+stored value is now a primary 78.4 at 296.15 K (Kobayashi et al. 2003, Table 2);
+the previously stored 102 was its flash point, not a permittivity.
 
 **3-Methoxypropionitrile (MOPN).** Present in the table as a flagged,
 non-model-ready row (36.0 at 298.15 K, secondary_compilation_unverified). Tier-0
@@ -376,8 +380,10 @@ Interactive database (Landolt-Bornstein series) was queried against the v0.2
 table and matched 60 compounds. The median absolute delta between the public and
 restricted values is 0.05 (p90 0.67, maximum 10.2, the last being the ethyl
 isothiocyanate conflict). SpringerMaterials values are used exclusively as
-cross-check evidence; no subscription-restricted value enters the public
-dataset.
+cross-check evidence; no subscription-restricted SpringerMaterials value enters
+the public dataset. The two values taken from paywalled primary articles (FEC
+78.4 and vinylene carbonate 126) are individual measurement facts, and their
+source PDFs are kept outside the repository.
 
 **NBS Circular 514 internal consistency.** All values sourced from NBS Circular
 514 carry the original page number, entry figure quality, and selection rank.
@@ -387,17 +393,19 @@ grades), the selection rank and figure quality determine the preferred record.
 **Conflict exclusions (v0.3.3 conventions).** Nine rows carry a non-empty
 conflict_status and six carry model_ready=false. Five of them are withheld from
 model fitting through the curated exclusion list
-(data/processed/dielectric_v03_exclusions.csv): FEC (reported values 78.4, 102,
-107), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate, whose NBS value
+(data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
+competing 107 claim unread), TEP (10, 13), TMP (10, 21.6), ethyl
+isothiocyanate, whose NBS value
 (19.5 at 294.15 K) and restricted cross-check value (29.7 at 293.2 K) differ by
 10.2, and 3-methoxypropionitrile, whose 36.0 rests on a secondary compilation
 awaiting primary confirmation. Methyl propionate (NBS 5.5 vs. review 6.2) and the two ECW-308
 nitrile disagreements are recorded with their primary rows retained.
 
-Two flagged rows need qualification. Vinylene carbonate (literature range
-78-127; ECW-308 lists 126.00 and includes Hall et al. 2018 among its source
-refs, so independence from Hall is not established, and this study did not
-trace 126 to an original measurement) carries model_ready=false and conflict_open. Since
+Two flagged rows need qualification. Vinylene carbonate now carries a primary
+126 +/- 1.0 measurement at 25 C (Saadi & Lee 1966, Table 2; stored as 298.0 K)
+with conflict_status=knovel_78_127_interval_contains_primary_value and
+model_ready=false, and Flamme et al. 2017 repeats that same primary source
+rather than corroborating it independently. Since
 the v0.3.4 revision the modelling gate enforces that flag, so the row is
 **withheld from every fit** and reported under `withheld_not_model_ready_names`
 instead of being trained on. 3-Methoxypropionitrile also carries
@@ -608,9 +616,10 @@ correlation effects in these systems require multi-body or explicit-solvent
 descriptions that are beyond the scope of the current candidate model.
 
 **Known data gaps.** FEC (fluoroethylene carbonate) is withheld through the
-curated exclusion list because reported values (78.4, 102, 107) disagree;
-ECW-308 supports 78.4, but no primary source was independently retrieved and
-102/107 remain unresolved. 3-Methoxypropionitrile rests on the
+curated exclusion list because the competing 107 claim remains unread; the
+stored value is now a primary 78.4 at 296.15 K (Kobayashi et al. 2003, Table 2)
+and the previously stored 102 was its flash point. 3-Methoxypropionitrile rests
+on the
 ECW-308 secondary compilation (36.0 at 298.15 K): Tier-0 checks of all 242 local
 ThermoML dielectric files and all 636 transcribed NBS Circular 514 organic rows
 returned no observation, and the cited primary source (Perricone et al. 2013) is

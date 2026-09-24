@@ -183,7 +183,7 @@ def export_results(
     write_json(
         week_root / "week7_summary.json",
         {
-            "dataset_version": "0.3.11",
+            "dataset_version": "0.3.12",
             "dataset_version_note": (
                 "the 246-row set was frozen at v0.3.3; v0.3.4 fixed the "
                 "model_ready modelling gate; v0.3.5-v0.3.6 revised provenance; "
@@ -202,8 +202,9 @@ def export_results(
                 "dielectric value. G1+ crawl round 5 read both surviving primary "
                 "measurements (Kobayashi 2003 Table 2 for the FEC 78.4 leg, Saadi & "
                 "Lee 1966 Table 2 for the vinylene carbonate 126 leg) and again moved "
-                "no cell; the two field-level patches it enables are queued for "
-                "v0.3.12 and are listed under open_items."
+                "no cell; v0.3.12 then landed the two field-level revisions it "
+                "enabled, again without moving a dielectric value and without "
+                "releasing either row into the modelling set."
             ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),
@@ -274,19 +275,21 @@ def export_results(
             },
             "open_items": [
                 (
-                    "vinylene carbonate: the primary measurement has been read "
-                    "(Saadi & Lee 1966 Table 2, eps = 126 +/- 1.0 at 25 C), so the "
-                    "stored 126 is confirmed; the row still carries "
-                    "conflict_status = conflict_open with evidence_level "
-                    "open_access_article_text and awaits the v0.3.12 provenance patch"
+                    "vinylene carbonate: the primary measurement (Saadi & Lee 1966 "
+                    "Table 2, eps = 126 +/- 1.0 at 25 C) landed in v0.3.12, so the "
+                    "row now carries source_quality = primary_experimental and "
+                    "conflict_status = knovel_78_127_interval_contains_primary_value. "
+                    "The row stays withheld (model_ready = false) because no primary "
+                    "source resolves the competing Knovel 78/127 interval"
                 ),
                 (
                     "fluoroethylene carbonate: the stored 102 is recorded as a "
-                    "flash point, not a permittivity. The 78.4 leg now has a "
-                    "readable primary measurement (Kobayashi 2003 Table 2, "
-                    "'Our data', 23 C); the 107 leg is still unread, so the two "
-                    "legs stay unreconciled and neither has been promoted. Both "
-                    "corrections await the v0.3.12 revision"
+                    "flash point, not a permittivity. The 78.4 leg (Kobayashi 2003 "
+                    "Table 2, 'Our data', 23 C) was promoted to the row's primary "
+                    "measurement in v0.3.12; the 107 leg (Ue et al. 2014 Table 2.3 "
+                    "read through Hall 2018 Table I, with Hagiyama 2008 Chem. Lett. "
+                    "37 210 blocked) is still unread, so the two legs stay "
+                    "unreconciled and the row stays withheld (model_ready = false)"
                 ),
                 "3-methoxypropionitrile still needs its primary-confirmation exclusion cleared and a GFN2-xTB feature row run (value and 25 C condition are now corroborated)",
                 "tier 4 print and subscription sources unverified",

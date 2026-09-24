@@ -95,9 +95,9 @@ search that finds no open full text is an access result.
 
 **None.** `data/dielectric_v03.csv` is still 246 rows x 38 columns with
 canonical SHA-256
-`765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60`. No value,
+`1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456`. No value,
 
-> **Re-pinned for v0.3.11 (2026-09-25).** The digest above is the current canonical dataset hash; the FEC metadata revision moved it. This crawl round itself changed no cell.
+> **Re-pinned for v0.3.12 (2026-09-25).** The digest above is the current canonical dataset hash; the v0.3.12 FEC/VC source revision moved it from the v0.3.11 digest `765fd8e0...646b60`. This crawl round itself changed no cell.
 temperature, evidence level, `model_ready` flag or conflict status moved. The
 round's product is adjudication: three crawl hits that would each have corrupted
 the dataset in a different way (a dispersion measurement, a wrong-compound

@@ -8,8 +8,8 @@ compounds), and open-access review tables and primary literature covering
 modern battery solvents (v0.3.3, 246 compounds), plus one non-redistributable
 publisher-compilation value retained only as a numeric fact and explicitly
 flagged. Every row carries deterministic
-source provenance, gate-flag metadata, license and redistribution conditions,
-and conflict status. Conflicting public values are recorded rather than
+source provenance, gate-flag metadata, and conflict status, with license and
+redistribution metadata recorded wherever the source supplies it. Conflicting public values are recorded rather than
 averaged: nine rows carry an explicit conflict or unverified-provenance
 record, six are flagged model_ready=false, and the benchmark withholds four
 rows through a curated exclusion list.
@@ -80,7 +80,7 @@ The primary contribution is the curated, auditable dataset itself, not a claim
 that small-data models solve static permittivity prediction. The remaining
 public-data gaps are narrow and explicit: 3-methoxypropionitrile rests on a
 secondary compilation with no traceable primary measurement, and
-fluoroethylene carbonate stays conflicted (78.4, 102, 107); ECW-308 independently supports the 78.4 branch, but the cited original table was not retrieved. The glyme diethers
+fluoroethylene carbonate now carries a primary 78.4 measurement at 296.15 K (Kobayashi et al. 2003, Table 2) and only the competing 107 claim remains unread; the previously stored 102 was its flash point, not a permittivity. The glyme diethers
 and the dinitriles (adiponitrile, glutaronitrile) that earlier internal reports
 listed as absent are present in the table under their IUPAC names. These open
 gaps are explicit targets for the v1.1 revision.

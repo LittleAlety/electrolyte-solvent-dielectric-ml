@@ -151,8 +151,8 @@ Cross-checks against the frozen dataset (compilation vs. primary, never averaged
 | compound | stored | ECW-308 @ 25 C | note |
 |---|---|---|---|
 | PC | 64.9 | 64.90 | exact reproduction |
-| VC | 126 | 126.00 | lists the contested high value; ECW-308 includes Hall et al. 2018 [3] among its source refs, so independence from Hall is not established |
-| FEC | 78.4 vs 107 (the 102 branch was shown to be a flash point in v0.3.11) | 78.40 | supports the low branch; both legs still lack a readable primary measurement |
+| VC | 126 | 126.00 | v0.3.12 landed the primary measurement (Saadi & Lee 1966, Table 2, 126 +/- 1.0 at 25 C); Flamme 2017 repeats that same primary source, so this is same-source repetition and not independent corroboration |
+| FEC | 78.4 vs 107 (the 102 branch was shown to be a flash point in v0.3.11) | 78.40 | v0.3.12 promoted the low branch to the stored value; 78.4 is a primary measurement (Kobayashi et al. 2003, Table 2), so only the 107 claim still lacks a readable primary source |
 | diglyme | 7.3815 | 7.40 | +0.25% |
 | triglyme | 7.604 | 7.53 | -0.97% |
 | tetraglyme | 7.798 | not present | no third-party check |
@@ -293,9 +293,10 @@ subsequently shown to be the flash point rather than a permittivity (v0.3.11).
 
 Hall et al. 2018 is CC BY 4.0 and therefore redistributable, but it was still
 recorded in `notes` rather than added to VC's `source_dois_all`: a dataset row
-carries a single licence metadata set, and VC's row already carries the
-CC BY-NC 4.0 metadata of its retained review source. The source-licence gate
-would reject a second, differently licensed DOI on the same row. This is a
+carries a single licence metadata set. After v0.3.12 the VC row draws on a
+paywalled 1966 primary article, so its licence columns are empty and only
+`redistribution_status=allowed` is set; the Hall 2018 cross-check therefore
+stays in `notes` rather than becoming a second DOI on the row. This is a
 structural limitation of the current schema, not a licensing objection.
 
 Effect on the shipped artifacts: 30 provenance patches (13 rewritten in place),
@@ -313,7 +314,8 @@ the frozen artifacts. Frozen hashes re-pinned: dataset
 `2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b` (superseded by `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`, then by `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`), patches
 `76070535fb51eb64f50facc7501f617f052e26feda775dc7b2c40c776bae3a47`.
 
-Open items after this round: the Saadi & Lee 1966 two-page full text is still
-needed to read the actual VC number, and Deng et al. 2020 (FEC) and Perricone
-et al. 2013 (MOPN) remain closed. Tier 3 and Tier 4 access judgements live in
+Open items after this round: the Saadi & Lee 1966 two-page full text was read
+on 2026-09-25 and reports E(25 C) = 126 +/- 1.0 in Table 2, so the VC number is
+now primary; Deng et al. 2020 (FEC) and Perricone et al. 2013 (MOPN) remain
+closed. Tier 3 and Tier 4 access judgements live in
 `reports/g1plus_tier34_access_findings.md`.

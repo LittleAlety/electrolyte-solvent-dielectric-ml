@@ -236,7 +236,7 @@ def test_the_tracked_crosscheck_is_reproducible_from_the_working_tree(
     # tracked summary is still guarded in CI, where the restricted
     # SpringerMaterials capture is absent and the rebuild below is skipped.
     assert crosscheck["dataset_sha256"] == (
-        "765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60"
+        "1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456"
     )
     assert crosscheck["max_delta_temperature_K"] == 5.0
     assert crosscheck["ambient_pressure_window_kPa"] == [90.0, 110.0]

@@ -28,7 +28,7 @@ REVIEW_OBSERVATIONS_PATH = (
 V03_PATH = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 V03_SUMMARY_PATH = REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json"
 EXPECTED_V03_SHA256 = (
-    "765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60"
+    "1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456"
 )
 NONCANONICAL_CASSC_DOIS = (
     "10.1002/CSSC.202402091",
@@ -67,7 +67,7 @@ MALFORMED_DOI_VALUES = (
     f"10.1002/cssc%{'25' * 12}2E202402091",
 )
 
-EXPECTED_REVIEW_SOURCES = {
+REVIEW_LICENSE_METADATA_UNDER_TEST = {
     "10.1002/smll.202504276": {
         "source_citation": "Senthil et al. (2025) Small 21 e202504276",
         "source_license": "CC BY 4.0",
@@ -89,6 +89,11 @@ EXPECTED_REVIEW_SOURCES = {
         "redistribution_conditions": "allowed_with_attribution",
         "redistribution_status": "allowed",
     },
+    # v0.3.12 note: in the shipped data the vinylene carbonate row moved to its
+    # primary measurement (10.1039/j29660000005), so no shipped review row
+    # claims 10.1002/cssc.202402091 any more.  Its frozen license triplet is
+    # still kept here because the synthetic-row tests below exercise the
+    # canonicalisation and mapped-DOI guardrails with it.
     "10.1002/cssc.202402091": {
         "source_citation": "Souid et al. (2025) ChemSusChem 18 e202402091",
         "source_license": "CC BY-NC 4.0",
@@ -110,6 +115,10 @@ EXPECTED_REVIEW_SOURCES = {
         "redistribution_conditions": "allowed_with_attribution",
         "redistribution_status": "allowed",
     },
+}
+
+SHIPPED_REVIEW_DOIS = frozenset(REVIEW_LICENSE_METADATA_UNDER_TEST) - {
+    "10.1002/cssc.202402091",
 }
 
 
@@ -154,7 +163,7 @@ def _review_addition(
     doi: str,
     **overrides: str,
 ) -> dict[str, str]:
-    metadata = EXPECTED_REVIEW_SOURCES[doi]
+    metadata = REVIEW_LICENSE_METADATA_UNDER_TEST[doi]
     row = {
         "source_quality": "open_access_review_table",
         **metadata,
@@ -178,8 +187,9 @@ def test_review_observations_preserve_verified_source_metadata() -> None:
     ]
 
     observed_dois = {row["source_doi"] for row in rows}
-    assert observed_dois == set(EXPECTED_REVIEW_SOURCES)
-    for doi, expected in EXPECTED_REVIEW_SOURCES.items():
+    assert observed_dois == set(SHIPPED_REVIEW_DOIS)
+    for doi in sorted(observed_dois):
+        expected = REVIEW_LICENSE_METADATA_UNDER_TEST[doi]
         matching_rows = [row for row in rows if row["source_doi"] == doi]
         assert matching_rows
         for row in matching_rows:
@@ -370,7 +380,7 @@ def test_verify_v03_rejects_known_or_unknown_doi_metadata_violations(
     assert any(error_fragment in error for error in errors)
 
 
-@pytest.mark.parametrize("doi", EXPECTED_REVIEW_SOURCES)
+@pytest.mark.parametrize("doi", sorted(REVIEW_LICENSE_METADATA_UNDER_TEST))
 def test_frozen_review_license_triplets_are_accepted(doi: str) -> None:
     rows = build_v03_rows(
         [],
