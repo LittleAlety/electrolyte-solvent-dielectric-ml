@@ -121,3 +121,22 @@ ImportError: cannot import name 'README_TEXT' from 'probes.export_week7_results'
 - Kobayashi Table 2 的 FEC 行归属依赖 mp/bp/η/ε 指纹对齐，不是行内文字标签；当前未证伪。
 - 论文侧仍以 `v0.3.3` 作为数据集血缘标签（未 bump 到 `v0.3.12`），这是先前已记录的决定；一致性脚本仍通过。
 - 受限目录 4 个未取值目标、温度带决策与 DC-200 成员表仍为开放数据工作项。
+
+---
+
+## 7. 外部执行手册同步（2026-09-25）
+
+用户端“已更新，请据此优化”经证据核对后，手册本体**没有发生新变更**：
+`E:\大二\d2qc\电解液（长期项目）\文献调研\执行手册_探针与周计划.md`
+在编辑前仍为 `d9d4049ef2578f10d0eb2105753000272a85aa2fd8a719c02170ffaa8d8dc4cc`
+（mtime 2026-09-25 04:16:38），与 CI fixture 逐字节一致。
+
+但手册的 `附录 J-补记三` 与最终仓库状态确有缺口：它只写到 v0.3.12 数据落地，
+没有记录第二轮对抗复审、C1 回归护栏、week7/week8 README 与最终 `abece75 / 729 passed`。
+因此追加 `### 九、第二轮对抗复审收口（2026-09-25，v0.3.12）`，并同步重生成：
+
+- 手册：`21e223d30e133ac54e231d67b3c10a32deeb816dd216240eb61108423c82c0fc`（75,918 B）
+- CI fixture：`f04bdab3fcf08c9cfb1ef59b1c39726f574c1f6197150beea7ad926db99d80a9`（10,699 B）
+- `probes/manual_appendix_reconciliation.json`：`line_count=760`、`char_count=44747`
+- 手册定向闸门：`tests/test_manual_appendix_reconciliation.py` **24 passed**
+- 名册重导：6 条 claim（4 条 confirmed_and_since_closed，2 条已知 false_negative），无新增漂移。

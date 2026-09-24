@@ -125,3 +125,22 @@ Tesla 40 / Peirce 40 / Ampere 40 / Pasteur 10，**合计 130 次**；四个 agen
 > **v0.3.12 后续修订（2026-09-25，已落地）。** 上面这一行是**第五轮当时**的快照；随后独立的 v0.3.12 数据修订把 FEC 与 VC 两条字段级补丁落地，
 > 当前规范哈希为 `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456`（v0.3.11 的 `765fd8e0…646b60` 为历史值），
 > 246 行 × 38 列不变，其余 244 行（含全部 240 条 `model_ready=true` 行）逐字节未变。
+
+### 九、第二轮对抗复审收口（2026-09-25，v0.3.12）
+
+- 触发：`adversarial-review-optimize` skill 的 fresh re-review。基线 `024be15`，修复 revision `dd2a37d`，复审记录 `abece75`，三重提交均已推送 `origin/main`。
+- 第一轮 finding：Turing 发现 1 Important——旧 `verify_v032_benchmarks.py` 对已知坏状态
+  `source_count=246 / excluded_count=5 / excluded_not_in_source=[]` 仍给 `27/27 PASS`；
+  Euler 发现 2 Important——week7 生成器仍写 v0.3.12 “without moving a dielectric value”、week7/week8 缺 README。
+- 修复：`probes/v032_ablation_summary.json` 现记录 `source_path=data/dielectric_v032.csv`、
+  `source_sha256=39d15e161a4fb5cf6dddf31749144ce038078823f7ed02aacbead5a1d75b30be`；
+  verifier 新增 `v0.3.2 lineage source provenance` 并 pin `245 / 4 / [OOWFYDWAMOKVSF-UHFFFAOYSA-N]`；
+  新增“坏状态必须 FAIL”的回归测试；week7 叙事改为 FEC `102 → 78.4`；
+  week7/week8 导出器生成 README 并纳入 `SHA256SUMS`。
+- 复审 verdict：Turing 对 `dd2a37d` 判 `No Critical or Important findings; Ready.`；
+  Euler 对最终交付包判 Ready，未发现剩余 Critical/Important/Minor。
+- 最终验证：`pytest -q -p no:cacheprovider` **729 passed**；`ruff check .` All checks passed；
+  7 个 verifier 全绿；week7 manifest `[PASS]`（61 文件 / 60 条目）、
+  week8 manifest `[PASS]`（75 文件 / 74 条目）。
+- 当前规范哈希仍为 `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456`；
+  本轮复审只动验证、叙事与交付包，不改任何数据单元格。
