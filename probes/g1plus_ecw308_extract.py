@@ -121,13 +121,12 @@ ROW_INDEX_MAX_X = 260.0
 ROW_NAME_MAX_X = 285.0
 FORMULA_MIN_X = 138.0
 FORMULA_MAX_X = 220.0
-FORMULA_MIN_DY = 10.5
 # The SI sets two different row pitches: 24.6 pt on most pages and 48.7 pt on
-# the pages whose names wrap onto continuation lines. A wrapped row pushes its
-# formula to 36.3 pt below the label, so the window has to reach past 35 pt; the
-# real guard against reading a neighbour's formula is the next-row label below,
-# not this cap.
-FORMULA_MAX_DY = 45.0
+# the pages whose names wrap onto continuation lines, so a wrapped row's
+# formula can sit 36-51 pt below its label. No fixed depth can separate such a
+# row from its neighbour, which is why the block is delimited by the *next row
+# label* instead of by an offset. There is deliberately no dy window here.
+#
 # An element symbol and its subscript sit ~1 pt apart, while two printed lines
 # are at least 6 pt apart, so a 2.5 pt single-linkage gap clusters a line
 # without ever merging two of them.
@@ -135,7 +134,10 @@ LINE_CLUSTER_GAP_PT = 2.5
 # A wrapped name continues at the left edge of the name column. A line that
 # starts further right is a neighbouring value cell ("127.00", "44.00/").
 NAME_CONTINUATION_MIN_X = 250.0
-PURE_NUMBER = re.compile(r"^\d+(?:\.\d+)?$")
+# A neighbouring value cell reads "127.00" or "47.00"; a locant reads "3".
+# Only the decimal form is refused on a continuation line, so the locants of
+# names such as "3-Methoxysulfolane" survive.
+DECIMAL_VALUE = re.compile(r"^\d+\.\d+$")
 BARE_ROW_INDEX = re.compile(r"^\d{1,3}\s*[.\-]?\s*")
 REFERENCE_MIN_X = 700.0
 # A row block occupies the ~20 pt of column space below its printed number, and
@@ -397,7 +399,7 @@ def _name_for(
             continue
         line: list[str] = []
         for token in ordered:
-            if index != start_group and PURE_NUMBER.match(token.text):
+            if index != start_group and DECIMAL_VALUE.match(token.text):
                 continue
             key = (round(token.x, 1), round(token.y, 1), token.text)
             # pypdf sometimes emits a name twice on one line (once glued to the

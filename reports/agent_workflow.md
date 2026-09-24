@@ -333,8 +333,19 @@ would have hidden. They were fixed at the root rather than by adjusting expectat
 | The block was bounded per page | rows 43 (MOPN) and 116 print their formula at the top of the following page | Block boundaries moved to document order `(page, -y)`; both formulas recovered |
 | The duplicate guard dropped a token whenever it appeared inside an earlier one | `1` inside `91.` and `Me` inside `Methyl` were deleted | Only same-coordinate duplicates are dropped, with a word-boundary test for multi-character chunks |
 
-Row-by-row diff against the v0.3.8 artefacts: **+21 formulas, 112 names repaired, 0 rows lost**,
-and no field other than `name`/`formula` changed.
+Row-by-row diff against the v0.3.8 artefacts (definitions reproducible): rows carrying a formula
+**267 -> 308** (**+41 gained, 0 lost, 0 changed**); **130** rows changed their `name`, net **+2004**
+characters (sum of `len(new) - len(old)`), including net **+172** printed hyphens; **no field other
+than `name`/`formula` moved**.
+
+The round-3 reviewer (Einstein) then judged this revision FAIL with 2 Important and 1 Minor, all of
+which were real and are fixed in the follow-up commit:
+
+| Finding | Evidence | Fix |
+| --- | --- | --- |
+| The report's `+21 / 112 / 66` numbers did not match a row-by-row diff, and the claimed "45 pt cap" did not exist in the code | `git show d37c5b8:...evidence.json` vs the new file: 41 rows gained a formula, 0 lost; 130 names changed | Numbers replaced with reproducible definitions; the dead `FORMULA_*_DY` constants were deleted and the report now describes the real rule (next row label, no dy window) |
+| Refusing every numeric token on a continuation line deleted legitimate locants | rows 207 (`octane - 3 - one`), 235 (`3 - Methoxysulfolane`), 246 (`ethyl 2 - methylsulfonylethyl carbonate`) | Only decimal value cells are refused on a continuation line |
+| The report tail still pinned the v0.3.8 hashes | `reports/g1plus_ecw308_crosscheck.md` section 7 | Hashes updated to the v0.3.9 pair |
 
 ## Verification Log
 
@@ -372,8 +383,8 @@ and no field other than `name`/`formula` changed.
 | 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider` | `553 passed` (538 before the Materials Project round) |
 | 2026-09-24 | `.venv\Scripts\python.exe probes/g1plus_ecw308_extract.py` | 308 rows / 87 value / 204 blank / 11 missing / 6 stacked; crosscheck matched=27, divergent=6, formula_only=19, ecw_no_formula=0 |
 | 2026-09-24 | `.venv\Scripts\python.exe probes/g1plus_ecw308_extract.py --check` | `evidence reproduces: True` after the identity-gate and extractor repairs |
-| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_g1plus_ecw308_extract.py` | `46 passed` (36 before this round) |
-| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider` | `599 passed` (589 before this round) |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_g1plus_ecw308_extract.py` | `48 passed` (36 before this round) |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider` | `601 passed` (589 before this round) |
 
 ## Visibility Rule
 

@@ -157,9 +157,11 @@ def export_results(
                 "v0.3.7 added the ECW-308 whole-table cross-check and its resolved "
                 "citation chain; v0.3.8 added the citation DOIs, the Perricone 2011 "
                 "thesis evidence and the corrected GVL conflict description; v0.3.9 "
-                "closed the second adversarial round (three same-CID synonyms) and "
-                "fixed four ECW-308 extraction defects (+21 formulas, 112 names "
-                "repaired). No dielectric value moved in any of those revisions."
+                "closed the second adversarial round: three same-CID synonym "
+                "pairs moved the cross-check to 27 gated comparisons, and four "
+                "ECW-308 extraction defects were fixed (41 rows gained a formula, "
+                "130 rows had their name repaired). No dielectric value moved in "
+                "any of those revisions."
             ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),

@@ -306,6 +306,34 @@ def test_row_279_drops_its_bare_label() -> None:
     assert _name_for(start, scoped) == "1 - Methyl - 2 - pyrrolidinone (NMP)"
 
 
+def test_locants_on_a_continuation_line_survive() -> None:
+    # The first version of the continuation rule refused every numeric token,
+    # which deleted the "3" of "3-Methoxysulfolane". Real PDF tokens for row 235
+    # are reproduced here, plus the neighbouring value cell of the row above.
+    start = Token(9, 159.9, 203.0, "235.")
+    scoped = [
+        start,
+        Token(9, 277.1, 196.0, "127.00"),
+        Token(9, 126.5, 190.8, "3"),
+        Token(9, 131.8, 190.8, "-"),
+        Token(9, 135.3, 190.8, "Methoxysulfolane"),
+        Token(9, 151.6, 178.7, "(MESL)"),
+    ]
+    assert _name_for(start, scoped) == "3 - Methoxysulfolane (MESL)"
+
+
+def test_a_decimal_value_cell_in_the_name_column_is_refused() -> None:
+    # Only the decimal form is a value cell; a single digit in the same place is
+    # a locant and must be kept (see the test above).
+    start = Token(2, 133.5, 369.2, "7.")
+    scoped = [
+        start,
+        Token(2, 144.0, 369.2, "Isobutyramide"),
+        Token(2, 150.0, 363.2, "127.00"),
+    ]
+    assert _name_for(start, scoped) == "Isobutyramide"
+
+
 def test_reference_list_parser_keeps_the_full_citation() -> None:
     pages = ["References\n[1] A. Author, J. Journal 2020, 1, 1.\n[2] B. Writer, X 2021.\n"]
     parsed = parse_references(pages)
