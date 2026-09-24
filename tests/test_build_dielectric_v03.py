@@ -9,7 +9,12 @@ from pathlib import Path
 import pytest
 
 from electrolyte_ml.exporting import canonical_text_sha256
-from scripts.build_dielectric_v03 import build_v03_rows
+from scripts.build_dielectric_v03 import (
+    PROVENANCE_PATCH_PROTECTED_FIELDS,
+    apply_provenance_patches,
+    build_v03_rows,
+    read_csv_rows,
+)
 from scripts.verify_dielectric_v03 import verify_v03_rows
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +27,7 @@ REVIEW_OBSERVATIONS_PATH = (
 V03_PATH = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 V03_SUMMARY_PATH = REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json"
 EXPECTED_V03_SHA256 = (
-    "39d15e161a4fb5cf6dddf31749144ce038078823f7ed02aacbead5a1d75b30be"
+    "8972935f7c4fffd8a6835efe013244ffdb749ccb6e5d829f503885c5b8b2b678"
 )
 NONCANONICAL_CASSC_DOIS = (
     "10.1002/CSSC.202402091",
@@ -161,7 +166,15 @@ def _review_addition(
 
 
 def test_review_observations_preserve_verified_source_metadata() -> None:
-    rows = _read_review_observations()
+    # The open-access allowlist below only binds rows that claim an open-access
+    # source.  v0.3.3 adds one documented row whose only access path is a non-CC
+    # publisher supplement; it is checked separately by
+    # test_mopn_secondary_compilation_row_claims_no_open_licence.
+    rows = [
+        row
+        for row in _read_review_observations()
+        if row["source_quality"].startswith("open_access")
+    ]
 
     observed_dois = {row["source_doi"] for row in rows}
     assert observed_dois == set(EXPECTED_REVIEW_SOURCES)
@@ -561,10 +574,10 @@ def test_current_v03_freeze_counts_and_sha_are_unchanged() -> None:
     ]
     summary = json.loads(V03_SUMMARY_PATH.read_text(encoding="utf-8"))
 
-    assert len(rows) == 245
-    assert len(additions) == 35
+    assert len(rows) == 246
+    assert len(additions) == 36
     assert sum(row["model_ready"] == "true" for row in additions) == 31
-    assert sum(bool(row["conflict_status"]) for row in additions) == 5
+    assert sum(bool(row["conflict_status"]) for row in additions) == 6
     assert canonical_text_sha256(V03_PATH) == EXPECTED_V03_SHA256
     assert summary["output"]["sha256"] == EXPECTED_V03_SHA256
 
@@ -624,3 +637,272 @@ def test_build_v03_marks_conflicted_v02_row_not_model_ready() -> None:
 
     assert rows[0]["model_ready"] == "false"
     assert rows[0]["conflict_status"] == "excluded_model_conflict"
+
+
+# ---------------------------------------------------------------------------
+# Provenance patch layer
+#
+# The v0.3.2 revision restored four rows (PC, ethoxybenzene, methyl propionate,
+# VC) by hand-editing the frozen CSV.  Those restorations were invisible to the
+# build, so any rebuild silently dropped them -- the same failure mode that had
+# already reverted an earlier NBS upgrade.  The patch layer exists to make such
+# provenance edits reproducible; these tests are its regression net.
+# ---------------------------------------------------------------------------
+
+PROVENANCE_PATCHES_PATH = (
+    REPOSITORY_ROOT / "data" / "processed" / "dielectric_v03_provenance_patches.csv"
+)
+V02_PATH = REPOSITORY_ROOT / "data" / "dielectric_v02.csv"
+ADDITIONS_PATH = (
+    REPOSITORY_ROOT / "data" / "processed" / "modern_solvent_public_observations.csv"
+)
+EXCLUSIONS_PATH = (
+    REPOSITORY_ROOT / "data" / "processed" / "dielectric_v03_exclusions.csv"
+)
+V032_PATH = REPOSITORY_ROOT / "data" / "dielectric_v032.csv"
+
+
+def _read_rows(path: Path) -> list[dict[str, str]]:
+    _, rows = read_csv_rows(path)
+    return rows
+
+
+def _shipped_patch_rows() -> list[dict[str, str]]:
+    return _read_rows(PROVENANCE_PATCHES_PATH)
+
+
+def _rebuild_shipped_rows() -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    """Rebuild v0.3 exactly the way the CLI does, provenance patches included."""
+
+    rows = build_v03_rows(
+        _read_rows(V02_PATH),
+        [*_read_rows(ADDITIONS_PATH), *_read_rows(REVIEW_OBSERVATIONS_PATH)],
+        minimum_additions=30,
+        excluded_model_keys={row["inchikey"] for row in _read_rows(EXCLUSIONS_PATH)},
+    )
+    return apply_provenance_patches(rows, _shipped_patch_rows())
+
+
+def _one_row(inchikey: str = "AAAA-BBBB-C", **overrides: str) -> dict[str, str]:
+    row = {"inchikey": inchikey, "name": "test compound", "notes": ""}
+    row.update(overrides)
+    return row
+
+
+@pytest.mark.parametrize("field", sorted(PROVENANCE_PATCH_PROTECTED_FIELDS))
+def test_provenance_patch_rejects_every_protected_field(field: str) -> None:
+    patch = {
+        "inchikey": "AAAA-BBBB-C",
+        "field": field,
+        "value": "tampered",
+        "rationale": "should never be accepted",
+    }
+
+    with pytest.raises(ValueError, match="targets protected field"):
+        apply_provenance_patches([_one_row()], [patch])
+
+
+@pytest.mark.parametrize("missing", ["inchikey", "field", "value", "rationale"])
+def test_provenance_patch_rejects_incomplete_patch(missing: str) -> None:
+    patch = {
+        "inchikey": "AAAA-BBBB-C",
+        "field": "notes",
+        "value": "value",
+        "rationale": "why",
+    }
+    patch[missing] = ""
+
+    with pytest.raises(ValueError, match=f"is missing: {missing}"):
+        apply_provenance_patches([_one_row()], [patch])
+
+
+def test_provenance_patch_rejects_unknown_compound() -> None:
+    patch = {
+        "inchikey": "ZZZZ-BBBB-C",
+        "field": "notes",
+        "value": "value",
+        "rationale": "why",
+    }
+
+    with pytest.raises(ValueError, match="targets unknown compound"):
+        apply_provenance_patches([_one_row()], [patch])
+
+
+def test_provenance_patch_rejects_repeated_compound_field() -> None:
+    patch = {
+        "inchikey": "AAAA-BBBB-C",
+        "field": "notes",
+        "value": "value",
+        "rationale": "why",
+    }
+
+    with pytest.raises(ValueError, match="repeats"):
+        apply_provenance_patches([_one_row()], [patch, dict(patch)])
+
+
+def test_provenance_patch_records_previous_value_and_leaves_input_untouched() -> None:
+    original = [_one_row(notes="old note")]
+    patch = {
+        "inchikey": "AAAA-BBBB-C",
+        "field": "notes",
+        "value": "new note",
+        "rationale": "because",
+    }
+
+    patched, applied = apply_provenance_patches(original, [patch])
+
+    assert original[0]["notes"] == "old note"
+    assert patched[0]["notes"] == "new note"
+    assert applied == [
+        {
+            "inchikey": "AAAA-BBBB-C",
+            "name": "test compound",
+            "field": "notes",
+            "previous_value": "old note",
+            "value": "new note",
+            "rationale": "because",
+        }
+    ]
+
+
+def test_shipped_patch_file_is_complete_and_auditable() -> None:
+    patches = _shipped_patch_rows()
+
+    assert patches, "the shipped patch file must not be empty"
+    for position, patch in enumerate(patches, start=1):
+        assert set(patch) == {"inchikey", "field", "value", "rationale"}, position
+        assert patch["value"].strip(), position
+        assert patch["rationale"].strip(), position
+        assert patch["field"] not in PROVENANCE_PATCH_PROTECTED_FIELDS, position
+        assert "?" * 4 not in patch["value"], f"mojibake in patch {position}"
+
+
+def test_shipped_patches_apply_cleanly_to_the_current_inputs() -> None:
+    _, applied = _rebuild_shipped_rows()
+
+    assert len(applied) == len(_shipped_patch_rows())
+    assert len({(row["inchikey"], row["field"]) for row in applied}) == len(applied)
+
+
+def test_shipped_patches_survive_a_full_rebuild() -> None:
+    """P0-3 regression: a rebuild must not silently drop provenance patches."""
+
+    with V03_PATH.open(encoding="utf-8", newline="") as handle:
+        frozen = {row["inchikey"]: row for row in csv.DictReader(handle)}
+    _, applied = _rebuild_shipped_rows()
+
+    assert applied
+    for record in applied:
+        assert frozen[record["inchikey"]][record["field"]] == record["value"], record
+
+
+def test_shipped_patches_are_metadata_only() -> None:
+    """v0.3.3 is a provenance revision: it must not move modelling inputs."""
+
+    _, applied = _rebuild_shipped_rows()
+
+    touched = {row["field"] for row in applied}
+    assert touched
+    assert not touched & set(PROVENANCE_PATCH_PROTECTED_FIELDS)
+
+
+def test_existing_model_ready_observations_are_stable_from_v032_to_v03() -> None:
+    """No compound already usable in v0.3.2 may change value, temperature or
+    readiness in v0.3.3.  If one did, every controlled benchmark number would
+    have to be re-derived before any v0.3.3 claim could be made."""
+
+    with V03_PATH.open(encoding="utf-8", newline="") as handle:
+        current = {row["inchikey"]: row for row in csv.DictReader(handle)}
+    with V032_PATH.open(encoding="utf-8", newline="") as handle:
+        previous = {row["inchikey"]: row for row in csv.DictReader(handle)}
+
+    compared = 0
+    for inchikey, old_row in previous.items():
+        if old_row["model_ready"] != "true":
+            continue
+        assert inchikey in current, inchikey
+        new_row = current[inchikey]
+        for field in ("dielectric", "T_K", "model_ready", "temperature_band"):
+            assert new_row[field] == old_row[field], (inchikey, field)
+        compared += 1
+
+    assert compared > 200, compared
+
+
+def test_build_summary_records_patch_provenance() -> None:
+    summary = json.loads(V03_SUMMARY_PATH.read_text(encoding="utf-8"))
+
+    assert summary["provenance_patches"]["applied_count"] == len(
+        _shipped_patch_rows()
+    )
+    assert summary["inputs"]["provenance_patches_sha256"] == canonical_text_sha256(
+        PROVENANCE_PATCHES_PATH
+    )
+
+
+KNOWN_NON_MODEL_READY_MODELLING_ROWS = frozenset(
+    {
+        # Vinylene carbonate is flagged model_ready=false / conflict_open in
+        # v0.3.2, yet it is still present in the modelling feature file and is
+        # therefore trained on today.  The modelling pipeline gates on the
+        # exclusion list plus feature success, not on model_ready; recorded in
+        # reports/v033_findings.md.  Fixing the wiring changes the benchmark and
+        # must be a deliberate, separately reported decision.
+        "VAYTZRYEBVHVLE-UHFFFAOYSA-N",
+    }
+)
+
+
+def test_only_known_non_model_ready_rows_reach_the_modelling_feature_file() -> None:
+    """Guard against quietly growing the model_ready / modelling-set mismatch."""
+
+    features_path = (
+        REPOSITORY_ROOT / "data" / "processed" / "dielectric_physical_features_v03.csv"
+    )
+    with V03_PATH.open(encoding="utf-8", newline="") as handle:
+        dataset = {row["inchikey"]: row for row in csv.DictReader(handle)}
+    with features_path.open(encoding="utf-8", newline="") as handle:
+        features = list(csv.DictReader(handle))
+
+    offenders = {
+        row["inchikey"]
+        for row in features
+        if row.get("status") != "error"
+        and dataset[row["inchikey"]]["model_ready"] != "true"
+    }
+
+    assert offenders == set(KNOWN_NON_MODEL_READY_MODELLING_ROWS)
+
+
+def test_mopn_gap_row_is_recorded_but_held_out_of_the_model() -> None:
+    with V03_PATH.open(encoding="utf-8", newline="") as handle:
+        rows = {row["inchikey"]: row for row in csv.DictReader(handle)}
+
+    mopn = rows["OOWFYDWAMOKVSF-UHFFFAOYSA-N"]
+    assert mopn["dataset_origin"] == "v0.3_addition"
+    assert mopn["dielectric"] == "36.0"
+    assert mopn["T_K"] == "298.15"
+    assert mopn["model_ready"] == "false"
+    assert mopn["evidence_level"] == "secondary_compilation_unverified"
+    assert mopn["conflict_status"] == "awaiting_primary_confirmation"
+    assert mopn["source_dois_all"] == (
+        "10.1016/j.electacta.2013.01.084;10.1002/adfm.202212342"
+    )
+
+
+def test_mopn_secondary_compilation_row_claims_no_open_licence() -> None:
+    """MOPN must not borrow an open licence it does not have."""
+
+    rows = _read_review_observations()
+    mopn = next(
+        row for row in rows if row["inchikey"] == "OOWFYDWAMOKVSF-UHFFFAOYSA-N"
+    )
+
+    assert mopn["source_quality"] == "secondary_compilation_publisher_si"
+    assert mopn["source_doi"] == "10.1016/j.electacta.2013.01.084"
+    assert mopn["source_license"] == ""
+    assert mopn["license_url"] == ""
+    assert mopn["redistribution_conditions"] == ""
+    assert mopn["redistribution_status"] == "allowed"
+    assert mopn["model_ready"] == "false"
+    assert mopn["conflict_status"] == "awaiting_primary_confirmation"

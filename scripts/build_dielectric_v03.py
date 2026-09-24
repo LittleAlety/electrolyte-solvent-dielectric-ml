@@ -37,6 +37,19 @@ SUPPLEMENTARY_PUBLIC_DOMAIN_DOIS = frozenset(
     }
 )
 PERCENT_ESCAPE_PATTERN = re.compile(r"%[0-9A-Fa-f]{2}")
+PROVENANCE_PATCH_REQUIRED_FIELDS = ("inchikey", "field", "value", "rationale")
+PROVENANCE_PATCH_PROTECTED_FIELDS = frozenset(
+    {
+        "inchikey",
+        "name",
+        "smiles",
+        "dielectric",
+        "T_K",
+        "temperature_band",
+        "model_ready",
+        "dataset_origin",
+    }
+)
 DOI_ASCII_CHARACTER = re.compile(r"[a-z0-9./:_-]")
 MAX_UNQUOTE_PASSES = 8
 
@@ -398,6 +411,66 @@ def _normalized_addition(row: Mapping[str, str]) -> dict[str, str]:
     return output
 
 
+def apply_provenance_patches(
+    rows: Sequence[Mapping[str, str]],
+    patches: Sequence[Mapping[str, str]],
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    """Apply auditable row-level provenance overrides to assembled rows.
+
+    Every patch names one InChIKey and one field, and carries its own
+    rationale.  Patches are rejected when they target an unknown compound, a
+    protected field, or an already-patched field.  Keeping provenance fixes in
+    a checked-in patch file makes them reproducible from the build inputs, so
+    regenerating the dataset cannot silently drop them -- which is exactly how
+    the v0.3.2 revision reverted an earlier NBS upgrade.
+    """
+
+    patched = [dict(row) for row in rows]
+    index = {row["inchikey"]: row for row in patched}
+    seen: set[tuple[str, str]] = set()
+    applied: list[dict[str, str]] = []
+    for position, patch in enumerate(patches, start=1):
+        missing = [
+            field
+            for field in PROVENANCE_PATCH_REQUIRED_FIELDS
+            if not str(patch.get(field, "")).strip()
+        ]
+        if missing:
+            raise ValueError(
+                f"provenance patch {position} is missing: {', '.join(missing)}"
+            )
+        inchikey = patch["inchikey"].strip()
+        field = patch["field"].strip()
+        if field in PROVENANCE_PATCH_PROTECTED_FIELDS:
+            raise ValueError(
+                f"provenance patch {position} targets protected field {field!r}"
+            )
+        row = index.get(inchikey)
+        if row is None:
+            raise ValueError(
+                f"provenance patch {position} targets unknown compound {inchikey}"
+            )
+        key = (inchikey, field)
+        if key in seen:
+            raise ValueError(
+                f"provenance patch {position} repeats {inchikey} / {field}"
+            )
+        seen.add(key)
+        previous = str(row.get(field, ""))
+        row[field] = patch["value"]
+        applied.append(
+            {
+                "inchikey": inchikey,
+                "name": str(row.get("name", "")),
+                "field": field,
+                "previous_value": previous,
+                "value": patch["value"],
+                "rationale": patch["rationale"].strip(),
+            }
+        )
+    return patched, applied
+
+
 def build_v03_rows(
     v02_rows: Sequence[Mapping[str, str]],
     additions: Sequence[Mapping[str, str]],
@@ -476,6 +549,11 @@ def _parse_args() -> argparse.Namespace:
         type=Path,
         default=REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json",
     )
+    parser.add_argument(
+        "--provenance-patches",
+        type=Path,
+        default=data_dir / "processed" / "dielectric_v03_provenance_patches.csv",
+    )
     parser.add_argument("--minimum-additions", type=int, default=30)
     return parser.parse_args()
 
@@ -494,6 +572,16 @@ def main() -> int:
         minimum_additions=args.minimum_additions,
         excluded_model_keys=excluded_model_keys,
     )
+    patch_rows: list[dict[str, str]] = []
+    if args.provenance_patches.is_file():
+        _, patch_rows = read_csv_rows(args.provenance_patches)
+    rows, applied_patches = apply_provenance_patches(rows, patch_rows)
+    patched_license_errors = v03_license_errors(rows)
+    if patched_license_errors:
+        raise ValueError(
+            "invalid v0.3 license metadata after provenance patches: "
+            f"{'; '.join(patched_license_errors)}"
+        )
     fields = list(v02_fields)
     fields.extend(field for field in V03_FIELDS if field not in fields)
     write_csv_rows(args.output, fields, rows)
@@ -528,7 +616,17 @@ def main() -> int:
             "room_temperature": list(ROOM_TEMPERATURE_RANGE_K),
             "extended_temperature": list(EXTENDED_TEMPERATURE_RANGE_K),
         },
+        "provenance_patches": {
+            "path": str(args.provenance_patches),
+            "applied_count": len(applied_patches),
+            "applied": applied_patches,
+        },
         "inputs": {
+            "provenance_patches_sha256": (
+                canonical_text_sha256(args.provenance_patches)
+                if args.provenance_patches.is_file()
+                else None
+            ),
             "v02_sha256": canonical_text_sha256(args.v02),
             "additions_sha256": canonical_text_sha256(args.additions),
             "review_additions_sha256": canonical_text_sha256(

@@ -1,6 +1,8 @@
 ﻿# G1 Data Gate Review: Conflict List & Provenance Changes
 
 > Updated 2026-09-24: v0.3.2 revision with PC & EC addition.
+> Updated 2026-09-24 (v0.3.3): G1+ tiers 0-3 executed; MOPN gap row added;
+> provenance made reproducible. Details: `reports/v033_provenance_upgrade.md`.
 > All findings from Week 7-8 G1+ source-priority pass.
 
 ## 1. New Additions (v0.3.2)
@@ -31,9 +33,9 @@ These compounds were listed as "known gaps" in G1 report v1 but their IUPAC/syst
 
 | Common Name | IUPAC Name (in dataset) | ε @ 298K | InChIKey |
 |---|---|---|---|
-| **Diglyme** | 2,5,8-trioxanonane | 7.38 | SBZXBUIDTXKZTM |
-| **Triglyme** | 2,5,8,11-tetraoxadodecane | 7.60 | YFNKIDBQEZHQBU |
-| **Tetraglyme** | 2,5,8,11,14-pentaoxapentadecane | 7.80 | LNWVAMHESCFODF |
+| **Diglyme** | 2,5,8-trioxanonane | 7.3815 | SBZXBUIDTXKZTM |
+| **Triglyme** | 2,5,8,11-tetraoxadodecane | 7.604 | YFNKIDBQEZZDLK |
+| **Tetraglyme** | 2,5,8,11,14-pentaoxapentadecane | 7.798 | ZUHZGEOKBKGPSW |
 | **Adiponitrile** | hexanedinitrile | 32.12 | BTGRAWJCKBQKAO |
 | **Glutaronitrile** | pentanedinitrile | 34.60 | ZTOMUSMDRMJOTH |
 
@@ -43,9 +45,9 @@ These compounds were listed as "known gaps" in G1 report v1 but their IUPAC/syst
 
 | Compound | CAS | Status | Evidence |
 |---|---|---|---|
-| Methoxypropionitrile | 110-67-8 | **Absent** | ThermoML XML mentions but no permittivity data |
+| Methoxypropionitrile | 110-67-8 | **Recorded, held out of the model** | v0.3.3 adds `36.0 @ 298.15 K` from the ECW-308 supplement (Table S3), which cites Perricone et al. 2013, `10.1016/j.electacta.2013.01.084`. That primary paper is closed access and unreachable, and no second source exists, so the row is `secondary_compilation_unverified`, `model_ready=false`, `conflict_status=awaiting_primary_confirmation`. |
 | FEC | 114435-16-8 | **Conflict open** | Three conflicting values (78.4/102/107), no traceable source |
-| THF/NMP/DCM | Various | **Resolved** | Already in dataset via NBS 514; no upgrade needed |
+| THF/NMP/DCM | Various | **Resolved (no upgrade possible)** | These three are in the dataset from **open-access review tables**, not NBS 514: direct checks of NBS Circular 514 found no THF or NMP entry. SpringerMaterials holds restricted THF/NMP records that agree with the open values (NMP 32.16/32.17 K records vs review 32.2), but that source is non-redistributable and was used only as a cross-check. The review-table provenance is therefore retained deliberately, not left un-upgraded by neglect. |
 
 ## 6. Progress Summary
 
@@ -58,3 +60,5 @@ These compounds were listed as "known gaps" in G1 report v1 but their IUPAC/syst
 | G1e: VC conflict | **Confirmed** | model_ready=false |
 | G1f: Applicability domain | **FIXED** | Onsager-estimated ε > 60 + HBD≥1 |
 | G1g: v1.0 premature tag | **DELETED** | Local + remote deleted |
+| G1h: reproducible provenance | **RESOLVED (v0.3.3)** | 4 hand-edited rows absorbed into a 19-patch checked-in layer; verifier now applies it |
+| G1i: `model_ready` is advisory only | **OPEN - P0** | The modelling path filters on the exclusions file and feature success, never on `model_ready`. Vinylene carbonate (`model_ready=false`, `conflict_open`, eps=126) is nevertheless trained on. Fixing it changes the +0.0265 controlled benchmark, so it needs a deliberate decision; guarded by `test_only_known_non_model_ready_rows_reach_the_modelling_feature_file`. |

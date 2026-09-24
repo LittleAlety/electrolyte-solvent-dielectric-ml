@@ -58,9 +58,9 @@ The v0.3 G1 report listed diglyme, triglyme, tetraglyme and adiponitrile as
 
 | Common name | Name in dataset | epsilon at 298 K | InChIKey |
 |---|---|---|---|
-| Diglyme | 2,5,8-trioxanonane | 7.38 | SBZXBUIDTXKZTM-UHFFFAOYSA-N |
-| Triglyme | 2,5,8,11-tetraoxadodecane | 7.60 | YFNKIDBQEZHQBU-UHFFFAOYSA-N |
-| Tetraglyme | 2,5,8,11,14-pentaoxapentadecane | 7.80 | LNWVAMHESCFODF-UHFFFAOYSA-N |
+| Diglyme | 2,5,8-trioxanonane | 7.3815 | SBZXBUIDTXKZTM-UHFFFAOYSA-N |
+| Triglyme | 2,5,8,11-tetraoxadodecane | 7.604 | YFNKIDBQEZZDLK-UHFFFAOYSA-N |
+| Tetraglyme | 2,5,8,11,14-pentaoxapentadecane | 7.798 | ZUHZGEOKBKGPSW-UHFFFAOYSA-N |
 | Adiponitrile | hexanedinitrile | 32.12 | BTGRAWJCKBQKAO-UHFFFAOYSA-N |
 | Glutaronitrile | pentanedinitrile | 34.60 | ZTOMUSMDRMJOTH-UHFFFAOYSA-N |
 

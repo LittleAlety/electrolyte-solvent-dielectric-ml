@@ -1,0 +1,713 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-24T09:06:50+08:00",
+  "scope": {
+    "task": "G1+ 第 1 梯队免费公开数据库取证",
+    "sources_query": [
+      "PubChem PUG-REST",
+      "PubChem PUG-View",
+      "NIST Chemistry WebBook",
+      "local Chodera extracted dataset"
+    ],
+    "priority_order": [
+      "MOPN",
+      "VC",
+      "FEC",
+      "triglyme",
+      "tetraglyme",
+      "diglyme",
+      "adiponitrile",
+      "glutaronitrile",
+      "PC",
+      "EC"
+    ],
+    "inchikey_correction_applied": {
+      "triglyme": "YFNKIDBQEZZDLK-UHFFFAOYSA-N",
+      "tetraglyme": "ZUHZGEOKBKGPSW-UHFFFAOYSA-N"
+    }
+  },
+  "request_accounting": {
+    "hard_limit": 60,
+    "actual_external_requests": 40,
+    "remaining_budget": 20,
+    "minimum_interval_seconds": 1.2,
+    "batches": [
+      {
+        "source": "PubChem PUG-REST CAS to CID",
+        "requests": 10,
+        "status": "10 unique CIDs resolved for 10 targets (all 10 requests HTTP 200)"
+      },
+      {
+        "source": "PubChem PUG-View exact heading",
+        "requests": 10,
+        "status": "all 10 returned HTTP 404 PUGVIEW.NotFound"
+      },
+      {
+        "source": "PubChem PUG-View Experimental Properties",
+        "requests": 10,
+        "status": "all 10 returned HTTP 200; local full-text scan found zero dielectric/permittivity strings"
+      },
+      {
+        "source": "NIST Chemistry WebBook",
+        "requests": 10,
+        "status": "all 10 returned HTTP 200; FEC body says Registry Number Not Found; no page contained dielectric/permittivity"
+      }
+    ],
+    "manifest_files": [
+      "data/external/g1plus/pubchem/cid_query_manifest.json",
+      "data/external/g1plus/pubchem/pugview_dielectric_manifest.json",
+      "data/external/g1plus/pubchem/pugview_experimental_properties_manifest.json",
+      "data/external/g1plus/pubchem/nist_webbook/nist_query_manifest.json"
+    ]
+  },
+  "evidence_policy": {
+    "primary": "直接测量文献；本次没有新增 primary 值。",
+    "compilation": "手册/数据库汇编；必须抄录其列出的原始引用，不能自动升级为 primary。",
+    "extracted_dataset": "已有提取数据集；必须保留数据集标识，但仅凭本地表无法证明原始测量出处。",
+    "not_found": "指定查询路径没有返回可用的 relative permittivity 值。"
+  },
+  "compilation_only_or_not_traceable": [
+    {
+      "label": "diglyme",
+      "source": "Chodera 2015 local extracted dataset",
+      "value": 7.3815,
+      "temperature_K": 298.2,
+      "why_not_primary": "本地 Chodera 表给出了数值和温度，但没有原始测量文献字段；仅可回溯到数据集 arXiv:1506.00262。"
+    }
+  ],
+  "molecules": {
+    "MOPN": {
+      "label": "MOPN",
+      "name": "3-methoxypropionitrile",
+      "cas": "110-67-8",
+      "inchikey": "OOWFYDWAMOKVSF-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 61032,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/110-67-8/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/61032/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/61032/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/01_MOPN_110-67-8_cid_by_cas.json",
+          "data/external/g1plus/pubchem/01_MOPN_110-67-8_cid61032_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/01_MOPN_110-67-8_cid61032_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=110-67-8&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "Propanenitrile, 3-methoxy-",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/01_MOPN_110-67-8_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": null,
+        "temperature_K": null,
+        "citation": null,
+        "evidence_level": "absent",
+        "note": "v0.3.2 无 dielectric 行；本地 Chodera 表也无记录。"
+      }
+    },
+    "VC": {
+      "label": "VC",
+      "name": "vinylene carbonate",
+      "cas": "872-36-6",
+      "inchikey": "VAYTZRYEBVHVLE-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 13385,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/872-36-6/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13385/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13385/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/02_VC_872-36-6_cid_by_cas.json",
+          "data/external/g1plus/pubchem/02_VC_872-36-6_cid13385_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/02_VC_872-36-6_cid13385_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=872-36-6&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "1,3-Dioxol-2-one",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/02_VC_872-36-6_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 126,
+        "temperature_K": 298.0,
+        "citation": "Souid et al. (2025) ChemSusChem 18 e202402091",
+        "evidence_level": "open_access_article_text",
+        "note": "v0.3.2: ε=126 @ 298.0 K，conflict_open；原记录为 ChemSusChem 2025 开放论文正文。"
+      }
+    },
+    "FEC": {
+      "label": "FEC",
+      "name": "fluoroethylene carbonate",
+      "cas": "114435-02-8",
+      "inchikey": "SBLRHMKNNHXPHG-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 2769656,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/114435-02-8/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2769656/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2769656/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/03_FEC_114435-02-8_cid_by_cas.json",
+          "data/external/g1plus/pubchem/03_FEC_114435-02-8_cid2769656_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/03_FEC_114435-02-8_cid2769656_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=114435-02-8&Units=SI",
+        "http_status": 200,
+        "registry_number_found": false,
+        "page_title": "Registry Number Not Found",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/03_FEC_114435-02-8_nist_webbook.html",
+        "conclusion": "NIST Registry Number Not Found"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 102,
+        "temperature_K": 298.15,
+        "citation": "Sun et al. (2026) iScience 29 115778, Table 3",
+        "evidence_level": "open_access_review_table",
+        "note": "v0.3.2: ε=102 @ 298.15 K，public_values_78.4_102_107；原记录为 iScience 2026 review table。"
+      }
+    },
+    "triglyme": {
+      "label": "triglyme",
+      "name": "triethylene glycol dimethyl ether",
+      "cas": "112-49-2",
+      "inchikey": "YFNKIDBQEZZDLK-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 8189,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/112-49-2/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8189/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8189/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/04_triglyme_112-49-2_cid_by_cas.json",
+          "data/external/g1plus/pubchem/04_triglyme_112-49-2_cid8189_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/04_triglyme_112-49-2_cid8189_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=112-49-2&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "2,5,8,11-Tetraoxadodecane",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/04_triglyme_112-49-2_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 7.604,
+        "temperature_K": 298.15,
+        "citation": "ThermoML: 10.1016/j.jct.2008.02.015;10.1016/j.jct.2010.09.008",
+        "evidence_level": "v0.2_primary_or_critical_compilation",
+        "note": "v0.3.2: ε=7.604 @ 298.15 K；ThermoML DOI 10.1016/j.jct.2008.02.015 与 10.1016/j.jct.2010.09.008。"
+      }
+    },
+    "tetraglyme": {
+      "label": "tetraglyme",
+      "name": "tetraethylene glycol dimethyl ether",
+      "cas": "143-24-8",
+      "inchikey": "ZUHZGEOKBKGPSW-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 8925,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/143-24-8/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8925/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8925/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/05_tetraglyme_143-24-8_cid_by_cas.json",
+          "data/external/g1plus/pubchem/05_tetraglyme_143-24-8_cid8925_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/05_tetraglyme_143-24-8_cid8925_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=143-24-8&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "Tetraglyme",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/05_tetraglyme_143-24-8_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 7.798,
+        "temperature_K": 298.15,
+        "citation": "ThermoML: 10.1016/j.jct.2010.09.008;10.1016/j.tca.2012.10.024",
+        "evidence_level": "v0.2_primary_or_critical_compilation",
+        "note": "v0.3.2: ε=7.798 @ 298.15 K；ThermoML DOI 10.1016/j.jct.2010.09.008 与 10.1016/j.tca.2012.10.024。"
+      }
+    },
+    "diglyme": {
+      "label": "diglyme",
+      "name": "diethylene glycol dimethyl ether",
+      "cas": "111-96-6",
+      "inchikey": "SBZXBUIDTXKZTM-UHFFFAOYSA-N",
+      "found": true,
+      "value": 7.3815,
+      "temperature_K": 298.2,
+      "citation": "Chodera 2015 dielectric extraction (local table), source identifier arXiv:1506.00262",
+      "url": "data/external/chodera_2015_data_dielectric.csv",
+      "evidence_level": "extracted_dataset",
+      "provenance": "Chodera local extracted dataset <- arXiv:1506.00262",
+      "pubchem": {
+        "cid": 8150,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/111-96-6/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8150/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8150/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/06_diglyme_111-96-6_cid_by_cas.json",
+          "data/external/g1plus/pubchem/06_diglyme_111-96-6_cid8150_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/06_diglyme_111-96-6_cid8150_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=111-96-6&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "Ethane, 1,1'-oxybis[2-methoxy-",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/06_diglyme_111-96-6_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": true,
+        "rows": [
+          {
+            "temperature_K": 288.2,
+            "relative_permittivity": 7.669,
+            "components": "2,5,8-trioxanonane",
+            "smiles": "COCCOCCOC",
+            "source_cas_field": "142939-39-7",
+            "row_number": 949
+          },
+          {
+            "temperature_K": 298.2,
+            "relative_permittivity": 7.3815,
+            "components": "2,5,8-trioxanonane",
+            "smiles": "COCCOCCOC",
+            "source_cas_field": "142939-39-7",
+            "row_number": 959
+          },
+          {
+            "temperature_K": 308.2,
+            "relative_permittivity": 7.118,
+            "components": "2,5,8-trioxanonane",
+            "smiles": "COCCOCCOC",
+            "source_cas_field": "142939-39-7",
+            "row_number": 969
+          },
+          {
+            "temperature_K": 318.2,
+            "relative_permittivity": 6.886,
+            "components": "2,5,8-trioxanonane",
+            "smiles": "COCCOCCOC",
+            "source_cas_field": "142939-39-7",
+            "row_number": 979
+          },
+          {
+            "temperature_K": 328.2,
+            "relative_permittivity": 6.637,
+            "components": "2,5,8-trioxanonane",
+            "smiles": "COCCOCCOC",
+            "source_cas_field": "142939-39-7",
+            "row_number": 989
+          }
+        ],
+        "source_identifier": "arXiv:1506.00262",
+        "conclusion": "Chodera 本地表有 5 个 diglyme 温度点；其值可由本地 CSV 复现，但不能从本地表继续回溯到原始测量文献。"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 7.3815,
+        "temperature_K": 298.15,
+        "citation": "ThermoML: 10.1016/j.jct.2008.09.006;10.1016/j.jct.2010.09.008",
+        "evidence_level": "v0.2_primary_or_critical_compilation",
+        "note": "v0.3.2: ε=7.3815 @ 298.15 K；ThermoML DOI 10.1016/j.jct.2008.09.006 与 10.1016/j.jct.2010.09.008；另有 Chodera 历史汇合。"
+      }
+    },
+    "adiponitrile": {
+      "label": "adiponitrile",
+      "name": "hexanedinitrile",
+      "cas": "111-69-3",
+      "inchikey": "BTGRAWJCKBQKAO-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 8128,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/111-69-3/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8128/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/8128/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/07_adiponitrile_111-69-3_cid_by_cas.json",
+          "data/external/g1plus/pubchem/07_adiponitrile_111-69-3_cid8128_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/07_adiponitrile_111-69-3_cid8128_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=111-69-3&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "Hexanedinitrile",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/07_adiponitrile_111-69-3_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 32.12,
+        "temperature_K": 298.15,
+        "citation": "ThermoML: 10.1021/je300958c",
+        "evidence_level": "v0.2_primary_or_critical_compilation",
+        "note": "v0.3.2: ε=32.12 @ 298.15 K；ThermoML DOI 10.1021/je300958c。"
+      }
+    },
+    "glutaronitrile": {
+      "label": "glutaronitrile",
+      "name": "pentanedinitrile",
+      "cas": "544-13-8",
+      "inchikey": "ZTOMUSMDRMJOTH-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 10994,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/544-13-8/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/10994/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/10994/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/08_glutaronitrile_544-13-8_cid_by_cas.json",
+          "data/external/g1plus/pubchem/08_glutaronitrile_544-13-8_cid10994_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/08_glutaronitrile_544-13-8_cid10994_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=544-13-8&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "Pentanedinitrile",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/08_glutaronitrile_544-13-8_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 34.6,
+        "temperature_K": 298.15,
+        "citation": "ThermoML: 10.1021/je300958c",
+        "evidence_level": "v0.2_primary_or_critical_compilation",
+        "note": "v0.3.2: ε=34.6 @ 298.15 K；ThermoML DOI 10.1021/je300958c。"
+      }
+    },
+    "PC": {
+      "label": "PC",
+      "name": "propylene carbonate",
+      "cas": "108-32-7",
+      "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 7924,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/108-32-7/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7924/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7924/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/09_PC_108-32-7_cid_by_cas.json",
+          "data/external/g1plus/pubchem/09_PC_108-32-7_cid7924_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/09_PC_108-32-7_cid7924_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=108-32-7&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "Propylene Carbonate",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/09_PC_108-32-7_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 64.9,
+        "temperature_K": 298.15,
+        "citation": "Simeral & Amey (1970), DOI 10.1021/j100702a008",
+        "evidence_level": "primary",
+        "note": "v0.3.2: ε=64.9 @ 298.15 K；原测量 DOI 10.1021/j100702a008。"
+      }
+    },
+    "EC": {
+      "label": "EC",
+      "name": "ethylene carbonate",
+      "cas": "96-49-1",
+      "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+      "found": false,
+      "value": null,
+      "temperature_K": null,
+      "citation": null,
+      "url": null,
+      "evidence_level": "not_found",
+      "provenance": null,
+      "pubchem": {
+        "cid": 7303,
+        "cid_query_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/96-49-1/cids/JSON",
+        "cid_query_status": 200,
+        "dielectric_heading_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7303/JSON?heading=Dielectric+Constant",
+        "dielectric_heading_status": 404,
+        "dielectric_heading_result": "PUGVIEW.NotFound: No data found",
+        "experimental_properties_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7303/JSON?heading=Experimental+Properties",
+        "experimental_properties_status": 200,
+        "dielectric_terms_found": [],
+        "original_citation_text": null,
+        "raw_response_files": [
+          "data/external/g1plus/pubchem/10_EC_96-49-1_cid_by_cas.json",
+          "data/external/g1plus/pubchem/10_EC_96-49-1_cid7303_pugview_dielectric.json",
+          "data/external/g1plus/pubchem/10_EC_96-49-1_cid7303_pugview_experimental_properties.json"
+        ],
+        "conclusion": "PubChem 无 dielectric 条目"
+      },
+      "nist_webbook": {
+        "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=96-49-1&Units=SI",
+        "http_status": 200,
+        "registry_number_found": true,
+        "page_title": "1,3-Dioxolan-2-one",
+        "dielectric_terms_found": [],
+        "raw_response_file": "data/external/g1plus/pubchem/nist_webbook/10_EC_96-49-1_nist_webbook.html",
+        "conclusion": "NIST 页面存在但无 dielectric/permittivity 字样"
+      },
+      "chodera_local": {
+        "checked_files": [
+          "data/external/chodera_2015_data_dielectric.csv",
+          "data/processed/chodera_crosscheck.csv"
+        ],
+        "found": false,
+        "rows": [],
+        "source_identifier": null,
+        "conclusion": "Chodera 本地表无该 InChIKey 的结构匹配记录"
+      },
+      "existing_dataset_context": {
+        "file": "data/dielectric_v032.csv",
+        "value": 90.5,
+        "temperature_K": 313.15,
+        "citation": "Chernyak (2006), DOI 10.1021/je050341y",
+        "evidence_level": "primary",
+        "note": "v0.3.2: ε=90.5 @ 313.15 K；原测量 DOI 10.1021/je050341y。"
+      }
+    }
+  },
+  "overall_findings": {
+    "new_primary_values": 0,
+    "new_pubchem_dielectric_entries": 0,
+    "new_nist_dielectric_entries": 0,
+    "new_compilation_values": 0,
+    "tier1_values_found_in_chodera_local": [
+      "diglyme"
+    ],
+    "highest_priority_gap_MOPN": "PubChem 和 NIST 均无 dielectric 值；Chodera 本地表也无记录。现有数据库缺口未被第 1 梯队补齐。",
+    "VC_assessment": "未发现 PubChem/NIST/Chodera 新值，无法用本批证据裁定 126 是否可信。",
+    "FEC_assessment": "未发现 PubChem/NIST/Chodera 新值；NIST 的 CAS 检索还明确返回 Registry Number Not Found，因此 78.4/102/107 冲突仍未解决。"
+  }
+}

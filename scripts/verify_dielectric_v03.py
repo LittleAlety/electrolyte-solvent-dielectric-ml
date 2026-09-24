@@ -19,6 +19,7 @@ from electrolyte_ml.pathing import portable_relative_path
 from scripts.build_dielectric_v03 import (
     ADDITION_REQUIRED_FIELDS,
     PUBLIC_REDISTRIBUTION_STATUSES,
+    apply_provenance_patches,
     build_v03_rows,
     temperature_band,
     v03_license_errors,
@@ -110,6 +111,11 @@ def _parse_args() -> argparse.Namespace:
         type=Path,
         default=data_dir / "processed" / "dielectric_v03_exclusions.csv",
     )
+    parser.add_argument(
+        "--provenance-patches",
+        type=Path,
+        default=data_dir / "processed" / "dielectric_v03_provenance_patches.csv",
+    )
     parser.add_argument("--output", type=Path, default=data_dir / "dielectric_v03.csv")
     parser.add_argument(
         "--summary",
@@ -128,6 +134,7 @@ def main() -> int:
     all_addition_rows = [*addition_rows, *review_addition_rows]
     _, exclusion_rows = read_csv_rows(args.model_exclusions)
     excluded_model_keys = {row["inchikey"] for row in exclusion_rows}
+    _, patch_rows = read_csv_rows(args.provenance_patches)
     _, output_rows = read_csv_rows(args.output)
     summary = json.loads(args.summary.read_text(encoding="utf-8"))
     expected_rows = build_v03_rows(
@@ -135,6 +142,9 @@ def main() -> int:
         all_addition_rows,
         minimum_additions=args.minimum_additions,
         excluded_model_keys=excluded_model_keys,
+    )
+    expected_rows, applied_patches = apply_provenance_patches(
+        expected_rows, patch_rows
     )
 
     errors = verify_v03_rows(
@@ -194,11 +204,26 @@ def main() -> int:
             "summary model exclusions hash mismatch: "
             f"{recorded_exclusions_hash} != {expected_exclusions_hash}"
         )
+    expected_patches_hash = canonical_text_sha256(args.provenance_patches)
+    recorded_patches_hash = summary.get("inputs", {}).get(
+        "provenance_patches_sha256"
+    )
+    if recorded_patches_hash != expected_patches_hash:
+        errors.append(
+            "summary provenance patches hash mismatch: "
+            f"{recorded_patches_hash} != {expected_patches_hash}"
+        )
+    recorded_patch_count = summary.get("provenance_patches", {}).get("applied_count")
+    if recorded_patch_count != len(applied_patches):
+        errors.append(
+            "summary provenance patch count mismatch: "
+            f"{recorded_patch_count} != {len(applied_patches)}"
+        )
 
     report = {
         "passed": not errors,
-        "check_count": 6,
-        "passed_count": 6 if not errors else 0,
+        "check_count": 7,
+        "passed_count": 7 if not errors else 0,
         "errors": errors,
         "row_count": len(output_rows),
         "addition_count": len(all_addition_rows),
