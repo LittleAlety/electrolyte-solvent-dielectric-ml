@@ -39,7 +39,9 @@ def write_sha256s(directory: Path) -> None:
         path for path in directory.rglob("*") if path.is_file() and path.name != "SHA256SUMS"
     )
     lines = [f"{sha256_file(path)}  {path.relative_to(directory).as_posix()}" for path in files]
-    (directory / "SHA256SUMS").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # Pin the newline so the manifest itself is byte-stable across platforms.
+    with (directory / "SHA256SUMS").open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write("\n".join(lines) + "\n")
 
 
 def copy_artifacts(

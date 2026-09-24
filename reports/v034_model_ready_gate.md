@@ -123,7 +123,9 @@ unchanged -- Physical with `log(eps-1)` remains best (R2 0.276 +/- 0.044, MAE
   what was featurized, and removing the row would silently change row counts in
   unrelated artifacts. The gate, not the inventory, decides fitness.
 - No `dielectric`, `T_K`, `source_doi` or `model_ready` value changes;
-  `data/dielectric_v03.csv` is byte-identical (sha256 `2cd58144...`).
+  `data/dielectric_v03.csv` was byte-identical in that round (sha256
+  `2cd58144...` as of v0.3.4; the current revision is `f5256d16...a853c`, whose
+  later revisions touched `notes` only).
 - Historical reports keep their v0.3.1-era numbers as records of what was
   reported then; each is annotated where it conflicts with the current state.
 

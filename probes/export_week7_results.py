@@ -44,6 +44,15 @@ ARTIFACTS = (
         "g1plus_perricone_thesis_crosscheck.md",
     ),
     ("reports/g1plus_citation_trace_findings.md", "g1plus_citation_trace_findings.md"),
+    ("reports/g1plus_pubchem_findings.md", "g1plus_pubchem_findings.md"),
+    (
+        "reports/g1plus_nist_webbook_findings.md",
+        "g1plus_nist_webbook_findings.md",
+    ),
+    (
+        "reports/g1plus_materials_project_findings.md",
+        "g1plus_materials_project_findings.md",
+    ),
     ("reports/g1plus_tier34_access_findings.md", "g1plus_tier34_access_findings.md"),
     ("data/dielectric_v031.csv", "dielectric_v031.csv"),
     ("data/dielectric_v032.csv", "dielectric_v032.csv"),
@@ -76,6 +85,18 @@ ARTIFACTS = (
         "g1plus_tier2_adversarial_check.json",
     ),
     ("probes/g1plus_tier3_mopn_evidence.json", "g1plus_tier3_mopn_evidence.json"),
+    ("probes/g1plus_pubchem_probe.py", "g1plus_pubchem_probe.py"),
+    ("probes/g1plus_pubchem_evidence.json", "g1plus_pubchem_evidence.json"),
+    ("probes/g1plus_nist_webbook_probe.py", "g1plus_nist_webbook_probe.py"),
+    (
+        "probes/g1plus_nist_webbook_evidence.json",
+        "g1plus_nist_webbook_evidence.json",
+    ),
+    ("probes/g1plus_materials_project_probe.py", "g1plus_materials_project_probe.py"),
+    (
+        "probes/g1plus_materials_project_evidence.json",
+        "g1plus_materials_project_evidence.json",
+    ),
     ("probes/g1plus_mopn_thesis_evidence.json", "g1plus_mopn_thesis_evidence.json"),
     (
         "probes/g1plus_perricone_thesis_crosscheck.json",
@@ -121,7 +142,12 @@ def export_results(
     write_json(
         week_root / "week7_summary.json",
         {
-            "dataset_version": "0.3.3 (v0.3.4 candidate)",
+            "dataset_version": "0.3.6",
+            "dataset_version_note": (
+                "the 246-row set was frozen at v0.3.3; v0.3.4 fixed the "
+                "model_ready modelling gate; v0.3.5-v0.3.6 revised provenance. "
+                "No dielectric value moved in any of those revisions."
+            ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),
                 "output_sha256": (v03_summary.get("output") or {}).get("sha256"),

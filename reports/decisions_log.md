@@ -571,3 +571,213 @@
   (`chromium.launch(channel="msedge")`). The thesis is open access and is
   cached git-ignored under `data/external/g1plus/mopn/`; it is never
   redistributed.
+
+## 2026-09-24: PubChem tier-1 audit and the acetonitrile / sulfolane cross-check notes (v0.3.6)
+
+- Scope: provenance only. Two rows gain a cross-check note; no numeric value,
+  temperature, evidence level or `model_ready` flag changes. Rows stay at 246 and
+  the fitted 236 are untouched.
+- The audit tested Appendix J's claim that PubChem's Experimental Properties
+  section deposits Riddick dielectric data, naming ethylene carbonate. Each of 14
+  targets was resolved **by InChIKey first** so a name collision cannot be
+  recorded against the wrong substance. Every target matched the dataset key.
+- Result: **no target carries a dielectric value that PubChem attributes to
+  Riddick.** Ethylene carbonate cites Riddick, Bunger & Sakano, *Techniques of
+  Chemistry 4th ed., Vol. II, Organic Solvents*, 1985, p. 989 - but inside a
+  *purification* procedure ("purified ethylene carbonate for dielectric constant
+  and dipole moment studies"), not as the source of a number. The manual's
+  wording is corrected in `reports/g1plus_pubchem_findings.md`.
+- Two citable numbers were found, both from other compilations: sulfolane 43.3
+  with no temperature (Kirk-Othmer 4th ed., Vol. 23, p. 135, 1995), and
+  acetonitrile 38.8 at 20 C (Merck Index, Royal Society of Chemistry 2013, p. 14)
+  plus 42.0 / 38.8 / 26.2 at 0 / 20 / 81.6 C (DeVito, Nitriles, Kirk-Othmer 2007
+  posting). PubChem also supplies every one of these as a link rather than a
+  value.
+- Decision: record both as cross-checks and change nothing else. The
+  acetonitrile note records that the retained 37.5 is at 293.15 K, which is also
+  20 C, so PubChem's 38.8 disagrees by 3.5% at matched temperature; NBS Circular
+  514 is the stronger evidence class, so no average is formed. The sulfolane note
+  records that 43.3 brackets the retained 44 at 298.15 K and the Perricone 2011
+  thesis's 43 at 30 C.
+- Nine of the fourteen records expose a **SpringerMaterials Properties** entry
+  for the dielectric constant as a deep link, not a value. The substance ids are
+  recorded in `probes/g1plus_pubchem_evidence.json` so the restricted-database
+  round becomes a lookup. Propylene carbonate, vinylene carbonate,
+  fluoroethylene carbonate, gamma-valerolactone and 3-methoxypropionitrile carry
+  no such pointer, so the tier-3/tier-4 ladder is still required for exactly
+  those five.
+- Implementation: two `notes` rows added to
+  `data/processed/dielectric_v03_provenance_patches.csv`; rebuild is the only
+  propagation step. A field-by-field diff against the previous revision shows
+  only the acetonitrile and sulfolane `notes` fields differ.
+- Frozen hash: `data/dielectric_v03.csv` moves from
+  `b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f` to
+  `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`, re-pinned
+  in `tests/test_build_dielectric_v03.py` and in the two benchmark summaries.
+- Budget: 56 PubChem calls for the first pass, inside the 500/hour ceiling; the
+  cache makes every re-run spend zero calls and rewrite the evidence JSON byte
+  for byte.
+- Still open after this round: the FEC 78.4/102/107 spread, the VC 126 vs 78-127
+  conflict, the gamma-valerolactone 36.1 vs 32 (thesis also gives 34) conflict,
+  and MOPN's missing GFN2-xTB feature row. Write-up:
+  `reports/g1plus_pubchem_findings.md`.
+
+## 2026-09-24: tier-1 closeout - the WebBook structural negative and the adversarial repair of the PubChem evidence
+
+- **NIST Chemistry WebBook (second half of tier 1): no dielectric evidence on the surface
+  this probe could reach, so it is not usable as a source here.**
+  Appendix J's parenthetical that the WebBook holds dielectric constants for some
+  substances is not supported on any surface this probe could reach. All 14 G1+ targets were queried through the `Name=` /
+  `ID=` forms and gated on the `inChIKey` embedded in each compound page: 13 of
+  the 14 resolved to a page whose key matches the dataset, and **none of the 14
+  exposes a dielectric or permittivity facet**. Fluoroethylene carbonate is absent from the WebBook entirely (CAS
+  114435-02-8 answers "Registry Number Not Found" - that CAS response comes from the
+  **first** tier-1 pass and its raw cache, not from this probe, which simply finds no
+  candidate for the name; the two checks are recorded separately).
+- The negative is not a lookup failure: the same test was run on four positive
+  controls (water, methanol, ethanol, acetone) whose dielectric constants are not in
+  dispute, and **all four are equally empty**. Water, methanol, ethanol and acetone are
+  the strongest expected positives for a surface that carries this property, so their
+  emptiness is a strong indication rather than a formal proof. **Scope:** the claim covers the compound
+  pages reached through `Name=` / `ID=` (18 records, tested against dielectric,
+  permittivity, epsilon and the symbol ε). It is not a claim that no WebBook entry
+  point, sub-page or JavaScript panel anywhere could ever carry such a quantity, and a
+  later review round narrowed the wording to say exactly that. Evidence:
+  `probes/g1plus_nist_webbook_evidence.json`, write-up
+  `reports/g1plus_nist_webbook_findings.md`. Opened with plain `urllib` HTTPS; no
+  browser session or login is involved.
+- No dataset impact. Nothing is added, moved or reclassified, so
+  `data/dielectric_v03.csv` stays at
+  `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`.
+- **Adversarial review round (two read-only reviewers, baseline `71295e2`):
+  fail, then repaired.** Both reviewers independently returned FAIL on the same
+  P1, and the finding was correct:
+  1. The PubChem evidence JSON counted **any** string containing "dielectric" as a
+     standard value, so nine compounds were filed under
+     `with_standard_dielectric_value` when only two of them state a number. Of the
+     seven spurious entries, six carry nothing but a SpringerMaterials *link* and
+     one (ethylene carbonate) carries nothing but the *purification* sentence. The
+     prose in the report contradicted the machine-readable summary. Fixed by
+     parsing a number out of a `dielectric constant <sep> <value>` clause:
+     `with_standard_dielectric_value` is now exactly `[sulfolane, acetonitrile]`,
+     `with_narrative_mention_only` is `[ethylene carbonate]`, and
+     `without_any_dielectric_evidence` is the expected five.
+  2. Repairing (1) introduced a second defect that the same scrutiny caught: the
+     first parser read every number in the clause as a dielectric value, so
+     acetonitrile's `42.0 at 0 C, 38.8 at 20 C, 26.2 at 81.6 C` was filed as six
+     values including the three temperatures. Values and temperatures are now
+     stored separately as `measurements: [{value, temperature_C}]`.
+  3. The ethylene carbonate citation read "p. 98"; the cached response says
+     `p. 989` (with a second citation at p. 990), and the quoted text says "dry
+     ethyl ether", not "dry ether". Both corrected; the quote is now verbatim.
+  4. Only a 404 may mean "absent". A 429 or 5xx used to be swallowed into
+     `inchikey_not_in_pubchem` or an empty identity, so a rate-limit could have
+     been filed as a substance that does not exist. Transient codes now raise.
+  5. Cached responses carry the URL they came from, so a stale or mis-keyed file
+     can no longer be served as evidence for a different request, and a 400/404
+     drops the stale cache instead of refreshing around it.
+  6. `riddick_reference_count` was an occurrence count that read like a
+     distinct-reference count (ethylene carbonate showed 42 occurrences of 2
+     distinct pages). Split into `riddick_reference_occurrences` and
+     `riddick_distinct_references`. A later audit showed the 42 was itself
+     wrong: `iter_sections` yields nested sections, so each citation was counted
+     once per ancestor. The count is now taken by walking the payload exactly
+     once and is **20 occurrences of 2 distinct pages** (p. 989 and p. 990, ten
+     each), covered by a regression test.
+  7. `reports/agent_workflow.md` still paired the v0.3.6 hash with "30 patches /
+     490 passed" while the artefact records 32 patches and the suite runs 521.
+- Export repair: `probes/export_week7_results.py` did not carry any of this
+  round's evidence and hard-coded the version label `0.3.3 (v0.3.4 candidate)`.
+  Six new source/destination entries are now in `ARTIFACTS` (two findings
+  reports, two probe scripts, two evidence JSONs). The label reads `0.3.6` with an
+  explicit note that the 246-row set was frozen at v0.3.3, that v0.3.4 fixed the
+  `model_ready` fitting gate and that v0.3.5-v0.3.6 revised provenance - no
+  dielectric value moved in any of them. `SHA256SUMS` now takes an explicit `\n`,
+  as do the week 4-5 and week 6 manifest writers, so every manifest and every
+  committed JSON is byte-stable across platforms.
+- Regression cover: `tests/test_g1plus_tier1_probes.py` pins the PubChem
+  value/narrative/link split, the value-versus-temperature separation and the
+  WebBook identity gate on synthetic cached pages, so all of it runs offline.
+- Budget: 53 WebBook requests, then 56 PubChem requests to re-verify the whole
+  target set under the corrected cache rule. Both passes are inside the 500/hour
+  ceiling and both re-run at zero requests, byte-identically.
+- **Artifact hashes after the newline repair.** Both evidence JSONs are written
+  with an explicit LF because `.gitattributes` normalises `*.json` to LF - a CRLF
+  working copy would report a raw sha256 that no clean checkout reproduces.
+  `probes/g1plus_pubchem_evidence.json` is
+  `9f180a5941fe2fa2eebf067343436c60d6c119894a047787b5ef46977b849c83` and
+  `probes/g1plus_nist_webbook_evidence.json` is
+  `ff56c4f16cec86fd5328dc147c964d57c1b25afb7c0c92411ef3c95885d1fdd4`, each
+  verified LF-only (0 CRLF).
+- **Second adversarial round (same two reviewers, repair verification): fail
+  again, then repaired.** The reviewers confirmed the repair and found four more
+  real defects, two of them introduced or exposed by the repair itself:
+  1. The two evidence JSONs were written with a default `write_text`, so on
+     Windows they carried CRLF while `.gitattributes` forces `*.json` to LF. Every
+     SHA256 the reports pinned was therefore a working-copy hash that no clean
+     checkout reproduces. Both writers now take `newline="\n"` and both artefacts
+     were regenerated LF-only (0 CRLF).
+  2. The hardened clause parser still scanned within a segment, so
+     `"32.2 at 298 K"` was read as two values and `"78.4 at 25 C (1 kHz)"` was read
+     as `[78.4, 1.0]`. Segments are now parsed whole: a value must be consumed
+     exactly, with an optional unit-bearing temperature and an optional
+     parenthetical note. A kelvin reading stays kelvin rather than being silently
+     converted, and any numeric segment the parser cannot consume whole is
+     recorded under `unparsed_clauses` for human review instead of being guessed
+     at. Adding that flag immediately paid for itself - it caught a real parse
+     failure on acetonitrile's sentence-final period before the artefact shipped.
+  3. The `SHA256SUMS` newline fix had only been applied to the week 7 / week 8
+     writer; the week 4-5 and week 6 exporters still wrote CRLF manifests, and CI
+     runs them on Linux where the difference never shows. Both fixed.
+  4. Two prose claims were wrong: the patch layer covers **17** distinct
+     InChIKeys, not 15 (32 patch rows over 17 compounds), and this entry itself
+     said "four artefacts" where the exporter gained six entries. Both corrected,
+     as was an over-broad `dataset_version_note` that described v0.3.4 as a
+     provenance-only revision when it actually fixed the `model_ready` gate.
+- Final evidence hashes after the newline repair:
+  `probes/g1plus_pubchem_evidence.json` =
+  `9f180a5941fe2fa2eebf067343436c60d6c119894a047787b5ef46977b849c83` (LF-only,
+  `with_standard_dielectric_value` exactly `[sulfolane, acetonitrile]`, zero
+  unparsed clauses) and `probes/g1plus_nist_webbook_evidence.json` =
+  `ff56c4f16cec86fd5328dc147c964d57c1b25afb7c0c92411ef3c95885d1fdd4` (LF-only).
+  `tests/test_g1plus_tier1_probes.py` started this round with 17 offline assertions
+(now 18). A further,
+  separate round added `tests/test_g1plus_materials_project_probe.py` (6 assertions
+initially, now 14) after
+  the Materials Project evaluation below, taking the full suite to **553 passed** (further regression tests cover the Riddick occurrence fix and the Materials Project error and cache paths).
+- Still open, unchanged: the FEC 78.4/102/107 spread, the VC 126 vs 78-127
+  conflict, the gamma-valerolactone 36.1 vs 32 (thesis also 34) conflict, MOPN's
+  missing GFN2-xTB row, and the tier-3/tier-4 print and subscription sources.
+
+## 2026-09-24: Materials Project out of scope, CatalystHub unverified
+
+- Both sources were offered as alternatives after the SpringerMaterials interactive view
+  became unavailable. "The site would not open" is not a finding about what a database
+  holds, so each was checked on its own terms rather than assumed.
+- **Materials Project: closed as out of scope.** The API works with the stored key and the
+  collection does carry dielectric information - the summary endpoint exposes `e_total`,
+  `e_ionic`, `e_electronic` and `n` from DFPT - but it is built from inorganic crystals.
+  A positive control (SiO2) returns 322 matching documents with populated `e_total`/`n`,
+  while **all 14 G1+ targets return `total_doc = 0`** by molecular formula. The populated
+  control is what makes the empty result readable: the key, the endpoint and the field names
+  all work, so the negative is about the scope of the collection. Its dielectric tensors are
+  computed for solid crystals, which is a different quantity in a different phase from the
+  experimental liquid permittivity this dataset records, so no value is imported even if a
+  molecular crystal of one of these compounds ever appears.
+- **CatalystHub: unverified, not empty.** The key stays in the git-ignored
+  `config/catalysthub_key.txt`, but no documented endpoint could be reached: `catalysthub.ai`
+  and `www.catalysthub.ai` resolve and then time out over HTTPS, `api.catalysthub.ai` does
+  not resolve, and `catalysthub.org` is a different site whose certificate fails validation.
+  This is recorded as inaccessible rather than as "no such data", because only the former has
+  been demonstrated.
+- No dataset impact: `data/dielectric_v03.csv` stays at
+  `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`.
+- Evidence: `probes/g1plus_materials_project_evidence.json` (sha256
+  `9f8837b152d6546a904a48364f106897ffa72019f39a74b78ff135b8ef60137a`, LF-only, and asserted
+  free of the API key by `tests/test_g1plus_materials_project_probe.py`), write-up
+  `reports/g1plus_materials_project_findings.md`.
+- Budget: 15 Materials Project API calls (1 control + 14 targets); re-runs cost 0 calls. The
+  CatalystHub probing was 5 DNS/HTTPS attempts, not API usage.
+- Still open: tier 3-4 for PC / VC / FEC / GVL / MOPN (print Riddick 4th ed., CRC
+  "Permittivity of Liquids", Reaxys / SciFinder-n / DIPPR 801), plus the existing FEC, VC and
+  GVL conflict tickets.

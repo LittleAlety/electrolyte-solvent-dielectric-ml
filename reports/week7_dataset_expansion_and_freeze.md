@@ -95,8 +95,8 @@ Playwright, i.e. the same route a human reader takes.
 ## Verification
 
 - `scripts/verify_dielectric_v03.py`: 7/7 checks, 246 rows,
-  sha256 `b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f` (re-pinned in v0.3.5 by the 3-methoxypropionitrile
-  provenance patch; the row's numeric value is unchanged)
+  sha256 `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c` (re-pinned in v0.3.6 by the PubChem tier-1
+  cross-check notes on acetonitrile and sulfolane; no numeric value is changed)
 - `scripts/verify_dielectric_v032.py`: 7/7 checks, 245 rows, 243/243
   field-by-field superset of v0.3.1
 - `scripts/verify_dielectric_v02.py`: 9/9 checks

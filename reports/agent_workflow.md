@@ -146,8 +146,9 @@ The previously reported +0.0265 hybrid and +0.0502 Physical gains were carried
 by the withheld row: PC and EC are structural analogues of vinylene carbonate,
 so appending them to the training folds mostly improved the prediction of that
 one contested compound. Fold churn between the two splits is now 1224 of 2340
-compound x repeat assignments (52.3%). `data/dielectric_v03.csv` is unchanged
-(sha256 `2cd58144...a1b`): no `dielectric`, `T_K` or `model_ready` value moved,
+compound x repeat assignments (52.3%). `data/dielectric_v03.csv` was unchanged in
+that round (sha256 `2cd58144...a1b` as of v0.3.4; the current revision is
+`f5256d16...a853c`): no `dielectric`, `T_K` or `model_ready` value moved,
 and the v0.3.2 and v0.3.3 lineages now fit the *same* 236 rows and return
 identical metrics, so the old row-wise v0.3 -> v0.3.2 "coverage gain" was fold
 churn plus the ungated row.
@@ -222,7 +223,7 @@ conflict occurred, and the integration made zero external API calls.
 | Noether | ECW-308 Table S3 line-level re-extraction | Complete | Re-ran pypdf from the PDF; confirmed 8/8 target rows (page/value/reference) and the tetraglyme no-hit; classified ECW as a secondary compilation | None |
 | Franklin | Provenance-patch and modelling-path audit | Complete | Confirmed the patch layer can update `source_dois_all`, `notes`, and `conflict_status`, cannot update `model_ready`, and does not move the benchmark (round 4 later took the fitted set to 236 rows); identified the review-license gate for FEC/VC | None |
 | Euler | Paper/report consistency audit | Complete | Found the FEC/VC overstatements, nitrile conflict accounting, MOPN licence wording, patch-count drift, and stale agent status | None |
-| Main | Patch integration and freeze | Complete | 30 patches / 15 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f`; full suite `490 passed`; Ruff clean; all four dataset verifiers pass | None |
+| Main | Patch integration and freeze | Complete | 32 patches / 17 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`; full suite `553 passed` (as of the final freeze); Ruff clean; all four dataset verifiers pass | None |
 
 The integration audit also found that `data/processed/*` had been ignoring
 `dielectric_v03_provenance_patches.csv`: the patch layer was present locally
@@ -271,6 +272,44 @@ verifiers.
 | `.venv\Scripts\python.exe scripts/verify_dielectric_v032.py` | `passed=true`, 7/7 checks, 245 rows |
 | `.venv\Scripts\python.exe probes/v032_controlled_comparison.py` | paired deltas in `probes/v032_controlled_comparison_summary.json` |
 
+## Tier-1 closeout: WebBook structural negative and the adversarial repair (parallel read-only cluster, 2026-09-24)
+
+The main thread again held the only write set. Two read-only reviewers were
+dispatched against the v0.3.6 diff with different lenses - one on provenance
+semantics, one on reproducibility and export integrity - and the NIST WebBook
+probe was written by the main thread while they ran, so no two writers touched
+the same file.
+
+| Agent | Scope | State | Result or evidence | Blocker |
+| --- | --- | --- | --- | --- |
+| Heisenberg | Provenance and evidence-semantics audit of the PubChem artefact | Complete, **FAIL** | Found the P1 classification defect (nine compounds filed as standard values when only two carry a number), two citation errors (p. 98 vs the cached p. 989; "dry ether" vs "dry ethyl ether"), 429/5xx being swallowed into `not_in_pubchem`, cache staleness, and the `riddick_reference_count` naming defect | None |
+| Peirce | Reproducibility, hash-chain and export-integrity audit | Complete, **FAIL** | Independently reproduced the same P1, confirmed the hash re-pin is complete and that no test assertion was weakened, and found the week7/week8 exports stale, four artefacts missing from the exporter, the hard-coded `0.3.3 (v0.3.4 candidate)` label, and the 30/490 statistics drift | None |
+| Main | WebBook probe, adversarial repair, evidence regeneration, Materials Project evaluation, re-export | Complete | NIST WebBook closed as a dielectric source (13/14 resolved, 0 facets, 4/4 positive controls also empty); seven repair items plus four second-round items applied; Materials Project closed as out of scope (control populated, 14/14 targets empty) while CatalystHub is recorded as unreachable rather than empty | None |
+
+### What the reviewers changed
+
+Both reviewers independently returned FAIL on the same P1, which is the useful
+outcome: the report said "only two of fourteen targets expose a number" while the
+machine-readable summary said nine. The summary was wrong. Fixing it then
+introduced a second defect that the same scrutiny caught - the first numeric
+parser read temperatures as dielectric values - so the split is now explicit:
+pinned to values (with temperatures kept as a separate field, including kelvin
+and frequency annotations, and any segment the parser cannot consume whole is
+flagged as `unparsed_clauses` rather than guessed at), narrative-and-link
+mentions are recorded as mentions, and
+`tests/test_g1plus_tier1_probes.py` locks all four categories down offline.
+
+A second, independent check was run on the two databases the user supplied as
+alternatives once SpringerMaterials went away. The Materials Project probe deliberately
+carries a positive control: the collection really does expose DFPT dielectric fields
+(`e_total`, `n`), and SiO2 returns 322 populated documents, while all 14 molecular-liquid
+targets return `total_doc = 0`. That pairing is what turns "no results" into a supportable
+claim about scope. CatalystHub could not be reached at any plausible endpoint, and is
+recorded as inaccessible rather than as empty.
+
+No dataset value moved in this round: `data/dielectric_v03.csv` is still
+`f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`.
+
 ## Verification Log
 
 | Date | Command | Result |
@@ -298,6 +337,13 @@ verifiers.
 | 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v02.py` | 9/9 checks passed |
 | 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_week1.py` | 15/15 checks passed |
 | 2026-09-24 | `.venv\Scripts\python.exe scripts/check_paper_artifact_consistency.py` | `paper drafts agree with the frozen artifacts` (now also checks the coverage table, the fitted-row count and the controlled delta) |
+| 2026-09-24 | `.venv\Scripts\python.exe probes/g1plus_nist_webbook_probe.py` | 13/14 targets resolved on the identity gate; 0 dielectric facets; 4/4 positive controls also empty, so the negative is structural |
+| 2026-09-24 | `.venv\Scripts\python.exe probes/g1plus_pubchem_probe.py` | regenerated after the repair: numeric values exactly `[sulfolane, acetonitrile]`, 9 SpringerMaterials links, 1 narrative-only mention, 5 with no evidence |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest tests/test_g1plus_tier1_probes.py -q` | `18 passed` - value/temperature separation, the narrative and link categories, the Riddick occurrence count, and the WebBook identity gate |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider` | `538 passed` (521 before this round) |
+| 2026-09-24 | `.venv\Scripts\python.exe probes/g1plus_materials_project_probe.py` | Materials Project: positive control SiO2 = 322 documents with populated `e_total`/`n`; **0/14 targets** |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_g1plus_materials_project_probe.py` | `14 passed` - control-populated evidence, LF-only artefacts, a guard that no API key shape leaked into them, and the 429/5xx, non-transient-error and cache-binding paths |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider` | `553 passed` (538 before the Materials Project round) |
 
 ## Visibility Rule
 
