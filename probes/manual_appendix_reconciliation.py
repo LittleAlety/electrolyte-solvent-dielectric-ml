@@ -112,8 +112,78 @@ STALE_MANUAL_PHRASES = (
     },
 )
 
+# Tokens that must never appear in the working manual at all, whatever the
+# surrounding sentence says. Appendix J-补记三 shipped two of these and each
+# would have done real damage: `primary_measurement` is not a value the
+# dataset's evidence_level column accepts (the real values are `primary`,
+# `secondary_compilation_unverified`, `open_access_review_table` and so on),
+# and the retraction wording declares a round-4 statement that was in fact
+# correct to be wrong.
+FORBIDDEN_MANUAL_TOKENS = (
+    {
+        "token": "primary_measurement",
+        "why": "Not a real enum value. Landing it would write an evidence_level "
+        "that no consumer accepts; the dataset uses `primary`.",
+    },
+    {
+        "token": "予以撤回",
+        "why": "Round 4 correctly recorded that Flamme 2017 was not established "
+        "as the primary measurement. Round 5 added the next layer; nothing was "
+        "retracted.",
+    },
+    {
+        "token": "该读法是错的",
+        "why": "Same defect as the retraction wording: the round-4 sentence was "
+        "incomplete rather than wrong.",
+    },
+    {
+        "token": "无新的受限抓取",
+        "why": "Unscoped. The round made no new capture from SpringerMaterials "
+        "or the SIOC database, but it did add restricted material from "
+        "Kobayashi 2003, Saadi & Lee 1966, Reaxys and Flamme 2017.",
+    },
+)
+
+# The archived capture the manual's verbatim quote has to match. Read from the
+# evidence file rather than copied here, so the two cannot drift apart.
+ROUND5_EVIDENCE = REPOSITORY_ROOT / "probes" / "g1plus_crawl_round5_evidence.json"
+ROUND5_VERBATIM_GATE = "fec_78_4_leg_primary_source"
+
+# The manual quotes Flamme Table 1 entry 21 and labels the quote verbatim. The
+# label is the anchor: the archived cells must sit on that same line, because a
+# plain "the string exists somewhere" test would still pass if the good copy
+# stayed in place while a truncated copy was added under a second label.
+ROUND5_VERBATIM_LABEL = "Table 1 entry 21 逐字"
+
 DEFAULT_MANUAL = Path(
     "E:/大二/d2qc/电解液（长期项目）/文献调研/执行手册_探针与周计划.md"
+)
+
+# The working manual is external to this repository, so CI (which never sees it)
+# verifies this committed excerpt of the appendix the round-5 guards inspect.
+MANUAL_FIXTURE = (
+    REPOSITORY_ROOT / "tests" / "fixtures" / "manual_appendix_j_snapshot.md"
+)
+MANUAL_FIXTURE_SECTION = "## 附录 J-补记三"
+MANUAL_FIXTURE_HEADER = (
+    "<!--\n"
+    "Manual snapshot for CI.\n"
+    "\n"
+    "Source: 执行手册_探针与周计划.md, the \"## 附录 J-补记三\" block.\n"
+    "The working manual lives outside this repository (absolute Windows\n"
+    "path), so a runner that has never seen it can only check a committed\n"
+    "excerpt.  This one carries the two round-5 guards:\n"
+    "\n"
+    "  * no forbidden token (the fake `evidence_level` value, the retraction\n"
+    "    wording)\n"
+    "  * the Flamme Table 1 entry 21 quote still sits on its labelled line in\n"
+    "    full, with neither archived cell dropped\n"
+    "\n"
+    "Regenerate after editing that appendix with:\n"
+    "\n"
+    "  python probes/manual_appendix_reconciliation.py --write-manual-fixture\n"
+    "\n"
+    "-->"
 )
 
 DETAIL_FIELDS = (
@@ -507,6 +577,79 @@ def _extended_rows(snapshot: dict[str, object]) -> int:
     return int(counts.get("extended_temperature", 0))  # type: ignore[union-attr]
 
 
+def _round5_verbatim_check(text: str) -> dict[str, object]:
+    """Require the manual to quote the Flamme Table 1 row exactly as archived.
+
+    The Appendix J-补记三 draft labelled a quote as verbatim while dropping the
+    (70.70) and (Pt) cells from it. A verbatim quote has to match the archived
+    capture, so the expected string is read from the evidence file.
+
+    The check is anchored to the line that carries the verbatim label: testing
+    for the string anywhere in the document is not enough, because the good copy
+    could stay in place while a truncated copy is added under a second label.
+    """
+
+    if not ROUND5_EVIDENCE.exists():
+        return {"available": False, "reason": "round-5 evidence not on this machine"}
+    evidence = json.loads(ROUND5_EVIDENCE.read_text(encoding="utf-8"))
+    gate = next(
+        (
+            item
+            for item in evidence.get("gate_results", [])
+            if item.get("gate_id") == ROUND5_VERBATIM_GATE
+        ),
+        None,
+    )
+    if gate is None:
+        return {"available": False, "reason": "gate not found in evidence"}
+    expected = gate.get("flamme_table_1_entry_21_verbatim")
+    lines = text.splitlines()
+    label_lines = [
+        index + 1
+        for index, line in enumerate(lines)
+        if ROUND5_VERBATIM_LABEL in line
+    ]
+    labelled_verbatim = bool(expected) and any(
+        expected in line for line in lines if ROUND5_VERBATIM_LABEL in line
+    )
+    # Dropping either archived cell is the exact defect this guard exists for,
+    # so the truncations are banned wherever they appear in the document.
+    truncations = (
+        (
+            expected.replace(" (70.70)", ""),
+            expected.replace(" (Pt)", ""),
+            expected.replace(" (70.70)", "").replace(" (Pt)", ""),
+        )
+        if expected
+        else ()
+    )
+    truncated_hits = [
+        {
+            "variant": variant,
+            "line_numbers": [
+                index + 1
+                for index, line in enumerate(lines)
+                if variant in line
+            ],
+        }
+        for variant in dict.fromkeys(truncations)
+        if variant in text
+    ]
+    return {
+        "available": True,
+        "evidence_path": ROUND5_EVIDENCE.relative_to(REPOSITORY_ROOT).as_posix(),
+        "expected_verbatim": expected,
+        "label": ROUND5_VERBATIM_LABEL,
+        "label_line_numbers": label_lines,
+        "verbatim_present": labelled_verbatim,
+        "truncated_variant_hits": truncated_hits,
+        "truncated_variant_hit_count": sum(
+            len(hit["line_numbers"]) for hit in truncated_hits
+        ),
+        "ok": labelled_verbatim and not truncated_hits,
+    }
+
+
 def _probe_manual(manual_path: Path | None) -> dict[str, object]:
     """Check whether the working manual still carries the stale sentences.
 
@@ -545,6 +688,20 @@ def _probe_manual(manual_path: Path | None) -> dict[str, object]:
                 "corrected_line_numbers": corrected_lines,
             }
         )
+    forbidden = []
+    for record in FORBIDDEN_MANUAL_TOKENS:
+        token = record["token"]
+        forbidden.append(
+            {
+                "token": token,
+                "why_forbidden": record["why"],
+                "line_numbers": [
+                    index + 1
+                    for index, line in enumerate(lines)
+                    if token in line
+                ],
+            }
+        )
     return {
         "available": True,
         "path": str(manual_path),
@@ -555,8 +712,29 @@ def _probe_manual(manual_path: Path | None) -> dict[str, object]:
         "corrected_phrase_hit_count": sum(
             len(hit["corrected_line_numbers"]) for hit in hits
         ),
+        "forbidden_token_hits": forbidden,
+        "forbidden_token_hit_count": sum(
+            len(hit["line_numbers"]) for hit in forbidden
+        ),
+        "round5_verbatim": _round5_verbatim_check(text),
     }
 
+
+def manual_fixture_text(manual_text: str) -> str:
+    """The committed CI excerpt: MANUAL_FIXTURE_SECTION plus a provenance header."""
+
+    lines = manual_text.splitlines()
+    start = next(
+        (
+            index
+            for index, line in enumerate(lines)
+            if line.startswith(MANUAL_FIXTURE_SECTION)
+        ),
+        None,
+    )
+    if start is None:
+        raise ValueError(f"{MANUAL_FIXTURE_SECTION} not found in the manual")
+    return MANUAL_FIXTURE_HEADER + "\n" + "\n".join(lines[start:]) + "\n"
 
 def _summarize(
     claims: list[dict[str, object]],
@@ -599,11 +777,29 @@ def main(argv: list[str] | None = None) -> int:
         help="Working manual probed for stale sentences; skipped when absent.",
     )
     parser.add_argument(
+        "--write-manual-fixture",
+        action="store_true",
+        help="Regenerate the committed CI excerpt from --manual and exit.",
+    )
+    parser.add_argument(
         "--summary-only",
         action="store_true",
         help="Print the summary block instead of writing the artifact.",
     )
     args = parser.parse_args(argv)
+
+    if args.write_manual_fixture:
+        if not args.manual.exists():
+            print(f"manual not found: {args.manual}", file=sys.stderr)
+            return 1
+        MANUAL_FIXTURE.parent.mkdir(parents=True, exist_ok=True)
+        MANUAL_FIXTURE.write_text(
+            manual_fixture_text(args.manual.read_text(encoding="utf-8")),
+            encoding="utf-8",
+            newline="\n",
+        )
+        print(f"wrote {MANUAL_FIXTURE.relative_to(REPOSITORY_ROOT).as_posix()}")
+        return 0
 
     report = build_reconciliation(manual_path=args.manual)
     if args.summary_only:

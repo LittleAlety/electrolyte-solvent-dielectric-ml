@@ -84,7 +84,7 @@ Saadi & Lee, *J. Chem. Soc. B: Physical Organic*, 1966, pp. 5–6, DOI `10.1039/
 
 - 正文原句：`a decrease of the dielectric constant is observed when EC is replaced by FEC
   (εr=89.8 for EC and 78.4 for FEC, Table 1, entries 20 and 21)`；
-- Table 1 entry 21 逐字：`17.3  210  4.1  78.4  4.70  1.50  (70.70)  5.0  6.6  (Pt)  [36],[42]`。
+- Table 1 entry 21 逐字：`17.3 210 4.1 78.4 4.70 1.50 (70.70) 5.0 6.6 (Pt) [36],[42]`。
 
 另外，Crossref 的 `reference.key` 相对 Flamme 的方括号编号存在 **+3 下标偏移**：
 校正后 `[36]` = Ue et al. 2014 专著章节，`[42]` = Kobayashi 2003。

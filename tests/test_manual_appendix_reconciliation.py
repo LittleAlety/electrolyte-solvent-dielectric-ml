@@ -16,16 +16,19 @@ from probes.manual_appendix_reconciliation import (
     CURRENT_VERSION,
     DATASET_VERSIONS,
     DEFAULT_MANUAL,
+    MANUAL_FIXTURE,
     REPOSITORY_ROOT,
     TARGET_GROUPS,
     _evaluate_claims,
     _probe_manual,
     build_reconciliation,
+    manual_fixture_text,
     name_search_safety,
     read_csv_rows,
 )
 
 ARTIFACT = REPOSITORY_ROOT / "probes" / "manual_appendix_reconciliation.json"
+
 CURRENT_DATASET_SHA256 = (
     "765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60"
 )
@@ -48,6 +51,7 @@ def _manual_state(payload: dict[str, object]) -> dict[str, object]:
     """The manual facts that must stay fresh, ignoring line-number drift."""
 
     probe = payload.get("manual_probe") or {}
+    verbatim = probe.get("round5_verbatim") or {}
     return {
         "available": probe.get("available"),
         "stale_phrase_hit_count": probe.get("stale_phrase_hit_count"),
@@ -55,6 +59,18 @@ def _manual_state(payload: dict[str, object]) -> dict[str, object]:
             hit["phrase"]
             for hit in probe.get("stale_phrase_hits", [])
             if hit["line_numbers"]
+        ),
+        "forbidden_token_hit_count": probe.get("forbidden_token_hit_count"),
+        "forbidden_tokens": sorted(
+            hit["token"]
+            for hit in probe.get("forbidden_token_hits", [])
+            if hit["line_numbers"]
+        ),
+        "round5_verbatim_available": verbatim.get("available"),
+        "round5_verbatim_present": verbatim.get("verbatim_present"),
+        "round5_verbatim_ok": verbatim.get("ok"),
+        "round5_truncated_variant_hit_count": verbatim.get(
+            "truncated_variant_hit_count"
         ),
     }
 
@@ -67,12 +83,50 @@ def test_committed_artifact_matches_a_live_derivation(
     # The manual is an external file: when it is present, the stored probe result
     # must still describe it, otherwise a stale verdict would ship unnoticed.
     if DEFAULT_MANUAL.exists():
-        assert _manual_state(committed) == _manual_state(live)
-        assert _manual_state(committed)["stale_phrase_hit_count"] == 0
+        state = _manual_state(committed)
+        assert state == _manual_state(live)
+        assert state["stale_phrase_hit_count"] == 0
+        # Appendix J-补记三 shipped a fake `evidence_level` value and a retraction
+        # sentence for a round-4 claim that was in fact correct. Both are now
+        # banned outright, and a quote labelled verbatim has to match the archive.
+        assert state["forbidden_token_hit_count"] == 0
+        assert state["forbidden_tokens"] == []
+        assert state["round5_verbatim_available"] is True
+        assert state["round5_verbatim_present"] is True
+        assert state["round5_verbatim_ok"] is True
+        assert state["round5_truncated_variant_hit_count"] == 0
+    # When the manual is absent there is nothing to compare here -- CI legitimately
+    # has no access to it. The committed excerpt is checked unconditionally by
+    # test_committed_manual_fixture_still_carries_the_round5_guards, so the guards
+    # never pass silently just because this machine cannot see the manual.
     for payload in (committed, live):
         payload.pop("generated_at_utc", None)
         payload.pop("manual_probe", None)
     assert committed == live
+
+
+def test_committed_manual_fixture_still_carries_the_round5_guards() -> None:
+    """CI has no access to the working manual, so an excerpt is committed."""
+
+    assert MANUAL_FIXTURE.exists(), (
+        "the working manual is external, so a committed excerpt has to carry "
+        "the round-5 guards for CI"
+    )
+    probe = _probe_manual(MANUAL_FIXTURE)
+    if DEFAULT_MANUAL.exists():
+        # The excerpt is derived from the manual, so on a machine that has the
+        # manual it must still be the current extraction; otherwise CI would be
+        # certifying an obsolete copy.
+        assert MANUAL_FIXTURE.read_text(encoding="utf-8") == manual_fixture_text(
+            DEFAULT_MANUAL.read_text(encoding="utf-8")
+        )
+    assert probe["available"] is True
+    assert probe["forbidden_token_hit_count"] == 0, json.dumps(
+        probe["forbidden_token_hits"], ensure_ascii=False
+    )
+    assert probe["round5_verbatim"]["ok"] is True, json.dumps(
+        probe["round5_verbatim"], ensure_ascii=False
+    )
 
 
 def test_every_registered_molecule_is_in_the_current_dataset(
@@ -318,3 +372,53 @@ def test_working_manual_no_longer_asserts_the_false_negative(
         "the working manual still carries a claim the datasets contradict: "
         + json.dumps(probe["stale_phrase_hits"], ensure_ascii=False)
     )
+
+
+@pytest.mark.skipif(
+    not DEFAULT_MANUAL.exists(), reason="the working manual is not on this machine"
+)
+def test_the_round5_guards_fire_on_an_injected_manual(tmp_path) -> None:
+    """The forbidden tokens and the verbatim check must actually fire.
+
+    Pinning only the current manual would pass if the registry were emptied.
+    These two injections prove the guards still detect the two defects that
+    Appendix J-补记三 shipped: a fake evidence_level value, and a quote labelled
+    verbatim that silently dropped two cells.
+    """
+
+    text = DEFAULT_MANUAL.read_text(encoding="utf-8")
+
+    fake_enum = tmp_path / "manual_with_fake_enum.md"
+    fake_enum.write_text(
+        text + "\nevidence_level -> primary_measurement\n", encoding="utf-8"
+    )
+    probe = _probe_manual(fake_enum)
+    assert probe["forbidden_token_hit_count"] == 1
+    assert probe["round5_verbatim"]["verbatim_present"] is True
+
+    truncated = tmp_path / "manual_with_truncated_quote.md"
+    truncated.write_text(
+        text.replace(
+            "17.3 210 4.1 78.4 4.70 1.50 (70.70) 5.0 6.6 (Pt) [36],[42]",
+            "17.3 210 4.1 78.4 4.70 1.50 5.0 6.6 [36],[42]",
+        ),
+        encoding="utf-8",
+    )
+    probe = _probe_manual(truncated)
+    assert probe["forbidden_token_hit_count"] == 0
+    assert probe["round5_verbatim"]["verbatim_present"] is False
+    assert probe["round5_verbatim"]["truncated_variant_hit_count"] == 1
+
+    # The reviewer-demonstrated bypass: keep the good copy on the labelled line
+    # and add a second labelled but truncated copy somewhere else. A plain
+    # membership test passes here; the anchored gate must not.
+    bypass = tmp_path / "manual_with_second_truncated_label.md"
+    appendix = (
+        "\n| Table 1 entry 21 逐字："
+        "17.3 210 4.1 78.4 4.70 1.50 5.0 6.6 [36],[42] |\n"
+    )
+    bypass.write_text(text + appendix, encoding="utf-8")
+    probe = _probe_manual(bypass)
+    assert probe["round5_verbatim"]["verbatim_present"] is True
+    assert probe["round5_verbatim"]["truncated_variant_hit_count"] == 1
+    assert probe["round5_verbatim"]["ok"] is False
