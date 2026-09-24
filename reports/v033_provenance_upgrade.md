@@ -173,8 +173,7 @@ added to their `source_dois_all` without violating the source-license gate.
 
 The DC-200 dataset could not be obtained: the ACS Nano SI contains no
 per-molecule table, the author GitHub tree has no DC-200 asset, and the Zenodo
-record's manifest was later verified by an IP-pinned request (a single 4.75 GB `GSDS_Prior_Finetune.zip`, no per-molecule table). All `dc200` fields are `found=false`
-- "asset not published", not "compound not found".
+record's manifest was later verified by an IP-pinned request: it lists a single 4.75 GB `GSDS_Prior_Finetune.zip` and no per-molecule table. The archive itself was not downloaded or unpacked, so this bounds what is listed, not what the archive contains. All `dc200` fields are `found=false`: "not located in the accessible sources", not "compound not found".
 
 ### Tier 3 - is the MOPN value primary?
 
@@ -242,7 +241,7 @@ primary value, an xTB feature row and a re-run of the controlled benchmark.
    branch but the row stays out of the model.
 3. Tier 4 (Reaxys / SciFinder-n / DIPPR 801) is still unchecked; it is the most
    likely route to a primary MOPN value.
-4. The DC-200 dataset remains unpublished in an accessible location.
+4. The DC-200 per-molecule table remains unlocated in the accessible sources (paper, SI, author GitHub tree, and the inspected Zenodo manifest, whose only file is a 4.75 GB fine-tuning/generator archive that was not downloaded).
 5. `reports/v032_veto_resolution.md` still describes v0.3.2 as a strict
    byte-identical superset of v0.3.1. That remains true for v0.3.2; v0.3.3
    supersedes it at the level of the modelling projection, not bytes.

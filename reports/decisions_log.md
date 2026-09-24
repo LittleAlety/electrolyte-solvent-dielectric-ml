@@ -964,3 +964,21 @@ initially, now 14) after
   `probes/g1plus_tier2_evidence.json` 的 `request_accounting.follow_up_zenodo_manifest_check`。
 - **新增开放项。** `www.zenodo.org` 可解析、`zenodo.org` 不可解析，本环境需钉 IP 才能访问
   Zenodo API；不影响结论，但后续任何 Zenodo 复核需同法。
+## 2026-09-24（续二）：第五轮审查对 DC-200/Zenodo 证据的收口
+
+- **第五轮独立审查（Einstein，只读）。** 对 `a351304`（第四轮修复）判 **PASS**；对 `7271367`
+  （DC-200/Zenodo 证据）判 **FAIL：1 Important + 1 Minor**，两条均成立。Zenodo API 元数据、
+  清单（1 个文件、4,746,199,417 字节、md5 `f1736827b1a9f31e85587ca2eae913a7`）、301/302/200
+  跳转、10/10 `dc200` 为 `found=false` 全部被独立复现。
+- **Important：可用性结论强于证据。** `reports/g1plus_tier2_findings.md` 与
+  `reports/v033_provenance_upgrade.md` 曾写成“该 200 分子表未随可访问论文资产发布 / asset not
+  published / remains unpublished”。但我们只核对了**清单**，没有下载、更没有解包那个 4.75 GB 的
+  `GSDS_Prior_Finetune.zip`，因此只能说“在已取得的论文资产与已核对清单的记录中没有逐分子表”，
+  不能断言包内没有该表，也不能断言该资产未发布。三处措辞已按此收紧。
+- **Minor：请求记账自相矛盾。** `request_accounting.counting_note` 原写“reaching 39 之后不再有
+  请求”，却又新增 3 次 follow-up GET（若 budget=40 为累计则 39+3=42 超预算）。现已把 39/40 明确
+  限定为**原始 tier-2 探测运行**，follow-up 单列为独立运行、不占该预算；并向被报告的逐次审计日志
+  `data/external/g1plus/compilations/_request_log.jsonl` 补写 R1-R3 三行（该文件被 .gitignore 忽略，
+  仅作本地审计）。
+- **仍然开放。** 4.75 GB 归档内部内容未核（未下载）；DC-200 逐分子表仍**未定位**，不是“不存在”。
+- **预算。** 本轮修复 0 次外部 API 调用。

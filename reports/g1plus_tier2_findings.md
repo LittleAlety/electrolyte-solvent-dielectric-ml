@@ -58,7 +58,7 @@ MOPN 身份不是只靠名字判断：PubChem PUG REST 查询 CAS `110-67-8` 返
 2. **GitHub 不含 DC-200。** `Teoroo-CMC/Batt-SLM` 递归树共 207 项，只有 Batt-SLM、Batt-P30K、Redox-Pot、CPI 和 RX-392 类资产；没有 DC-200、dielectric 或 dielectric-constant 数据文件。
 3. **Zenodo 配套记录经清单核对后仍不含 DC-200。** DataCite 搜索找到 `10.5281/zenodo.21061161` 与 `10.5281/zenodo.21061162`（两者指向同一记录），许可证为 CC-BY-4.0 + MIT，且 IsSupplementTo 该论文。首轮探测时 `zenodo.org` 在本环境 DNS 不可达；后续复核把主机名钉到已解析 IP（`137.138.52.235`）后记录 API 可访问，清单实际为 1 个文件 `GSDS_Prior_Finetune.zip`（4,746,199,417 字节，md5 `f1736827b1a9f31e85587ca2eae913a7`），描述为 fine-tuning results 与 final generators，**没有**逐分子 DC-200 表。结论不变，但依据由“端点不可达”升级为“清单已核对”。
 4. **原始组装来源不可直接获得。** 正文说明 DC-200 来自“literature and public databases”，对应参考文献为 He et al. 2025 (`10.1063/5.0267184`) 与 Minnesota Solvation Database 2012。MNSOL 官网当前连接超时；没有下载或使用未核验镜像。
-5. **因此 10 个目标的 DC-200 字段全部为 `found=false`。** 这不是“查无此分子”的结论，而是“该 200 分子表未随可访问论文资产发布，且任务限定的直接资产不可恢复”。
+5. **因此 10 个目标的 DC-200 字段全部为 `found=false`。** 这不是“查无此分子”的结论，而是“在已取得的论文资产与**已核对清单**的 Zenodo 记录中都没有逐分子 DC-200 表”。注意：4.75 GB 的 `GSDS_Prior_Finetune.zip` **未下载、未解包**，因此不能据此外推“包内没有该表”或“该资产未发布”。
 
 ## 与现有 dielectric v0.3.2 的对照
 
