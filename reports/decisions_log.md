@@ -1682,3 +1682,25 @@ FEC 107 腿（Hagiyama 2008 OUP 403；Ue 2014 Springer 认证墙）、MOPN 的 p
 test fixture 与外部手册附录 J-补记三逐字节一致、历史哈希未被误改（`decisions_log.md` 为 +91/-0 纯追加）。
 
 温度带决策、DC-200 成员表、受限目录 4 个未取值目标。**v0.3.12 这一节已结清。**
+
+
+## 2026-09-25（续十一）第二轮对抗复审：C1 护栏 + 交付包 README
+
+- 触发：`adversarial-review-optimize` skill 的 fresh re-review 步骤。基线 `024be15`，
+  修复 revision `dd2a37d`。主线程是唯一写者；复审员 Turing（代码/数据）与 Euler（交付包/汇总）全程只读。
+- 第一轮 finding：Turing 1 Important（原 C1 的 verifier 盲区仍在：把 summary 改成已知坏状态
+  `246/5/[]` 后旧 verifier 仍 `27/27` PASS）+ 3 Minor；Euler 2 Important
+  （week7 生成器仍写 v0.3.12 “without moving a dielectric value”；week7/week8 缺 README）+ 4 Minor。
+- 修复：`probes/dielectric_representation_ablation.py` 写入 `source_path/source_sha256`；
+  `scripts/verify_v032_benchmarks.py` 新增 `v0.3.2 lineage source provenance` 并 pin
+  `data/dielectric_v032.csv / 39d15e16…b30be / 245 / 4 / [MOPN]`；
+  `tests/test_verify_v032_benchmarks.py` 加负向测试；week7 叙事改为 FEC `102→78.4`；
+  week7/week8 导出器生成 README 并纳入 `SHA256SUMS`；跨版本报告与 paper 的 stale 叙述同步修正。
+- RED → GREEN：坏状态回归测试先在旧实现下 `assert not True` 失败，修复后通过；
+  export README 测试先 `ImportError`，修复后 2 passed。全量 `pytest` **729 passed**、
+  `ruff check .` 全绿、7 个 verifier 全绿。
+- 第二轮 Euler 复审发现总汇总仍写 `HEAD 024be15`（Important）、README 校验命令目录不对等 4 个 Minor；
+  已改为最终 revision、从仓库根目录运行、最终计数 week7 61/60、week8 75/74，并给两处 v0.3.11 历史哈希加 v0.3.12 re-pin 注记。
+- **Re-review verdict**：Turing 对 `024be15..dd2a37d` 判
+  `No Critical or Important findings; Ready.`；最终 7 个 verifier 与两个 manifest 均 PASS。
+- 完整记录见 `reports/v0312_adversarial_review_round.md`。**本轮 v0.3.12 收口完成。**

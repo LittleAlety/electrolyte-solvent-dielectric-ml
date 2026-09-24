@@ -105,6 +105,11 @@ separate v0.3.11 revision, which changed only fluoroethylene carbonate's
 correction: it prevents a reviewer-facing document from spending its first three
 resource tiers rediscovering data the repository has shipped since v0.1.
 
+> **v0.3.12 re-pin (2026-09-25):** the current canonical digest is
+> `1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456`.
+> The `57387b98...` and `765fd8e0...` values above are the historical
+> v0.3.3 and v0.3.11 pins; this reconciliation probe itself still wrote no cell.
+
 ## 6. Reproducing
 
 ```

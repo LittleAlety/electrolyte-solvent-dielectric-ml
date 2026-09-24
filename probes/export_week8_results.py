@@ -42,7 +42,7 @@ README_TEXT = """# Week 8 交付包
 - 论文快照: paper/ 下的 7 份文件
 
 ## 校验
-在本目录运行:
+从仓库根目录运行（scripts/ 不在交付包内）:
 python scripts/verify_export_manifests.py --output-dir <本目录>
 python scripts/check_paper_artifact_consistency.py
 python scripts/verify_v032_benchmarks.py
