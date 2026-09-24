@@ -781,3 +781,42 @@ initially, now 14) after
 - Still open: tier 3-4 for PC / VC / FEC / GVL / MOPN (print Riddick 4th ed., CRC
   "Permittivity of Liquids", Reaxys / SciFinder-n / DIPPR 801), plus the existing FEC, VC and
   GVL conflict tickets.
+
+## 2026-09-24: ECW-308 全表重抽与引文链闭环 (v0.3.7)
+
+- **范围。** 上一轮 tier-2 只按目标分子逐行读了 ECW-308 的 SI，留下两个口子：SI 的
+  "Refs." 列是方括号编号，"Hall et al." 无法核验；以及缺少全表交叉验证。本轮把
+  Supporting Information 的 Table S3 全部 308 行结构化（本地零 API 调用）。
+- **方法。** 纯文本 dump 不可用，原因是可复现的：行是流式的、第 279 行行号没有句点、
+  第 167 行行号与名称粘连、部分条目上下堆叠两个数值。改用 pypdf 坐标文本流：列归属由
+  表头 x 坐标决定的"介电带"（486.3-559.7 pt）判定，行号必须等于期望的下一个序号
+  （1..308），单元格归属于基线在其上方 0-20 pt 的行块。
+- **锚点回归 11/11。** v0.3.6 手工读出的 11 个值全部命中，并固化为测试用例
+  （`tests/test_g1plus_ecw308_extract.py`，33 项，离线）。抽取覆盖：87 value / 204
+  blank / 11 missing / 6 stacked，行号序列完整到达 308，另解出 54 条完整参考文献。
+- **引文链闭环。** [3] Hall 2018 JES 165 A2365、[16] Flamme 2017 Green Chem 19 1828、
+  [34] Duncan 2013 JES 160 A838、[36] Perricone 2013 Electrochim. Acta 93 1、
+  [40] Huang 2019 Adv. Mater. 31 1808393、[42] Deng 2020 Energy Storage Mater. 32 425。
+  **VC 的 126.00 引 [3, 16]，即 Hall 2018 + Flamme 2017，不是 Saadi & Lee 1966** ——
+  既有 VC 付费墙冲突项属于另一条证据线，不应合并。
+- **腈类冲突的根因被解释。** ADN/GLN/PMN 三条 ECW-308 值全部只引 [34] Duncan 2013；
+  上一轮对 Duncan 接受稿的核验已确认该表只印整数 30/37/89 且无温度、频率与不确定度。
+  ECW-308 的两位小数是二次汇编制造的精度，与数据集一手值（JCED）之间的 5.8-6.9% 差异
+  是**来源等级差异**，不是两条独立实验的对立。数据集保留一手值的取舍得到支持。
+- **身份门控。** 交叉核对要求分子式一致**且**名称身份成立（去括号全名相同，或命中
+  显式同义词表）。只有分子式相同的行记为 `formula_only_candidate`，不计入冲突。这条
+  规则排除了初版两个假阳性：甲酸甲酯↔乙酸、甲基丙基碳酸酯↔碳酸二乙酯。
+  最终 16 条通过门控：5 条 ≤1%、6 条 ≤5%、5 条分歧。
+- **FEC 维持开放。** 78.4（引 Deng 2020）vs 数据集 102（开放综述表），−23.1%；两侧
+  原文本轮均未取得，不收敛，既有 `public_values_78.4_102_107` 票据不变。
+- **未改动数据集。** `data/dielectric_v03.csv` 仍为
+  `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`；本次是交叉核对，
+  没有写入任何介电数值或 `conflict_status`。
+- **证据。** `probes/g1plus_ecw308_evidence.json`（sha256
+  `ac890473f4a07e68c5f04b93d4f30472a30d1d118bf69e417a0606e0966f75fb`）、
+  `probes/g1plus_ecw308_crosscheck.json`（sha256
+  `a1bed4df36227c2da58867e54338a5b8b833a0a487db760619bf87efbdd6ab01`），两份均为纯 LF；
+  写于 `reports/g1plus_ecw308_crosscheck.md`。源 SI PDF 哈希固定在脚本内，不匹配即中止。
+- **预算。** 0 次外部 API 调用（全部基于已落地的 SI PDF）；`--check` 可验证可复现性。
+- **仍然开放。** PC / VC / FEC / GVL / MOPN 的 tier 3-4 实体书与机构库路径；FEC、VC、
+  GVL 冲突票据。

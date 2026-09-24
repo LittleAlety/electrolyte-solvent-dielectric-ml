@@ -54,6 +54,10 @@ ARTIFACTS = (
         "g1plus_materials_project_findings.md",
     ),
     ("reports/g1plus_tier34_access_findings.md", "g1plus_tier34_access_findings.md"),
+    ("reports/g1plus_ecw308_crosscheck.md", "g1plus_ecw308_crosscheck.md"),
+    ("probes/g1plus_ecw308_extract.py", "g1plus_ecw308_extract.py"),
+    ("probes/g1plus_ecw308_evidence.json", "g1plus_ecw308_evidence.json"),
+    ("probes/g1plus_ecw308_crosscheck.json", "g1plus_ecw308_crosscheck.json"),
     ("data/dielectric_v031.csv", "dielectric_v031.csv"),
     ("data/dielectric_v032.csv", "dielectric_v032.csv"),
     ("data/dielectric_v03.csv", "dielectric_v03.csv"),
@@ -142,11 +146,12 @@ def export_results(
     write_json(
         week_root / "week7_summary.json",
         {
-            "dataset_version": "0.3.6",
+            "dataset_version": "0.3.7",
             "dataset_version_note": (
                 "the 246-row set was frozen at v0.3.3; v0.3.4 fixed the "
-                "model_ready modelling gate; v0.3.5-v0.3.6 revised provenance. "
-                "No dielectric value moved in any of those revisions."
+                "model_ready modelling gate; v0.3.5-v0.3.6 revised provenance; "
+                "v0.3.7 added the ECW-308 whole-table cross-check and its resolved "
+                "citation chain. No dielectric value moved in any of those revisions."
             ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),
