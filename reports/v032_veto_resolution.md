@@ -224,3 +224,10 @@ asserted.
 - `temp_header.txt` (an untracked scratch file) was removed.
 - Full suite: **457 passed** (up from 441 at the audit baseline);
   `ruff check scripts src probes tests` clean.
+- Nine wording/structure inconsistencies remain in the per-section paper
+  drafts (`paper/abstract_and_intro.md`, `paper/benchmark_and_figures.md`,
+  `paper/code_and_data.md`, `paper/outline.md`,
+  `paper/technical_validation.md`). They are enumerated in
+  `reports/agent_workflow.md` under "Known remaining inconsistencies" and
+  must be closed before a v1.0 freeze. They do not affect the dataset, the
+  verifier or the controlled benchmark.

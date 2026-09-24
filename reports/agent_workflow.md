@@ -72,7 +72,7 @@ read-only until it received an explicit, non-overlapping write scope.
 | Lorentz | P0-1: wire the Onsager threshold into the production caller | `probes/build_applicability_flags.py`, `src/electrolyte_ml/xtb_features.py`, `tests/test_applicability.py` | `onsager_dielectric_estimate` + explicit fallback counters; 8 tests |
 | Jason | P0-3 + P1: restore provenance, harden the verifier | `data/dielectric_v032.csv`, `data/dielectric_v03.csv`, `scripts/verify_dielectric_v032.py`, `tests/test_verify_dielectric_v032.py` | 243/243 strict superset; 7 named checks; 11 tests |
 | Averroes | Appendix J resource ladder | execution manual, outside the repository | Appendix J in both copies |
-| Linnaeus | v1.0 wording and section sync in the paper | `paper/abstract_and_intro.md`, `paper/benchmark_and_figures.md`, `paper/code_and_data.md`, `paper/outline.md`, `paper/technical_validation.md` | 13 wording/number alignments; flagged 12 further inconsistencies, 10 of which the main thread then fixed |
+| Linnaeus | v1.0 wording and section sync in the paper | `paper/abstract_and_intro.md`, `paper/benchmark_and_figures.md`, `paper/code_and_data.md`, `paper/outline.md`, `paper/technical_validation.md` | 13 wording/number alignments; flagged 12 further inconsistencies, one of which the main thread also fixed; the rest are listed under remaining gaps |
 | Main thread | P0-2 controlled benchmark and integration | `probes/v032_controlled_comparison.py`, `paper/full_draft.md`, `reports/`, `scripts/build_dielectric_v03.py`, `tests/test_build_dielectric_v03.py` | paired gain +0.0265 R2; validator fix; re-freeze |
 
 ### What the audit changed
@@ -83,6 +83,27 @@ the data addition; 1272 of 2350 compound x repeat fold assignments (54.1%)
 had silently changed between the two splits. The independently computed churn
 fraction from the audit reviewer and from the main-thread probe agree to three
 significant figures. The paper no longer cites +0.056 as a gain.
+
+### Known remaining inconsistencies (open, not silently dropped)
+
+Linnaeus' section-level review flagged inconsistencies that this round did
+**not** resolve. They are recorded here rather than fixed with guessed
+values, because each needs a version check against the frozen artifacts:
+
+| Location | Issue | Why it was left open |
+| --- | --- | --- |
+| `paper/abstract_and_intro.md:68-70` | still describes glyme diethers and adiponitrile as missing | the G1 correction proves they exist under IUPAC names; needs a rewrite, not a number swap |
+| `paper/benchmark_and_figures.md:20-35` | neural baselines labelled "same 10x5 folds" without a version | they were never rerun on v0.3.2 folds |
+| `paper/benchmark_and_figures.md:38-49` | scaffold/cluster table carries older values with no version label | main draft has a different six-row v0.3.2 table |
+| `paper/benchmark_and_figures.md:67-71` | Figure 1 still says `v0.3 (243)` | should read `v0.3.2 (245)` |
+| `paper/code_and_data.md:16-24` | repository listing omits `dielectric_v032.csv` and the v0.3.2 verifier | structural, needs a matching rewrite |
+| `paper/outline.md:122` | `immutable release commit` conflicts with candidate status | ambiguous: aspiration vs. claim |
+| `paper/technical_validation.md:24-31` | conflict count not version-labelled | needs the v0.3 vs v0.3.2 distinction |
+| `paper/technical_validation.md:98-99,115` | older benchmark values lack an explicit version tag | same |
+| `paper/technical_validation.md:159-165` | known data gaps disagree with the corrected G1 list | same |
+
+None of these affect the dataset, the verifier or the controlled benchmark,
+but they must be closed before any v1.0 freeze.
 
 ### Verification commands for this round
 
