@@ -168,7 +168,11 @@ superset of `data/dielectric_v031.csv`:
 - 243 shared keys, **243 rows equal field-by-field**, 0 missing keys,
   0 field mismatches, 2 added keys (PC, EC).
 - 245 rows, 240 `model_ready=true`, 6 rows carrying a `conflict_status`,
-  5 compounds excluded from model fitting.
+  4 compounds withheld from model fitting through the curated exclusion list
+  (FEC, TEP, TMP, ethyl isothiocyanate). **Corrected 2026-09-24:** this line
+  previously read "5 compounds excluded from model fitting", which was wrong.
+  Vinylene carbonate is flagged `model_ready=false` but is still fitted, because
+  the modelling pipeline honours the exclusion list and not the flag.
 
 Because the provenance text changed, the v0.3 freeze hash was **re-frozen**
 deliberately rather than left stale: `3068a4ff...` -> `39d15e16...`, updated

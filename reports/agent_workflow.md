@@ -84,26 +84,55 @@ had silently changed between the two splits. The independently computed churn
 fraction from the audit reviewer and from the main-thread probe agree to three
 significant figures. The paper no longer cites +0.056 as a gain.
 
-### Known remaining inconsistencies (open, not silently dropped)
+### Paper draft inconsistencies: closed (2026-09-24, v0.3.3 round)
 
-Linnaeus' section-level review flagged inconsistencies that this round did
-**not** resolve. They are recorded here rather than fixed with guessed
-values, because each needs a version check against the frozen artifacts:
+Linnaeus' section-level review flagged nine inconsistencies that the first round
+did not resolve. All nine are now closed, and the underlying cause (a
+hand-maintained `paper/full_draft.md` drifting away from the section files) was
+removed: the section files are the single source of truth and
+`paper/full_draft.md` is generated from them by
+`scripts/build_paper_full_draft.py`.
 
-| Location | Issue | Why it was left open |
+| # | Original item | Resolution |
 | --- | --- | --- |
-| `paper/abstract_and_intro.md:68-70` | still describes glyme diethers and adiponitrile as missing | the G1 correction proves they exist under IUPAC names; needs a rewrite, not a number swap |
-| `paper/benchmark_and_figures.md:20-35` | neural baselines labelled "same 10x5 folds" without a version | they were never rerun on v0.3.2 folds |
-| `paper/benchmark_and_figures.md:38-49` | scaffold/cluster table carries older values with no version label | main draft has a different six-row v0.3.2 table |
-| `paper/benchmark_and_figures.md:67-71` | Figure 1 still says `v0.3 (243)` | should read `v0.3.2 (245)` |
-| `paper/code_and_data.md:16-24` | repository listing omits `dielectric_v032.csv` and the v0.3.2 verifier | structural, needs a matching rewrite |
-| `paper/outline.md:122` | `immutable release commit` conflicts with candidate status | ambiguous: aspiration vs. claim |
-| `paper/technical_validation.md:24-31` | conflict count not version-labelled | needs the v0.3 vs v0.3.2 distinction |
-| `paper/technical_validation.md:98-99,115` | older benchmark values lack an explicit version tag | same |
-| `paper/technical_validation.md:159-165` | known data gaps disagree with the corrected G1 list | same |
+| 1 | glyme diethers and adiponitrile described as missing | rewritten; they are present under IUPAC names, and the named gaps are now 3-methoxypropionitrile and FEC |
+| 2 | neural baselines labelled "same 10x5 folds" without a version | header now names the 205-row v0.2 feature table, and the Chemprop comparison was re-based on like-for-like 205-row numbers (0.203, not 0.190) |
+| 3 | scaffold/cluster table carried old values and no version label | replaced with `probes/v032_target_scaffold_summary.json` (v0.3.2, 237 rows); several std values in the existing six-row table were wrong too, e.g. `7.104 +/- 0.257` -> `7.103 +/- 0.168` |
+| 4 | Figure 1 said `v0.3 (243)` | now `v0.1 (100) -> v0.2 (210) -> v0.3 (243) -> v0.3.3 (246)` |
+| 5 | repository listing omitted `dielectric_v032.csv` and the v0.3.2 verifier | tree rewritten with v0.3.1/v0.3.2/v0.3.3, both verifiers, the exclusion table and the provenance patch table |
+| 6 | `immutable release commit` conflicting with candidate status | reworded, and a stale-phrase check now fails the build if the phrase returns |
+| 7 | conflict count not version-labelled | now stated as 7 conflict statuses / 6 `model_ready=false` / 4 withheld / 237 fitted, each re-derived from the table |
+| 8 | older benchmark values lacked an explicit version tag | every benchmark table now names its dataset version and row count |
+| 9 | known data gaps disagreed with the corrected G1 list | rewritten around 3-methoxypropionitrile (no physical-feature row) and FEC (excluded) |
 
-None of these affect the dataset, the verifier or the controlled benchmark,
-but they must be closed before any v1.0 freeze.
+Five further discrepancies surfaced while closing the nine, all now fixed:
+
+| Finding | Evidence |
+| --- | --- |
+| v0.1 was described as 45 compounds; `data/dielectric_v01.csv` holds 100 | 45 is the Chodera common-key overlap, not the v0.1 row count |
+| the Chodera cross-check claimed a median absolute deviation below 0.01 | `probes/chodera_crosscheck_summary.json`: `median_abs_delta = 0.175`, `max_abs_delta = 7.341`, 44 of 45 key pairs within 0.05 K |
+| the SpringerMaterials cross-check claimed 30 modern-solvent candidates | `probes/springer_materials_crosscheck_summary.json`: `matched_compounds = 60`, matched against v0.2 |
+| the Dummy baseline row claimed MAE 21.66 | no committed artifact reproduces it; replaced by a fold-matched constant baseline (MAE 12.33, R2 -0.010) recomputed from `data/processed/v032_ablation_predictions.csv` |
+| the main benchmark quoted Physical AUC>30 as 0.937 | `probes/v032_ablation_summary.json` gives 0.9365, i.e. 0.936 |
+
+Two further claims were softened after the read-only audit showed them to be
+overstated: vinylene carbonate contributes about 17.8% of the hybrid
+`epsilon > 60` absolute error (material, not dominant), and the 6,150-row
+applicability file is 205 compounds x 3 representations x 10 repeats, not
+"123 compounds x 10 x 5".
+
+One false sentence was corrected in a historical report:
+`reports/v032_veto_resolution.md` claimed "5 compounds excluded from model
+fitting"; only the four rows on the curated exclusion list are withheld.
+
+### Enforcement added
+
+`scripts/check_paper_artifact_consistency.py` re-derives row counts, conflict
+counts, the main benchmark table, the scaffold table, the release version and
+the generated draft from the committed artifacts, and fails on any mismatch.
+`tests/test_paper_artifact_consistency.py` pins it with injected-drift tests, so
+each mutation must produce an error. Both run in CI alongside the dataset
+verifiers.
 
 ### Verification commands for this round
 
@@ -124,6 +153,12 @@ but they must be closed before any v1.0 freeze.
 | 2026-09-23 | `.venv\Scripts\python.exe -m ruff check scripts src probes tests` | All checks passed |
 | 2026-09-23 | `.venv\Scripts\python.exe scripts\analyze_springer_materials_crosscheck.py` | 60 v0.2 compounds matched; median absolute delta `0.05`; one review conflict retained |
 | 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q` | `457 passed` |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q` | `481 passed` (v0.3.3 provenance round) |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v032.py` | `passed=true`, 7/7 checks, 245 rows |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v03.py` | `passed=true`, 7/7 checks, 246 rows |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/build_paper_full_draft.py --check` | `paper/full_draft.md` up to date |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/check_paper_artifact_consistency.py` | `paper drafts agree with the frozen artifacts` |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest tests/test_paper_artifact_consistency.py -q` | `8 passed` (includes 6 injected-drift tests) |
 
 ## Visibility Rule
 

@@ -1,4 +1,4 @@
-﻿# Methods
+# Methods
 
 ## Dataset scope
 
@@ -20,11 +20,12 @@ conflict status.
 The dataset was assembled in three incremental versions, each independently
 buildable and verifiable.
 
-**v0.1 (45 compounds).** Extracted from the NIST ThermoML archive
+**v0.1 (100 compounds).** Extracted from the NIST ThermoML archive
 (https://trc.nist.gov/ThermoML/) using the thermoml-io parser. Only
 zero-frequency, pure-component observations within 293.15-303.15 K were
-retained. This replicates and extends the extraction scope of Chodera et al.
-(2015) arXiv:1506.00262.
+retained. The extraction shares 45 keys with Chodera et al. (2015)
+arXiv:1506.00262 from the same archive, and that 45-record overlap is the figure
+quoted in the cross-check below; v0.1 itself holds 100 compounds.
 
 **v0.2 (210 compounds).** Added manually curated records from NBS Circular 514
 (Maryott & Smith, 1951, https://doi.org/10.6028/nbs.circ.514), a critical
@@ -44,6 +45,24 @@ the gate flag nbs514_circular_514.
   TMP), fluorinated ethers (TTE, BTFE, HFE), nitriles, chlorinated diluents,
   and fluorinated carbonates (FEC, VC).
 
+**v0.3.2 (245 compounds).** Added the two decisive battery carbonates that were
+absent from every earlier revision:
+- Propylene carbonate (PC, epsilon=64.9 at 298.15 K) from Simeral & Amey (1970)
+  J. Phys. Chem. 74, 1443 (https://doi.org/10.1021/j100702a008).
+- Ethylene carbonate (EC, epsilon=90.5 at 313.15 K) from Chernyak (2006)
+  J. Chem. Eng. Data 51, 416 (https://doi.org/10.1021/je050341y); EC melts at
+  36.4 C, so the measurement is flagged extended_temperature.
+
+**v0.3.3 (246 compounds).** Adds one row and repairs provenance. The new row is
+3-methoxypropionitrile (epsilon=36.0 at 298.15 K), transcribed from the ECW-308
+battery-solvent supporting information (Wang & Shi, Adv. Funct. Mater. 2023,
+https://doi.org/10.1002/adfm.202212342). No traceable primary measurement was
+found for it, so it is flagged secondary_compilation_unverified with
+model_ready=false. v0.3.3 also applies 19 reproducible provenance patches
+(data/processed/dielectric_v03_provenance_patches.csv) that restore the
+source-priority decisions and conflict records that earlier hand-edits had
+lost.
+
 Every v0.3 addition records its source DOI, table or section identifier,
 license and redistribution conditions, and temperature-source status. Review-
 table values that do not state an independent measurement temperature are
@@ -57,13 +76,22 @@ values were promoted into the public dataset.
 ## Conflict handling
 
 When independent public sources disagree materially, the conflicting values
-are recorded but excluded from model fitting. Conflicts are not averaged.
-Explicitly excluded compounds: FEC (values 78.4, 102, 107), TEP (10, 13), TMP
-(10, 21.6), vinylene carbonate (78-127; primary source traced only to Knovel
-Critical Tables, not original measurement), and ethyl isothiocyanate (NBS 19.5
-at 294.15 K vs. restricted cross-check 29.7 at 293.2 K). All excluded rows
-remain in the public table with model_ready=false and a populated
-conflict_status field.
+are recorded and the row is flagged; conflicts are never averaged. Seven rows
+carry an explicit conflict_status and six are flagged model_ready=false. The
+benchmark withholds four rows through a curated exclusion list
+(data/processed/dielectric_v03_exclusions.csv): FEC (values 78.4, 102, 107),
+TEP (10, 13), TMP (10, 21.6), and ethyl isothiocyanate (NBS 19.5 at 294.15 K vs.
+restricted cross-check 29.7 at 293.2 K). A further conflict, methyl propionate
+(NBS 5.5 vs. review 6.2), is documented and its row is retained.
+
+One flagged row is not yet withheld. Vinylene carbonate (literature range
+78-127; the ChemSusChem 2025 value of 126 traces only to Knovel Critical Tables,
+not to an original measurement) carries model_ready=false and conflict_open but
+still reaches the feature table, because the modelling pipeline currently
+honours only the exclusion list and not the model_ready flag. The discrepancy is
+recorded as a known issue rather than smoothed over; 3-methoxypropionitrile has
+no physical-feature row, so it is absent from the fitted set for that reason
+alone.
 
 ## Physical features
 
@@ -126,9 +154,11 @@ GitHub repository at https://github.com/[repository].
 
 ## Core dataset files
 
-### data/dielectric_v03.csv (243 compounds)
+### data/dielectric_v03.csv (246 compounds)
 
-The primary dataset table. Each row contains:
+The current table (dataset version 0.3.3). It is a strict superset of v0.3.2:
+the only added row is 3-methoxypropionitrile, flagged
+secondary_compilation_unverified and model_ready=false. Each row contains:
 
 - **Structural identifiers**: InChIKey, canonical SMILES, common name.
 - **Measurement**: dielectric constant (epsilon), temperature (T_K, K),
@@ -144,11 +174,24 @@ The primary dataset table. Each row contains:
 
 ### data/dielectric_v031.csv (243 compounds)
 
-Revision incorporating G1 data-gate findings:
+Superseded historical revision (v0.3.1) incorporating the first G1 data-gate
+findings:
 - Vinylene carbonate: model_ready demoted to false, conflict range 78-127.
 - Ethoxybenzene: provenance promoted to primary (NBS Circular 514 p35:011
   eps=4.22 matches review 4.2).
 - Methyl propionate: conflict opened (NBS 5.5 vs. review 6.2, 13% difference).
+
+### data/dielectric_v032.csv (245 compounds)
+
+Superseded by v0.3.3. Supersedes v0.3.1 by adding two decisive battery
+solvents that were missing from all earlier revisions:
+- Propylene carbonate (PC), epsilon=64.9 at 298.15 K, primary source traced to
+  Simeral & Amey (1970) DOI 10.1021/j100702a008.
+- Ethylene carbonate (EC), epsilon=90.5 at 313.15 K (liquid range), primary
+  source DOI 10.1021/je050341y, flagged extended_temperature.
+The glyme diethers (diglyme/triglyme/tetraglyme) and the dinitriles
+(adiponitrile, glutaronitrile) that earlier reports listed as "absent" were
+already present under their IUPAC names; they are now documented explicitly.
 
 ### data/dielectric_v02.csv (210 compounds)
 
@@ -159,7 +202,7 @@ The v0.2 predecessor built from ThermoML and NBS Circular 514.
 | File | Contents |
 |------|----------|
 | data/processed/dielectric_physical_features.csv | GFN2-xTB and RDKit features for 205 compounds |
-| data/processed/dielectric_applicability_flags.csv | Per-row applicability flags (6150 = 123 compounds x 10 repeats x 5 folds) |
+| data/processed/dielectric_applicability_flags.csv | Per-row applicability flags (6150 = 205 compounds x 3 representations x 10 repeats; each row carries the held-out fold index) |
 | data/processed/dielectric_mlp_probe_predictions.csv | OOF predictions from MLP probe |
 | data/processed/dielectric_mlp_calibration_predictions.csv | OOF predictions from calibration probe |
 | data/processed/dielectric_chemprop_predictions.csv | OOF predictions from Chemprop D-MPNN |
@@ -176,14 +219,30 @@ The v0.2 predecessor built from ThermoML and NBS Circular 514.
 | probes/dielectric_chemprop_summary.json | Chemprop D-MPNN baseline |
 | probes/g2_domain_gap_summary.json | Domain-gap external test (frozen v0.2 model) |
 | probes/dielectric_density_feature_summary.json | Experimental-density comparison |
-| probes/dielectric_target_scaffold_summary.json | Scaffold/cluster holdout benchmark |
-| eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
+| probes/dielectric_target_scaffold_summary.json | Scaffold/cluster holdout benchmark (v0.2, 205 rows) |
+| probes/v032_target_scaffold_summary.json | v0.3.2 target-transform and scaffold benchmark (237 rows) |
+| probes/v032_ablation_summary.json | v0.3.2 main ablation benchmark (237 rows) |
+| probes/v032_controlled_comparison_summary.json | Paired PC/EC train-only control |
+| probes/dielectric_v03_summary.json | v0.3.3 build manifest, patches and SHA256 |
+| 
+eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
 
 ## Known gaps (for v1.1)
 
-The following compounds lack publicly traceable dielectric constant measurements
-from primary sources and are excluded from the current dataset: diglyme,
-triglyme, tetraglyme, and adiponitrile. FEC is excluded due to unresolved
-conflicts (three reported values 78.4, 102, 107 without traceable primary
-sources). These compounds constitute explicit targets for the next dataset
-revision.
+**Fluoroethylene carbonate (FEC).** Withheld from model fitting through the
+curated exclusion list because public sources disagree (78.4, 102, 107) and no
+primary measurement has been identified.
+
+**3-Methoxypropionitrile (MOPN).** Present in the table as a flagged,
+non-model-ready row (36.0 at 298.15 K, secondary_compilation_unverified). Tier-0
+checks over all 242 local ThermoML dielectric files and all 636 transcribed NBS
+Circular 514 organic rows returned no permittivity observation for it. The value
+rests on the ECW-308 battery-solvent compilation, and its cited primary source
+(Perricone et al. 2013, https://doi.org/10.1016/j.electacta.2013.01.084) is
+closed access with no open full text. It is the single named solvent gap.
+
+**Resolved gap reports.** The glyme diethers and the dinitriles that earlier
+internal reports listed as absent are present in the table under their IUPAC
+names (diglyme = 2,5,8-trioxanonane, and so on); those reports were wrong about
+absence, not about the underlying measurements. The open items above constitute
+explicit targets for the next dataset revision.

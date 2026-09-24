@@ -56,7 +56,10 @@ holdout performance, and poor transfer to associated liquids.
 
 - `data/dielectric_v01.csv`
 - `data/dielectric_v02.csv`
-- `data/dielectric_v03.csv`
+- `data/dielectric_v03.csv` (v0.3.3, 246 compounds, current)
+- `data/dielectric_v031.csv` (243) and `data/dielectric_v032.csv` (245), historical
+- `data/processed/dielectric_v03_exclusions.csv` (4-row curated exclusion list)
+- `data/processed/dielectric_v03_provenance_patches.csv` (19 reproducible patches)
 - `data/processed/modern_solvent_public_review_observations.csv`
 - `data/processed/dielectric_physical_features_density.csv`
 - `data/processed/dielectric_physical_features_v03.csv`
@@ -67,10 +70,16 @@ holdout performance, and poor transfer to associated liquids.
 
 - Chodera 2015 cross-check.
 - SpringerMaterials restricted cross-check with median absolute delta `0.05`.
-- Ethyl isothiocyanate conflict remains explicitly unresolved.
+- Ethyl isothiocyanate conflict remains explicitly unresolved and is withheld.
+- Vinylene carbonate is flagged `model_ready=false` but is still fitted: the
+  modelling pipeline honours the exclusion list, not the flag. Reported openly.
 - Deterministic builders and independent verifiers.
-- v0.3 model sensitivity: broader modern-solvent coverage without an accuracy
-  gain (`R2 0.310` hybrid on 235 rows versus `0.320` on 205 v0.2 rows).
+- v0.3.2 model sensitivity: broader modern-solvent coverage without a
+  controlled accuracy gain (`R2 0.366` hybrid on 237 rows versus `0.320` on the
+  205-row v0.2 table). A paired train-only control attributes `+0.0265`
+  (95% CI `+0.017` to `+0.036`) to the PC/EC addition; 1272 of 2350 fold
+  assignments (54.1%) also changed, so the raw version-to-version difference is
+  not a controlled estimate.
 - Cross-platform CI over all committed artifacts.
 
 ## Benchmark Tables
@@ -102,7 +111,7 @@ correlation effects require multi-body descriptions outside the candidate model.
 
 ## Figures
 
-1. Dataset growth and source composition from v0.1 to v0.3.2.
+1. Dataset growth and source composition from v0.1 to v0.3.3 (246 compounds).
 2. Chemical-space projection with electrolyte families highlighted.
 3. Model benchmark and uncertainty across repeated folds.
 4. Prediction error by dielectric stratum.
@@ -115,9 +124,14 @@ correlation effects require multi-body descriptions outside the candidate model.
 - Most additions are at a single near-room temperature.
 - Conformer-averaged dipole moments are not implemented.
 - Associated liquids remain outside the model boundary.
-- Some modern-solvent targets still require public primary-source resolution.
+- Some modern-solvent targets still require public primary-source resolution;
+  3-methoxypropionitrile (secondary compilation) and fluoroethylene carbonate
+  (conflicting values) are the two named open items.
 
 ## Code and Data Availability
 
-List the GitHub repository, immutable release commit, Zenodo DOI, environment
-versions, and commands for each verifier.
+List the GitHub repository, the candidate release commit (which becomes the
+immutable v1.0 commit only after the Appendix I freeze conditions are met), the
+Zenodo DOI, environment versions, and the command for each verifier. Do not
+describe the release commit as immutable while the release is still a
+candidate.
