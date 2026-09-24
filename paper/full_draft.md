@@ -5,10 +5,12 @@ constants (relative permittivities) for 246 pure organic liquids at near-room
 temperature (293.15-303.15 K). The dataset is assembled from three sources:
 the NIST ThermoML archive (v0.1, 100 compounds), NBS Circular 514 (v0.2, 210
 compounds), and open-access review tables and primary literature covering
-modern battery solvents (v0.3.3, 246 compounds). Every row carries deterministic
+modern battery solvents (v0.3.3, 246 compounds), plus one non-redistributable
+publisher-compilation value retained only as a numeric fact and explicitly
+flagged. Every row carries deterministic
 source provenance, gate-flag metadata, license and redistribution conditions,
 and conflict status. Conflicting public values are recorded rather than
-averaged: seven rows carry an explicit conflict or unverified-provenance
+averaged: nine rows carry an explicit conflict or unverified-provenance
 record, six are flagged model_ready=false, and the benchmark withholds four
 rows through a curated exclusion list.
 
@@ -76,7 +78,7 @@ The primary contribution is the curated, auditable dataset itself, not a claim
 that small-data models solve static permittivity prediction. The remaining
 public-data gaps are narrow and explicit: 3-methoxypropionitrile rests on a
 secondary compilation with no traceable primary measurement, and
-fluoroethylene carbonate stays conflicted (78.4, 102, 107). The glyme diethers
+fluoroethylene carbonate stays conflicted (78.4, 102, 107); ECW-308 independently supports the 78.4 branch, but the cited original table was not retrieved. The glyme diethers
 and the dinitriles (adiponitrile, glutaronitrile) that earlier internal reports
 listed as absent are present in the table under their IUPAC names. These open
 gaps are explicit targets for the v1.1 revision.
@@ -141,7 +143,7 @@ absent from every earlier revision:
 battery-solvent supporting information (Wang & Shi, Adv. Funct. Mater. 2023,
 https://doi.org/10.1002/adfm.202212342). No traceable primary measurement was
 found for it, so it is flagged secondary_compilation_unverified with
-model_ready=false. v0.3.3 also applies 19 reproducible provenance patches
+model_ready=false. v0.3.3 also applies 30 reproducible provenance patches
 (data/processed/dielectric_v03_provenance_patches.csv) that restore the
 source-priority decisions and conflict records that earlier hand-edits had
 lost.
@@ -156,20 +158,29 @@ The restricted SpringerMaterials Interactive database (Landolt-Bornstein
 series) was used as cross-check evidence only. No subscription-only numeric
 values were promoted into the public dataset.
 
+ECW-308 (Wang et al., Adv. Funct. Mater. 2023, DOI
+10.1002/adfm.202212342) was retrieved from a non-redistributable publisher
+supplement and used only as a secondary cross-check. It reproduces PC 64.90
+exactly, reports EC 89.00 at a different temperature (25 C versus the stored
+313.15 K), supports the glyme values, and disagrees with the retained primary
+nitrile values. No ECW-308 numeric value replaces a primary row.
+
 ## Conflict handling
 
 When independent public sources disagree materially, the conflicting values
-are recorded and the row is flagged; conflicts are never averaged. Seven rows
+are recorded and the row is flagged; conflicts are never averaged. Nine rows
 carry an explicit conflict_status and six are flagged model_ready=false. The
 benchmark withholds four rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (values 78.4, 102, 107),
 TEP (10, 13), TMP (10, 21.6), and ethyl isothiocyanate (NBS 19.5 at 294.15 K vs.
-restricted cross-check 29.7 at 293.2 K). A further conflict, methyl propionate
-(NBS 5.5 vs. review 6.2), is documented and its row is retained.
+restricted cross-check 29.7 at 293.2 K). Methyl propionate (NBS 5.5 vs. review
+6.2) is also documented and retained. Adiponitrile and glutaronitrile retain
+their ThermoML primary values (32.12 and 34.6); ECW-308 compilation values
+(30.00 and 37.00) are recorded as disagreements, not replacements.
 
 One flagged row is not yet withheld. Vinylene carbonate (literature range
-78-127; the ChemSusChem 2025 value of 126 traces only to Knovel Critical Tables,
-not to an original measurement) carries model_ready=false and conflict_open but
+78-127; ECW-308 independently reports 126.00, but this study did not trace 126
+to an original measurement) carries model_ready=false and conflict_open but
 still reaches the feature table, because the modelling pipeline currently
 honours only the exclusion list and not the model_ready flag. The discrepancy is
 recorded as a known issue rather than smoothed over; 3-methoxypropionitrile has
@@ -313,8 +324,9 @@ eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
 ## Known gaps (for v1.1)
 
 **Fluoroethylene carbonate (FEC).** Withheld from model fitting through the
-curated exclusion list because public sources disagree (78.4, 102, 107) and no
-primary measurement has been identified.
+curated exclusion list because public sources disagree (78.4, 102, 107).
+ECW-308 independently supports the low endpoint 78.4, but its cited original
+table was not retrieved and 102/107 remain unresolved.
 
 **3-Methoxypropionitrile (MOPN).** Present in the table as a flagged,
 non-model-ready row (36.0 at 298.15 K, secondary_compilation_unverified). Tier-0
@@ -359,18 +371,18 @@ dataset.
 For compounds with multiple NBS entries (different temperatures or purity
 grades), the selection rank and figure quality determine the preferred record.
 
-**Conflict exclusions (v0.3.3 conventions).** Seven rows carry a non-empty
+**Conflict exclusions (v0.3.3 conventions).** Nine rows carry a non-empty
 conflict_status and six carry model_ready=false. Four of them are withheld from
 model fitting through the curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (reported values 78.4, 102,
 107), TEP (10, 13), TMP (10, 21.6), and ethyl isothiocyanate, whose NBS value
 (19.5 at 294.15 K) and restricted cross-check value (29.7 at 293.2 K) differ by
-10.2. A fifth conflict, methyl propionate (NBS 5.5 vs. review 6.2), is recorded
-with the row retained.
+10.2. Methyl propionate (NBS 5.5 vs. review 6.2) and the two ECW-308
+nitrile disagreements are recorded with their primary rows retained.
 
 Two flagged rows need qualification rather than a clean exclusion claim.
-Vinylene carbonate (literature range 78-127; the ChemSusChem 2025 value of 126
-traces only to Knovel Critical Tables, not to an original measurement) carries
+Vinylene carbonate (literature range 78-127; ECW-308 independently reports
+126.00, but this study did not trace 126 to an original measurement) carries
 model_ready=false and conflict_open but still reaches the feature table, because
 `probes/dielectric_representation_ablation.py` filters on the exclusion list and
 not on the model_ready column; its epsilon of 126 therefore remains inside the
@@ -570,8 +582,9 @@ or explicit-solvent descriptions that are beyond the scope of the current
 candidate model.
 
 **Known data gaps.** FEC (fluoroethylene carbonate) is withheld through the
-curated exclusion list because reported values (78.4, 102, 107) disagree and no
-identifiable primary source has been found. 3-Methoxypropionitrile rests on the
+curated exclusion list because reported values (78.4, 102, 107) disagree;
+ECW-308 supports 78.4, but no primary source was independently retrieved and
+102/107 remain unresolved. 3-Methoxypropionitrile rests on the
 ECW-308 secondary compilation (36.0 at 298.15 K): Tier-0 checks of all 242 local
 ThermoML dielectric files and all 636 transcribed NBS Circular 514 organic rows
 returned no observation, and the cited primary source (Perricone et al. 2013) is
@@ -744,7 +757,7 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── dielectric_v032.csv          # v0.3.2: PC+EC freeze (245, historical)
 │   ├── processed/
 │   │   ├── dielectric_v03_exclusions.csv           # 4-row curated exclusion list
-│   │   ├── dielectric_v03_provenance_patches.csv   # 19 reproducible patches
+│   │   ├── dielectric_v03_provenance_patches.csv   # 30 reproducible patches
 │   └── restricted/                  # Non-redistributable cross-check evidence
 ├── scripts/
 │   ├── build_dielectric_v03.py      # v0.3/v0.3.3 deterministic builder
@@ -824,12 +837,14 @@ python scripts/check_paper_artifact_consistency.py
 The dataset and code are released under the Creative Commons Attribution 4.0
 International (CC BY 4.0) license, except where individual source records
 carry more restrictive licenses (CC BY-NC, CC BY-NC-ND) as noted in the
-source_license and redistribution_conditions columns of each row.
+source_license and redistribution_conditions columns of each row, or because
+the underlying source has no stated reuse license.
 
 Two rows need explicit qualification. 3-Methoxypropionitrile (MOPN) was
 transcribed from the ECW-308 supporting information and carries no license
-statement of its own, so it is flagged model_ready=false and its redistribution
-status is documented as unverified. The ECW-308 supporting-information text and
+statement of its own, so it is flagged model_ready=false; the numeric fact is
+retained while the underlying publisher supplement remains non-redistributable,
+and no open-license claim is made for that source. The ECW-308 supporting-information text and
 the other closed-access extractions used during the Tier-1/Tier-2 search are
 kept outside the repository (data/external/ is git-ignored) and are not
 redistributed here.

@@ -5,10 +5,12 @@ constants (relative permittivities) for 246 pure organic liquids at near-room
 temperature (293.15-303.15 K). The dataset is assembled from three sources:
 the NIST ThermoML archive (v0.1, 100 compounds), NBS Circular 514 (v0.2, 210
 compounds), and open-access review tables and primary literature covering
-modern battery solvents (v0.3.3, 246 compounds). Every row carries deterministic
+modern battery solvents (v0.3.3, 246 compounds), plus one non-redistributable
+publisher-compilation value retained only as a numeric fact and explicitly
+flagged. Every row carries deterministic
 source provenance, gate-flag metadata, license and redistribution conditions,
 and conflict status. Conflicting public values are recorded rather than
-averaged: seven rows carry an explicit conflict or unverified-provenance
+averaged: nine rows carry an explicit conflict or unverified-provenance
 record, six are flagged model_ready=false, and the benchmark withholds four
 rows through a curated exclusion list.
 
@@ -76,7 +78,7 @@ The primary contribution is the curated, auditable dataset itself, not a claim
 that small-data models solve static permittivity prediction. The remaining
 public-data gaps are narrow and explicit: 3-methoxypropionitrile rests on a
 secondary compilation with no traceable primary measurement, and
-fluoroethylene carbonate stays conflicted (78.4, 102, 107). The glyme diethers
+fluoroethylene carbonate stays conflicted (78.4, 102, 107); ECW-308 independently supports the 78.4 branch, but the cited original table was not retrieved. The glyme diethers
 and the dinitriles (adiponitrile, glutaronitrile) that earlier internal reports
 listed as absent are present in the table under their IUPAC names. These open
 gaps are explicit targets for the v1.1 revision.

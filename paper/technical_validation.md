@@ -27,18 +27,18 @@ dataset.
 For compounds with multiple NBS entries (different temperatures or purity
 grades), the selection rank and figure quality determine the preferred record.
 
-**Conflict exclusions (v0.3.3 conventions).** Seven rows carry a non-empty
+**Conflict exclusions (v0.3.3 conventions).** Nine rows carry a non-empty
 conflict_status and six carry model_ready=false. Four of them are withheld from
 model fitting through the curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (reported values 78.4, 102,
 107), TEP (10, 13), TMP (10, 21.6), and ethyl isothiocyanate, whose NBS value
 (19.5 at 294.15 K) and restricted cross-check value (29.7 at 293.2 K) differ by
-10.2. A fifth conflict, methyl propionate (NBS 5.5 vs. review 6.2), is recorded
-with the row retained.
+10.2. Methyl propionate (NBS 5.5 vs. review 6.2) and the two ECW-308
+nitrile disagreements are recorded with their primary rows retained.
 
 Two flagged rows need qualification rather than a clean exclusion claim.
-Vinylene carbonate (literature range 78-127; the ChemSusChem 2025 value of 126
-traces only to Knovel Critical Tables, not to an original measurement) carries
+Vinylene carbonate (literature range 78-127; ECW-308 independently reports
+126.00, but this study did not trace 126 to an original measurement) carries
 model_ready=false and conflict_open but still reaches the feature table, because
 `probes/dielectric_representation_ablation.py` filters on the exclusion list and
 not on the model_ready column; its epsilon of 126 therefore remains inside the
@@ -238,8 +238,9 @@ or explicit-solvent descriptions that are beyond the scope of the current
 candidate model.
 
 **Known data gaps.** FEC (fluoroethylene carbonate) is withheld through the
-curated exclusion list because reported values (78.4, 102, 107) disagree and no
-identifiable primary source has been found. 3-Methoxypropionitrile rests on the
+curated exclusion list because reported values (78.4, 102, 107) disagree;
+ECW-308 supports 78.4, but no primary source was independently retrieved and
+102/107 remain unresolved. 3-Methoxypropionitrile rests on the
 ECW-308 secondary compilation (36.0 at 298.15 K): Tier-0 checks of all 242 local
 ThermoML dielectric files and all 636 transcribed NBS Circular 514 organic rows
 returned no observation, and the cited primary source (Perricone et al. 2013) is

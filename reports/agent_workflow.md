@@ -11,7 +11,7 @@ scope, or is blocked.
 
 | Agent | Assigned scope | State | Result or evidence | Blocker |
 | --- | --- | --- | --- | --- |
-| Dirac | Independent verification of the v0.3.2 veto-resolution revision (read-only) | Running | Checks data integrity, RDKit re-derivation, Crossref DOI resolution, applicability-domain circularity, verifier strength, and benchmark control | None |
+| Dirac | Independent verification of the v0.3.2 veto-resolution revision (read-only) | Complete | Audit results are integrated and summarized in `reports/v032_veto_resolution.md`; no files were modified by the reviewer | None |
 | Darwin | Independent baseline review | Complete | Reviewed the Week 1 tree at baseline `7d1d645`; found no Critical/Important issue; independently reproduced 124 all-component and 100 pure-component gate identities; full suite `71 passed`; no files modified | None |
 | Arendt | Week 1 fixes and evidence | Complete | Pure-only gate, provisional decision metadata, robust histogram cap, tests, notebook, and exports; targeted tests `9 passed`, full suite `71 passed`, Ruff clean; HEAD remained `7d1d645` in that worktree | None for that scope |
 | Archimedes | Kernel-comparison contradiction audit | Complete | Confirmed `tree_method="exact"` and `n_jobs=1` in builder/verifier/summary; kernel tests `16 passed`, full suite `255 passed`, Ruff clean | None; the later exact-tree verifier rerun passed `5/5` |
@@ -101,7 +101,7 @@ removed: the section files are the single source of truth and
 | 4 | Figure 1 said `v0.3 (243)` | now `v0.1 (100) -> v0.2 (210) -> v0.3 (243) -> v0.3.3 (246)` |
 | 5 | repository listing omitted `dielectric_v032.csv` and the v0.3.2 verifier | tree rewritten with v0.3.1/v0.3.2/v0.3.3, both verifiers, the exclusion table and the provenance patch table |
 | 6 | `immutable release commit` conflicting with candidate status | reworded, and a stale-phrase check now fails the build if the phrase returns |
-| 7 | conflict count not version-labelled | now stated as 7 conflict statuses / 6 `model_ready=false` / 4 withheld / 237 fitted, each re-derived from the table |
+| 7 | conflict count not version-labelled | now stated as 9 conflict statuses / 6 `model_ready=false` / 4 withheld / 237 fitted, each re-derived from the table |
 | 8 | older benchmark values lacked an explicit version tag | every benchmark table now names its dataset version and row count |
 | 9 | known data gaps disagreed with the corrected G1 list | rewritten around 3-methoxypropionitrile (no physical-feature row) and FEC (excluded) |
 
@@ -124,6 +124,25 @@ applicability file is 205 compounds x 3 representations x 10 repeats, not
 One false sentence was corrected in a historical report:
 `reports/v032_veto_resolution.md` claimed "5 compounds excluded from model
 fitting"; only the four rows on the curated exclusion list are withheld.
+
+### G1+ tier-2 provenance integration (parallel read-only cluster, 2026-09-24)
+
+Three read-only agents audited the ECW-308 evidence and its downstream
+semantics while the main thread held the only write set. No parallel write
+conflict occurred, and the integration made zero external API calls.
+
+| Agent | Scope | State | Result or evidence | Blocker |
+| --- | --- | --- | --- | --- |
+| Noether | ECW-308 Table S3 line-level re-extraction | Complete | Re-ran pypdf from the PDF; confirmed 8/8 target rows (page/value/reference) and the tetraglyme no-hit; classified ECW as a secondary compilation | None |
+| Franklin | Provenance-patch and modelling-path audit | Complete | Confirmed the patch layer can update `source_dois_all`, `notes`, and `conflict_status`, cannot update `model_ready`, and does not move the 237-row benchmark; identified the review-license gate for FEC/VC | None |
+| Euler | Paper/report consistency audit | Complete | Found the FEC/VC overstatements, nitrile conflict accounting, MOPN licence wording, patch-count drift, and stale agent status | None |
+| Main | Patch integration and freeze | Complete | 30 patches / 15 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `88f0a1a609b4c462db51a507f72e2909a1a28de8eb4e887c936adaa6f74a7a33`; full suite `490 passed`; Ruff clean; all four dataset verifiers pass | None |
+
+The integration audit also found that `data/processed/*` had been ignoring
+`dielectric_v03_provenance_patches.csv`: the patch layer was present locally
+but absent from Git, so a fresh clone or CI run could not rebuild the frozen
+artifact. `.gitignore` now explicitly unignores the patch CSV, and the
+30-row file is part of this commit.
 
 ### Enforcement added
 
@@ -153,7 +172,9 @@ verifiers.
 | 2026-09-23 | `.venv\Scripts\python.exe -m ruff check scripts src probes tests` | All checks passed |
 | 2026-09-23 | `.venv\Scripts\python.exe scripts\analyze_springer_materials_crosscheck.py` | 60 v0.2 compounds matched; median absolute delta `0.05`; one review conflict retained |
 | 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q` | `457 passed` |
-| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q` | `481 passed` (v0.3.3 provenance round) |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q` | `481 passed` (first v0.3.3 provenance round) |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q` | `490 passed` (G1+ tier-2 provenance integration) |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v03.py` | `passed=true`, 7/7 checks, 246 rows, sha256 `88f0a1a6...a7a33` |
 | 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v032.py` | `passed=true`, 7/7 checks, 245 rows |
 | 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v03.py` | `passed=true`, 7/7 checks, 246 rows |
 | 2026-09-24 | `.venv\Scripts\python.exe scripts/build_paper_full_draft.py --check` | `paper/full_draft.md` up to date |

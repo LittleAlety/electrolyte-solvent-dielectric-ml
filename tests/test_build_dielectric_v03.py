@@ -27,7 +27,7 @@ REVIEW_OBSERVATIONS_PATH = (
 V03_PATH = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 V03_SUMMARY_PATH = REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json"
 EXPECTED_V03_SHA256 = (
-    "8972935f7c4fffd8a6835efe013244ffdb749ccb6e5d829f503885c5b8b2b678"
+    "88f0a1a609b4c462db51a507f72e2909a1a28de8eb4e887c936adaa6f74a7a33"
 )
 NONCANONICAL_CASSC_DOIS = (
     "10.1002/CSSC.202402091",
@@ -566,7 +566,7 @@ def test_build_and_verify_cli_reject_mapped_doi_injected_through_v02(
     assert "source_license" in f"{verify_result.stdout}{verify_result.stderr}"
 
 
-def test_current_v03_freeze_counts_and_sha_are_unchanged() -> None:
+def test_current_v03_counts_and_sha_are_pinned() -> None:
     with V03_PATH.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
     additions = [

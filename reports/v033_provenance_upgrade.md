@@ -16,8 +16,8 @@ checked-in inputs.
 | v0.3 additions | 35 | 36 |
 | model-ready additions | 31 | 31 |
 | additions carrying `conflict_status` | 5 | 6 |
-| provenance patches | 0 | **19** |
-| `data/dielectric_v03.csv` sha256 | `39d15e16...b30be` | **`8972935f...2b678`** |
+| provenance patches | 0 | **30** |
+| `data/dielectric_v03.csv` sha256 | `39d15e16...b30be` | **`88f0a1a6...a7a33`** |
 
 Because the model-ready set is byte-identical, **every controlled benchmark
 number derived for v0.3.2 still applies to v0.3.3**. That is enforced by
@@ -37,7 +37,7 @@ differences against the frozen CSV, in `evidence_level` (3), `notes` (11),
 `source_dois_all` (3) and `temperature_source` (1).
 
 Fix: all four rows were absorbed into the checked-in patch file
-`data/processed/dielectric_v03_provenance_patches.csv` (19 patches, 12 rows).
+`data/processed/dielectric_v03_provenance_patches.csv` (30 patches, 15 compounds).
 `apply_provenance_patches` rejects unknown compounds, protected fields
 (`inchikey`, `name`, `smiles`, `dielectric`, `T_K`, `temperature_band`,
 `model_ready`, `dataset_origin`) and duplicate `(inchikey, field)` pairs, and
@@ -155,6 +155,15 @@ Cross-checks against the frozen dataset (compilation vs. primary, never averaged
 | glutaronitrile | 34.60 (primary) | 37.00 | +6.9% compilation disagreement |
 | EC | 90.5 @ 313.15 K | 89.00 @ 25 C | different temperature, not comparable |
 
+Follow-up provenance integration: the G1+ tier-2 pass now records the ECW-308
+value, SI page, and reference for diglyme, triglyme, PC, EC, FEC, adiponitrile,
+and glutaronitrile. The two nitrile rows carry
+`conflict_status=primary_vs_ecw308_compilation_differs` while retaining their
+ThermoML primary values. FEC and VC record the ECW cross-check in `notes` only,
+because both are review-licensed rows and the closed-license ECW DOI cannot be
+added to their `source_dois_all` without violating the source-license gate.
+
+
 The DC-200 dataset could not be obtained: the ACS Nano SI contains no
 per-molecule table, the author GitHub tree has no DC-200 asset, and the Zenodo
 record describes only fine-tuning results. All `dc200` fields are `found=false`
@@ -198,10 +207,11 @@ primary value, an xTB feature row and a re-run of the controlled benchmark.
 
 ## 6. Verification
 
-- `pytest -q`: **481 passed** (was 457).
+- `pytest -q`: **490 passed** after the G1+ tier-2 provenance integration
+  (the first v0.3.3 provenance round was 481).
 - `ruff check scripts src probes tests`: clean.
 - `scripts/verify_dielectric_v03.py`: **7/7 checks pass**, 246 rows, 36 additions,
-  output sha256 `8972935f7c4fffd8a6835efe013244ffdb749ccb6e5d829f503885c5b8b2b678`.
+  output sha256 `88f0a1a609b4c462db51a507f72e2909a1a28de8eb4e887c936adaa6f74a7a33`.
 - Frozen hash re-pinned in `tests/test_build_dielectric_v03.py`.
 - Raw fetch caches for the tier 0-3 passes live in `data/external/g1plus/`, which is
   git-ignored: it contains the text extraction of a closed-access publisher

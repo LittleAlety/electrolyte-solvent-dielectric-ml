@@ -55,8 +55,8 @@ def test_a_stale_row_count_is_rejected(paper_copy: Path) -> None:
 def test_conflict_count_drift_is_rejected(paper_copy: Path) -> None:
     path = paper_copy / "methods_data_records.md"
     text = path.read_text(encoding="utf-8")
-    assert "Seven rows" in text
-    path.write_text(text.replace("Seven rows", "Five rows"), encoding="utf-8")
+    assert "Nine rows" in text
+    path.write_text(text.replace("Nine rows", "Five rows"), encoding="utf-8")
     errors = verify_paper(paper_copy)
     assert any("conflict rows" in error for error in errors), errors
 

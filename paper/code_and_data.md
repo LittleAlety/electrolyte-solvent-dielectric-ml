@@ -18,7 +18,7 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── dielectric_v032.csv          # v0.3.2: PC+EC freeze (245, historical)
 │   ├── processed/
 │   │   ├── dielectric_v03_exclusions.csv           # 4-row curated exclusion list
-│   │   ├── dielectric_v03_provenance_patches.csv   # 19 reproducible patches
+│   │   ├── dielectric_v03_provenance_patches.csv   # 30 reproducible patches
 │   └── restricted/                  # Non-redistributable cross-check evidence
 ├── scripts/
 │   ├── build_dielectric_v03.py      # v0.3/v0.3.3 deterministic builder
@@ -98,12 +98,14 @@ python scripts/check_paper_artifact_consistency.py
 The dataset and code are released under the Creative Commons Attribution 4.0
 International (CC BY 4.0) license, except where individual source records
 carry more restrictive licenses (CC BY-NC, CC BY-NC-ND) as noted in the
-source_license and redistribution_conditions columns of each row.
+source_license and redistribution_conditions columns of each row, or because
+the underlying source has no stated reuse license.
 
 Two rows need explicit qualification. 3-Methoxypropionitrile (MOPN) was
 transcribed from the ECW-308 supporting information and carries no license
-statement of its own, so it is flagged model_ready=false and its redistribution
-status is documented as unverified. The ECW-308 supporting-information text and
+statement of its own, so it is flagged model_ready=false; the numeric fact is
+retained while the underlying publisher supplement remains non-redistributable,
+and no open-license claim is made for that source. The ECW-308 supporting-information text and
 the other closed-access extractions used during the Tier-1/Tier-2 search are
 kept outside the repository (data/external/ is git-ignored) and are not
 redistributed here.

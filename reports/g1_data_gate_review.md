@@ -39,14 +39,14 @@ These compounds were listed as "known gaps" in G1 report v1 but their IUPAC/syst
 | **Adiponitrile** | hexanedinitrile | 32.12 | BTGRAWJCKBQKAO |
 | **Glutaronitrile** | pentanedinitrile | 34.60 | ZTOMUSMDRMJOTH |
 
-*All sourced from ThermoML (DOI: 10.1021/je300958c for dinitriles; DOIs for glymes scattered across J. Chem. Thermodyn. 2004-2010).*
+*All sourced from ThermoML; the dinitriles use DOI 10.1021/je300958c, and each glyme's exact zero-frequency datasets are recorded in the v0.3.3 provenance notes. ECW-308 cross-checks are recorded separately.*
 
 ## 5. Remaining Known Gaps (for paper Limitations)
 
 | Compound | CAS | Status | Evidence |
 |---|---|---|---|
 | Methoxypropionitrile | 110-67-8 | **Recorded, held out of the model** | v0.3.3 adds `36.0 @ 298.15 K` from the ECW-308 supplement (Table S3), which cites Perricone et al. 2013, `10.1016/j.electacta.2013.01.084`. That primary paper is closed access and unreachable, and no second source exists, so the row is `secondary_compilation_unverified`, `model_ready=false`, `conflict_status=awaiting_primary_confirmation`. |
-| FEC | 114435-16-8 | **Conflict open** | Three conflicting values (78.4/102/107), no traceable source |
+| FEC | 114435-02-8 | **Conflict open** | Three conflicting values (78.4/102/107); ECW-308 supports the 78.4 branch, but its cited original table was not independently retrieved |
 | THF/NMP/DCM | Various | **Resolved (no upgrade possible)** | These three are in the dataset from **open-access review tables**, not NBS 514: direct checks of NBS Circular 514 found no THF or NMP entry. SpringerMaterials holds restricted THF/NMP records that agree with the open values (NMP 32.16/32.17 K records vs review 32.2), but that source is non-redistributable and was used only as a cross-check. The review-table provenance is therefore retained deliberately, not left un-upgraded by neglect. |
 
 ## 6. Progress Summary

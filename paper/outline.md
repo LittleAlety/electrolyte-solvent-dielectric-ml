@@ -59,7 +59,7 @@ holdout performance, and poor transfer to associated liquids.
 - `data/dielectric_v03.csv` (v0.3.3, 246 compounds, current)
 - `data/dielectric_v031.csv` (243) and `data/dielectric_v032.csv` (245), historical
 - `data/processed/dielectric_v03_exclusions.csv` (4-row curated exclusion list)
-- `data/processed/dielectric_v03_provenance_patches.csv` (19 reproducible patches)
+- `data/processed/dielectric_v03_provenance_patches.csv` (30 reproducible patches)
 - `data/processed/modern_solvent_public_review_observations.csv`
 - `data/processed/dielectric_physical_features_density.csv`
 - `data/processed/dielectric_physical_features_v03.csv`
@@ -86,7 +86,7 @@ holdout performance, and poor transfer to associated liquids.
 
 ### Main benchmark
 
-Rows: Dummy, size-only, Morgan, Physical, Hybrid.
+Rows: Constant (train-fold mean), size-only, Morgan, Physical, Hybrid.
 
 Columns: raw/log target, R2, MAE, Spearman, AUC>30, and high-permittivity
 stratum MAE.
