@@ -18,7 +18,7 @@
 
 | Compound | Value | Conflict Interval | Current Status | Action | Reason |
 |---|---|---|---|---|---|
-| Vinylene carbonate (VC) | 126 | 78-127 | model_ready=true, open_access_article_text | **model_ready -> false** | Extreme high value; Knovel compilation conflicts; mp~22°C, 298K near melting |
+| Vinylene carbonate (VC) | 126 | 78-127 | model_ready=false, primary_experimental (v0.3.12; was open_access_article_text) | **model_ready -> false** | Extreme high value; Knovel compilation conflicts; mp~22°C, 298K near melting |
 | Methyl propionate | 6.2 | 5.5-6.2 | open_access_review_table | **open conflict** | NBS 514 has eps=5.5 vs review 6.2, ~13% difference |
 
 ## 3. Provenance Promotions
@@ -60,5 +60,5 @@ These compounds were listed as "known gaps" in G1 report v1 but their IUPAC/syst
 | G1e: VC conflict | **Confirmed** | model_ready=false |
 | G1f: Applicability domain | **FIXED** | Structural HBD≥1 (`[O,S,N;!H0]`); Onsager variant measured and rejected (0/150 coverage of ε>60) |
 | G1g: v1.0 premature tag | **DELETED** | Local + remote deleted |
-| G1h: reproducible provenance | **RESOLVED (v0.3.3)** | 4 hand-edited rows absorbed into a 19-patch checked-in layer; verifier now applies it |
+| G1h: reproducible provenance | **RESOLVED (v0.3.3)** | v0.3.3 absorbed 4 hand-edited rows into what was then a 19-patch checked-in layer; the current v0.3.12 layer holds 30 patches and the verifier still applies it |
 | G1i: `model_ready` is advisory only | **FIXED (v0.3.4)** | `read_modelling_rows` now withholds every row whose dataset record is not `model_ready=true` and returns those rows explicitly; the accounting invariant counts them. Vinylene carbonate is withheld, the fitted set fell 237 -> 236, and the controlled PC/EC gain fell from +0.0265 to +0.0059 (p = 0.11). See `reports/v034_model_ready_gate.md`. |

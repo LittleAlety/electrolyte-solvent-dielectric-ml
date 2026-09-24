@@ -276,8 +276,10 @@ Four results changed the dataset's provenance layer:
    DOI `10.1039/j29660000005`. That paper's abstract states that the dielectric
    constant and dipole moment of vinylene carbonate were measured, so the
    previous note claiming that no primary measurement had been found was wrong
-   and has been corrected. The numeric value could not be read, so VC stays
-   `conflict_open` and is still not promoted to primary.
+   and has been corrected. At the time of this v0.3.3 round the numeric value could not be read, so VC
+   then stayed `conflict_open` and was not promoted to primary. The Saadi &
+   Lee 1966 full text was subsequently read in v0.3.12, which landed the
+   primary 126 +/- 1.0 measurement and replaced that conflict status.
 4. **EC's class assignment is confirmed by a closed loop.** Hall et al. 2018
    Table I lists EC as `90.5` citing ref 78, DOI `10.1021/je050341y` - the same
    source this repository already uses - and footnotes that EC permittivity is

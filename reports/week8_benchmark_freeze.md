@@ -110,7 +110,7 @@ the generated draft. Superseded number strings fail the build.
 
 | Command | Result |
 | --- | --- |
-| `pytest -q -p no:cacheprovider` | `509 passed` |
+| `pytest -q -p no:cacheprovider` | `509 passed` at commit `060e9d7` (historical; later revisions raise the suite) |
 | `ruff check scripts src probes tests` | All checks passed |
 | `scripts/check_paper_artifact_consistency.py` | paper drafts agree with the frozen artifacts |
 | `scripts/verify_dielectric_representation_ablation.py` | all fold, repeat and summary metrics recomputed |

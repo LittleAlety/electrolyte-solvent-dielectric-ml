@@ -52,6 +52,11 @@ METRICS = (
 )
 WITHHELD_INCHIKEY = "VAYTZRYEBVHVLE-UHFFFAOYSA-N"
 WITHHELD_NAME = "vinylene carbonate"
+MOPN_INCHIKEY = "OOWFYDWAMOKVSF-UHFFFAOYSA-N"
+V032_SOURCE = "data/dielectric_v032.csv"
+V032_SOURCE_SHA256 = (
+    "39d15e161a4fb5cf6dddf31749144ce038078823f7ed02aacbead5a1d75b30be"
+)
 
 LINEAGES = {
     "v0.3.2": {
@@ -306,6 +311,44 @@ def verify(root: Path = REPOSITORY_ROOT) -> dict[str, object]:
                 else mismatches[0],
             )
         )
+
+    # 1b. The v0.3.2 lineage must declare its own source, not inherit v0.3.3's.
+    v032 = json.loads(
+        (root / LINEAGES["v0.3.2"]["summary"]).read_text(encoding="utf-8")
+    )
+    v032_source_errors: list[str] = []
+    if v032.get("source_path") != V032_SOURCE:
+        v032_source_errors.append(
+            f"source_path={v032.get('source_path')!r} != {V032_SOURCE!r}"
+        )
+    if v032.get("source_sha256") != V032_SOURCE_SHA256:
+        v032_source_errors.append(
+            f"source_sha256={v032.get('source_sha256')!r} != {V032_SOURCE_SHA256!r}"
+        )
+    for key, expected in (
+        ("source_count", 245),
+        ("excluded_count", 4),
+        ("exclusion_file_count", 5),
+    ):
+        if v032.get(key) != expected:
+            v032_source_errors.append(f"{key}={v032.get(key)!r} != {expected!r}")
+    if v032.get("excluded_not_in_source") != [MOPN_INCHIKEY]:
+        v032_source_errors.append(
+            "excluded_not_in_source="
+            f"{v032.get('excluded_not_in_source')!r} != [{MOPN_INCHIKEY!r}]"
+        )
+    checks.append(
+        Check(
+            "v0.3.2 lineage source provenance",
+            not v032_source_errors,
+            (
+                f"{V032_SOURCE} pinned at 245 source rows, 4 applicable exclusions "
+                f"and {MOPN_INCHIKEY} outside the lineage"
+            )
+            if not v032_source_errors
+            else v032_source_errors[0],
+        )
+    )
 
     # 2. The controlled train-only PC/EC comparison reproduces its own statistics.
     controlled = json.loads((root / CONTROLLED_SUMMARY).read_text(encoding="utf-8"))

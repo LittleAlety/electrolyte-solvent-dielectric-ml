@@ -881,11 +881,18 @@ carry more restrictive licenses (CC BY-NC, CC BY-NC-ND) as noted in the
 source_license and redistribution_conditions columns of each row, or because
 the underlying source has no stated reuse license.
 
-Two rows need explicit qualification. 3-Methoxypropionitrile (MOPN) was
+Several rows need explicit qualification. 3-Methoxypropionitrile (MOPN) was
 transcribed from the ECW-308 supporting information and carries no license
 statement of its own, so it is flagged model_ready=false; the numeric fact is
 retained while the underlying publisher supplement remains non-redistributable,
-and no open-license claim is made for that source. The ECW-308 supporting-information text and
+and no open-license claim is made for that source. Triethyl phosphate and
+trimethyl phosphate retain their CC BY-NC 4.0 source_license metadata and are
+also withheld from the modelling set; their conflict_status fields record the
+competing public values rather than treating the licence as the reason for
+withholding. Vinylene carbonate and fluoroethylene carbonate now each cite a
+paywalled primary article, so their three licence columns are empty and
+redistribution_status=allowed; only the measured fact, not the source PDF, is
+redistributed. The ECW-308 supporting-information text and
 the other closed-access extractions used during the Tier-1/Tier-2 search are
 kept outside the repository (data/external/ is git-ignored) and are not
 redistributed here.

@@ -20,6 +20,38 @@ from probes.export_results_common import (
 )
 
 WEEK = "week8"
+
+README_TEXT = """# Week 8 交付包
+
+数据血缘: v0.3.12（规范数据集 dielectric_v03.csv，246 行 x 38 列）
+生成脚本: probes/export_week8_results.py
+
+## 入口
+- week8_report.md - Week 8 基准冻结主报告
+- week8_summary.json - 机器可读摘要
+- verification.json - verifier 退出码与报告
+- SHA256SUMS - 本目录全部文件的清单
+
+## 关键内容
+- C1 分裂共形: week8_c1_split_conformal.md, dielectric_split_conformal_*
+- C2 排序头: week8_c2_ranking_head.md, dielectric_ranking_head_*
+- C4 Onsager Delta: week8_c4_onsager_delta.md, dielectric_onsager_delta_*
+- C6 NBS alpha 协调化: week8_c6_nbs_alpha_harmonization.md,
+  nbs514_alpha_harmonization_*
+- 模型比较: model_comparison.md, v034_model_ready_gate.md
+- 论文快照: paper/ 下的 7 份文件
+
+## 校验
+在本目录运行:
+python scripts/verify_export_manifests.py --output-dir <本目录>
+python scripts/check_paper_artifact_consistency.py
+python scripts/verify_v032_benchmarks.py
+
+## 仍未闭环
+- VC 与 FEC 两行仍 model_ready=false；
+- 主基准的 236 行拟合集与 240 行 model-ready 行未被 v0.3.12 改动；
+- FEC 107 腿与 MOPN 独立确认仍需访问权限或新证据。
+"""
 ARTIFACTS = (
     ("reports/week8_benchmark_freeze.md", "week8_report.md"),
     ("reports/week8_c1_split_conformal.md", "week8_c1_split_conformal.md"),
@@ -402,6 +434,10 @@ def export_results(
             "verification": verification["passed"],
         },
     )
+    (week_root / "README.md").write_text(
+        README_TEXT, encoding="utf-8", newline="\n"
+    )
+    written.append("README.md")
     write_sha256s(week_root)
     return {
         "week": WEEK,

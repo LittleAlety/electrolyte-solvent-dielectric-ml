@@ -12,6 +12,7 @@ from scripts.verify_v032_benchmarks import REPOSITORY_ROOT, verify
 
 NEEDED = (
     "data/dielectric_v03.csv",
+    "data/dielectric_v032.csv",
     "data/processed/v032_ablation_predictions.csv",
     "data/processed/dielectric_v03_representation_ablation_predictions.csv",
     "data/processed/v032_scaffold_folds.csv",
@@ -156,5 +157,37 @@ def test_a_stale_recorded_input_hash_is_rejected(tmp_path: Path) -> None:
     assert not result["passed"]
     assert any(
         "recorded input hashes" in check["name"] and not check["passed"]
+        for check in result["checks"]
+    )
+
+
+def test_the_known_bad_v032_lineage_state_is_rejected(tmp_path: Path) -> None:
+    """Re-pin the exact Critical that shipped before 024be15.
+
+    The original v0.3.2 summary was regenerated with the v0.3.3 source file,
+    which made the two lineages numerically identical (246/5/[]). The old
+    verifier accepted that state because it never pinned the lineage source.
+    """
+
+    root = _stage(tmp_path)
+    summary = root / "probes" / "v032_ablation_summary.json"
+    payload = json.loads(summary.read_text(encoding="utf-8"))
+    payload["source_count"] = 246
+    payload["excluded_count"] = 5
+    payload["excluded_not_in_source"] = []
+    payload["source_path"] = "data/dielectric_v03.csv"
+    payload["source_sha256"] = (
+        "1b285fe852c13a99e26cc94e85ffab389857351cd4fca36aed0ccf3f40d22456"
+    )
+    summary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    result = verify(root)
+
+    assert not result["passed"]
+    assert any(
+        "v0.3.2 lineage source" in check["name"] and not check["passed"]
         for check in result["checks"]
     )

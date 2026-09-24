@@ -1670,15 +1670,15 @@ FEC 107 腿（Hagiyama 2008 OUP 403；Ue 2014 Springer 认证墙）、MOPN 的 p
 本记录 §D 原先引用的 `excluded_count=4` 一度被上述 Critical 污染，已改为引用 `source_count=245` 的 v0.3.2 lineage；
 §F 关于 `verify_export_manifests.py` 的覆盖范围已限定为 week1–week6 + 显式 `--output-dir`。
 
-**留档的 4 条「未能证伪但存疑」**：① `v032_ablation_summary.json` 不记录 `source_path`，lineage 输入无法自证；
+**留档的 4 条「未能证伪但存疑」**：① `v032_ablation_summary.json` 原先不记录 `source_path`，lineage 输入无法自证（已于续十一修复）；
 ② Kobayashi Table 2 的 FEC 行归属靠 mp/bp/η/ε 四值指纹与 Flamme entry 21 对齐，不是行内文字标签；
-③ `paper/code_and_data.md` 的 "Two rows need explicit qualification" 只点名了 MOPN；
+③ `paper/code_and_data.md` 的 "Two rows need explicit qualification" 只点名了 MOPN（已于续十一改为逐行点名）；
 ④ VC 存 `T_K=298.0` 而源文写 25 °C（298.15 K），行内 `notes` 已声明 0.15 K 差在报告精度内。
 
 **复审已核实为真的关键声明**：数据集只有 VC / FEC 两行不同、canonical 哈希
 `765fd8e0…646b60 → 1b285fe8…22456`、`build_dielectric_v03.py` **幂等**（前后 SHA256 完全相同）、
 补丁层 33→30 且 FEC/VC 不再有任何补丁、FEC/VC 的 `notes` 与 round-5 `backlog` 的 VERBATIM 串逐字相等（476 / 518 字符）、
-另外两个 ML 摘要只变哈希与 `generated_at`、三个轻量探针只差 `generated_at_utc`、
+另外两个 ML 摘要只变哈希与 `generated_at`；三个轻量探针均重跑并重钉 dataset hash，`manual_appendix_reconciliation` 还更新了手册快照计数与 FEC/VC current-row 视图、
 test fixture 与外部手册附录 J-补记三逐字节一致、历史哈希未被误改（`decisions_log.md` 为 +91/-0 纯追加）。
 
 温度带决策、DC-200 成员表、受限目录 4 个未取值目标。**v0.3.12 这一节已结清。**

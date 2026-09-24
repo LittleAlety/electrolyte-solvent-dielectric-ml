@@ -555,6 +555,8 @@ def run_experiment(
         "schema_version": 1,
         "input_path": portable_relative_path(input_path, root=REPOSITORY_ROOT),
         "input_sha256": canonical_text_sha256(input_path),
+        "source_path": portable_relative_path(source_path, root=REPOSITORY_ROOT),
+        "source_sha256": canonical_text_sha256(source_path),
         "source_count": len(source_rows),
         "compound_count": len(rows),
         "excluded_count": len(excluded_keys),

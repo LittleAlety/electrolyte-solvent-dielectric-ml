@@ -78,15 +78,18 @@ The tier-3 thesis retrieval is recorded in
 interstitial; the PDF was obtained by driving the user's Microsoft Edge through
 Playwright, i.e. the same route a human reader takes.
 
-## What is still open
+## What is still open (updated at v0.3.12)
 
-- **Vinylene carbonate** carries `conflict_open`: the literature range is
-  78-127 and the ECW-308 value 126 could not be traced to an original
-  measurement. The 1966 paper that first measured it (Saadi & Lee) is paywalled.
-- **FEC**: resolved down to two legs in v0.3.11. The stored 102 was shown to
-  be the flash point rather than a permittivity, leaving 78.4 (ECW-308) and
-  107 (Ue 2014 Table 2.3); neither has a readable primary measurement, so the
-  row stays excluded from the model-ready set.
+- **Vinylene carbonate**: the primary 1966 Saadi & Lee measurement
+  (126 +/- 1.0 at 25 C, Table 2) landed in v0.3.12, replacing the earlier
+  `conflict_open` state. The competing Knovel 78-127 interval is unresolved,
+  so the row keeps
+  `conflict_status=knovel_78_127_interval_contains_primary_value` and remains
+  excluded from the model-ready set.
+- **FEC**: v0.3.12 moved the stored value from 102 to the primary 78.4
+  measurement (Kobayashi 2003 Table 2, 296.15 K). Only the 107 leg
+  (Ue 2014 Table 2.3 read through Hall 2018; Hagiyama 2008 blocked) remains
+  unread, so the row stays excluded from the model-ready set.
 - **3-methoxypropionitrile**: the value and its 25 C condition are both
   citable to the open-access thesis (Tableau 4 and Tableau 14). The row still
   stays out of the model-ready set for two independent reasons, neither of them

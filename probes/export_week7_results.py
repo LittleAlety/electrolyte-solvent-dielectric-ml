@@ -21,6 +21,39 @@ from probes.export_results_common import (
 
 WEEK = "week7"
 
+README_TEXT = """# Week 7 交付包
+
+数据血缘: v0.3.12（规范数据集 dielectric_v03.csv，246 行 x 38 列）
+生成脚本: probes/export_week7_results.py
+
+## 入口
+- week7_report.md - Week 7 主报告（数据扩展、G1+ 与冻结）
+- week7_summary.json - 机器可读摘要、版本注记与 open items
+- dielectric_v03.csv - 规范数据集（sha256 1b285fe8...22456）
+- verification.json - 四个 verifier 的退出码与报告
+- SHA256SUMS - 本目录全部文件的清单
+
+## 关键内容
+- 数据: dielectric_v031.csv, dielectric_v032.csv, dielectric_v03.csv,
+  dielectric_v03_exclusions.csv, dielectric_v03_provenance_patches.csv,
+  dielectric_physical_features_v03.csv
+- G1+: g1plus_*_findings.md, g1plus_*_evidence.json
+- 适用域: applicability_domain_summary.json, g2_domain_gap_summary.json,
+  g2_domain_gap_parity.png
+- 手册闸门: manual_appendix_reconciliation.md/.json
+
+## 校验
+在本目录运行:
+python scripts/verify_export_manifests.py --output-dir <本目录>
+python scripts/verify_dielectric_v03.py
+python scripts/verify_v032_benchmarks.py
+
+## 仍未闭环（不要误读为已解决）
+- FEC 107 腿: Ue et al. 2014 Table 2.3 / Hagiyama 2008 受限，尚未读到。
+- MOPN: 缺独立一手确认与 GFN2-xTB 特征行。
+- Tier 4 印刷/订阅来源: 访问受限，记录为 limitation，不是"查无此值"。
+"""
+
 
 def row_count(path: Path) -> int:
     lines = path.read_text(encoding="utf-8-sig").strip().splitlines()
@@ -201,10 +234,10 @@ def export_results(
                 "the row's conflict_status and notes, again without moving a "
                 "dielectric value. G1+ crawl round 5 read both surviving primary "
                 "measurements (Kobayashi 2003 Table 2 for the FEC 78.4 leg, Saadi & "
-                "Lee 1966 Table 2 for the vinylene carbonate 126 leg) and again moved "
-                "no cell; v0.3.12 then landed the two field-level revisions it "
-                "enabled, again without moving a dielectric value and without "
-                "releasing either row into the modelling set."
+                "Lee 1966 Table 2 for the vinylene carbonate 126 leg); v0.3.12 then "
+                "landed the two field-level revisions it enabled: it moved the stored "
+                "FEC dielectric from 102 to 78.4 and adopted the VC primary identity "
+                "fields, while releasing neither row into the modelling set."
             ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),
@@ -283,8 +316,9 @@ def export_results(
                     "source resolves the competing Knovel 78/127 interval"
                 ),
                 (
-                    "fluoroethylene carbonate: the stored 102 is recorded as a "
-                    "flash point, not a permittivity. The 78.4 leg (Kobayashi 2003 "
+                    "fluoroethylene carbonate: the previously stored 102 is "
+                    "recorded as a flash point, not a permittivity. The 78.4 leg "
+                    "(Kobayashi 2003 "
                     "Table 2, 'Our data', 23 C) was promoted to the row's primary "
                     "measurement in v0.3.12; the 107 leg (Ue et al. 2014 Table 2.3 "
                     "read through Hall 2018 Table I, with Hagiyama 2008 Chem. Lett. "
@@ -297,6 +331,10 @@ def export_results(
             "verification": verification["passed"],
         },
     )
+    (week_root / "README.md").write_text(
+        README_TEXT, encoding="utf-8", newline="\n"
+    )
+    written.append("README.md")
     write_sha256s(week_root)
     return {
         "week": WEEK,
