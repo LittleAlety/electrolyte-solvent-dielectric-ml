@@ -159,7 +159,9 @@ Follow-up provenance integration: the G1+ tier-2 pass now records the ECW-308
 value, SI page, and reference for diglyme, triglyme, PC, EC, FEC, adiponitrile,
 and glutaronitrile. The two nitrile rows carry
 `conflict_status=primary_vs_ecw308_compilation_differs` while retaining their
-ThermoML primary values. FEC and VC record the ECW cross-check in `notes` only,
+ThermoML primary values. A later pass renamed that label to
+`primary_vs_duncan2013_reported_value_differs` once the cited original table had
+been retrieved; see section 8. FEC and VC record the ECW cross-check in `notes` only,
 because both are review-licensed rows and the closed-license ECW DOI cannot be
 added to their `source_dois_all` without violating the source-license gate.
 
@@ -211,7 +213,9 @@ primary value, an xTB feature row and a re-run of the controlled benchmark.
   (the first v0.3.3 provenance round was 481).
 - `ruff check scripts src probes tests`: clean.
 - `scripts/verify_dielectric_v03.py`: **7/7 checks pass**, 246 rows, 36 additions,
-  output sha256 `88f0a1a609b4c462db51a507f72e2909a1a28de8eb4e887c936adaa6f74a7a33`.
+  output sha256 `2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b`
+  after the citation-trace round in section 8 (previously
+  `88f0a1a609b4c462db51a507f72e2909a1a28de8eb4e887c936adaa6f74a7a33`).
 - Frozen hash re-pinned in `tests/test_build_dielectric_v03.py`.
 - Raw fetch caches for the tier 0-3 passes live in `data/external/g1plus/`, which is
   git-ignored: it contains the text extraction of a closed-access publisher
@@ -230,3 +234,72 @@ primary value, an xTB feature row and a re-run of the controlled benchmark.
 5. `reports/v032_veto_resolution.md` still describes v0.3.2 as a strict
    byte-identical superset of v0.3.1. That remains true for v0.3.2; v0.3.3
    supersedes it at the level of the modelling projection, not bytes.
+
+## 8. Citation-trace escalation (2026-09-24)
+
+The tier-2 pass recorded what ECW-308 prints; this pass recorded what the
+documents ECW-308 cites actually are. Method and per-compound evidence are in
+`reports/g1plus_citation_trace_findings.md` and
+`probes/g1plus_citation_trace_evidence.json`.
+
+Four results changed the dataset's provenance layer:
+
+1. **Duncan et al. 2013 was retrieved legally.** The NRC Publications Archive
+   accepted manuscript (record `431ad01c-3fb7-4610-923b-99d08c6a4c16`) was read
+   in full. Its Table I on p. A840 reports adiponitrile as `30` and
+   glutaronitrile as `37` - integers, not `30.00` and `37.00`. The two decimals
+   in ECW-308 are therefore ECW's own extension and are unsupported precision.
+   The paper states that dielectric constants were measured with a Brookhaven
+   BI-870 meter, but Table I has no per-row provenance and no temperature,
+   frequency or uncertainty, so the rows are **not** promoted to primary and
+   their stored ThermoML values are **not** replaced or averaged.
+2. **The nitrile conflict label names the real counterpart.**
+   `primary_vs_ecw308_compilation_differs` became
+   `primary_vs_duncan2013_reported_value_differs`, and `10.1149/2.088306jes`
+   joined their `source_dois_all` because the document is legally held.
+3. **Vinylene carbonate has a named primary measurement source.** ECW-308
+   citation [3] is Hall et al. 2018 (CC BY 4.0), whose Table I reports VC as
+   `126` and attributes it to Saadi & Lee, *J. Chem. Soc. B* 1966, 5-6,
+   DOI `10.1039/j29660000005`. That paper's abstract states that the dielectric
+   constant and dipole moment of vinylene carbonate were measured, so the
+   previous note claiming that no primary measurement had been found was wrong
+   and has been corrected. The numeric value could not be read, so VC stays
+   `conflict_open` and is still not promoted to primary.
+4. **EC's class assignment is confirmed by a closed loop.** Hall et al. 2018
+   Table I lists EC as `90.5` citing ref 78, DOI `10.1021/je050341y` - the same
+   source this repository already uses - and footnotes that EC permittivity is
+   quoted at 40 C. This corroborates the 313.15 K assignment rather than adding
+   an independent measurement.
+
+Two further independent relays were recorded in `notes` without changing any
+value: Hall et al. 2018 gives PC as `64.9` (a 1972 measurement, DOI
+`10.1021/j100664a019`), methyl propionate as `6.07`, and FEC as `107` (citing
+the Ue et al. 2014 book chapter, DOI `10.1007/978-1-4939-0302-3_2`), which
+supports the high endpoint of the unresolved 78.4/102/107 FEC spread.
+
+Hall et al. 2018 is CC BY 4.0 and therefore redistributable, but it was still
+recorded in `notes` rather than added to VC's `source_dois_all`: a dataset row
+carries a single licence metadata set, and VC's row already carries the
+CC BY-NC 4.0 metadata of its retained review source. The source-licence gate
+would reject a second, differently licensed DOI on the same row. This is a
+structural limitation of the current schema, not a licensing objection.
+
+Effect on the shipped artifacts: 30 provenance patches (13 rewritten in place),
+246 rows, `source_dois_all` changed on 2 rows, `conflict_status` on 2 rows,
+`notes` on 9 rows, and **no change to `dielectric`, `T_K`, `model_ready`,
+`temperature_band` or `dataset_origin`**. The controlled benchmark is therefore
+untouched by this round.
+
+Verification after the round: `pytest -q` **490 passed**, Ruff clean,
+`verify_week1.py` 15/15, `verify_dielectric_v02.py` 9/9,
+`verify_dielectric_v03.py` 7/7 (246 rows, 36 additions),
+`verify_dielectric_v032.py` 7/7, and
+`check_paper_artifact_consistency.py` reports that the paper drafts agree with
+the frozen artifacts. Frozen hashes re-pinned: dataset
+`2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b`, patches
+`76070535fb51eb64f50facc7501f617f052e26feda775dc7b2c40c776bae3a47`.
+
+Open items after this round: the Saadi & Lee 1966 two-page full text is still
+needed to read the actual VC number, and Deng et al. 2020 (FEC) and Perricone
+et al. 2013 (MOPN) remain closed. Tier 3 and Tier 4 access judgements live in
+`reports/g1plus_tier34_access_findings.md`.

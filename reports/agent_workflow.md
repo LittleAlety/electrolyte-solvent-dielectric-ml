@@ -136,7 +136,7 @@ conflict occurred, and the integration made zero external API calls.
 | Noether | ECW-308 Table S3 line-level re-extraction | Complete | Re-ran pypdf from the PDF; confirmed 8/8 target rows (page/value/reference) and the tetraglyme no-hit; classified ECW as a secondary compilation | None |
 | Franklin | Provenance-patch and modelling-path audit | Complete | Confirmed the patch layer can update `source_dois_all`, `notes`, and `conflict_status`, cannot update `model_ready`, and does not move the 237-row benchmark; identified the review-license gate for FEC/VC | None |
 | Euler | Paper/report consistency audit | Complete | Found the FEC/VC overstatements, nitrile conflict accounting, MOPN licence wording, patch-count drift, and stale agent status | None |
-| Main | Patch integration and freeze | Complete | 30 patches / 15 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `88f0a1a609b4c462db51a507f72e2909a1a28de8eb4e887c936adaa6f74a7a33`; full suite `490 passed`; Ruff clean; all four dataset verifiers pass | None |
+| Main | Patch integration and freeze | Complete | 30 patches / 15 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b`; full suite `490 passed`; Ruff clean; all four dataset verifiers pass | None |
 
 The integration audit also found that `data/processed/*` had been ignoring
 `dielectric_v03_provenance_patches.csv`: the patch layer was present locally
@@ -144,6 +144,27 @@ but absent from Git, so a fresh clone or CI run could not rebuild the frozen
 artifact. `.gitignore` now explicitly unignores the patch CSV, and the
 30-row file is part of this commit.
 
+### G1+ citation-trace escalation (parallel read-only cluster, 2026-09-24)
+
+Three read-only agents traced the documents ECW-308 cites back to their
+originals while the main thread again held the only write set. The agents
+wrote no files and the combined request count stayed far below the 500/hour
+cap.
+
+| Agent | Scope | State | Result or evidence | Blocker |
+| --- | --- | --- | --- | --- |
+| Locke | Huang 2019 and Flamme 2017 (ECW refs 40 and 16) | Complete | 28 requests. Both closed; PubMed types Huang as a Review. Neither can supply a measurement, so the diglyme and triglyme entries are third-hand relays | None |
+| Galileo | Duncan 2013, Hall 2018, Deng 2020 | Complete | 44 requests. Read the NRC accepted manuscript of Duncan 2013: Table I reports ADN 30, GLN 37, EC 89 as integers, not ECW's 30.00/37.00/89.00, so ECW added unsupported precision | Deng 2020 is closed |
+| Banach | Tier 3 print references and Tier 4 databases | Complete (wrapped up on request) | 22–39 requests. Every Tier 3/Tier 4 resource is `blocked` on institutional access - none may be reported as `found=false`. Located the open-access Perricone 2011 thesis | Needs library catalogue, ILL or an institutional subscription |
+| Main | Browner verification and patch integration | Complete | Confirmed Hall 2018 is CC BY 4.0 and read Table I; traced VC 126 to Saadi & Lee 1966, whose abstract confirms the dielectric constant of vinylene carbonate was measured. 13 patch rows rewritten in place | Saadi & Lee 1966 full text and Deng 2020 remain paywalled |
+
+The two audit findings that changed the dataset: ECW-308's two-decimal nitrile
+values are its own precision, not Duncan's; and the previous VC note claiming
+no primary measurement existed was wrong. Neither finding changes any
+`dielectric`, `T_K` or `model_ready` value, so the controlled benchmark is
+untouched. Evidence: `reports/g1plus_citation_trace_findings.md`,
+`reports/g1plus_tier34_access_findings.md`,
+`probes/g1plus_citation_trace_evidence.json`.
 ### Enforcement added
 
 `scripts/check_paper_artifact_consistency.py` re-derives row counts, conflict
