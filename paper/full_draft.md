@@ -1,20 +1,24 @@
 ﻿# Abstract
 
 We present an auditable, machine-learning-ready dataset of static dielectric
-constants (relative permittivities) for 243 pure organic liquids at near-room
+constants (relative permittivities) for 245 pure organic liquids at near-room
 temperature (293.15-303.15 K). The dataset is assembled from three sources:
 the NIST ThermoML archive (v0.1, 45 compounds), NBS Circular 514 (v0.2, 210
 compounds), and open-access review tables and primary literature covering
-modern battery solvents (v0.3, 243 compounds). Every row carries deterministic
+modern battery solvents (v0.3.2, 245 compounds). Every row carries deterministic
 source provenance, gate-flag metadata, license and redistribution conditions,
-and conflict status. Four compounds with unresolved public-source conflicts
+and conflict status. Five compounds with unresolved public-source conflicts
 are explicitly documented and excluded from model fitting. A companion
 benchmark evaluates three representations (Morgan fingerprints, 13-dimensional
 physical features from GFN2-xTB and RDKit, and their equal-weight hybrid)
 under fixed 10x5 repeated cross-validation, scaffold/cluster holdout, and an
-external domain-gap test on 29 battery-relevant solvents. The frozen v1.0
-model (XGBoost, Morgan+Physical hybrid on raw target) achieves R2 0.310,
-Spearman 0.816, and MAE 6.97. All builds and verifiers are deterministic and
+external domain-gap test on 29 battery-relevant solvents. The v0.3.2 release
+candidate (XGBoost, Morgan+Physical hybrid on raw target) achieves R2 0.366,
+Spearman 0.814, and MAE 7.13 on the 237-row table. A paired control that
+freezes the v0.3 fold assignment and appends the two added battery carbonates
+to the training folds only attributes +0.027 R2 (95% CI +0.017 to +0.036) to
+the data addition, and both added solvents remain outside the model's
+extrapolation range. All builds and verifiers are deterministic and
 reproducible in continuous integration.
 
 # Background and Summary
@@ -46,25 +50,25 @@ The present dataset addresses these gaps by:
 - Providing a fixed multi-repeat cross-validation framework with three
   representations (fingerprint, physical descriptor, hybrid) and two targets
   (raw, log-transformed).
-- Evaluating the frozen model on an external domain-gap test of 29
+- Evaluating the frozen v0.2 model on an external domain-gap test of 29
   battery-relevant solvents, directly measuring how well a model trained on
   classic organic compounds generalizes to electrolyte-relevant chemical space.
 
-The frozen v1.0 model is intentionally conservative (shallow XGBoost with
+The v0.3.2 candidate model is intentionally conservative (shallow XGBoost with
 equal-weight Morgan+Physical ensemble). Graph neural networks and deeper
 architectures are evaluated as probes (MLP, Chemprop D-MPNN) but are not
-promoted to the frozen model. The benchmark results establish a clear
+promoted to the v0.3.2 candidate model. The benchmark results establish a clear
 representation ceiling: physical features provide the ranking signal
-(Spearman 0.803 for Physical alone vs. 0.697 for Morgan), fingerprints
-provide complementary breadth (R2 0.190 vs. 0.273), and their hybrid ensemble
-outperforms either alone (R2 0.310, Spearman 0.816). Neural probes confirm
+(Spearman 0.801 for Physical alone vs. 0.689 for Morgan), fingerprints
+provide complementary breadth (R2 0.223 vs. 0.354), and their hybrid ensemble
+outperforms either alone (R2 0.366, Spearman 0.814). Neural probes confirm
 this ceiling: the best MLP (Physical, Spearman 0.884) outperforms XGBoost in
 ranking but has negative R2 that is not recoverable by linear calibration.
 
 The primary contribution is the curated, auditable dataset itself, not a claim
 that small-data models solve static permittivity prediction. We identify
-several known gaps (glyme diethers, adiponitrile, FEC) as explicit targets for
-the v1.1 revision.
+one unresolved conflict class (fluoroethylene carbonate, FEC) and one gap
+(methoxypropionitrile) as explicit targets for the v1.1 revision.
 # Methods
 
 ## Dataset scope
@@ -100,7 +104,7 @@ entry was manually transcribed with its page number, figure quality, and
 selection rank from the circular's own ranking system. All v0.2 rows carry
 the gate flag nbs514_circular_514.
 
-**v0.3 (243 compounds).** Added 33 publicly accessible values from:
+**v0.3 (245 compounds).** Added 35 publicly accessible values from:
 - Six n-nitriles from Helambe et al. (1995) Pramana
   (https://doi.org/10.1007/BF02848094), open access.
 - Four NBS Circular 514 records that were eligible in v0.2 but remained below
@@ -110,6 +114,12 @@ the gate flag nbs514_circular_514.
   (EMC), cyclic ethers (DOL, THF, 2-MeTHF), lactones (GVL), phosphates (TEP,
   TMP), fluorinated ethers (TTE, BTFE, HFE), nitriles, chlorinated diluents,
   and fluorinated carbonates (FEC, VC).
+- Propylene carbonate (PC, epsilon=64.9 at 298.15 K) from Simeral & Amey (1970)
+  J. Phys. Chem. 74, 1443 (https://doi.org/10.1021/j100702a008); the single most
+  important battery solvent that was absent from earlier revisions.
+- Ethylene carbonate (EC, epsilon=90.5 at 313.15 K) from Chernyak (2006)
+  J. Chem. Eng. Data 51, 416 (https://doi.org/10.1021/je050341y); EC melts at
+  36.4 C, so the measurement is flagged extended_temperature.
 
 Every v0.3 addition records its source DOI, table or section identifier,
 license and redistribution conditions, and temperature-source status. Review-
@@ -193,7 +203,7 @@ GitHub repository at https://github.com/[repository].
 
 ## Core dataset files
 
-### data/dielectric_v03.csv (243 compounds)
+### data/dielectric_v03.csv (245 compounds)
 
 The primary dataset table. Each row contains:
 
@@ -211,11 +221,23 @@ The primary dataset table. Each row contains:
 
 ### data/dielectric_v031.csv (243 compounds)
 
-Revision incorporating G1 data-gate findings:
+Historical intermediate revision incorporating the first G1 data-gate findings:
 - Vinylene carbonate: model_ready demoted to false, conflict range 78-127.
 - Ethoxybenzene: provenance promoted to primary (NBS Circular 514 p35:011
   eps=4.22 matches review 4.2).
 - Methyl propionate: conflict opened (NBS 5.5 vs. review 6.2, 13% difference).
+
+### data/dielectric_v032.csv (245 compounds)
+
+Current release-candidate revision. Supersedes v0.3.1 by adding two decisive battery
+solvents that were missing from all earlier revisions:
+- Propylene carbonate (PC), epsilon=64.9 at 298.15 K, primary source traced to
+  Simeral & Amey (1970) DOI 10.1021/j100702a008.
+- Ethylene carbonate (EC), epsilon=90.5 at 313.15 K (liquid range), primary
+  source DOI 10.1021/je050341y, flagged extended_temperature.
+The glyme diethers (diglyme/triglyme/tetraglyme) and the dinitriles
+(adiponitrile, glutaronitrile) that earlier reports listed as "absent" were
+already present under their IUPAC names; they are now documented explicitly.
 
 ### data/dielectric_v02.csv (210 compounds)
 
@@ -249,12 +271,13 @@ eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
 
 ## Known gaps (for v1.1)
 
-The following compounds lack publicly traceable dielectric constant measurements
-from primary sources and are excluded from the current dataset: diglyme,
-triglyme, tetraglyme, and adiponitrile. FEC is excluded due to unresolved
-conflicts (three reported values 78.4, 102, 107 without traceable primary
-sources). These compounds constitute explicit targets for the next dataset
-revision.
+Fluoroethylene carbonate (FEC) is excluded due to unresolved conflicts (three
+reported values 78.4, 102, 107 without traceable primary sources).
+Methoxypropionitrile has no public zero-frequency permittivity measurement in
+the local ThermoML archive or NBS Circular 514 and remains the single named
+solvent gap. The glyme diethers and dinitriles previously listed here are now
+included (see data/dielectric_v032.csv). These remaining items constitute
+explicit targets for the next dataset revision.
 # Technical Validation
 
 ## Cross-source verification
@@ -320,15 +343,58 @@ dataset.
 ## Model benchmark sensitivity
 
 The fixed 10x5 repeated cross-validation ensures that every model probe and
-baseline is evaluated on identical train-test splits.
+baseline is evaluated on identical train-test splits **within a dataset
+version**. Growing a dataset reshuffles the split, so a row-wise comparison
+across versions is a coverage result, not a controlled estimate of what the
+added compounds contribute.
 
-**v0.3 coverage sensitivity.** The frozen Morgan, Physical, and Hybrid
-representations were rerun on the 235-row v0.3 physical-feature set. The
-Morgan+Physical hybrid R2 is 0.310 on v0.3 versus 0.320 on the 205-row v0.2
-set. The difference (0.01) is smaller than the cross-validation standard
-deviation across repeats (+/- 0.03). This confirms that the v0.3 expansion
-improves domain coverage without degrading predictive accuracy -- a coverage
-result, not a performance improvement.
+**v0.3.2 coverage sensitivity.** The frozen Morgan, Physical, and Hybrid
+representations were rerun under the identical fixed 10x5 protocol as each
+dataset expanded. Every version was rebuilt from pinned inputs and the v0.3
+baseline was reproduced exactly (R2 0.3099):
+
+| Dataset | Fitted rows | Morgan R2 | Physical R2 | Hybrid R2 |
+|---|---|---|---|---|
+| v0.2 | 205 | 0.2025 | 0.2829 | 0.3201 |
+| v0.3 | 235 | 0.1898 | 0.2731 | 0.3099 |
+| **v0.3.2** | **237** | **0.2230** | **0.3538** | **0.3660** |
+
+These values are not attributable to the two added compounds. Enlarging the
+table from 235 to 237 rows reshuffles `RepeatedKFold`: 1272 of 2350
+compound x repeat fold assignments (54.1%) differ between the two splits, and
+the evaluation-set target variance grows by 8.1%. The v0.3 -> v0.3.2 row above
+therefore mixes the data addition with a different random partition.
+
+To isolate the data contribution we ran a paired control
+(`probes/v032_controlled_comparison.py`). The v0.3 fold assignment was frozen,
+all 235 v0.3 compounds kept their original folds in every repeat, and
+propylene carbonate (epsilon 64.9) and ethylene carbonate (epsilon 90.5) were
+appended to the **training folds only**, so both arms score exactly the same
+held-out compounds:
+
+| Representation | v0.3 R2 | + PC/EC (train only) | Paired delta | 95% CI | Paired p |
+|---|---|---|---|---|---|
+| Morgan | 0.1898 | 0.1899 | +0.0001 | [-0.006, +0.006] | 0.97 |
+| Physical | 0.2731 | 0.3233 | **+0.0502** | [+0.032, +0.068] | 1.3e-4 |
+| Morgan+Physical | 0.3099 | 0.3364 | **+0.0265** | [+0.017, +0.036] | 1.3e-4 |
+
+The controlled hybrid gain is **+0.027**, about half of the +0.056 implied by
+the raw version-to-version comparison. The effect sits in the Physical
+representation (+0.050) while the Morgan fingerprint representation is flat
+(+0.0001) and its MAE and Spearman deteriorate (p = 0.006 and p = 0.008).
+That is consistent with the stated mechanism: the carbonate dipole feature,
+not fingerprint bits, separates high-permittivity cyclic carbonates. The
+hybrid MAE improves only slightly (6.970 -> 6.906, p = 0.14) while RMSE
+improves by 0.31 (p = 9.5e-5), so the addition is a real but moderate
+generalization gain rather than a step change.
+
+**The added solvents stay outside the extrapolation range.** Training on all
+235 v0.3 compounds and predicting PC and EC as external holdouts underestimates
+both: the hybrid predicts 29.8 +/- 1.1 for PC (true 64.9) and 50.3 +/- 2.2 for
+EC (true 90.5). Adding these two solvents improves interpolation among the
+existing 235 compounds; it does not give the model extrapolation ability for
+unseen high-permittivity carbonates. This limitation is consistent with the
+applicability-domain rule recorded in the dataset.
 
 **Domain-gap external test.** The frozen v0.2 model (trained on 205 classic
 organic compounds) was applied to 29 new v0.3 battery-relevant solvents as an
@@ -345,15 +411,19 @@ Under fixed 10x5 cross-validation:
 
 | Representation | R2 (raw) | MAE (raw) | Spearman | AUC (eps > 30) |
 |---|---|---|---|---|
-| Morgan (ECFP4 count) | 0.190 | 7.88 | 0.697 | 0.915 |
-| Physical (13-dim) | 0.273 | 7.43 | 0.803 | 0.928 |
-| Morgan+Physical (hybrid) | **0.310** | **6.97** | **0.816** | **0.930** |
+| Morgan (ECFP4 count) | 0.223 | 8.22 | 0.689 | 0.826 |
+| Physical (13-dim) | 0.354 | 7.50 | 0.801 | 0.937 |
+| Morgan+Physical (hybrid) | **0.366** | **7.13** | **0.814** | **0.929** |
 
-The log(epsilon - 1) target improves the Physical representation (R2 0.283 to
-0.303, MAE 7.24 to 6.07) but not the Morgan or hybrid raw-scale variants.
+(All values are the v0.3.2 237-row benchmark; the v0.2 205-row reference
+values remain 0.203 / 0.283 / 0.320 for the corresponding representations.)
+
+The log(epsilon - 1) target improves the Physical representation on MAE
+(7.50 to 6.53) and Spearman (0.801 to 0.883) while leaving R2 slightly lower
+(0.354 to 0.338); it does not transfer to the hybrid (R2 0.315).
 
 **Scaffold/cluster holdout.** Physical with log(epsilon - 1) has the best mean
-R2 (0.267 +/- 0.014) and MAE (6.718 +/- 0.316) under structure-based holdout,
+R2 (0.299 +/- 0.018) and MAE (7.104 +/- 0.257) under structure-based holdout,
 confirming that physical features generalize better to novel scaffolds than
 fingerprint-based representations.
 
@@ -387,7 +457,7 @@ provide the ranking signal.
 
 # Limitations
 
-**Dataset size.** The current dataset (243 compounds) is small by deep-learning
+**Dataset size.** The current dataset (245 compounds) is small by deep-learning
 standards. The limiting factor is the scarcity of public, traceable, static
 dielectric constant measurements for pure organic liquids at near-room
 temperature. The dataset's value proposition rests on quality, provenance
@@ -407,20 +477,24 @@ lowest-energy conformer only. Conformer-aware averaging (Boltzmann-weighted
 dipole across the conformational ensemble) could improve the physical-feature
 quality for flexible molecules at modest computational cost.
 
-**Associated liquids.** Compounds with hydrogen-bond donors and predicted
-dielectric above 60 are flagged as outside the model's applicability domain.
-Kirkwood correlation effects in these systems require multi-body or
-explicit-solvent descriptions that are beyond the scope of the current
-frozen model.
+**Associated liquids.** Compounds with hydrogen-bond donors and an
+Onsager-estimated static dielectric above 60 are flagged as outside the
+model's applicability domain. The Onsager estimate is computed from the
+gas-phase dipole moment, refractive index, and molar volume, so the threshold
+is model-independent and not a circular function of the model's own
+prediction. Kirkwood correlation effects in these systems require multi-body
+or explicit-solvent descriptions that are beyond the scope of the current
+v0.3.2 candidate model.
 
-**Known data gaps.** The following compounds are absent from the dataset
-because publicly traceable dielectric constant measurements could not be
-located: diglyme (diethylene glycol dimethyl ether), triglyme (triethylene
-glycol dimethyl ether), tetraglyme (tetraethylene glycol dimethyl ether), and
-adiponitrile. FEC (fluoroethylene carbonate) is excluded due to unresolved
-conflicts among reported values (78.4, 102, 107) without identifiable primary
-sources. These compounds constitute explicit targets for the v1.1 revision.
-Contributions from the community via the GitHub repository are welcome.
+**Known data gaps.** FEC (fluoroethylene carbonate) is excluded due to
+unresolved conflicts among reported values (78.4, 102, 107) without
+identifiable primary sources. Methoxypropionitrile lacks a public
+zero-frequency permittivity measurement. The glyme diethers and dinitriles that
+earlier drafts listed as absent are in fact present in the dataset under their
+IUPAC names (diglyme = 2,5,8-trioxanonane, and so on) and are now documented
+explicitly. The remaining items constitute explicit targets for the v1.1
+revision. Contributions from the community via the GitHub repository are
+welcome.
 
 **Neural architectures.** Graph neural networks and transformer-based models
 were not systematically explored beyond the single-probe MLP and Chemprop
@@ -430,18 +504,19 @@ identified as the natural next steps, reserved for future work to avoid scope
 creep before the v1.0 freeze.
 # Benchmark Tables
 
-## Main benchmark: 10x5 repeated cross-validation (205-235 compounds)
+## Main benchmark: 10x5 repeated cross-validation (v0.3.2, 237 compounds)
 
-| Representation | Target | R2 | MAE | Spearman | AUC (eps > 30) | MAE (eps < 20) | MAE (eps > 60) |
-|---|---|---|---|---|---|---|---|
-| Dummy (mean) | raw | 0.000 | 21.66 | — | 0.500 | 4.85 | 86.5 |
-| Morgan (ECFP4) | raw | 0.190 | 7.88 | 0.697 | 0.915 | 3.60 | 81.3 |
-| Physical (13-dim) | raw | 0.273 | 7.43 | 0.803 | 0.928 | 3.48 | 73.8 |
-| Morgan+Physical | raw | **0.310** | **6.97** | **0.816** | **0.930** | 3.31 | 69.2 |
-| Physical | log(eps-1) | 0.303 | 6.07 | 0.836 | 0.933 | 3.12 | 68.0 |
-| Morgan+Physical | log(eps-1) | 0.296 | 6.46 | 0.830 | 0.934 | 3.18 | 69.5 |
+| Representation | Target | R2 | MAE | Spearman | AUC (eps > 30) | MAE (eps < 20) |
+|---|---|---|---|---|---|---|
+| Dummy (mean) | raw | 0.000 | 21.66 | — | 0.500 | 4.85 |
+| Morgan (ECFP4) | raw | 0.223 | 8.22 | 0.689 | 0.826 | 4.74 |
+| Physical (13-dim) | raw | 0.354 | 7.50 | 0.801 | 0.937 | 4.53 |
+| Morgan+Physical | raw | **0.366** | **7.13** | **0.814** | 0.929 | 4.22 |
+| Morgan | log(eps-1) | 0.192 | 7.66 | 0.767 | 0.851 | 3.24 |
+| Physical | log(eps-1) | 0.338 | 6.53 | **0.883** | 0.931 | 2.68 |
+| Morgan+Physical | log(eps-1) | 0.315 | 6.54 | 0.881 | 0.931 | 2.58 |
 
-The equal-weight Morgan+Physical hybrid on the raw target is the frozen v1.0 model.
+The equal-weight Morgan+Physical hybrid on the raw target is the v0.3.2 candidate model.
 It is selected for its consistent rank across all metrics, not for a single
 best score. The log(eps-1) target improves the Physical representation but does
 not transfer to the hybrid.
@@ -459,19 +534,23 @@ not transfer to the hybrid.
 MLP-Physical achieves the highest Spearman correlation across all models (0.884)
 but with negative R2. A pre-registered linear calibration probe did not recover
 positive R2, confirming this as a ranking-only representation ceiling.
-Chemprop D-MPNN R2 (0.237) exceeds Morgan XGBoost (0.190) but its Spearman
-(0.665) is lower than both Morgan (0.697) and Physical (0.803), reinforcing
-that graph representations carry fingerprint-level information while physical
-features drive ranking quality.
+Chemprop D-MPNN R2 (0.237) exceeds the v0.2 Morgan XGBoost baseline (0.190) but
+its Spearman (0.665) is lower than both Morgan (0.697) and Physical (0.803),
+reinforcing that graph representations carry fingerprint-level information
+while physical features drive ranking quality. The neural rows were computed on
+the frozen v0.2/v0.3 folds and are retained as representation-ceiling evidence;
+they were not recomputed on the v0.3.2 fold set.
 
 ## Extrapolation: scaffold/cluster holdout
 
 | Representation | Target | R2 | MAE | Spearman |
 |---|---|---|---|---|
-| Morgan | raw | 0.119 +/- 0.017 | 8.618 +/- 0.478 | 0.614 +/- 0.031 |
-| Physical | raw | 0.219 +/- 0.012 | 7.436 +/- 0.419 | 0.771 +/- 0.023 |
-| Morgan+Physical | raw | 0.229 +/- 0.014 | 7.216 +/- 0.473 | 0.766 +/- 0.024 |
-| Physical | log(eps-1) | **0.267 +/- 0.014** | **6.718 +/- 0.316** | **0.802 +/- 0.020** |
+| Morgan | raw | 0.129 +/- 0.017 | 9.861 +/- 0.280 | 0.558 +/- 0.031 |
+| Physical | raw | 0.213 +/- 0.048 | 8.950 +/- 0.610 | 0.735 +/- 0.043 |
+| Morgan+Physical | raw | 0.289 +/- 0.034 | 8.406 +/- 0.418 | 0.739 +/- 0.030 |
+| Morgan | log(eps-1) | 0.138 +/- 0.022 | 8.964 +/- 0.228 | 0.619 +/- 0.029 |
+| **Physical** | **log(eps-1)** | **0.299 +/- 0.018** | **7.104 +/- 0.257** | **0.855 +/- 0.017** |
+| Morgan+Physical | log(eps-1) | 0.279 +/- 0.016 | 7.274 +/- 0.208 | 0.832 +/- 0.016 |
 
 Physical with log(eps-1) is the best representation for scaffold extrapolation,
 confirming that physical descriptors generalize better to novel chemical
@@ -494,8 +573,8 @@ the domain gap that v0.3's expanded coverage aims to close.
 # Figures
 
 **Figure 1. Dataset growth and source composition.**
-Panel A: Cumulative compound count from v0.1 (45) through v0.2 (210) to v0.3
-(243), annotated by source type (ThermoML, NBS Circular 514, open-access
+Panel A: Cumulative compound count from v0.1 (45) through v0.2 (210) to v0.3.2
+(245), annotated by source type (ThermoML, NBS Circular 514, open-access
 review tables, primary literature).
 Panel B: Source-type proportions in the final v0.3 table.
 
@@ -536,7 +615,7 @@ The complete dataset, all build scripts, probe scripts, verifiers, and
 benchmark outputs are deposited in a public GitHub repository:
 
 **Repository:** https://github.com/[repository-name]
-**Release:** v1.0 (immutable)
+**Release:** v0.3.2 (candidate; v1.0 tag will be applied only after the Appendix I freeze conditions are met)
 **DOI:** https://doi.org/10.5281/zenodo.[XXXXX]
 
 ## Repository structure
@@ -545,13 +624,15 @@ benchmark outputs are deposited in a public GitHub repository:
 ├── data/
 │   ├── dielectric_v01.csv          # v0.1: 45 ThermoML compounds
 │   ├── dielectric_v02.csv          # v0.2: 210 NBS + ThermoML compounds
-│   ├── dielectric_v03.csv          # v0.3: 243 compounds (candidate)
-│   ├── dielectric_v031.csv         # v0.3.1: G1 revision
+│   ├── dielectric_v03.csv          # v0.3: 245 compounds (candidate)
+│   ├── dielectric_v031.csv         # v0.3.1: G1 revision (243, historical)
+│   ├── dielectric_v032.csv         # v0.3.2: current freeze (245, PC+EC)
 │   ├── processed/                  # Derived data (physical features, predictions)
 │   └── restricted/                 # Non-redistributable cross-check evidence
 ├── scripts/
 │   ├── build_dielectric_v03.py     # v0.3 deterministic builder
 │   ├── verify_dielectric_v03.py    # v0.3 independent verifier (passes 6/6)
+│   ├── verify_dielectric_v032.py   # v0.3.2 verifier (passes)
 │   ├── run_xtb_physical_features.py
 │   └── build_dataset_v01.py, build_dielectric_v02.py, ...
 ├── probes/
@@ -581,7 +662,7 @@ benchmark outputs are deposited in a public GitHub repository:
 
 - Python 3.12
 - RDKit 2024.09 (structure standardization, Morgan fingerprints, 2D descriptors)
-- XGBoost 2.1 (primary frozen model)
+- XGBoost 2.1 (primary candidate model)
 - scikit-learn 1.5 (cross-validation, MLP, metrics)
 - GFN2-xTB 6.7.1 (physical features)
 - Chemprop 2.1.0 (D-MPNN baseline, isolated environment)

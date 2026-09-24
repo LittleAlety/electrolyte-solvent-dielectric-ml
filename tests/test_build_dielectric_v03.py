@@ -22,7 +22,7 @@ REVIEW_OBSERVATIONS_PATH = (
 V03_PATH = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 V03_SUMMARY_PATH = REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json"
 EXPECTED_V03_SHA256 = (
-    "c8bb4c108d7da450fa18824f98d3398c147f4787016be812aec1a608846c980c"
+    "39d15e161a4fb5cf6dddf31749144ce038078823f7ed02aacbead5a1d75b30be"
 )
 NONCANONICAL_CASSC_DOIS = (
     "10.1002/CSSC.202402091",
@@ -561,10 +561,10 @@ def test_current_v03_freeze_counts_and_sha_are_unchanged() -> None:
     ]
     summary = json.loads(V03_SUMMARY_PATH.read_text(encoding="utf-8"))
 
-    assert len(rows) == 243
-    assert len(additions) == 33
-    assert sum(row["model_ready"] == "true" for row in additions) == 30
-    assert sum(bool(row["conflict_status"]) for row in additions) == 3
+    assert len(rows) == 245
+    assert len(additions) == 35
+    assert sum(row["model_ready"] == "true" for row in additions) == 31
+    assert sum(bool(row["conflict_status"]) for row in additions) == 5
     assert canonical_text_sha256(V03_PATH) == EXPECTED_V03_SHA256
     assert summary["output"]["sha256"] == EXPECTED_V03_SHA256
 

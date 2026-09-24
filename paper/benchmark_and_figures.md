@@ -1,17 +1,18 @@
 ﻿# Benchmark Tables
 
-## Main benchmark: 10x5 repeated cross-validation (205-235 compounds)
+## Main benchmark: 10x5 repeated cross-validation (v0.3.2, 237 compounds)
 
-| Representation | Target | R2 | MAE | Spearman | AUC (eps > 30) | MAE (eps < 20) | MAE (eps > 60) |
-|---|---|---|---|---|---|---|---|
-| Dummy (mean) | raw | 0.000 | 21.66 | — | 0.500 | 4.85 | 86.5 |
-| Morgan (ECFP4) | raw | 0.190 | 7.88 | 0.697 | 0.915 | 3.60 | 81.3 |
-| Physical (13-dim) | raw | 0.273 | 7.43 | 0.803 | 0.928 | 3.48 | 73.8 |
-| Morgan+Physical | raw | **0.310** | **6.97** | **0.816** | **0.930** | 3.31 | 69.2 |
-| Physical | log(eps-1) | 0.303 | 6.07 | 0.836 | 0.933 | 3.12 | 68.0 |
-| Morgan+Physical | log(eps-1) | 0.296 | 6.46 | 0.830 | 0.934 | 3.18 | 69.5 |
+| Representation | Target | R2 | MAE | Spearman | AUC (eps > 30) | MAE (eps < 20) |
+|---|---|---|---|---|---|---|
+| Dummy (mean) | raw | 0.000 | 21.66 | — | 0.500 | 4.85 |
+| Morgan (ECFP4) | raw | 0.223 | 8.22 | 0.689 | 0.826 | 4.74 |
+| Physical (13-dim) | raw | 0.354 | 7.50 | 0.801 | 0.937 | 4.53 |
+| Morgan+Physical | raw | **0.366** | **7.13** | **0.814** | 0.929 | 4.22 |
+| Morgan | log(eps-1) | 0.192 | 7.66 | 0.767 | 0.851 | 3.24 |
+| Physical | log(eps-1) | 0.338 | 6.53 | **0.883** | 0.931 | 2.68 |
+| Morgan+Physical | log(eps-1) | 0.315 | 6.54 | 0.881 | 0.931 | 2.58 |
 
-The equal-weight Morgan+Physical hybrid on the raw target is the frozen v1.0 model.
+The equal-weight Morgan+Physical hybrid on the raw target is the v0.3.2 candidate model.
 It is selected for its consistent rank across all metrics, not for a single
 best score. The log(eps-1) target improves the Physical representation but does
 not transfer to the hybrid.

@@ -1,17 +1,28 @@
-﻿import csv, json, sys
-sys.path.insert(0, "."); sys.path.insert(0, "src")
+"""G2 probe: frozen v0.2 model evaluated on new battery-relevant solvents."""
+
+from __future__ import annotations
+
+import csv
+import json
+import sys
 from pathlib import Path
 
+import matplotlib
 import numpy as np
-import matplotlib; matplotlib.use("Agg")
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from xgboost import XGBRegressor
-from scipy.stats import spearmanr
 from rdkit import Chem
 from rdkit.Chem import AllChem, Descriptors, rdMolDescriptors
+from scipy.stats import spearmanr
+from xgboost import XGBRegressor
+
+sys.path.insert(0, ".")
+sys.path.insert(0, "src")
 
 from probes.dielectric_representation_ablation import (
-    read_modelling_rows, morgan_count_features
+    morgan_count_features,
+    read_modelling_rows,
 )
 
 XGB_PARAMS = {"n_estimators":200,"max_depth":2,"learning_rate":0.05,"subsample":0.8,
@@ -92,7 +103,7 @@ print("\n=== External Test Results (v0.2 model -> 30 new compounds) ===")
 print(f"{'Model':15s}  {'R2':>8s}  {'Spearman':>10s}")
 for k,v in metrics.items():
     print(f"{k:15s}  {v['R2']:8.4f}  {v['Spearman']:10.4f}")
-print(f"\n(v0.2 CRV hybrid R2 reference: 0.320)")
+print("\n(v0.2 CRV hybrid R2 reference: 0.320)")
 
 # Parity plot
 fig, axes = plt.subplots(1, 3, figsize=(14, 5))
@@ -119,8 +130,22 @@ detail = [{"name":n,"dielectric":float(test_y[i]),
 for d in detail:
     print(f"  {d['name']:30s} true={d['dielectric']:6.1f}  morgan={d['pred_morgan']:6.1f}  phys={d['pred_phys']:6.1f}  hybrid={d['pred_hybrid']:6.1f}")
 
-json.dump({"probe":"G2_domain_gap","train_count":len(train_rows),"test_count":len(test_compounds),
-           "metrics":metrics,"per_compound":detail,"v02_crv_hybrid_r2":0.320,
-           "note":"Physical features use RDKit-only subset (no xTB); xTB-dependent features not available for new compounds"},
-          open("probes/g2_domain_gap_summary.json","w",encoding="utf-8"),ensure_ascii=False,indent=2)
+with Path("probes/g2_domain_gap_summary.json").open("w", encoding="utf-8") as handle:
+    json.dump(
+        {
+            "probe": "G2_domain_gap",
+            "train_count": len(train_rows),
+            "test_count": len(test_compounds),
+            "metrics": metrics,
+            "per_compound": detail,
+            "v02_crv_hybrid_r2": 0.320,
+            "note": (
+                "Physical features use RDKit-only subset (no xTB); "
+                "xTB-dependent features not available for new compounds"
+            ),
+        },
+        handle,
+        ensure_ascii=False,
+        indent=2,
+    )
 print("\nDone")

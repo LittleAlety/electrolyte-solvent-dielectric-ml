@@ -10,7 +10,6 @@ import argparse
 import json
 import sys
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -35,7 +34,6 @@ from probes.dielectric_representation_ablation import (
     REPEAT_COLUMNS,
     SEED,
     evaluate_repeat,
-    morgan_count_features,
     physical_feature_matrix,
     read_modelling_rows,
     write_csv_rows,
@@ -165,7 +163,6 @@ def _write_plot(cal_summary, raw_summary, calibration_params, path):
 def run(input_path, repeat_path, predictions_path, summary_path, plot_path):
     rows, failed = read_modelling_rows(input_path)
     target = np.asarray([float(row["dielectric"]) for row in rows], dtype=np.float64)
-    smiles_values = [str(row["smiles"]) for row in rows]
     physical = physical_feature_matrix(rows)
     features = {"MLP_Physical": physical}
 

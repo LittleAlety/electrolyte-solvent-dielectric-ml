@@ -31,6 +31,11 @@ REVIEW_METADATA_FIELDS = (*REVIEW_LICENSE_FIELDS, "redistribution_status")
 SOURCE_DOI_SEPARATOR = ";"
 DOI_RESOLVER_HOSTS = frozenset({"doi.org", "dx.doi.org", "www.doi.org"})
 DOI_PREFIX_PATTERN = re.compile(r"10\.\d{4,9}/")
+SUPPLEMENTARY_PUBLIC_DOMAIN_DOIS = frozenset(
+    {
+        "10.6028/nbs.circ.514",
+    }
+)
 PERCENT_ESCAPE_PATTERN = re.compile(r"%[0-9A-Fa-f]{2}")
 DOI_ASCII_CHARACTER = re.compile(r"[a-z0-9./:_-]")
 MAX_UNQUOTE_PASSES = 8
@@ -311,6 +316,12 @@ def review_license_errors(row: Mapping[str, str]) -> list[str]:
     dois = source_dois(row)
     unknown_dois = []
     for doi in dois:
+        if doi in SUPPLEMENTARY_PUBLIC_DOMAIN_DOIS:
+            # Public-domain compilations (e.g. NBS Circular 514) may be cited
+            # alongside a review-table row as independent corroboration.  They
+            # carry no CC licence metadata, so they are exempt from the
+            # review-DOI allowlist; the review DOI itself is still checked.
+            continue
         expected = REVIEW_LICENSE_METADATA.get(doi)
         if expected is None:
             unknown_dois.append(doi)

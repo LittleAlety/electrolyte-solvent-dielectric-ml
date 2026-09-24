@@ -1,20 +1,24 @@
 ﻿# Abstract
 
 We present an auditable, machine-learning-ready dataset of static dielectric
-constants (relative permittivities) for 243 pure organic liquids at near-room
+constants (relative permittivities) for 245 pure organic liquids at near-room
 temperature (293.15-303.15 K). The dataset is assembled from three sources:
 the NIST ThermoML archive (v0.1, 45 compounds), NBS Circular 514 (v0.2, 210
 compounds), and open-access review tables and primary literature covering
-modern battery solvents (v0.3, 243 compounds). Every row carries deterministic
+modern battery solvents (v0.3.2, 245 compounds). Every row carries deterministic
 source provenance, gate-flag metadata, license and redistribution conditions,
-and conflict status. Four compounds with unresolved public-source conflicts
+and conflict status. Five compounds with unresolved public-source conflicts
 are explicitly documented and excluded from model fitting. A companion
 benchmark evaluates three representations (Morgan fingerprints, 13-dimensional
 physical features from GFN2-xTB and RDKit, and their equal-weight hybrid)
 under fixed 10x5 repeated cross-validation, scaffold/cluster holdout, and an
-external domain-gap test on 29 battery-relevant solvents. The frozen v1.0
-model (XGBoost, Morgan+Physical hybrid on raw target) achieves R2 0.310,
-Spearman 0.816, and MAE 6.97. All builds and verifiers are deterministic and
+external domain-gap test on 29 battery-relevant solvents. The v0.3.2 release
+candidate (XGBoost, Morgan+Physical hybrid on raw target) achieves R2 0.366,
+Spearman 0.814, and MAE 7.13 on the 237-row table. A paired control that
+freezes the v0.3 fold assignment and appends the two added battery carbonates
+to the training folds only attributes +0.027 R2 (95% CI +0.017 to +0.036) to
+the data addition, and both added solvents remain outside the model's
+extrapolation range. All builds and verifiers are deterministic and
 reproducible in continuous integration.
 
 # Background and Summary
@@ -46,18 +50,18 @@ The present dataset addresses these gaps by:
 - Providing a fixed multi-repeat cross-validation framework with three
   representations (fingerprint, physical descriptor, hybrid) and two targets
   (raw, log-transformed).
-- Evaluating the frozen model on an external domain-gap test of 29
+- Evaluating the frozen v0.2 model on an external domain-gap test of 29
   battery-relevant solvents, directly measuring how well a model trained on
   classic organic compounds generalizes to electrolyte-relevant chemical space.
 
-The frozen v1.0 model is intentionally conservative (shallow XGBoost with
+The v0.3.2 candidate model is intentionally conservative (shallow XGBoost with
 equal-weight Morgan+Physical ensemble). Graph neural networks and deeper
 architectures are evaluated as probes (MLP, Chemprop D-MPNN) but are not
-promoted to the frozen model. The benchmark results establish a clear
+promoted to the v0.3.2 candidate model. The benchmark results establish a clear
 representation ceiling: physical features provide the ranking signal
-(Spearman 0.803 for Physical alone vs. 0.697 for Morgan), fingerprints
-provide complementary breadth (R2 0.190 vs. 0.273), and their hybrid ensemble
-outperforms either alone (R2 0.310, Spearman 0.816). Neural probes confirm
+(Spearman 0.801 for Physical alone vs. 0.689 for Morgan), fingerprints
+provide complementary breadth (R2 0.223 vs. 0.354), and their hybrid ensemble
+outperforms either alone (R2 0.366, Spearman 0.814). Neural probes confirm
 this ceiling: the best MLP (Physical, Spearman 0.884) outperforms XGBoost in
 ranking but has negative R2 that is not recoverable by linear calibration.
 

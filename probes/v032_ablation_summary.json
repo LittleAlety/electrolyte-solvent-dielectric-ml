@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "input_path": "data/processed/dielectric_physical_features_v03.csv",
+  "input_sha256": "b36d3439560e4381b7779565b9950eed379832e832b72ea6a3a010662ed24fa3",
+  "source_count": 245,
+  "compound_count": 237,
+  "excluded_count": 4,
+  "excluded_inchikeys": [
+    "DQWPFSLDHJDLRL-UHFFFAOYSA-N",
+    "HBNYJWAFDZLWRS-UHFFFAOYSA-N",
+    "SBLRHMKNNHXPHG-UHFFFAOYSA-N",
+    "WVLBCYQITXONBZ-UHFFFAOYSA-N"
+  ],
+  "exclusions_path": "data/processed/dielectric_v03_exclusions.csv",
+  "exclusions_sha256": "f9b51dc6f61adc6eb3bab41d191e8218123201991cec9e7a68ccd048951a35cc",
+  "failed_physical_feature_count": 4,
+  "failed_physical_feature_names": [
+    "1,3-dimethylimidazolium dimethylphosphate",
+    "1-butyl-3-methylimidazolium hexafluorophosphate",
+    "1-butyl-2,3-dimethylimidazolium hexafluorophosphate",
+    "Iron pentacarbonyl"
+  ],
+  "representations": {
+    "Morgan": {
+      "type": "Morgan count fingerprint",
+      "radius": 2,
+      "fp_size": 2048
+    },
+    "Physical": {
+      "type": "GFN2-xTB and RDKit physical descriptors",
+      "columns": [
+        "T_K",
+        "formal_charge",
+        "heavy_atom_count",
+        "hbd",
+        "hba",
+        "tpsa_A2",
+        "molecular_volume_A3",
+        "dipole_D",
+        "polarizability_A3",
+        "mu_sq_over_Vm",
+        "alpha_over_Vm",
+        "total_energy_hartree",
+        "homo_lumo_gap_ev"
+      ]
+    },
+    "Morgan+Physical": {
+      "type": "equal-weight ensemble of separately trained Morgan and Physical models",
+      "components": [
+        "Morgan",
+        "Physical"
+      ],
+      "component_weight": 0.5
+    }
+  },
+  "model": {
+    "name": "XGBRegressor",
+    "parameters": {
+      "n_estimators": 200,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1.0,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1
+    },
+    "random_state_scheme": "42 + global RepeatedKFold split index; consecutive folds use different seeds"
+  },
+  "validation": {
+    "strategy": "RepeatedKFold",
+    "n_splits": 5,
+    "n_repeats": 10,
+    "random_state": 42,
+    "metrics": [
+      "mae",
+      "rmse",
+      "r2",
+      "spearman",
+      "auc_gt15",
+      "auc_gt30",
+      "stratified_mae"
+    ],
+    "target_transform": "none",
+    "prediction_constraint": "clip to dielectric >= 1"
+  },
+  "aggregation": "Per repeat, concatenate the five fold-held-out predictions into a complete OOF vector; compute metrics on that vector; then average the ten repeat-level metrics. Per-fold metrics are diagnostic only.",
+  "predictions_clipped": true,
+  "summary": {
+    "Morgan": {
+      "mae": {
+        "mean": 8.216175374563836,
+        "std": 0.16330348019333712,
+        "n": 10
+      },
+      "rmse": {
+        "mean": 17.892129018102104,
+        "std": 0.22508171372219057,
+        "n": 10
+      },
+      "r2": {
+        "mean": 0.22302214414889718,
+        "std": 0.019484605668803504,
+        "n": 10
+      },
+      "spearman": {
+        "mean": 0.6890460543992799,
+        "std": 0.013942712798135644,
+        "n": 10
+      },
+      "auc_gt15": {
+        "mean": 0.8579543621996452,
+        "std": 0.00810971491676741,
+        "n": 10
+      },
+      "auc_gt30": {
+        "mean": 0.8261066547831254,
+        "std": 0.016182049698096838,
+        "n": 10
+      },
+      "mae_lt20": {
+        "mean": 4.738828703814287,
+        "std": 0.1539288207282606,
+        "n": 10
+      },
+      "mae_20_60": {
+        "mean": 10.664021678559324,
+        "std": 0.5740948959593046,
+        "n": 10
+      },
+      "mae_gt60": {
+        "mean": 72.94471509814262,
+        "std": 2.3215254097947535,
+        "n": 10
+      }
+    },
+    "Physical": {
+      "mae": {
+        "mean": 7.4953692980236735,
+        "std": 0.2915375378096985,
+        "n": 10
+      },
+      "rmse": {
+        "mean": 16.314141750061133,
+        "std": 0.3629179922369994,
+        "n": 10
+      },
+      "r2": {
+        "mean": 0.3538332696304021,
+        "std": 0.02874673593229617,
+        "n": 10
+      },
+      "spearman": {
+        "mean": 0.8005355818457203,
+        "std": 0.015081895901423068,
+        "n": 10
+      },
+      "auc_gt15": {
+        "mean": 0.8895944202547976,
+        "std": 0.00978305906835786,
+        "n": 10
+      },
+      "auc_gt30": {
+        "mean": 0.9364824717765895,
+        "std": 0.007426949226175918,
+        "n": 10
+      },
+      "mae_lt20": {
+        "mean": 4.526311594935511,
+        "std": 0.22744754502174666,
+        "n": 10
+      },
+      "mae_20_60": {
+        "mean": 10.791630230980731,
+        "std": 0.7077823291809571,
+        "n": 10
+      },
+      "mae_gt60": {
+        "mean": 55.67589906215668,
+        "std": 3.520490790262187,
+        "n": 10
+      }
+    },
+    "Morgan+Physical": {
+      "mae": {
+        "mean": 7.133246682683728,
+        "std": 0.09910689148340995,
+        "n": 10
+      },
+      "rmse": {
+        "mean": 16.161255900200814,
+        "std": 0.237270622835762,
+        "n": 10
+      },
+      "r2": {
+        "mean": 0.3660467944950598,
+        "std": 0.018594452161603298,
+        "n": 10
+      },
+      "spearman": {
+        "mean": 0.8143597251111098,
+        "std": 0.01172886657934255,
+        "n": 10
+      },
+      "auc_gt15": {
+        "mean": 0.8995000806321561,
+        "std": 0.006877481246903867,
+        "n": 10
+      },
+      "auc_gt30": {
+        "mean": 0.9292632204396911,
+        "std": 0.009106623725094326,
+        "n": 10
+      },
+      "mae_lt20": {
+        "mean": 4.218974161964458,
+        "std": 0.13413539885765915,
+        "n": 10
+      },
+      "mae_20_60": {
+        "mean": 8.750478691620522,
+        "std": 0.5819165410914949,
+        "n": 10
+      },
+      "mae_gt60": {
+        "mean": 63.93170847654343,
+        "std": 2.404306943582491,
+        "n": 10
+      }
+    }
+  },
+  "outputs": {
+    "cv_csv": "data/processed/v032_ablation_cv.csv",
+    "repeat_csv": "data/processed/v032_ablation_repeats.csv",
+    "predictions_csv": "data/processed/v032_ablation_predictions.csv",
+    "summary_json": "probes/v032_ablation_summary.json",
+    "plot": "probes/artifacts/v032_ablation.png"
+  }
+}

@@ -65,11 +65,11 @@ dataset.
 The fixed 10x5 repeated cross-validation ensures that every model probe and
 baseline is evaluated on identical train-test splits.
 
-**v0.3 coverage sensitivity.** The frozen Morgan, Physical, and Hybrid
+**v0.3 coverage sensitivity.** The v0.3 Morgan, Physical, and Hybrid
 representations were rerun on the 235-row v0.3 physical-feature set. The
-Morgan+Physical hybrid R2 is 0.310 on v0.3 versus 0.320 on the 205-row v0.2
-set. The difference (0.01) is smaller than the cross-validation standard
-deviation across repeats (+/- 0.03). This confirms that the v0.3 expansion
+Morgan+Physical hybrid R2 is 0.310 (v0.3, 235 rows) versus 0.320 on the
+205-row v0.2 set. The difference (0.01) is smaller than the cross-validation
+standard deviation across repeats (+/- 0.03). This confirms that the v0.3 expansion
 improves domain coverage without degrading predictive accuracy -- a coverage
 result, not a performance improvement.
 
@@ -84,7 +84,7 @@ space that the classic-organic model cannot interpolate.
 
 ## Physical-feature ablation
 
-Under fixed 10x5 cross-validation:
+Under fixed 10x5 cross-validation on the v0.3 235-row table:
 
 | Representation | R2 (raw) | MAE (raw) | Spearman | AUC (eps > 30) |
 |---|---|---|---|---|
@@ -130,7 +130,7 @@ provide the ranking signal.
 
 # Limitations
 
-**Dataset size.** The current dataset (243 compounds) is small by deep-learning
+**Dataset size.** The v0.3 dataset (243 compounds) is small by deep-learning
 standards. The limiting factor is the scarcity of public, traceable, static
 dielectric constant measurements for pure organic liquids at near-room
 temperature. The dataset's value proposition rests on quality, provenance
@@ -154,7 +154,7 @@ quality for flexible molecules at modest computational cost.
 dielectric above 60 are flagged as outside the model's applicability domain.
 Kirkwood correlation effects in these systems require multi-body or
 explicit-solvent descriptions that are beyond the scope of the current
-frozen model.
+v0.3.2 candidate model.
 
 **Known data gaps.** The following compounds are absent from the dataset
 because publicly traceable dielectric constant measurements could not be

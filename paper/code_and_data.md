@@ -4,7 +4,7 @@ The complete dataset, all build scripts, probe scripts, verifiers, and
 benchmark outputs are deposited in a public GitHub repository:
 
 **Repository:** https://github.com/[repository-name]
-**Release:** v1.0 (immutable)
+**Release:** v0.3.2 (candidate; v1.0 tag will be applied only after the Appendix I freeze conditions are met)
 **DOI:** https://doi.org/10.5281/zenodo.[XXXXX]
 
 ## Repository structure
@@ -49,7 +49,7 @@ benchmark outputs are deposited in a public GitHub repository:
 
 - Python 3.12
 - RDKit 2024.09 (structure standardization, Morgan fingerprints, 2D descriptors)
-- XGBoost 2.1 (primary frozen model)
+- XGBoost 2.1 (primary candidate model)
 - scikit-learn 1.5 (cross-validation, MLP, metrics)
 - GFN2-xTB 6.7.1 (physical features)
 - Chemprop 2.1.0 (D-MPNN baseline, isolated environment)

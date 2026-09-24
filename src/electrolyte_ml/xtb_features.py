@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 
@@ -9,6 +10,10 @@ from rdkit import Chem
 from rdkit.Chem import AllChem, rdDetermineBonds
 
 AU_POLARIZABILITY_TO_A3 = 0.148184743
+_AVOGADRO_CONSTANT = 6.02214076e23
+_BOLTZMANN_CONSTANT_J_PER_K = 1.380649e-23
+_DEBYE_TO_COULOMB_METRE = 3.3356409519815204e-30
+_VACUUM_PERMITTIVITY_F_PER_M = 8.8541878128e-12
 
 
 class XtbFeatureError(ValueError):
@@ -82,6 +87,79 @@ def onsager_proxy(dipole_debye: float, molar_volume_m3_mol: float) -> float:
     if molar_volume_m3_mol <= 0:
         raise ValueError("molar_volume_m3_mol must be positive")
     return dipole_debye**2 / molar_volume_m3_mol
+
+
+def onsager_dielectric_estimate(
+    dipole_debye: float,
+    molar_volume_m3_mol: float,
+    polarizability_A3: float,
+    temperature_K: float,
+) -> float:
+    """Estimate static dielectric constant from a simple Onsager model.
+
+    Assumes a homogeneous, isotropic, non-associated liquid of rigid point
+    dipoles in an Onsager cavity. The high-frequency dielectric constant is
+    approximated from the molecular polarizability with the Lorentz-Lorenz
+    relation,
+
+        (n^2 - 1) / (n^2 + 2) = N_A alpha / (3 V_m),
+
+    and the static dielectric constant solves the Onsager reaction-field
+    equation,
+
+        (eps - n^2)(2 eps + n^2) / (eps (n^2 + 2)^2)
+            = N_A mu^2 / (9 eps_0 k_B T V_m).
+
+    Here alpha is the polarizability volume in m^3, mu is the gas-phase dipole
+    moment in C m, V_m is molar volume in m^3 mol^-1, and T is in K. The model
+    intentionally neglects hydrogen bonding and association; it is therefore
+    used only as a model-independent screening threshold.
+    """
+    values = (
+        dipole_debye,
+        molar_volume_m3_mol,
+        polarizability_A3,
+        temperature_K,
+    )
+    if not all(math.isfinite(value) for value in values):
+        raise ValueError("Onsager inputs must be finite")
+    if dipole_debye < 0:
+        raise ValueError("dipole_debye must be non-negative")
+    if polarizability_A3 < 0:
+        raise ValueError("polarizability_A3 must be non-negative")
+    if temperature_K <= 0:
+        raise ValueError("temperature_K must be positive")
+    if molar_volume_m3_mol <= 0:
+        raise ValueError("molar_volume_m3_mol must be positive")
+
+    alpha_density = (
+        _AVOGADRO_CONSTANT
+        * polarizability_A3
+        * 1e-30
+        / (3.0 * molar_volume_m3_mol)
+    )
+    if not 0.0 <= alpha_density < 1.0:
+        raise ValueError("Lorentz-Lorenz polarizability density must be in [0, 1)")
+    high_frequency_epsilon = (1.0 + 2.0 * alpha_density) / (1.0 - alpha_density)
+
+    reaction_field_term = (
+        onsager_proxy(dipole_debye, molar_volume_m3_mol)
+        * _DEBYE_TO_COULOMB_METRE**2
+        * _AVOGADRO_CONSTANT
+        / (
+            9.0
+            * _VACUUM_PERMITTIVITY_F_PER_M
+            * _BOLTZMANN_CONSTANT_J_PER_K
+            * temperature_K
+        )
+    )
+    if not math.isfinite(reaction_field_term) or reaction_field_term < 0:
+        raise ValueError("Onsager reaction-field term must be finite and non-negative")
+
+    denominator = (high_frequency_epsilon + 2.0) ** 2
+    linear_term = high_frequency_epsilon + reaction_field_term * denominator
+    discriminant = linear_term**2 + 8.0 * high_frequency_epsilon**2
+    return (linear_term + math.sqrt(discriminant)) / 4.0
 
 
 def clausius_mossotti_proxy(

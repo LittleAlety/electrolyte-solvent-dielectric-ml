@@ -1,6 +1,6 @@
 # Agent Workflow Visibility
 
-Last updated: 2026-09-23 (Asia/Shanghai)
+Last updated: 2026-09-24 (Asia/Shanghai)
 
 This file records delegated work at a level the user can audit in the
 repository. It is not a substitute for the generated artifacts or independent
@@ -11,6 +11,7 @@ scope, or is blocked.
 
 | Agent | Assigned scope | State | Result or evidence | Blocker |
 | --- | --- | --- | --- | --- |
+| Dirac | Independent verification of the v0.3.2 veto-resolution revision (read-only) | Running | Checks data integrity, RDKit re-derivation, Crossref DOI resolution, applicability-domain circularity, verifier strength, and benchmark control | None |
 | Darwin | Independent baseline review | Complete | Reviewed the Week 1 tree at baseline `7d1d645`; found no Critical/Important issue; independently reproduced 124 all-component and 100 pure-component gate identities; full suite `71 passed`; no files modified | None |
 | Arendt | Week 1 fixes and evidence | Complete | Pure-only gate, provisional decision metadata, robust histogram cap, tests, notebook, and exports; targeted tests `9 passed`, full suite `71 passed`, Ruff clean; HEAD remained `7d1d645` in that worktree | None for that scope |
 | Archimedes | Kernel-comparison contradiction audit | Complete | Confirmed `tree_method="exact"` and `n_jobs=1` in builder/verifier/summary; kernel tests `16 passed`, full suite `255 passed`, Ruff clean | None; the later exact-tree verifier rerun passed `5/5` |
@@ -42,6 +43,56 @@ scope, or is blocked.
   no immediate model gain at equal training sizes, so feature/kernel work
   remains necessary.
 
+
+## v0.3.2 Veto-Resolution Round (2026-09-24)
+
+Main-thread work resolved the two Appendix I veto items. No parallel write
+conflicts occurred because the revision was done single-threaded after the
+read-only evidence was gathered.
+
+| Item | Action | Evidence |
+| --- | --- | --- |
+| PC absent | Added epsilon=64.9 at 298.15 K | DOI 10.1021/j100702a008, Crossref-verified |
+| EC absent | Added epsilon=90.5 at 313.15 K | DOI 10.1021/je050341y |
+| Applicability rule circular | Added `onsager_epsilon` parameter | `src/electrolyte_ml/applicability.py`, 3 tests pass |
+| Premature v1.0 tag | Deleted local + remote | Release candidate renamed to v0.3.2 |
+| Glymes/dinitriles mis-reported absent | Corrected; already present under IUPAC names | `reports/g1_data_gate_review.md` |
+| Benchmark stale | Re-ran on 237 rows; v0.3 baseline reproduced exactly | `probes/v032_ablation_summary.json` |
+
+## VETO Fix Round 2 (parallel agent cluster, 2026-09-24)
+
+Dirac's audit of the first fix attempt found that two of the three claimed
+fixes were incomplete and that the headline benchmark claim was not
+controlled. Five agents then ran on disjoint write sets; every agent was
+read-only until it received an explicit, non-overlapping write scope.
+
+| Agent | Bounded scope | Write set | Outcome |
+| --- | --- | --- | --- |
+| Dirac | adversarial audit of the first VETO fix | none (read-only) | 3 P0 + 2 P1 findings |
+| Lorentz | P0-1: wire the Onsager threshold into the production caller | `probes/build_applicability_flags.py`, `src/electrolyte_ml/xtb_features.py`, `tests/test_applicability.py` | `onsager_dielectric_estimate` + explicit fallback counters; 8 tests |
+| Jason | P0-3 + P1: restore provenance, harden the verifier | `data/dielectric_v032.csv`, `data/dielectric_v03.csv`, `scripts/verify_dielectric_v032.py`, `tests/test_verify_dielectric_v032.py` | 243/243 strict superset; 7 named checks; 11 tests |
+| Averroes | Appendix J resource ladder | execution manual, outside the repository | Appendix J in both copies |
+| Linnaeus | v1.0 wording and section sync in the paper | `paper/abstract_and_intro.md`, `paper/benchmark_and_figures.md`, `paper/code_and_data.md`, `paper/outline.md`, `paper/technical_validation.md` | 13 wording/number alignments; flagged 12 further inconsistencies, 10 of which the main thread then fixed |
+| Main thread | P0-2 controlled benchmark and integration | `probes/v032_controlled_comparison.py`, `paper/full_draft.md`, `reports/`, `scripts/build_dielectric_v03.py`, `tests/test_build_dielectric_v03.py` | paired gain +0.0265 R2; validator fix; re-freeze |
+
+### What the audit changed
+
+The first fix attempt claimed that adding PC/EC raised hybrid R2 by +0.056.
+The controlled re-run attributes **+0.0265** (95% CI +0.0171 to +0.0359) to
+the data addition; 1272 of 2350 compound x repeat fold assignments (54.1%)
+had silently changed between the two splits. The independently computed churn
+fraction from the audit reviewer and from the main-thread probe agree to three
+significant figures. The paper no longer cites +0.056 as a gain.
+
+### Verification commands for this round
+
+| Command | Result |
+| --- | --- |
+| `.venv\Scripts\python.exe -m pytest -q` | `457 passed` (baseline was 441) |
+| `.venv\Scripts\python.exe -m ruff check scripts src probes tests` | All checks passed |
+| `.venv\Scripts\python.exe scripts/verify_dielectric_v032.py` | `passed=true`, 7/7 checks, 245 rows |
+| `.venv\Scripts\python.exe probes/v032_controlled_comparison.py` | paired deltas in `probes/v032_controlled_comparison_summary.json` |
+
 ## Verification Log
 
 | Date | Command | Result |
@@ -51,6 +102,7 @@ scope, or is blocked.
 | 2026-09-23 | `.venv\Scripts\python.exe -m pytest -q` | `265 passed` |
 | 2026-09-23 | `.venv\Scripts\python.exe -m ruff check scripts src probes tests` | All checks passed |
 | 2026-09-23 | `.venv\Scripts\python.exe scripts\analyze_springer_materials_crosscheck.py` | 60 v0.2 compounds matched; median absolute delta `0.05`; one review conflict retained |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q` | `457 passed` |
 
 ## Visibility Rule
 

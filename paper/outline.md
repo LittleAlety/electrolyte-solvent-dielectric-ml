@@ -98,11 +98,11 @@ stratum MAE.
 
 Predictions with `HBD >= 1` and predicted dielectric `> 60` are marked
 `outside_associated_liquid`. The dataset paper should state that Kirkwood
-correlation effects require multi-body descriptions outside the frozen model.
+correlation effects require multi-body descriptions outside the candidate model.
 
 ## Figures
 
-1. Dataset growth and source composition from v0.1 to v1.0.
+1. Dataset growth and source composition from v0.1 to v0.3.2.
 2. Chemical-space projection with electrolyte families highlighted.
 3. Model benchmark and uncertainty across repeated folds.
 4. Prediction error by dielectric stratum.

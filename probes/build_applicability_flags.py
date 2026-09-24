@@ -15,6 +15,7 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
 from electrolyte_ml.applicability import applicability_domain
 from electrolyte_ml.pathing import portable_relative_path
+from electrolyte_ml.xtb_features import onsager_dielectric_estimate
 
 OUTPUT_FIELDS = (
     "representation",
@@ -26,6 +27,7 @@ OUTPUT_FIELDS = (
     "hbd",
     "target",
     "prediction",
+    "onsager_epsilon",
     "applicability_domain",
 )
 
@@ -47,6 +49,21 @@ def write_csv_rows(
         writer.writerows(rows)
 
 
+def _onsager_epsilon(feature: Mapping[str, str]) -> float | None:
+    """Return a model-independent Onsager estimate, or ``None`` if unavailable."""
+    if feature.get("status") == "error":
+        return None
+    try:
+        return onsager_dielectric_estimate(
+            dipole_debye=float(feature["dipole_D"]),
+            molar_volume_m3_mol=float(feature["molar_volume_m3_mol"]),
+            polarizability_A3=float(feature["polarizability_A3"]),
+            temperature_K=float(feature["T_K"]),
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return None
+
+
 def run(
     *,
     predictions_path: Path,
@@ -54,17 +71,21 @@ def run(
     output_path: Path,
     summary_path: Path,
 ) -> dict[str, object]:
-    features = {
-        row["inchikey"]: row
-        for row in read_csv_rows(features_path)
-        if row["status"] != "error"
-    }
+    features = {row["inchikey"]: row for row in read_csv_rows(features_path)}
     output_rows: list[dict[str, object]] = []
+    onsager_available = 0
+    onsager_fallback = 0
     for row in read_csv_rows(predictions_path):
         feature = features[row["inchikey"]]
+        onsager_epsilon = _onsager_epsilon(feature)
+        if onsager_epsilon is None:
+            onsager_fallback += 1
+        else:
+            onsager_available += 1
         domain = applicability_domain(
             float(row["prediction"]),
             hbd_count=int(feature["hbd"]),
+            onsager_epsilon=onsager_epsilon,
         )
         output_rows.append(
             {
@@ -77,6 +98,9 @@ def run(
                 "hbd": feature["hbd"],
                 "target": row["target"],
                 "prediction": row["prediction"],
+                "onsager_epsilon": (
+                    "" if onsager_epsilon is None else f"{onsager_epsilon:.12g}"
+                ),
                 "applicability_domain": domain,
             }
         )
@@ -94,7 +118,14 @@ def run(
         "output_path": portable_relative_path(output_path, root=REPOSITORY_ROOT),
         "row_count": len(output_rows),
         "domain_counts": dict(sorted(counts.items())),
-        "rule": "HBD >= 1 and predicted dielectric > 60 => outside_associated_liquid",
+        "onsager_available": onsager_available,
+        "onsager_fallback": onsager_fallback,
+        "rule": (
+            "predicted_dielectric < 1.0 => outside_nonphysical; "
+            "hbd_count >= 1 and threshold_eps > 60.0 => "
+            "outside_associated_liquid; threshold_eps = onsager_epsilon "
+            "when available, otherwise predicted_dielectric"
+        ),
     }
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.write_text(
