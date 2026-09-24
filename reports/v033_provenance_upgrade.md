@@ -173,7 +173,7 @@ added to their `source_dois_all` without violating the source-license gate.
 
 The DC-200 dataset could not be obtained: the ACS Nano SI contains no
 per-molecule table, the author GitHub tree has no DC-200 asset, and the Zenodo
-record describes only fine-tuning results. All `dc200` fields are `found=false`
+record's manifest was later verified by an IP-pinned request (a single 4.75 GB `GSDS_Prior_Finetune.zip`, no per-molecule table). All `dc200` fields are `found=false`
 - "asset not published", not "compound not found".
 
 ### Tier 3 - is the MOPN value primary?

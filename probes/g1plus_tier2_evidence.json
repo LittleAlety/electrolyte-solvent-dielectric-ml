@@ -15,7 +15,20 @@
       "request_034_jina_connect_timeout"
     ],
     "minimum_interval_seconds": 1,
-    "counting_note": "Counts explicitly initiated API/download/navigation requests. Browser page subresources are not individually counted; no further requests were made after reaching 39."
+    "counting_note": "Counts explicitly initiated API/download/navigation requests. Browser page subresources are not individually counted; no further requests were made after reaching 39.",
+    "follow_up_zenodo_manifest_check": {
+      "date": "2026-09-24",
+      "reason": "the probe run recorded DNS failures for zenodo.org (request_026 / request_031) and so could not list the record manifest",
+      "method": "host name pinned to the IP that socket.gethostbyname('www.zenodo.org') returned (137.138.52.235) and the record API fetched with curl --resolve",
+      "http_requests": 3,
+      "requests": [
+        "GET https://www.zenodo.org/api/records/21061161 -> 301 to zenodo.org",
+        "GET https://zenodo.org/api/records/21061161 -> 302 to /api/records/21061162",
+        "GET https://zenodo.org/api/records/21061162 -> 200, record manifest JSON"
+      ],
+      "result": "one file, GSDS_Prior_Finetune.zip (4,746,199,417 bytes, md5 f1736827b1a9f31e85587ca2eae913a7), described as fine-tuning results and final generators; no DC-200 per-molecule table",
+      "quota_note": "three unauthenticated HTTP GETs; no API key and no paid quota"
+    }
   },
   "assets": {
     "ecw308": {
@@ -77,7 +90,7 @@
       "dataset_release_checks": {
         "paper_text": "States DC-200 was curated from 200 aprotic samples measured experimentally at room temperature, citing He et al. 2025 (10.1063/5.0267184) and the Minnesota Solvation Database (MNSOL) Version 2012.",
         "github": "The author-linked repository Teoroo-CMC/Batt-SLM was enumerated recursively (207 tree entries). It contains Batt-SLM, Batt-P30K, redox/CPI assets and RX-392, but no DC-200/dielectric table.",
-        "zenodo": "DataCite search found companion records 10.5281/zenodo.21061161 and 10.5281/zenodo.21061162, both CC-BY-4.0 + MIT and marked IsSupplementTo the paper. Their descriptions state that they provide fine-tuning results and final generators, not DC-200. zenodo.org did not resolve from this environment, so file manifests could not be inspected.",
+        "zenodo": "DataCite search found companion records 10.5281/zenodo.21061161 and 10.5281/zenodo.21061162, both CC-BY-4.0 + MIT and marked IsSupplementTo the paper; the two ids resolve to a single record (21061161 -> 21061162, DOI 10.5281/zenodo.21061162). The zenodo.org host name does not resolve by name in this environment, but its API answers once the host is pinned to a resolved IP, so the manifest was inspected in a follow-up check: it holds a single file, GSDS_Prior_Finetune.zip (4,746,199,417 bytes, md5 f1736827b1a9f31e85587ca2eae913a7), described as fine-tuning results and final generators. No DC-200 per-molecule table is present, so the availability conclusion is unchanged and now rests on an inspected manifest rather than an unreachable endpoint.",
         "mnsol": "Direct MNSOL landing request failed at transport level; no MNSOL file was downloaded or used."
       },
       "conclusion": "No DC-200 per-molecule table/value was obtainable from the published SI, the current author repository, or indexed release metadata; this is an availability conclusion, not an inferred value."

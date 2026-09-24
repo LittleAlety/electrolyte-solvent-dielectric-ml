@@ -10,7 +10,7 @@
 - **ECW-308：成功。** 论文 DOI 为 `10.1002/adfm.202212342`。doi.org、Wiley TDM/XML 和 SI 直链经 curl 均被 Cloudflare 403；应用内浏览器加载 Wiley 文章页后成功取得 SI PDF。原始文件：
   - `data/external/g1plus/compilations/adfm202212342-sup-0001-SuppMat.pdf`
   - 2,194,733 bytes，SHA-256 `19F1166E2ABA6834F0CCCB1D751B618DDED5C80F97AB5B9957B2D15046BDBC76`
-- **DC-200：未取得逐分子数据集。** 论文全文与 SI 已成功取得，但 SI 只有 DC-200 模型说明和图，不含 200 分子表；作者 GitHub 的完整文件树也没有 DC-200。DataCite 找到作者 Zenodo 配套记录，但记录说明只含 fine-tuning 结果和最终 generators；Zenodo 在本环境 DNS 不可达。未用 MNSOL 或其他来源猜填 DC-200 数值。
+- **DC-200：未取得逐分子数据集。** 论文全文与 SI 已成功取得，但 SI 只有 DC-200 模型说明和图，不含 200 分子表；作者 GitHub 的完整文件树也没有 DC-200。DataCite 找到作者 Zenodo 配套记录 `10.5281/zenodo.21061162`，说明只含 fine-tuning 结果和最终 generators。后续复核把主机名钉到已解析 IP 后成功取到清单：仅 1 个文件 `GSDS_Prior_Finetune.zip`（4,746,199,417 字节），仍不含 DC-200 逐分子表。未用 MNSOL 或其他来源猜填 DC-200 数值。
 - **10 个目标中，ECW-308 命中 9 个。** 唯一未命中的是 tetraglyme；MOPN 取得 `ε=36.00 @ 25 °C`，这是本任务最重要的缺口补录。
 - 所有 ECW-308 表头均为 `Dielectric constant at 25 °C`；结构化数据把 25 °C 写成 298.15 K，仅是单位换算，不是独立测温记录。
 
@@ -56,7 +56,7 @@ MOPN 身份不是只靠名字判断：PubChem PUG REST 查询 CAS `110-67-8` 返
 
 1. **SI 不含数据表。** 50 页 SI 只在 pp. S22-S23 讨论 LF-MLR-DC-200 和作图，没有 200 分子的名单、实验值或计算值。
 2. **GitHub 不含 DC-200。** `Teoroo-CMC/Batt-SLM` 递归树共 207 项，只有 Batt-SLM、Batt-P30K、Redox-Pot、CPI 和 RX-392 类资产；没有 DC-200、dielectric 或 dielectric-constant 数据文件。
-3. **Zenodo 配套记录不含 DC-200 描述。** DataCite 搜索找到 `10.5281/zenodo.21061161` 与 `10.5281/zenodo.21061162`，许可证为 CC-BY-4.0 + MIT，且 IsSupplementTo 该论文；描述明确只提供 fine-tuning results 和 final generators。`zenodo.org` 在当前环境 DNS 不可达，无法进一步列出文件，但已不存在可证实的 DC-200 表入口。
+3. **Zenodo 配套记录经清单核对后仍不含 DC-200。** DataCite 搜索找到 `10.5281/zenodo.21061161` 与 `10.5281/zenodo.21061162`（两者指向同一记录），许可证为 CC-BY-4.0 + MIT，且 IsSupplementTo 该论文。首轮探测时 `zenodo.org` 在本环境 DNS 不可达；后续复核把主机名钉到已解析 IP（`137.138.52.235`）后记录 API 可访问，清单实际为 1 个文件 `GSDS_Prior_Finetune.zip`（4,746,199,417 字节，md5 `f1736827b1a9f31e85587ca2eae913a7`），描述为 fine-tuning results 与 final generators，**没有**逐分子 DC-200 表。结论不变，但依据由“端点不可达”升级为“清单已核对”。
 4. **原始组装来源不可直接获得。** 正文说明 DC-200 来自“literature and public databases”，对应参考文献为 He et al. 2025 (`10.1063/5.0267184`) 与 Minnesota Solvation Database 2012。MNSOL 官网当前连接超时；没有下载或使用未核验镜像。
 5. **因此 10 个目标的 DC-200 字段全部为 `found=false`。** 这不是“查无此分子”的结论，而是“该 200 分子表未随可访问论文资产发布，且任务限定的直接资产不可恢复”。
 
@@ -95,6 +95,12 @@ MOPN 身份不是只靠名字判断：PubChem PUG REST 查询 CAS `110-67-8` 返
 | 34 | `https://r.jina.ai/http://zenodo.org/api/records/21061161` | 000，connection timeout |
 | 35 | OpenAlex Zenodo DOI | 404，数据集未索引 |
 | B3 | 浏览器打开 Zenodo API | `ERR_ADDRESS_INVALID` |
+| R1 | `https://www.zenodo.org/api/records/21061161`（钉 IP） | 301 → `zenodo.org` |
+| R2 | `https://zenodo.org/api/records/21061161`（钉 IP） | 302 → `/api/records/21061162` |
+| R3 | `https://zenodo.org/api/records/21061162`（钉 IP） | 200，取得记录清单 |
+
+R1-R3 是 v0.3.9 收尾时的后续复核：3 次未认证 GET（无 API key、不计费），把主机名钉到
+`137.138.52.235`，只读取记录元数据，未下载 4.75 GB 资产。
 
 成功的关键请求包括 Crossref 元数据、Europe PMC 全文/补充包、GitHub 仓库树、PubChem 身份确认、DataCite Zenodo 元数据，以及应用内浏览器对 Wiley 文章页和 SI 的访问。浏览器页面自身静态子资源未逐条计入；本报告统计的是显式发起的逻辑请求/下载。
 

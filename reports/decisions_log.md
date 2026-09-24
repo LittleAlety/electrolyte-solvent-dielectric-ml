@@ -944,3 +944,23 @@ initially, now 14) after
   （Riddick 4th ed. 纸质、CRC "Permittivity of Liquids"、Reaxys/SciFinder-n、DIPPR 801）仍受阻。
 - **预算。** 本轮 0 次外部 API 调用（全部本地重算）；三条同物异名核验沿用上一轮已取回的
   PubChem 结果。
+## 2026-09-24（续）：第四轮审查收口 + DC-200/Zenodo 清单核对
+
+- **第四轮独立审查（Einstein，只读）。** 对 `fd60fbf` 判 **FAIL：仅 1 Minor（纯文档）**，
+  无 Critical/Important。该条成立并已修：`reports/agent_workflow.md` 第 331 行仍写 “45 pt cap”，
+  与同文件第 346 行及代码自相矛盾。现改为“按印刷行聚类（2.5 pt），块边界是下一行行标签，
+  无 dy 窗口”，与实现一致。
+- **该轮确认通过的部分。** 308 行名称用原始 pypdf token 独立重建：逐字不一致 0、规范化后
+  不一致 0；三处哈希与报告固定值一致且纯 LF；`matched 27 = 11 + 10 + 6` 自洽；SI PDF 与数据集
+  哈希未变；历史 `matched` 16→24→27 与 export 说明相符；48 项抽取测试、全仓 601 项、ruff、
+  `--check` 全绿。
+- **DC-200 / Zenodo：把“端点不可达”升级为“清单已核对”。** 首轮探测因 `zenodo.org` DNS
+  不可达而无法列出配套记录清单。本次把主机名钉到已解析 IP（`137.138.52.235`）后复核：
+  `10.5281/zenodo.21061161` 与 `21061162` 是同一记录（DOI `10.5281/zenodo.21061162`），
+  清单为**单个** `GSDS_Prior_Finetune.zip`（4,746,199,417 字节，md5
+  `f1736827b1a9f31e85587ca2eae913a7`），描述为 fine-tuning 结果与最终 generators。
+  **无逐分子 DC-200 表**，故 10 个目标的 `dc200` 仍全部 `found=false`：结论不变，依据变强。
+- **预算。** 该复核为 3 次未认证 HTTP GET（无 API key、不计费），已记入
+  `probes/g1plus_tier2_evidence.json` 的 `request_accounting.follow_up_zenodo_manifest_check`。
+- **新增开放项。** `www.zenodo.org` 可解析、`zenodo.org` 不可解析，本环境需钉 IP 才能访问
+  Zenodo API；不影响结论，但后续任何 Zenodo 复核需同法。
