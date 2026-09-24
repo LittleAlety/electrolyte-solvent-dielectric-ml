@@ -1486,3 +1486,69 @@ Springer 303 跳转身份认证、HAL `numFound=0`、Google Books / Internet Arc
 
 修复后重跑：`pytest -q` **712 passed**（新增 Onsager 绑定测试 1 项）；`ruff check .` All checks passed；
 7 个 verifier 全通过；两个成果包重导并各自自校验通过。
+
+## 2026-09-25（续九）：两条介电腿在原始测量层面闭死 + G1+ 第五轮爬取
+
+- Decision: 把 FEC 78.4 与碳酸亚乙烯酯 126 两条腿**从"有线索"升级为"已读到原始测量"**，
+  但**本轮不改任何数据单元格**；两条更正各自写成字段级补丁进入 backlog，
+  留给独立的 v0.3.12 修订轮落地。语料来源：Kobayashi 2003 与 Saadi & Lee 1966 两份原文 PDF。
+- Evidence（FEC 78.4）: Kobayashi, Inoguchi, Iida, Tanioka, Kumase & Fukai,
+  *J. Fluorine Chem.* **120**(2), 105-110 (2003), DOI `10.1016/S0022-1139(02)00317-2`，
+  Table 2 第三条数据行逐字 `210  17.3  1497  4.1e  78.4e  1.04e  Our data`。
+  介电值带脚注 e，Table 2 脚注 **e = "At 23 °C."**；脚注 b 明写
+  "Physical properties are cited from ref. [11,12] **except our data**"，该行 Ref 列即 "Our data"。
+  同一行 mp 17.3 / bp 210 / 黏度 4.1 / ε 78.4 与 Flamme 2017 Table 1 entry 21 的 FEC 四项完全一致，
+  构成由 Flamme 到 Kobayashi 的锁定。
+- Evidence（VC 126）: Saadi & Lee, *J. Chem. Soc. B*, 1966, pp. 5-6, DOI `10.1039/j29660000005`。
+  实验部分给出 **E (25°) = 126 ± 1.0**（电池以苯、甲醇、水标定）；Table 2
+  "Physical properties of some cyclic carbonates at 25°" 列 Vinylene carbonate ε = 126、μ = 4.45 D。
+  同表旁证：PC 61.0（25 °C）、EC 95.3（40 °C）、氯代 EC 62.0（40 °C）、水 78.5。
+  数据集存的 126 本来就是对的，缺的是它的"身份"。
+- Correction（给第四轮补下一层，非撤回）: 第四轮写的是"Flamme 2017 未被确立为 FEC 78.4 的原始测量"，
+  这句本身**没有错、也未撤回**——Flamme 确实不是原始测量，第四轮只是没拿到全文。
+  本轮 Ampere 从 HZDR 机构库取得全文，**补下了一层**：正文写 `εr=89.8 for EC and 78.4 for FEC, Table 1, entries 20 and 21`，
+  Table 1 entry 21 逐字 `17.3 210 4.1 78.4 4.70 1.50 (70.70) 5.0 6.6 (Pt) [36],[42]`。
+  另修正一处下标错误：Crossref `reference.key` 相对方括号编号有 **+3 偏移**，
+  校正后 `[42]` = Kobayashi 2003（第四轮按数组下标直读会错解为 Sasaki 2010 / Wang 2010）。
+  正确表述分两层：**Flamme 是承载者（第四轮未确立，本轮确立），Flamme 不是原始测量。**
+  另 note：Kobayashi 表化合物名为结构图，文本层抽不出字，78.4 归属 FEC 靠与 Flamme entry 21 的
+  mp 17.3 / bp 210 / 黏度 4.1 / ε 78.4 指纹匹配 + entry 编号锚定，不是行内文字标签。
+- Identifier（Saadi 定案）: 原文与已登录 Reaxys 双向确认 DOI `10.1039/j29660000005`
+  是**碳酸亚乙烯酯**论文，Reaxys 里该引用挂在 vinylene carbonate 行（CAS 872-36-6，RN 105683）的
+  "Dielectric Constant - 1" 分类下。仓库此前把它当己二腈/戊二腈票据是仓库的错，标识符本身无误。
+  该 Reaxys 记录六个数值列**全为空**，只有 Reference 有值——索引知道有人测过，但不给数。
+- Decision（同源 vs 独立）: 受限互证必须区分"同源确认"与"独立互证"。
+  己二腈、戊二腈的受限记录引用与数据集行**同一个 DOI** `10.1021/je300958c` → 同源确认（只证明抄写正确）；
+  四甘醇二甲醚、四氢呋喃、NMP 为独立互证；二甘醇二甲醚混合。
+  计数 `same_source_confirmation 2 / independent_sources_only 3 / mixed 1 / no_capture 10`。
+- Decision（压力闸门）: 生成器实现 90–110 kPa 常压窗口。NMP 的 Uosaki 1996 是 100 kPa–250 MPa 压力序列，
+  保留 5 条窗口内近室温行、**排除 5 条加压行**；没有任何加压值进入比较。
+- Negative（三个数据源）: Materials Project 对液体实验介电常数**不适用**（SiO₂ 对照 200/total_doc 322 证明 key 有效，
+  EC/PC/乙腈均 total_doc 0；其介电量是晶体计算值）。NIST WebBook 53 个缓存页全文检索介电词汇 **0 命中**，
+  水/甲醇/乙醇/丙酮正对照同样为 0。CatalystHub 三个入口测试两个超时，相似域名身份未确认，密钥未外发。
+- Boundary（受限源）: SpringerMaterials 与上海有机所数据库**当前都打不开**（用户确认），
+  本轮**没有从这两处取得任何新抓取**；涉及这两处的受限陈述都是对 2026-09-23 已有磁盘抓取的重读。
+  但本轮**确实新增了受限材料**（Kobayashi 2003、Saadi & Lee 1966、Reaxys 抓取、Flamme 2017 HZDR 副本），
+  清单见证据文件 `new_restricted_materials_this_round`。
+  上海有机所那次会话返回"无此用户名"错误页，不是已登录态，故一次查询都没发。
+- Dataset impact: **changed_fields = []**，`data/dielectric_v03.csv` 仍 246 行、
+  sha256 `765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60`。
+  不就地改的原因：该哈希被约 20 个探针、报告与测试写死，改一格必须连带重跑，
+  属于独立的数据修订轮。两条补丁已逐字段写进证据文件 backlog：
+  **FEC** `dielectric 102 -> 78.4`、`T_K 298.15 -> 296.15`、`evidence_level -> primary`、
+  `source_quality -> primary_experimental`、`temperature_source -> reported`、
+  `source_doi -> 10.1016/S0022-1139(02)00317-2`、`source_table -> Table 2`、`notes` 按原始测量重写，`model_ready` 保持 false
+  （78.4 vs 107 未解，且动它会改变冻结的拟合子集）；
+  **VC** 数值不动，改 `evidence_level -> primary`、`source_quality -> primary_experimental`、
+  `temperature_source -> reported`、`source_doi -> 10.1039/j29660000005`、`source_table -> Table 2`、
+  `uncertainty_kind -> reported` + `uncertainty_value 1.0`、`notes` 按原始测量重写，并重写 `conflict_status`
+  （Knovel 78–127 是包含原始值的低信息量区间，不是竞争点值）；许可字段需按付费原始源重新推导。
+- Request budget: Tesla 40 / Peirce 40 / Ampere 40 / Pasteur 10 = **130**，
+  四个 agent 均未突破 40 次/人子上限，用户 500 次/小时上限未被接近；主线程未发出计量 API 调用。
+- Artifacts: `probes/g1plus_round5_crosscheck.py`（受限互证生成器，可复跑）、
+  `probes/g1plus_round5_crosscheck_summary.json`、`probes/g1plus_crawl_round5_evidence.json`、
+  `reports/g1plus_crawl_round5_findings.md`、`tests/test_g1plus_crawl_round5.py`（12 项断言全通过）。
+  两份 PDF 与 Reaxys 抓取留在 git-ignored 的 `data/restricted/{kobayashi2003,saadi1966,reaxys}/`。
+- Still open: FEC 107 腿（Hagiyama 2008 OUP 403；Ue 2014 章节 Springer 身份认证）、
+  MOPN 介电值（Ue 1994 IOPscience 付费页；Reaxys 已确认无该分类）、受限目录 4 个未取值目标
+  （需 SpringerMaterials 恢复可达）、v0.3.12 数据修订落地、温度带决策、DC-200 成员表。

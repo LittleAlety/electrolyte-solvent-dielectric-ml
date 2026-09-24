@@ -199,7 +199,11 @@ def export_results(
                 "attribution, again without moving a value; v0.3.11 resolved "
                 "the stored 102 as the flash point of fluoroethylene carbonate in "
                 "the row's conflict_status and notes, again without moving a "
-                "dielectric value."
+                "dielectric value. G1+ crawl round 5 read both surviving primary "
+                "measurements (Kobayashi 2003 Table 2 for the FEC 78.4 leg, Saadi & "
+                "Lee 1966 Table 2 for the vinylene carbonate 126 leg) and again moved "
+                "no cell; the two field-level patches it enables are queued for "
+                "v0.3.12 and are listed under open_items."
             ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),
@@ -269,12 +273,20 @@ def export_results(
                 "tier4_status": "blocked on institutional access, recorded as a limitation",
             },
             "open_items": [
-                "vinylene carbonate conflict_open (Saadi & Lee 1966 paywalled)",
+                (
+                    "vinylene carbonate: the primary measurement has been read "
+                    "(Saadi & Lee 1966 Table 2, eps = 126 +/- 1.0 at 25 C), so the "
+                    "stored 126 is confirmed; the row still carries "
+                    "conflict_status = conflict_open with evidence_level "
+                    "open_access_article_text and awaits the v0.3.12 provenance patch"
+                ),
                 (
                     "fluoroethylene carbonate: the stored 102 is recorded as a "
-                    "flash point, not a permittivity, so the surviving dielectric "
-                    "legs are 78.4 vs 107 and neither has a readable primary "
-                    "measurement"
+                    "flash point, not a permittivity. The 78.4 leg now has a "
+                    "readable primary measurement (Kobayashi 2003 Table 2, "
+                    "'Our data', 23 C); the 107 leg is still unread, so the two "
+                    "legs stay unreconciled and neither has been promoted. Both "
+                    "corrections await the v0.3.12 revision"
                 ),
                 "3-methoxypropionitrile still needs its primary-confirmation exclusion cleared and a GFN2-xTB feature row run (value and 25 C condition are now corroborated)",
                 "tier 4 print and subscription sources unverified",
