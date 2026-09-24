@@ -151,7 +151,7 @@ Cross-checks against the frozen dataset (compilation vs. primary, never averaged
 | compound | stored | ECW-308 @ 25 C | note |
 |---|---|---|---|
 | PC | 64.9 | 64.90 | exact reproduction |
-| VC | 126 | 126.00 | independently reproduces the contested high value |
+| VC | 126 | 126.00 | lists the contested high value; ECW-308 includes Hall et al. 2018 [3] among its source refs, so independence from Hall is not established |
 | FEC | 78.4/102/107 conflict | 78.40 | supports the low branch; conflict stays open |
 | diglyme | 7.3815 | 7.40 | +0.25% |
 | triglyme | 7.604 | 7.53 | -0.97% |

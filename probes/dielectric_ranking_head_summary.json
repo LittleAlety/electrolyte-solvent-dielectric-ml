@@ -1,0 +1,924 @@
+{
+  "schema_version": 1,
+  "probe": "C2 XGBoost rank:pairwise versus regression head",
+  "input_sha256": "da82f748daeccbc9c7c045aa2369085b147c2124693c62dc72994a4cb629f5f4",
+  "source_code_sha256": "aa6201de84f65730eeebd4b72946fef660d2736486187fac98862d60faae25ac",
+  "source_code_path": "probes/dielectric_ranking_head_probe.py",
+  "counts": {
+    "modelling_rows": 234,
+    "failed_feature_rows": 4,
+    "withheld_not_model_ready_rows": 1,
+    "feature_count": 2061
+  },
+  "representation": "Morgan_count_r2_2048 + physical_13",
+  "splitter": {
+    "outer": "RepeatedKFold(n_splits=5, n_repeats=10, random_state=42)",
+    "split_level": "qid",
+    "inner": "KFold(n_splits=5, shuffle=True, random_state=42+split_id)",
+    "methodology_note": "C2 的 5x10x42 在 qid 层运行，不是 v0.3 行级 fold 表的逐行复用。"
+  },
+  "qid_rule": {
+    "primary": "ring molecules use ring:{MurckoScaffoldSmiles}; acyclic molecules use acyclic_cluster:{Butina cluster id} from ECFP4 Morgan radius=2 and Tanimoto distance threshold 0.5",
+    "negative_control": "qid = InChIKey",
+    "source": "probes.dielectric_target_and_scaffold.scaffold_group_keys"
+  },
+  "qid_count": 111,
+  "singleton_count": 76,
+  "total_pair_capacity": 799,
+  "rank_objective": "rank:pairwise",
+  "rank_params": {
+    "n_estimators": 200,
+    "max_depth": 2,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0,
+    "objective": "rank:pairwise",
+    "tree_method": "hist",
+    "max_bin": 64,
+    "n_jobs": 1,
+    "lambdarank_pair_method": "mean",
+    "random_state": "SEED + split_id"
+  },
+  "regression_params": {
+    "n_estimators": 200,
+    "max_depth": 2,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0,
+    "objective": "reg:squarederror",
+    "tree_method": "hist",
+    "max_bin": 64,
+    "n_jobs": 1,
+    "random_state": "SEED + split_id"
+  },
+  "metric_definition": {
+    "primary": [
+      "global Spearman rank correlation",
+      "macro query-level pairwise accuracy; target ties excluded; predicted ties score 0.5"
+    ],
+    "secondary": [
+      "micro pairwise accuracy",
+      "AUC(epsilon > 15)",
+      "AUC(epsilon > 30)",
+      "calibrated MAE/RMSE/R2"
+    ],
+    "calibrated_metrics_warning": "rank scores are not epsilon values; MAE/RMSE/R2 are computed only after identical nested isotonic calibration"
+  },
+  "calibration_spec": {
+    "algorithm": "IsotonicRegression(out_of_bounds='clip')",
+    "fit_data": "inner qid-grouped OOF predictions from outer-train rows only",
+    "outer_test_targets_used": false,
+    "same_link_family_for_both_heads": true,
+    "clip": "max(calibrated_prediction, 1.0)"
+  },
+  "fold_qid_overlap_assertions": {
+    "outer_train_test_qid_disjoint": true,
+    "each_repeat_tests_every_qid_once": true,
+    "both_heads_share_exact_row_indices": true,
+    "inner_calibration_grouping": "qid"
+  },
+  "scenarios": {
+    "scaffold_butina_qid": {
+      "scenario": "scaffold_butina_qid",
+      "qid_rule": "Murcko scaffold for cyclic molecules; ECFP4 Morgan radius=2, Tanimoto distance <= 0.5 Butina clusters for acyclic molecules",
+      "qid_count": 111,
+      "singleton_count": 76,
+      "total_pair_capacity": 799,
+      "train_pair_capacity_min": 173,
+      "train_pair_capacity_median": 712.0,
+      "train_pair_capacity_max": 796,
+      "test_pair_capacity_min": 3,
+      "test_pair_capacity_max": 626,
+      "results": {
+        "rank_pairwise": {
+          "per_repeat_metric_summary": {
+            "global_spearman": {
+              "mean": 0.7061862098258618,
+              "std": 0.029481906899987753,
+              "n": 10
+            },
+            "macro_query_spearman": {
+              "mean": 0.503407558297421,
+              "std": 0.07222640022222496,
+              "n": 10
+            },
+            "micro_pairwise_accuracy": {
+              "mean": 0.6355527638190954,
+              "std": 0.046251520349075856,
+              "n": 10
+            },
+            "macro_pairwise_accuracy": {
+              "mean": 0.7313620667099732,
+              "std": 0.036403468015192966,
+              "n": 10
+            },
+            "auc_gt15": {
+              "mean": 0.8573333333333334,
+              "std": 0.020258435822567245,
+              "n": 10
+            },
+            "auc_gt30": {
+              "mean": 0.8649673202614381,
+              "std": 0.021624973165382883,
+              "n": 10
+            },
+            "calibrated_mae": {
+              "mean": 8.613157572500818,
+              "std": 0.5314716006646936,
+              "n": 10
+            },
+            "calibrated_rmse": {
+              "mean": 16.40294020976607,
+              "std": 0.35032692617346134,
+              "n": 10
+            },
+            "calibrated_r2": {
+              "mean": 0.18542712908466258,
+              "std": 0.034933081854933754,
+              "n": 10
+            }
+          },
+          "pooled_across_all_50_test_folds": {
+            "n_comparable_pairs": 79600,
+            "global_spearman": 0.7027459403679701,
+            "macro_query_spearman": 0.39648215776262,
+            "micro_pairwise_accuracy": 0.6247613065326633,
+            "macro_pairwise_accuracy": 0.7014754179523268,
+            "auc_gt15": 0.8547379454926624,
+            "auc_gt30": 0.8638725490196077,
+            "calibrated_mae": 8.613157572500818,
+            "calibrated_rmse": 16.40630682343965,
+            "calibrated_r2": 0.18542712908466263
+          },
+          "constant_score_split_count": 0,
+          "n_splits": 50
+        },
+        "regression_head": {
+          "per_repeat_metric_summary": {
+            "global_spearman": {
+              "mean": 0.7887555487844263,
+              "std": 0.02759599313694524,
+              "n": 10
+            },
+            "macro_query_spearman": {
+              "mean": 0.6646330469100574,
+              "std": 0.07653490365924003,
+              "n": 10
+            },
+            "micro_pairwise_accuracy": {
+              "mean": 0.7009422110552764,
+              "std": 0.020524496819940886,
+              "n": 10
+            },
+            "macro_pairwise_accuracy": {
+              "mean": 0.8010608004475002,
+              "std": 0.03292820992042839,
+              "n": 10
+            },
+            "auc_gt15": {
+              "mean": 0.8865115303983228,
+              "std": 0.01394324616997205,
+              "n": 10
+            },
+            "auc_gt30": {
+              "mean": 0.9313071895424837,
+              "std": 0.015003929202186263,
+              "n": 10
+            },
+            "calibrated_mae": {
+              "mean": 7.370623660168389,
+              "std": 0.5181664806258099,
+              "n": 10
+            },
+            "calibrated_rmse": {
+              "mean": 15.65553553552831,
+              "std": 0.6024999094902497,
+              "n": 10
+            },
+            "calibrated_r2": {
+              "mean": 0.2572842111282571,
+              "std": 0.057866938931337895,
+              "n": 10
+            }
+          },
+          "pooled_across_all_50_test_folds": {
+            "n_comparable_pairs": 79600,
+            "global_spearman": 0.7879964817091802,
+            "macro_query_spearman": 0.525809480833682,
+            "micro_pairwise_accuracy": 0.6932223618090452,
+            "macro_pairwise_accuracy": 0.7683387421281511,
+            "auc_gt15": 0.8865035639412997,
+            "auc_gt30": 0.9309934640522876,
+            "calibrated_mae": 7.370623660168389,
+            "calibrated_rmse": 15.665966246326205,
+            "calibrated_r2": 0.25728421112825717
+          },
+          "constant_score_split_count": 0,
+          "n_splits": 50
+        }
+      },
+      "paired_repeat_diagnostics_rank_minus_regression": {
+        "global_spearman": {
+          "n_pairs": 10,
+          "delta_mean": -0.08256933895856441,
+          "delta_ci95": [
+            -0.10892276475232524,
+            -0.05621591316480359
+          ],
+          "paired_t_pvalue": 0.00017056802592985796,
+          "wilcoxon_pvalue": 0.001953125,
+          "per_repeat_delta": [
+            -0.07194666019752938,
+            -0.15839016367759817,
+            -0.08911724342425709,
+            -0.04070088171650599,
+            -0.07748858279189141,
+            -0.1434294942684914,
+            -0.08770525497894044,
+            -0.07691012004400932,
+            -0.015496323793398048,
+            -0.06450866469302285
+          ]
+        },
+        "macro_pairwise_accuracy": {
+          "n_pairs": 10,
+          "delta_mean": -0.0696987337375269,
+          "delta_ci95": [
+            -0.09683611420779265,
+            -0.042561353267261154
+          ],
+          "paired_t_pvalue": 0.0007055197933849366,
+          "wilcoxon_pvalue": 0.00390625,
+          "per_repeat_delta": [
+            -0.0575643055630739,
+            -0.1507723434201268,
+            -0.022755643371406897,
+            -0.08915286273660672,
+            -0.1000735532939967,
+            -0.08070839874411306,
+            -0.06981089518035333,
+            -0.09123357963875223,
+            -0.039649691441563495,
+            0.0047339360147241605
+          ]
+        },
+        "calibrated_mae": {
+          "n_pairs": 10,
+          "delta_mean": 1.2425339123324282,
+          "delta_ci95": [
+            0.8940146304338188,
+            1.5910531942310375
+          ],
+          "paired_t_pvalue": 6.410885413654057e-05,
+          "wilcoxon_pvalue": 0.001953125,
+          "per_repeat_delta": [
+            0.6952996496241726,
+            2.058055803493912,
+            1.0565874677587033,
+            0.43684170235057884,
+            1.620935459768007,
+            1.1040690062293725,
+            1.3940023150690983,
+            1.6981377332075915,
+            0.5494817002408361,
+            1.8119282855820105
+          ]
+        }
+      },
+      "qid_cluster_bootstrap_rank_minus_regression": {
+        "global_spearman": {
+          "metric": "global_spearman",
+          "baseline_arm": "regression_head",
+          "challenger_arm": "rank_pairwise",
+          "point_delta_challenger_minus_baseline": -0.08256933895856455,
+          "cluster_bootstrap_ci95": [
+            -0.14616032641090507,
+            -0.018693364276157087
+          ],
+          "n_bootstrap": 500,
+          "cluster_unit": "qid",
+          "seed": 20260924
+        },
+        "macro_pairwise_accuracy": {
+          "metric": "macro_pairwise_accuracy",
+          "baseline_arm": "regression_head",
+          "challenger_arm": "rank_pairwise",
+          "point_delta_challenger_minus_baseline": -0.06969873373752677,
+          "cluster_bootstrap_ci95": [
+            -0.15264328231292515,
+            0.004206528146183297
+          ],
+          "n_bootstrap": 500,
+          "cluster_unit": "qid",
+          "seed": 20260925
+        },
+        "calibrated_mae": {
+          "metric": "calibrated_mae",
+          "baseline_arm": "regression_head",
+          "challenger_arm": "rank_pairwise",
+          "point_delta_challenger_minus_baseline": 1.2425339123324282,
+          "cluster_bootstrap_ci95": [
+            0.45120986698763266,
+            2.2080576243569006
+          ],
+          "n_bootstrap": 500,
+          "cluster_unit": "qid",
+          "seed": 20260926
+        }
+      },
+      "calibration_example_diagnostics": {
+        "inner_n_splits": 5,
+        "inner_grouping": "qid",
+        "outer_test_target_used_for_calibration": false,
+        "calibrator": "IsotonicRegression(out_of_bounds=clip)",
+        "diagnostics_by_arm": {
+          "rank_pairwise": {
+            "oof_score_count": 191,
+            "fitted_value_count": 18,
+            "outer_score_count": 43
+          },
+          "regression_head": {
+            "oof_score_count": 191,
+            "fitted_value_count": 15,
+            "outer_score_count": 43
+          }
+        }
+      },
+      "negative_results": [
+        "76 of 111 qids are singletons and contribute no pairwise training gradient",
+        "the minimum train-fold pair capacity over all 50 splits is 173; the earlier audit shorthand of approximately 277 was the repeat-0 minimum and is not the global minimum across all repeats",
+        "all 234 InChIKey queries are singleton in the negative control, so rank:pairwise has no comparable training pair"
+      ],
+      "split_manifest_assertions": {
+        "train_test_qid_disjoint": true,
+        "each_repeat_tests_every_qid_once": true,
+        "both_heads_use_identical_outer_and_inner_row_indices": true,
+        "outer_and_inner_grouping": "qid"
+      }
+    },
+    "inchikey_singleton_negative_control": {
+      "scenario": "inchikey_singleton_negative_control",
+      "qid_rule": "qid = InChIKey negative control",
+      "qid_count": 234,
+      "singleton_count": 234,
+      "total_pair_capacity": 0,
+      "train_pair_capacity_min": 0,
+      "train_pair_capacity_median": 0.0,
+      "train_pair_capacity_max": 0,
+      "test_pair_capacity_min": 0,
+      "test_pair_capacity_max": 0,
+      "results": {
+        "rank_pairwise": {
+          "per_repeat_metric_summary": {
+            "global_spearman": {
+              "mean": null,
+              "std": null,
+              "n": 0
+            },
+            "macro_query_spearman": {
+              "mean": null,
+              "std": null,
+              "n": 0
+            },
+            "micro_pairwise_accuracy": {
+              "mean": null,
+              "std": null,
+              "n": 0
+            },
+            "macro_pairwise_accuracy": {
+              "mean": null,
+              "std": null,
+              "n": 0
+            },
+            "auc_gt15": {
+              "mean": 0.5,
+              "std": 0.0,
+              "n": 10
+            },
+            "auc_gt30": {
+              "mean": 0.5,
+              "std": 0.0,
+              "n": 10
+            },
+            "calibrated_mae": {
+              "mean": 11.108674063823464,
+              "std": 0.05139508804571963,
+              "n": 10
+            },
+            "calibrated_rmse": {
+              "mean": 18.279298973849365,
+              "std": 0.07925960596087943,
+              "n": 10
+            },
+            "calibrated_r2": {
+              "mean": -0.011194513106345404,
+              "std": 0.008787758953896668,
+              "n": 10
+            }
+          },
+          "pooled_across_all_50_test_folds": {
+            "n_comparable_pairs": 0,
+            "global_spearman": null,
+            "macro_query_spearman": null,
+            "micro_pairwise_accuracy": null,
+            "macro_pairwise_accuracy": null,
+            "auc_gt15": 0.5,
+            "auc_gt30": 0.5,
+            "calibrated_mae": 11.108674063823464,
+            "calibrated_rmse": 18.279453625641928,
+            "calibrated_r2": -0.011194513106345338
+          },
+          "constant_score_split_count": 50,
+          "n_splits": 50
+        },
+        "regression_head": {
+          "per_repeat_metric_summary": {
+            "global_spearman": {
+              "mean": 0.84282058706825,
+              "std": 0.01195379221488692,
+              "n": 10
+            },
+            "macro_query_spearman": {
+              "mean": null,
+              "std": null,
+              "n": 0
+            },
+            "micro_pairwise_accuracy": {
+              "mean": null,
+              "std": null,
+              "n": 0
+            },
+            "macro_pairwise_accuracy": {
+              "mean": null,
+              "std": null,
+              "n": 0
+            },
+            "auc_gt15": {
+              "mean": 0.9215429769392033,
+              "std": 0.007323037840635204,
+              "n": 10
+            },
+            "auc_gt30": {
+              "mean": 0.9496405228758169,
+              "std": 0.005850393289093678,
+              "n": 10
+            },
+            "calibrated_mae": {
+              "mean": 6.232603225820172,
+              "std": 0.24157995696768947,
+              "n": 10
+            },
+            "calibrated_rmse": {
+              "mean": 14.724875091280103,
+              "std": 0.31860900940703946,
+              "n": 10
+            },
+            "calibrated_r2": {
+              "mean": 0.3435608432651055,
+              "std": 0.028378310839950696,
+              "n": 10
+            }
+          },
+          "pooled_across_all_50_test_folds": {
+            "n_comparable_pairs": 0,
+            "global_spearman": 0.8430725411804392,
+            "macro_query_spearman": null,
+            "micro_pairwise_accuracy": null,
+            "macro_pairwise_accuracy": null,
+            "auc_gt15": 0.9216109014675054,
+            "auc_gt30": 0.9498039215686274,
+            "calibrated_mae": 6.232603225820172,
+            "calibrated_rmse": 14.727977016025964,
+            "calibrated_r2": 0.3435608432651055
+          },
+          "constant_score_split_count": 0,
+          "n_splits": 50
+        }
+      },
+      "paired_repeat_diagnostics_rank_minus_regression": {
+        "global_spearman": {
+          "n_pairs": 0,
+          "delta_mean": null,
+          "delta_ci95": [
+            null,
+            null
+          ],
+          "paired_t_pvalue": null,
+          "wilcoxon_pvalue": null,
+          "per_repeat_delta": []
+        },
+        "macro_pairwise_accuracy": {
+          "n_pairs": 0,
+          "delta_mean": null,
+          "delta_ci95": [
+            null,
+            null
+          ],
+          "paired_t_pvalue": null,
+          "wilcoxon_pvalue": null,
+          "per_repeat_delta": []
+        },
+        "calibrated_mae": {
+          "n_pairs": 10,
+          "delta_mean": 4.876070838003293,
+          "delta_ci95": [
+            4.736070899803952,
+            5.016070776202634
+          ],
+          "paired_t_pvalue": 1.5691293950736246e-13,
+          "wilcoxon_pvalue": 0.001953125,
+          "per_repeat_delta": [
+            5.126231618995786,
+            4.870732689593318,
+            5.289296996625316,
+            5.032525520950204,
+            4.536016263331827,
+            4.8079898773208285,
+            4.900434111690375,
+            4.632286336595384,
+            4.824842661632084,
+            4.740352303297814
+          ]
+        }
+      },
+      "qid_cluster_bootstrap_rank_minus_regression": {
+        "global_spearman": {
+          "metric": "global_spearman",
+          "baseline_arm": "regression_head",
+          "challenger_arm": "rank_pairwise",
+          "point_delta_challenger_minus_baseline": null,
+          "cluster_bootstrap_ci95": [
+            null,
+            null
+          ],
+          "n_bootstrap": 0,
+          "cluster_unit": "qid",
+          "seed": 20260924
+        },
+        "macro_pairwise_accuracy": {
+          "metric": "macro_pairwise_accuracy",
+          "baseline_arm": "regression_head",
+          "challenger_arm": "rank_pairwise",
+          "point_delta_challenger_minus_baseline": null,
+          "cluster_bootstrap_ci95": [
+            null,
+            null
+          ],
+          "n_bootstrap": 0,
+          "cluster_unit": "qid",
+          "seed": 20260925
+        },
+        "calibrated_mae": {
+          "metric": "calibrated_mae",
+          "baseline_arm": "regression_head",
+          "challenger_arm": "rank_pairwise",
+          "point_delta_challenger_minus_baseline": 4.876070838003296,
+          "cluster_bootstrap_ci95": [
+            3.8164182403471085,
+            5.908644924030199
+          ],
+          "n_bootstrap": 500,
+          "cluster_unit": "qid",
+          "seed": 20260926
+        }
+      },
+      "calibration_example_diagnostics": {
+        "inner_n_splits": 5,
+        "inner_grouping": "qid",
+        "outer_test_target_used_for_calibration": false,
+        "calibrator": "IsotonicRegression(out_of_bounds=clip)",
+        "diagnostics_by_arm": {
+          "rank_pairwise": {
+            "oof_score_count": 188,
+            "fitted_value_count": 1,
+            "outer_score_count": 46
+          },
+          "regression_head": {
+            "oof_score_count": 188,
+            "fitted_value_count": 20,
+            "outer_score_count": 46
+          }
+        }
+      },
+      "negative_results": [
+        "234 of 234 qids are singletons and contribute no pairwise training gradient",
+        "the minimum train-fold pair capacity over all 50 splits is 0; the earlier audit shorthand of approximately 277 was the repeat-0 minimum and is not the global minimum across all repeats",
+        "all 234 InChIKey queries are singleton in the negative control, so rank:pairwise has no comparable training pair"
+      ],
+      "split_manifest_assertions": {
+        "train_test_qid_disjoint": true,
+        "each_repeat_tests_every_qid_once": true,
+        "both_heads_use_identical_outer_and_inner_row_indices": true,
+        "outer_and_inner_grouping": "qid"
+      },
+      "rank_degeneracy": {
+        "rank_constant_score_split_count": 50,
+        "rank_constant_score_split_fraction": 1.0
+      }
+    }
+  },
+  "results": {
+    "primary_arm_results": {
+      "rank_pairwise": {
+        "per_repeat_metric_summary": {
+          "global_spearman": {
+            "mean": 0.7061862098258618,
+            "std": 0.029481906899987753,
+            "n": 10
+          },
+          "macro_query_spearman": {
+            "mean": 0.503407558297421,
+            "std": 0.07222640022222496,
+            "n": 10
+          },
+          "micro_pairwise_accuracy": {
+            "mean": 0.6355527638190954,
+            "std": 0.046251520349075856,
+            "n": 10
+          },
+          "macro_pairwise_accuracy": {
+            "mean": 0.7313620667099732,
+            "std": 0.036403468015192966,
+            "n": 10
+          },
+          "auc_gt15": {
+            "mean": 0.8573333333333334,
+            "std": 0.020258435822567245,
+            "n": 10
+          },
+          "auc_gt30": {
+            "mean": 0.8649673202614381,
+            "std": 0.021624973165382883,
+            "n": 10
+          },
+          "calibrated_mae": {
+            "mean": 8.613157572500818,
+            "std": 0.5314716006646936,
+            "n": 10
+          },
+          "calibrated_rmse": {
+            "mean": 16.40294020976607,
+            "std": 0.35032692617346134,
+            "n": 10
+          },
+          "calibrated_r2": {
+            "mean": 0.18542712908466258,
+            "std": 0.034933081854933754,
+            "n": 10
+          }
+        },
+        "pooled_across_all_50_test_folds": {
+          "n_comparable_pairs": 79600,
+          "global_spearman": 0.7027459403679701,
+          "macro_query_spearman": 0.39648215776262,
+          "micro_pairwise_accuracy": 0.6247613065326633,
+          "macro_pairwise_accuracy": 0.7014754179523268,
+          "auc_gt15": 0.8547379454926624,
+          "auc_gt30": 0.8638725490196077,
+          "calibrated_mae": 8.613157572500818,
+          "calibrated_rmse": 16.40630682343965,
+          "calibrated_r2": 0.18542712908466263
+        },
+        "constant_score_split_count": 0,
+        "n_splits": 50
+      },
+      "regression_head": {
+        "per_repeat_metric_summary": {
+          "global_spearman": {
+            "mean": 0.7887555487844263,
+            "std": 0.02759599313694524,
+            "n": 10
+          },
+          "macro_query_spearman": {
+            "mean": 0.6646330469100574,
+            "std": 0.07653490365924003,
+            "n": 10
+          },
+          "micro_pairwise_accuracy": {
+            "mean": 0.7009422110552764,
+            "std": 0.020524496819940886,
+            "n": 10
+          },
+          "macro_pairwise_accuracy": {
+            "mean": 0.8010608004475002,
+            "std": 0.03292820992042839,
+            "n": 10
+          },
+          "auc_gt15": {
+            "mean": 0.8865115303983228,
+            "std": 0.01394324616997205,
+            "n": 10
+          },
+          "auc_gt30": {
+            "mean": 0.9313071895424837,
+            "std": 0.015003929202186263,
+            "n": 10
+          },
+          "calibrated_mae": {
+            "mean": 7.370623660168389,
+            "std": 0.5181664806258099,
+            "n": 10
+          },
+          "calibrated_rmse": {
+            "mean": 15.65553553552831,
+            "std": 0.6024999094902497,
+            "n": 10
+          },
+          "calibrated_r2": {
+            "mean": 0.2572842111282571,
+            "std": 0.057866938931337895,
+            "n": 10
+          }
+        },
+        "pooled_across_all_50_test_folds": {
+          "n_comparable_pairs": 79600,
+          "global_spearman": 0.7879964817091802,
+          "macro_query_spearman": 0.525809480833682,
+          "micro_pairwise_accuracy": 0.6932223618090452,
+          "macro_pairwise_accuracy": 0.7683387421281511,
+          "auc_gt15": 0.8865035639412997,
+          "auc_gt30": 0.9309934640522876,
+          "calibrated_mae": 7.370623660168389,
+          "calibrated_rmse": 15.665966246326205,
+          "calibrated_r2": 0.25728421112825717
+        },
+        "constant_score_split_count": 0,
+        "n_splits": 50
+      }
+    },
+    "negative_control_arm_results": {
+      "rank_pairwise": {
+        "per_repeat_metric_summary": {
+          "global_spearman": {
+            "mean": null,
+            "std": null,
+            "n": 0
+          },
+          "macro_query_spearman": {
+            "mean": null,
+            "std": null,
+            "n": 0
+          },
+          "micro_pairwise_accuracy": {
+            "mean": null,
+            "std": null,
+            "n": 0
+          },
+          "macro_pairwise_accuracy": {
+            "mean": null,
+            "std": null,
+            "n": 0
+          },
+          "auc_gt15": {
+            "mean": 0.5,
+            "std": 0.0,
+            "n": 10
+          },
+          "auc_gt30": {
+            "mean": 0.5,
+            "std": 0.0,
+            "n": 10
+          },
+          "calibrated_mae": {
+            "mean": 11.108674063823464,
+            "std": 0.05139508804571963,
+            "n": 10
+          },
+          "calibrated_rmse": {
+            "mean": 18.279298973849365,
+            "std": 0.07925960596087943,
+            "n": 10
+          },
+          "calibrated_r2": {
+            "mean": -0.011194513106345404,
+            "std": 0.008787758953896668,
+            "n": 10
+          }
+        },
+        "pooled_across_all_50_test_folds": {
+          "n_comparable_pairs": 0,
+          "global_spearman": null,
+          "macro_query_spearman": null,
+          "micro_pairwise_accuracy": null,
+          "macro_pairwise_accuracy": null,
+          "auc_gt15": 0.5,
+          "auc_gt30": 0.5,
+          "calibrated_mae": 11.108674063823464,
+          "calibrated_rmse": 18.279453625641928,
+          "calibrated_r2": -0.011194513106345338
+        },
+        "constant_score_split_count": 50,
+        "n_splits": 50
+      },
+      "regression_head": {
+        "per_repeat_metric_summary": {
+          "global_spearman": {
+            "mean": 0.84282058706825,
+            "std": 0.01195379221488692,
+            "n": 10
+          },
+          "macro_query_spearman": {
+            "mean": null,
+            "std": null,
+            "n": 0
+          },
+          "micro_pairwise_accuracy": {
+            "mean": null,
+            "std": null,
+            "n": 0
+          },
+          "macro_pairwise_accuracy": {
+            "mean": null,
+            "std": null,
+            "n": 0
+          },
+          "auc_gt15": {
+            "mean": 0.9215429769392033,
+            "std": 0.007323037840635204,
+            "n": 10
+          },
+          "auc_gt30": {
+            "mean": 0.9496405228758169,
+            "std": 0.005850393289093678,
+            "n": 10
+          },
+          "calibrated_mae": {
+            "mean": 6.232603225820172,
+            "std": 0.24157995696768947,
+            "n": 10
+          },
+          "calibrated_rmse": {
+            "mean": 14.724875091280103,
+            "std": 0.31860900940703946,
+            "n": 10
+          },
+          "calibrated_r2": {
+            "mean": 0.3435608432651055,
+            "std": 0.028378310839950696,
+            "n": 10
+          }
+        },
+        "pooled_across_all_50_test_folds": {
+          "n_comparable_pairs": 0,
+          "global_spearman": 0.8430725411804392,
+          "macro_query_spearman": null,
+          "micro_pairwise_accuracy": null,
+          "macro_pairwise_accuracy": null,
+          "auc_gt15": 0.9216109014675054,
+          "auc_gt30": 0.9498039215686274,
+          "calibrated_mae": 6.232603225820172,
+          "calibrated_rmse": 14.727977016025964,
+          "calibrated_r2": 0.3435608432651055
+        },
+        "constant_score_split_count": 0,
+        "n_splits": 50
+      }
+    }
+  },
+  "decision": {
+    "label": "no_established_rank_pairwise_advantage",
+    "pre_registered_rule": "rank head is declared superior only when the 95% qid-cluster bootstrap CI for both macro pairwise accuracy and global Spearman is strictly above zero, and the corresponding calibrated-MAE CI is strictly below zero; otherwise the advantage is not established",
+    "macro_pairwise_accuracy_ci95": [
+      -0.15264328231292515,
+      0.004206528146183297
+    ],
+    "global_spearman_ci95": [
+      -0.14616032641090507,
+      -0.018693364276157087
+    ],
+    "calibrated_mae_ci95": [
+      0.45120986698763266,
+      2.2080576243569006
+    ],
+    "ranking_gain_established": false,
+    "calibration_gain_established": false,
+    "negative_control": {
+      "qid_count": 234,
+      "singleton_count": 234,
+      "total_pair_capacity": 0,
+      "rank_degeneracy": {
+        "rank_constant_score_split_count": 50,
+        "rank_constant_score_split_fraction": 1.0
+      }
+    },
+    "honesty_note": "The decision follows the pre-registered ranking criteria. It is not changed after inspecting the metrics."
+  },
+  "limitations": [
+    "76 of 111 primary qids are singletons and provide no pairwise training gradient.",
+    "The actual 50-split minimum train pair capacity is 173; the audit shorthand of approximately 277 was the repeat-0 minimum. The difference occurs when the large benzene-like qid and another large qid co-occur in the test fold.",
+    "The 10 RepeatedKFold repeats are correlated and are not 10 independent datasets; repeat-level t-tests are diagnostics only.",
+    "Primary confidence intervals use a qid-cluster bootstrap; stable inference is limited by small non-singleton query counts.",
+    "The qid-level split does not reproduce the v0.3 row-level fold table and must not be compared as if fold indices were identical.",
+    "Isotonic calibration is applied separately to each head but with the same algorithm and inner splits; it can remove score-scale information by construction.",
+    "The negative control is intentionally degenerate: every InChIKey is a singleton, so no comparable pairwise training or evaluation pairs exist.",
+    "No claim is made about compounds outside the frozen 234-row v0.3 benchmark or about arbitrary chemical extrapolation."
+  ],
+  "outputs": {
+    "summary": "probes/dielectric_ranking_head_summary.json",
+    "predictions": "data/processed/dielectric_ranking_head_predictions.csv",
+    "metrics": "data/processed/dielectric_ranking_head_metrics.csv",
+    "qid_audit": "data/processed/dielectric_ranking_head_qid_audit.csv"
+  }
+}

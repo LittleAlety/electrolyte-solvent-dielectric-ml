@@ -183,8 +183,9 @@ their ThermoML primary values (32.12 and 34.6); ECW-308 compilation values
 (30.00 and 37.00) are recorded as disagreements, not replacements.
 
 One flagged row is not yet withheld. Vinylene carbonate (literature range
-78-127; ECW-308 independently reports 126.00, but this study did not trace 126
-to an original measurement) carries model_ready=false and conflict_open but
+78-127; ECW-308 lists 126.00 and includes Hall et al. 2018 among its source
+refs, so independence from Hall is not established, and this study did not
+trace 126 to an original measurement) carries model_ready=false and conflict_open but
 still reaches the feature table, because the modelling pipeline currently
 honours only the exclusion list and not the model_ready flag. The discrepancy is
 recorded as a known issue rather than smoothed over; 3-methoxypropionitrile has
@@ -394,8 +395,9 @@ awaiting primary confirmation. Methyl propionate (NBS 5.5 vs. review 6.2) and th
 nitrile disagreements are recorded with their primary rows retained.
 
 Two flagged rows need qualification. Vinylene carbonate (literature range
-78-127; ECW-308 independently reports 126.00, but this study did not trace 126
-to an original measurement) carries model_ready=false and conflict_open. Since
+78-127; ECW-308 lists 126.00 and includes Hall et al. 2018 among its source
+refs, so independence from Hall is not established, and this study did not
+trace 126 to an original measurement) carries model_ready=false and conflict_open. Since
 the v0.3.4 revision the modelling gate enforces that flag, so the row is
 **withheld from every fit** and reported under `withheld_not_model_ready_names`
 instead of being trained on. 3-Methoxypropionitrile also carries

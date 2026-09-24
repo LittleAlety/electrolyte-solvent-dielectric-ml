@@ -38,8 +38,9 @@ awaiting primary confirmation. Methyl propionate (NBS 5.5 vs. review 6.2) and th
 nitrile disagreements are recorded with their primary rows retained.
 
 Two flagged rows need qualification. Vinylene carbonate (literature range
-78-127; ECW-308 independently reports 126.00, but this study did not trace 126
-to an original measurement) carries model_ready=false and conflict_open. Since
+78-127; ECW-308 lists 126.00 and includes Hall et al. 2018 among its source
+refs, so independence from Hall is not established, and this study did not
+trace 126 to an original measurement) carries model_ready=false and conflict_open. Since
 the v0.3.4 revision the modelling gate enforces that flag, so the row is
 **withheld from every fit** and reported under `withheld_not_model_ready_names`
 instead of being trained on. 3-Methoxypropionitrile also carries

@@ -1160,3 +1160,182 @@ initially, now 14) after
   全部修复；差异复审 **PASS（Critical 0 / Important 0）**。收口门禁为全量 `pytest` **640 passed**、
   `ruff check .` **All checks passed**；数据集 canonical SHA-256 仍为
   `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`。
+
+## 2026-09-24（续六）：Week 8 分析封版——C1/C2/C4/C6 四探针 + Tier-0 独立复核
+
+- **决定。** 附录 B 的 Week 8 封版清单 C1/C2/C4/C6 四项全部完成并各自封版；
+  C5（xTB ALPB 溶剂相 μ）按手册原议继续搁置。四项都**没有改动** `data/dielectric_v03.csv`：
+  canonical SHA-256 仍为 `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`（246 行 × 38 列）。
+- **编排与预算。** 本轮的并行结构是「3 个只读审查 + 2 个独立写集实现 + 主线程唯一数据写者」：
+  Hilbert（C1 审计）、Hume（C2/C4 审计）、Mencius（C6 审计）三名只读；
+  Jason（C2 实现）与 Galileo（C4 实现）写集互不重叠；主线程负责 C1、C6、Tier-0 复核与全部合并。
+  **本轮外部 HTTP 调用 0 次**（NBS PDF 早已缓存并核对过 SHA-256），远低于每小时 500 次上限。
+- **C1 分裂共形——第一版方法学错误，已推翻重做。** 初版把不同 fold 的 OOF 残差池化成一个全局分位数，
+  **不是标准分裂共形**：每个 `(repeat, fold)` 来自不同训练集与不同 XGBoost seed，跨 fold 残差不满足交换性。
+  修正后的协议：每个随机 split 对全部 234 个化合物做一次**全局**校准/测试划分（角色只由 `seed + split_id` 决定，
+  跨 representation/arm/repeat 保持一致），再在**每个冻结 fold 内部**单独估分位数、单独测覆盖，**绝不跨格池化**。
+  规则 `k = ceil((m+1)*0.9)`，`m >= 9` 才有限。结果：六个系列边际覆盖 **0.9138–0.9156**（名义 0.90），
+  无穷区间率 **全 0**，平均区间宽 38.4–45.4。
+  **必须保留的负结果**：`ε > 60` 分层（仅 5 个化合物）条件覆盖崩到 **0.015–0.257**（归一化后 0.18–0.51）。
+  边际覆盖合格 ≠ 条件覆盖合格，此点写入 JSON 的 `honest_boundary` 并由回归测试锁定。
+- **C2 rank:pairwise——干净负结果。** qid 用仓库既有的 Murcko/Butina 结构分组规则（只读 SMILES），
+  234 行 → **111 qid、76 单例、799 对 query 内 pair**；负对照 `qid=InChIKey` 时 234 个 query 全单例、
+  50/50 个 split 的 rank 输出为常数分，训练目标完全退化。主实验在 qid 层跑 5×10×42，
+  两个头使用**完全相同**的 train/test 行索引。10-repeat 均值：macro pairwise accuracy
+  **0.7314（rank） vs 0.8011（回归）**、global Spearman **0.7062 vs 0.7888**、
+  等校准 isotonic 后 MAE **8.61 vs 7.37**。配对差值 CI：Spearman `[-0.1462, -0.0187]`（不含 0，回归更好）、
+  校准 MAE `[+0.4512, +2.2081]`（不含 0，rank 更差）。判定 `no_established_rank_pairwise_advantage`；
+  筛选继续用回归头排序。另修正审计口误：50 个 split 的**全局**最低 pair capacity 是 **173**，不是 277。
+- **C4 Onsager 残差 delta——机理层 go，但不升级为预测器。** 四参数原函数
+  `onsager_dielectric_estimate(mu, Vm, alpha, T)`；`delta = ε - g`；特征分闭包 A（Onsager 输入）
+  与 B_core，断言 `A ∩ delta_features = ∅`，D3_leaky 作为显式泄漏诊断。O0 复现审计值
+  （总体 MAE 10.49、给体 16.66 / bias +13.84、离子 41.22 / bias −34.25）。
+  headline D1 在**点估计**上过全部预注册闸门（总体 8.54 < O1 9.41；给体 12.14 < 16.66；
+  离子 34.13 ≤ 41.22；ε>60 的 MAE 87.02 → 75.96），但**仍打不过直接 Morgan+Physical 回归（8.54 vs 6.36）**，
+  且对 O1 的优势 CI 含 0（`[-1.744, +0.011]`）。因此
+  `learned_delta_layer_confirmed = true`（仅机理披露）、`onsager_promoted_to_standalone_predictor = false`。
+  保留负结果：ε>60 域 Onsager 命中 **0/5**（五个化合物全部严重低估，stratum bias +69.96）；
+  D3_leaky（7.22）点估计胜过所有确认臂，说明部分增益来自重复使用物理输入而非缔合修正。
+- **C6 NBS 温度调和——符号被实证纠正。** 从 NBS Circular 514 原 PDF（印刷页 III–IV，
+  SHA-256 `cb3fa923…`）确认 `a = -dε/dt`、`alpha = -d log10(ε)/dt`，两分支**同向**，
+  指数取值必须是 `(T - 298.15)`。**此前工作笔记里对数分支的符号是写反的**，并被
+  `tests/test_nbs514_alpha_harmonization_probe.py` 的手算锚点锁死。
+  内证三点：① 同表双温度对照 4 对，平均相对误差 **0.21%**、最大 0.56%（另一符号约定会差 2–5%，差一个数量级）；
+  ② 188 条带系数行中 182 条隐含斜率 `dε/dt < 0`（正常液体应如此）；③ 严格 zero-frequency 同结构 ThermoML
+  对照 **0 条**。可修正性分解与 Mencius 独立审计**逐项一致**：110 条 NBS 行 = 68 无系数 + 17 已在 298.15 K +
+  **15 严格可修正** + 10 有效温区不含 25 °C。严格可修正行的中位位移仅 **0.011**、均值 0.248（最大 2.5），
+  即温度窗是真实但**次要**的限制。另标记 2 条负系数记录（三氟乙酸 `a=-0.5`、丁酸 `a=-0.0023`）：
+  原表即为负号，属**忠实转录**，单独标记待人工复核、不静默调和。
+  放宽到「纯液 + 近常压 + 频率 ≤ 3 MHz + 观测落在 NBS 有效温区内」得 18 对代理对照（5 个化合物）：
+  MAE 0.375 → 0.232、RMSE 0.733 → 0.368，但仅 6/18 单独改善，按**混合风险信号**报告，不写成验证通过。
+- **Tier-0 独立复核（本地 ThermoML 覆盖）。** 用 242 份 XML 的**独立文本 grep** + 抽取表组件级重数，
+  复核「PC/EC 本地无介电数据」这一承重结论。结果：PC **26 份 XML 提及但 0 份含任何 permittivity/dielectric 措辞**、
+  抽取表 0 行；EC 11/0/0；VC 与 FEC 完全不在本地语料；MOPN 1 份无介电措辞。
+  反面：diglyme **9 条纯组分**、triglyme **15 条**、tetraglyme **11 条**、adiponitrile **31 条**、
+  glutaronitrile **31 条**——这些「升级」根本不需要新爬取，本来就在缓存里。
+  因此把此前的措辞从「未找到」收窄为更准确、也更强的表述：**PC/EC 只作为非介电研究的混合物组分出现，
+  再爬同一语料不会有帮助**。同时修正一处口径错误：adiponitrile 的正确 InChIKey 是
+  `BTGRAWJCKBQKAO-UHFFFAOYSA-N`（此前临时 grep 用的 `BTGRAWLCACVEDO-…` 是错的，会伪造出第二次"缺失"）。
+- **未变的部分（复核过，不是假设）。** `data/dielectric_v03.csv` 仍 246 行 × 38 列、canonical SHA-256 未变；
+  无任何数值、温度、证据等级、`model_ready` 门控或冲突状态变化。vc/FEC/MOPN 的 v1.0 闸门**仍未闭环**，
+  本轮没有、也不应擅自打 tag。
+- **产物。** 探针 `probes/dielectric_split_conformal_probe.py`、`probes/dielectric_ranking_head_probe.py`、
+  `probes/dielectric_onsager_delta_probe.py`、`probes/nbs514_alpha_harmonization_probe.py`、
+  `probes/thermoml_local_coverage_probe.py`；报告 `reports/week8_c1_split_conformal.md`、
+  `reports/week8_c2_ranking_head.md`、`reports/week8_c4_onsager_delta.md`、
+  `reports/week8_c6_nbs_alpha_harmonization.md`、`reports/thermoml_local_coverage_audit.md`；
+  测试 `tests/test_dielectric_split_conformal_probe.py`（13）、`tests/test_dielectric_ranking_head_probe.py`（7）、
+  `tests/test_dielectric_onsager_delta_probe.py`（17）、`tests/test_nbs514_alpha_harmonization_probe.py`（20）、
+  `tests/test_thermoml_local_coverage_probe.py`（6）。
+- **导出。** `probes/export_week8_results.py` 的 `ARTIFACTS` 与 `week8_summary.json` 已登记
+  `c1_split_conformal` / `c2_ranking_head` / `c4_onsager_delta` / `c6_nbs_alpha_harmonization` /
+  `thermoml_local_coverage` 五个摘要块；新增的 `data/processed` CSV 已加入 `.gitignore` 白名单。
+
+## 2026-09-24（续七）：Week 8 对抗复审收口（I1/I2/I3）+ G1+ 第三轮爬取
+
+### A. 对抗复审（Boyle，只读）的三项 Important 修复
+
+复审判定：**无 Critical，3 项 Important，2 项 Minor**。Important 全部修复，Minor 全部修掉，未扩张范围。
+
+- **I1（口径冲突）C1 的 repeat 级 t 区间被误当作置信区间。** 该区间是十个 repeat 均值的
+  mean +/- t_{0.975,9} * s / sqrt(10)，而 repeat 复用同一批 234 个化合物、并非独立样本，
+  同一份 summary 里又写着 repeat_treated_as_independent = false。修复：字段从 `coverage.ci95`
+  改名为 `coverage.repeat_dispersion_interval`，`_aggregate` 补文档字符串，summary 新增
+  `repeat_dispersion_interval_note` 明示「描述性离散度，不是抽样置信区间，抽样区间需要化合物级
+  bootstrap 且本探针不做此声明」，报告表头由「95% CI (repeat level)」改为「Repeat dispersion
+  (descriptive)」并加一段说明。**点估计与覆盖度数值一个都没变。**
+- **I2（非法 JSON）`probes/dielectric_ranking_head_summary.json` 含裸 `NaN`，严格 JSON 解析器拒收。**
+  修复：五个新探针各自新增 `_json_ready`（非有限浮点递归转 `null`）与 `write_json_lf`，写盘统一走
+  `allow_nan=False`。修复后**全部 62 份 JSON 产物严格解析通过**。C2 里新出现的 58 个 `null`
+  全部落在退化负对照（`inchikey_singleton_negative_control` 37 个 + `results.negative_control_arm_results`
+  21 个），即每个 InChIKey 都是单例、rank 输出常数分、Spearman 与 pairwise 指标**在数学上未定义**的
+  那一格；主口径 `scaffold_butina_qid` 一个 `null` 也没有。这属于「未定义」而非「缺失」，不是把数字抹掉。
+- **I3（成果包陈旧）Week8 输出包仍是旧版，且有 4 个被 summary 引用的 CSV 未登记。**
+  修复：`probes/export_week8_results.py` 的 ARTIFACTS 补入
+  `dielectric_ranking_head_predictions.csv`、`dielectric_ranking_head_qid_audit.csv`、
+  `dielectric_onsager_delta_predictions.csv`、`dielectric_onsager_delta_failure_cases.csv`，
+  并把导出的 `coverage_ci95` 键同步改名为 `coverage_repeat_dispersion_interval`。
+- **Minor 1**：`tests/test_dielectric_split_conformal_probe.py` 里 `assert not np.any(first & ~first)`
+  是恒真断言。改为按文档化的规则独立重推期望掩码（`np.random.default_rng(1234).permutation(234)[:117]`）
+  并显式校验两个角色构成划分。
+- **Minor 2**：`reports/week8_c6_nbs_alpha_harmonization.md` 把 ThermoML 重叠扫描范围误写为
+  「ten target keys」，改为「**110 frozen NBS keys**（不只是 10 个 G1+ 目标分子）」。
+
+**超出复审清单的一项自纠：**本轮五个新探针原先都用 `Path.write_text` 落盘，在 Windows 上会被翻译成
+CRLF，而仓库 `.gitattributes` 规定 `*.json text eol=lf`、旧证据文件也都是纯 LF。同一脚本在 Linux 上会产出
+不同字节，属于跨平台不可复现。修复：五个探针统一改走 `write_json_lf`（显式 `newline=""`）。
+重生成后五份 summary 的 CRLF 计数全部为 0。
+
+**重生成后的数值复核（均与封版一致）：**C1 六系列边际覆盖 0.9138-0.9156、无限区间率 0；
+C4 O0 = 10.488 / O1 = 9.411 / R0 = 6.357 / D1 = 8.539 / D2 = 12.851 / D3_leaky = 7.220，decision 仍为 go（仅残差层）；
+C6 与 Tier-0 结论不变。五个证据产物重生成后 `data/dielectric_v03.csv` 仍为 246 行、
+SHA-256 `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`。
+
+### B. G1+ 第三轮爬取：三张开放票据（三名只读研究者 + 主线程本地复核）
+
+证据 `probes/g1plus_crawl_round3_evidence.json`，写于 `reports/g1plus_crawl_round3_findings.md`。
+**本轮没有新增任何可入数据集的原始测量值，数据集一个字节未动。**
+
+- **FEC：存量 102 是闪点，量纲错误（本轮最重要发现）。** Luo et al. 2021（Adv. Sci. 8, 2101051，
+  DOI 10.1002/advs.202101051）同一行的列序为 Tm / Tb / 粘度 / **Dielectric constant eps** /
+  **Flash point Tf** / 密度 = 20 / 210 / 3.33 / **78.4** / **102** / 1.45 —— 78.4 在介电列，102 在闪点列。
+  ECW-308 Table S3 自己给的是 78.40（主线程在本地缓存第 5876-5879 行复核），Deng et al. 2020 全文已读且
+  **不含 78.4**，Ue et al. 2014 Table 2.3 给 107（汇编）。结论：冲突单应改述为「78.4 vs 107 双腿，102 属量纲错误」，
+  且两条腿都是名义 25 °C、无频率的二次来源，不得解释成温度或频率依赖。
+- **VC：126（整数，名义 25 °C）在两张互不相同的综述级表格里都被印为整数，但两表独立性未确立，且仍无原始测量。** Hall et al. 2018 的
+  表是 **Table II**（更正此前 Table I 的记法），Vali et al. 2016 开放论文 Table I 的 VC 行给 126 并在表注写明
+  25 °C；Souid et al. 2025 的「126 at 298 K」其 [29] 就是 Vali 2016，属**转述而非独立确认**；
+  Saadi & Lee 1966（DOI 10.1039/j29660000005）正文仍被 Cloudflare 拦截。票保持 conflict_open，不升级。
+- **MOPN：36 追到具名 1994 主来源候选，且存量精度被高估。** 主线程在本地论文缓存中独立复核到
+  Tableau 4 表头确为 `eps_r à 25°C`、MP 行为 `Méthoxypropionitrile [43] - 57 165 66 1,1 36`，
+  Figure 10 与 Tableau 12 同值，正文亦写 `eps_r = 36`；参考文献 **[43] = Ue, Ida & Mori, J. Electrochem. Soc.
+  141(11) 2989-2996 (1994)**，DOI 10.1149/1.2059270，正文写法 Ue et al. [43, 51] 已确认。第二条独立综述级
+  确认来自 Yen et al. 2022（Electrochim. Acta 411, 141105）。Ue 1994 本体 blocked（OpenAlex OA=False）。
+  另外：所有可读来源印的都是两位有效数字的整数 **36**，存量 **36.0 的位数没有来源支持**。
+
+**FEC 的 102 为什么不当场改：**`dielectric` 属 `PROVENANCE_PATCH_PROTECTED_FIELDS`，且
+`data/dielectric_v03.csv` 被约 25 份报告、探针摘要与 5 个测试硬钉哈希；改写它要同步重建数据集、
+更新全部钉点并重跑基准，属于一次**新的数据修订**，不应在分析封版的同时静默进行。
+证据文件的 `pending_patch_rows` 已写好下一条修订应原样采用的两行 patch（conflict_status 与 notes）。
+
+**请求预算（如实记账）：**Chandrasekhar 77 次、Boole 40 次、Dalton 55 次，合计 **172 次**；
+用户硬上限 500 次/小时**未被接近**，主线程外部调用 0 次。但**两名研究者突破了主线程设定的 40 次/人子上限**，
+这一偏差按事实记录，不写成合规。所有 blocked 路径都具名到具体文献与具体失败原因，「查无此值」与
+「权限阻断」严格区分，本轮没有任何一条写成「无数据」。
+
+### C. 本轮验证
+
+`pytest -q` **703 passed**；`ruff check .` **All checks passed**；五个新探针产物重生成后 62 份 JSON 全部严格解析通过。
+五个新增测试文件（C1-共13 / C2-共7 / C4-共17 / C6-共20 / Tier-0-共6）合计 63 项全过。
+
+### D. 二次对抗复审（同一 reviewer）的 1 项 Important 与 2 项 Minor
+
+首次修复后把**精确 diff** 交回同一位只读 reviewer（Boyle）复审。结论：**0 Critical、1 Important、2 Minor**；
+修复项 1-7 全部 pass（C1 口径、C2 严格 JSON、Week8 输出包与 4 个 CSV、C1 测试可失败性、C6 措辞、五探针 LF 自纠、数据集冻结哈希），
+第 8 项（本轮新增的 round-3 证据）为 partial。三项已修：
+
+- **Important：VC 的「两个独立综述表」是过强断言。** 证据只能证明 Hall 2018 与 Vali 2016 是两张**互不相同**的
+  综述级表格；两表的 VC 行都没有逐值引注，而已知的原始测量（Saadi & Lee 1966）不可读，所以两表**可能都在转引同一原始值**，
+  独立性无法确立。修复：证据文件的 verdict/claim/consequence 与报告、手册一并由 independent 降级为
+  distinct + independence not established，finding_id 同步改名。
+- **Important：未复核来源的披露不完整。** 原先 local_recheck.not_rechecked 只列了 7 个来源，漏掉 Hall 2018、Yen 2022、
+  Ue 1994、Knovel。修复：**每一条 evidence 行**新增 recheck_status（coordinator / agent_only / blocked）并补 recheck_status_legend，
+  not_rechecked 扩到 11 条。现状：17 条引文中 coordinator 6、agent_only 7、blocked 4；无一条缺标注。
+- **Minor：C1 报告表格被说明段落切断。** 插入的说明段落把 GFM 表头与数据行分成了两个块。修复：说明段落移到数据表之后。
+- **Minor：C4 的 JSON writer 与其余四个探针契约不一致。** C4 沿用既有 json_safe 而非 _json_ready，且 json.dumps 未显式写
+  allow_nan=False。修复：显式补上 allow_nan=False（json_safe 已把非有限浮点转 None，语义未变，仅统一契约）。
+以上四项修完后再交同一位 reviewer 复审，发现**唯一一处未收口的 Important**：全仓 6 处旧文本把
+**ECW-308 的 VC 126** 描述为 independent / independently，而 ECW-308 自己的 source_refs 就含 [3] Hall 2018，
+两者不构成独立确认。已逐处修正（paper/full_draft.md 两处、paper/methods_data_records.md、paper/technical_validation.md、
+reports/v033_provenance_upgrade.md、probes/g1plus_tier2_evidence.json 各一处），按 reviewer 的更严格建议写作
+「ECW-308 includes Hall et al. 2018 among its source refs, so independence from Hall is not established」，
+而不是断言「确定转引」（因为 ECW-308 同时引 [3] 与 [16]）。**只改 provenance 措辞，不动任何数字或结论。**
+
+第四轮复审最终判定：**0 Critical、0 未解决 Important**；三项旧断言（independently reports 126 / independent compilation
+reproduces 126 / independently reproduces the contested）在仓库与两个输出包中均为 0 命中。同一轮 reviewer 还**收回**了它上一轮
+关于「Tableau 4 表头未明写 25 °C」的提示——经其复核缓存文本第 1364-1365 行确为 `εr à 25°C`，原表述无误。
+
+**最终验证（第四轮后重跑）**：`pytest -q` **703 passed**；`ruff check .` All checks passed；
+`check_paper_artifact_consistency.py` 报 paper drafts agree with the frozen artifacts；
+`verify_dielectric_v03.py` 报 output_sha256 = 57387b98…（规范数据集未变）；
+week7 输出包 59 个文件、week8 输出包 63 个文件，SHA256SUMS 均 missing/extra/mismatch = 0。
