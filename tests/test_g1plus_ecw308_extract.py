@@ -115,6 +115,7 @@ def test_a_stray_bare_integer_never_opens_a_row() -> None:
 
 def test_formula_window_is_bounded_by_the_next_row_label() -> None:
     start = Token(2, 120.3, 230.3, "38.")
+    follower = Token(2, 147.3, 204.4, "39. Propanenitrile")
     scoped = [
         start,
         Token(2, 154.5, 218.3, "C"),
@@ -122,10 +123,59 @@ def test_formula_window_is_bounded_by_the_next_row_label() -> None:
         Token(2, 165.0, 218.3, "H"),
         Token(2, 172.7, 217.4, "3"),
         Token(2, 176.1, 218.3, "N"),
-        Token(2, 147.3, 204.4, "Propanenitrile"),
+        follower,
     ]
-    assert _formula_for(start, scoped, 204.4) == "C2H3N"
-    assert _formula_for(start, scoped, None) is None
+    formula, line = _formula_for(start, scoped, follower)
+    assert formula == "C2H3N"
+    assert {token.text for token in scoped if id(token) in line} == {"C", "2", "H", "3", "N"}
+
+
+def test_formula_window_reaches_a_wrapped_row_without_taking_its_neighbour() -> None:
+    # Rows whose names wrap sit on a 48.7 pt pitch and push the formula 36.3 pt
+    # below the label, past the old fixed 35 pt cap. The next row's formula sits
+    # one whole pitch further down and must stay unclaimed.
+    start = Token(2, 122.5, 495.0, "88.")
+    follower = Token(2, 101.4, 446.3, "89.")
+    scoped = [
+        start,
+        Token(2, 146.3, 458.7, "C"),
+        Token(2, 153.4, 457.8, "5"),
+        Token(2, 156.9, 458.7, "H"),
+        Token(2, 164.5, 457.8, "10"),
+        Token(2, 171.5, 458.7, "F"),
+        Token(2, 177.4, 457.8, "2"),
+        Token(2, 180.7, 458.7, "O"),
+        Token(2, 188.4, 457.8, "2"),
+        follower,
+        Token(2, 148.1, 410.0, "C"),
+        Token(2, 158.7, 410.0, "H"),
+        Token(2, 169.8, 410.0, "F"),
+        Token(2, 179.1, 410.0, "O"),
+    ]
+    assert _formula_for(start, scoped, follower)[0] == "C5H10F2O2"
+    # The follower's own window stops before the row below it, so it reads the
+    # reduced formula and never inherits its predecessor's.
+    assert _formula_for(follower, scoped, None)[0] == "CHFO"
+
+
+def test_a_formula_that_crosses_a_page_break_is_still_read() -> None:
+    # Entries 43 and 116 print their formula at the very top of the *following*
+    # page, above the label of that page's first row.
+    start = Token(70, 115.9, 104.1, "43.")
+    follower = Token(71, 118.3, 479.7, "44.")
+    scoped = [
+        start,
+        Token(70, 131.8, 104.1, "Methoxypropionitrile"),
+        follower,
+        Token(71, 150.7, 495.0, "C"),
+        Token(71, 157.8, 494.0, "4"),
+        Token(71, 161.3, 495.0, "H"),
+        Token(71, 169.0, 494.0, "7"),
+        Token(71, 172.3, 495.0, "NO"),
+    ]
+    assert _formula_for(start, scoped, follower)[0] == "C4H7NO"
+    # The same tokens must not leak into the next row's window.
+    assert _formula_for(follower, scoped, None)[0] is None
 
 
 def test_a_number_far_to_the_right_never_opens_a_row() -> None:
@@ -197,13 +247,63 @@ def test_formula_is_assembled_left_to_right_across_baselines() -> None:
         Token(1, 171.0, 403.5, "4"),
         Token(1, 182.1, 403.5, "3"),
     ]
-    assert _formula_for(start, scoped) == "C3H4O3"
+    formula, line = _formula_for(start, scoped)
+    assert formula == "C3H4O3"
+    assert [token.text for token in scoped if id(token) in line] == [
+        "C",
+        "H",
+        "O",
+        "3",
+        "4",
+        "3",
+    ]
 
 
 def test_name_does_not_repeat_an_overlapping_chunk() -> None:
     start = Token(1, 117.0, 271.2, "52. Glutaronitrile (GLN)")
     scoped = [start, Token(1, 117.0, 271.2, "Glutaronitrile (GLN)")]
     assert _name_for(start, scoped) == "Glutaronitrile (GLN)"
+
+
+def test_locants_survive_the_duplicate_guard() -> None:
+    # The previous guard dropped a token whenever its text appeared inside an
+    # earlier one, so "1" already present in "91." vanished and the ester lost
+    # both of its locants. Locants and repeated hyphens must both survive.
+    start = Token(5, 86.5, 372.8, "91.")
+    scoped = [
+        start,
+        *(Token(5, x, 372.8, text) for x, text in [
+            (102.4, "1"),
+            (107.7, "-"),
+            (111.1, "(2"),
+            (119.9, "-"),
+            (123.4, "Fluoroethoxy)"),
+            (183.5, "-"),
+            (187.0, "2"),
+            (192.3, "-"),
+            (195.7, "ethoxyethane"),
+        ]),
+    ]
+    assert _name_for(start, scoped) == "1 - (2 - Fluoroethoxy) - 2 - ethoxyethane"
+
+
+def test_row_279_drops_its_bare_label() -> None:
+    start = Token(9, 88.2, 369.2, "279")
+    scoped = [
+        start,
+        *(Token(9, x, 369.2, text) for x, text in [
+            (104.1, "."),
+            (109.3, "1"),
+            (114.6, "-"),
+            (118.1, "Methyl"),
+            (148.3, "-"),
+            (151.8, "2"),
+            (157.1, "-"),
+            (160.6, "pyrrolidinone"),
+            (220.3, "(NMP)"),
+        ]),
+    ]
+    assert _name_for(start, scoped) == "1 - Methyl - 2 - pyrrolidinone (NMP)"
 
 
 def test_reference_list_parser_keeps_the_full_citation() -> None:
@@ -324,6 +424,62 @@ def test_committed_evidence_covers_every_row_of_table_s3() -> None:
     assert evidence["summary"]["row_index_sequence_complete"] is True
     assert evidence["summary"]["row_index_sequence_reached"] == TABLE_ROWS
     assert len(evidence["rows"]) == TABLE_ROWS
+
+
+def test_committed_evidence_reads_the_wrapped_and_cross_page_entries() -> None:
+    rows = {row["index"]: row for row in _evidence()["rows"]}
+    # Row 88 and 89 wrap their name over three printed lines; the continuation
+    # carries the abbreviation that the identity gate needs to see.
+    assert rows[88]["name"].endswith("methoxyethoxy)ethane (DFEME)")
+    assert rows[88]["formula"] == "C5H10F2O2"
+    assert rows[89]["formula"] == "C5H9F3O3"
+    # Rows 43 (MOPN) and 116 print their formula after a page break.
+    assert rows[43]["formula"] == "C4H7NO"
+    assert rows[116]["formula"] == "C5H10O2"
+    # Row 279's label is a bare "279" followed by a separate "." token.
+    assert rows[279]["name"] == "1 - Methyl - 2 - pyrrolidinone (NMP)"
+    assert "279" not in rows[279]["name"]
+
+
+def test_every_valued_row_of_the_table_carries_a_formula() -> None:
+    report = _crosscheck()
+    # The two earlier hold-outs (43 and 116) are read across their page break,
+    # so no valued row is left without the identity gate's input.
+    assert report["summary"]["ecw_no_formula"] == 0
+    assert report["summary"]["matched"] == 27
+    assert report["summary"]["agree_within_1pct"] == 11
+    assert report["summary"]["agree_within_5pct"] == 10
+    assert report["summary"]["divergent"] == 6
+    assert report["summary"]["formula_only_candidate"] == 19
+
+
+@pytest.mark.parametrize(
+    ("index", "dataset_name", "dataset_value"),
+    [
+        (109, "Butyl acetate", 5.01),
+        (280, "Acetone", 20.7),
+        (283, "N-methylpyrrolidone", 32.2),
+    ],
+)
+def test_same_cid_synonyms_are_gated_on_identity(
+    index: int, dataset_name: str, dataset_value: float
+) -> None:
+    # Each pair was confirmed to be one structure by PubChem PUG-REST (same
+    # CID), so the row may be matched on identity rather than on formula alone.
+    entry = next(e for e in _crosscheck()["entries"] if e["ecw_index"] == index)
+    assert entry["status"] == "agree_within_1pct"
+    assert entry["dataset_name"] == dataset_name
+    assert entry["dataset_dielectric"] == pytest.approx(dataset_value)
+
+
+def test_a_candidate_without_a_name_claim_stays_a_candidate() -> None:
+    # ECW prints "Methoxypropionitrile" with no locant; the dataset entry is
+    # "3-methoxypropionitrile". Without a locant the two names do not establish
+    # identity (2-methoxypropionitrile is a different molecule), so the row must
+    # stay a candidate instead of becoming a match or a conflict.
+    entry = next(e for e in _crosscheck()["entries"] if e["ecw_index"] == 43)
+    assert entry["status"] == "formula_only_candidate"
+    assert entry["formula_candidates"] == ["3-methoxypropionitrile"]
 
 
 def test_committed_evidence_resolves_the_ecw_citation_numbers() -> None:

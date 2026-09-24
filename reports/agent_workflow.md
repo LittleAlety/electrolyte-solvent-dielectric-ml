@@ -310,6 +310,32 @@ recorded as inaccessible rather than as empty.
 No dataset value moved in this round: `data/dielectric_v03.csv` is still
 `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`.
 
+
+## ECW-308 second adversarial round: identity gate and extractor precision (round 3, 2026-09-24)
+
+Reviewer: Boole (read-only adversarial pass, independent pypdf scan, no reuse of the
+extractor's own helpers). Verdict on v0.3.8: **FAIL - 1 Important, 2 Minor, no Critical**.
+The main thread held the only write set; the reviewer ran read-only.
+
+| # | Finding (reviewer) | Fix (main thread) |
+| --- | --- | --- |
+| Important 1 | Three same-CID name pairs were still outside `SYNONYM_NAMES`, so `matched=24 / formula_only=20` was a mechanical count rather than a complete identity gate | Added `n butyl acetate`, `dimethylketone`, `n methylpyrrolidinone`; the three rows now pass the gate (5.00/5.01, 20.50/20.7, 32.00/32.2) |
+| Minor 1 | Row 279's name carried its row number because pypdf splits `279.` into `279` `.` tokens | Name assembly strips a bare row index plus the punctuation token that follows it |
+| Minor 2 | `ecw_no_formula` still mixed two different causes (row pitch vs page break) | Both causes fixed in the extractor; the state now reads 0 and is kept as a safety net |
+
+The reviewer's three findings also exposed four **extraction** defects that the counts alone
+would have hidden. They were fixed at the root rather than by adjusting expectations:
+
+| Defect | Evidence | Fix |
+| --- | --- | --- |
+| Two row pitches (24.6 pt / 48.7 pt) left the formula of wrapped rows 36.3 pt below the label, past the 35 pt cap | rows 88 (DFEME) and 89 (TFEME) had no formula | Per-line clustering (2.5 pt gap) plus a 45 pt cap whose real bound is the next row label |
+| Names were read from the label line only | row 88 was `1,1 - Difluoro 2 (2` | Names are reassembled line by line down to the formula line; continuation lines must start in the name column (x<=250) and value tokens are refused |
+| The block was bounded per page | rows 43 (MOPN) and 116 print their formula at the top of the following page | Block boundaries moved to document order `(page, -y)`; both formulas recovered |
+| The duplicate guard dropped a token whenever it appeared inside an earlier one | `1` inside `91.` and `Me` inside `Methyl` were deleted | Only same-coordinate duplicates are dropped, with a word-boundary test for multi-character chunks |
+
+Row-by-row diff against the v0.3.8 artefacts: **+21 formulas, 112 names repaired, 0 rows lost**,
+and no field other than `name`/`formula` changed.
+
 ## Verification Log
 
 | Date | Command | Result |
@@ -344,6 +370,10 @@ No dataset value moved in this round: `data/dielectric_v03.csv` is still
 | 2026-09-24 | `.venv\Scripts\python.exe probes/g1plus_materials_project_probe.py` | Materials Project: positive control SiO2 = 322 documents with populated `e_total`/`n`; **0/14 targets** |
 | 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_g1plus_materials_project_probe.py` | `14 passed` - control-populated evidence, LF-only artefacts, a guard that no API key shape leaked into them, and the 429/5xx, non-transient-error and cache-binding paths |
 | 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider` | `553 passed` (538 before the Materials Project round) |
+| 2026-09-24 | `.venv\Scripts\python.exe probes/g1plus_ecw308_extract.py` | 308 rows / 87 value / 204 blank / 11 missing / 6 stacked; crosscheck matched=27, divergent=6, formula_only=19, ecw_no_formula=0 |
+| 2026-09-24 | `.venv\Scripts\python.exe probes/g1plus_ecw308_extract.py --check` | `evidence reproduces: True` after the identity-gate and extractor repairs |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_g1plus_ecw308_extract.py` | `46 passed` (36 before this round) |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider` | `599 passed` (589 before this round) |
 
 ## Visibility Rule
 

@@ -23,11 +23,11 @@ for this dataset, so reconciling all 308 rows is the strongest cheap
 cross-validation available.
 
 A plain text dump cannot support that reconciliation. In the dump the rows run
-together on shared lines ("... [16, 34, 36] 159. Propylene carbonate ..."), row
-279 loses its full stop entirely, and some names are glued to the row number.
-The PDF, by contrast, positions every cell at a stable x coordinate, so the
-extractor reads the PDF through the pypdf text visitor and decides columns by
-geometry:
+together on shared lines ("... [16, 34, 36] 159. Propylene carbonate ..."), the
+tokens of a single entry are interleaved with its neighbours, and some names are
+glued to the row number. The PDF, by contrast, positions every cell at a stable
+x coordinate, so the extractor reads the PDF through the pypdf text visitor and
+decides columns by geometry:
 
 - the dielectric column is the band strictly between the viscosity and
   ionic-conductivity header columns, both of which are printed on every Table
@@ -35,7 +35,12 @@ geometry:
 - a row is only accepted when its row number equals the next expected index, so
   a stray number in a neighbouring column cannot open a row,
 - a cell is only reported as a value when exactly one token falls inside the
-  band and it parses as a number.
+  band and it parses as a number,
+- an entry's text is delimited by the *next row label in document order*, so a
+  name that wraps onto continuation lines is read whole and a row whose formula
+  is pushed past a page break (entries 43 and 116) is still read,
+- names are reassembled from their printed lines and a value cell sitting in
+  the name margin is rejected rather than glued onto the name.
 
 Honesty rules
 -------------
@@ -117,7 +122,21 @@ ROW_NAME_MAX_X = 285.0
 FORMULA_MIN_X = 138.0
 FORMULA_MAX_X = 220.0
 FORMULA_MIN_DY = 10.5
-FORMULA_MAX_DY = 35.0
+# The SI sets two different row pitches: 24.6 pt on most pages and 48.7 pt on
+# the pages whose names wrap onto continuation lines. A wrapped row pushes its
+# formula to 36.3 pt below the label, so the window has to reach past 35 pt; the
+# real guard against reading a neighbour's formula is the next-row label below,
+# not this cap.
+FORMULA_MAX_DY = 45.0
+# An element symbol and its subscript sit ~1 pt apart, while two printed lines
+# are at least 6 pt apart, so a 2.5 pt single-linkage gap clusters a line
+# without ever merging two of them.
+LINE_CLUSTER_GAP_PT = 2.5
+# A wrapped name continues at the left edge of the name column. A line that
+# starts further right is a neighbouring value cell ("127.00", "44.00/").
+NAME_CONTINUATION_MIN_X = 250.0
+PURE_NUMBER = re.compile(r"^\d+(?:\.\d+)?$")
+BARE_ROW_INDEX = re.compile(r"^\d{1,3}\s*[.\-]?\s*")
 REFERENCE_MIN_X = 700.0
 # A row block occupies the ~20 pt of column space below its printed number, and
 # the SI sometimes stacks a second, uncited value under the first. A cell is
@@ -126,7 +145,6 @@ REFERENCE_MIN_X = 700.0
 # printed fractionally above the row name).
 CELL_BELOW_MAX_DY = 20.0
 CELL_ABOVE_MAX_DY = 2.0
-NAME_SAME_LINE_DY = 1.5
 COLUMN_TEMPERATURE_C = 25.0
 COLUMN_TEMPERATURE_SOURCE = "column_header"
 
@@ -154,6 +172,13 @@ SYNONYM_NAMES = {
     "dimethyl acetamide": "n n dimethylethanamide",
     "dioxolane": "1,3-dioxolane",
     "i butyl acetate": "isobutyl acetate",
+    # Same-CID identities confirmed against PubChem PUG-REST (see the round-3
+    # review note): the SI's spelling and the dataset's spelling are two names
+    # for one structure, so the pair may be gated on identity rather than on
+    # formula alone.
+    "n butyl acetate": "butyl acetate",
+    "dimethylketone": "acetone",
+    "n methylpyrrolidinone": "n methylpyrrolidone",
 }
 
 AGREEMENT_BANDS = ((0.01, "agree_within_1pct"), (0.05, "agree_within_5pct"))
@@ -260,49 +285,162 @@ def _row_index(start: Token) -> int:
     return int(match.group("index")) if match else int(start.text)
 
 
-def _name_for(start: Token, scoped: Sequence[Token]) -> str:
-    parts = [(start.x, start.text)]
-    for token in scoped:
-        if token.page != start.page:
-            continue
-        if abs(token.y - start.y) > NAME_SAME_LINE_DY:
-            continue
-        if token.x > ROW_NAME_MAX_X:
-            continue
-        parts.append((token.x, token.text))
+def _line_groups(tokens: Sequence[Token]) -> list[list[Token]]:
+    """Group tokens into printed lines, in document order.
+
+    Within a page the table advances downwards (y decreases), so sorting by
+    -y yields reading order. Baselines closer than LINE_CLUSTER_GAP_PT belong
+    to the same line: an element symbol and its subscript differ by ~1 pt,
+    while two printed lines of the SI never sit closer than 6 pt apart.
+    """
+    by_page: dict[int, list[Token]] = defaultdict(list)
+    for token in tokens:
+        by_page[token.page].append(token)
+    groups: list[list[Token]] = []
+    for page in sorted(by_page):
+        current: list[Token] = []
+        for token in sorted(by_page[page], key=lambda cell: -cell.y):
+            if current and current[-1].y - token.y > LINE_CLUSTER_GAP_PT:
+                groups.append(current)
+                current = []
+            current.append(token)
+        if current:
+            groups.append(current)
+    return groups
+
+
+def _block_tokens(
+    start: Token,
+    scoped: Sequence[Token],
+    next_start: Token | None,
+    *,
+    include_label_line: bool = False,
+) -> list[Token]:
+    """Tokens printed between this row's label and the next row's label.
+
+    The block is delimited in *document* order rather than by a vertical
+    offset, because the SI breaks rows across pages: entries 43 and 116 print
+    their formula at the very top of the following page, after the last line of
+    the page they belong to. The label line itself only belongs to the name.
+    """
+    begin = (start.page, -start.y)
+    if next_start is not None:
+        end = (next_start.page, -next_start.y)
+    else:
+        end = (start.page, float("inf"))
+    block = [token for token in scoped if begin <= (token.page, -token.y) < end]
+    if not include_label_line:
+        block = [token for token in block if (token.page, -token.y) != begin]
+    return block
+
+
+def _already_present(text: str, emitted: str) -> bool:
+    """True when a multi-character chunk is already on the line, word-aligned.
+
+    A plain substring test is not enough: the abbreviation "Me" of
+    "2-MeTHF" sits inside the preceding word "Methyl" and would be deleted.
+    """
+    if len(text) < 2 or not emitted:
+        return False
+    pattern = r"(?<![A-Za-z0-9])" + re.escape(text) + r"(?![A-Za-z0-9])"
+    return re.search(pattern, emitted) is not None
+
+
+def _name_for(
+    start: Token,
+    scoped: Sequence[Token],
+    next_start: Token | None = None,
+    formula_line: frozenset[int] = frozenset(),
+) -> str:
+    """Assemble the printed name, including its wrapped continuation lines.
+
+    The name is read line by line until the row's formula line. A continuation
+    line has to start in the name column: a line whose first token sits further
+    right is a neighbouring value cell ("127.00", "44.00/") and is refused.
+
+    Duplicate or overlapping glyphs are dropped only when the *same* text sits
+    at the *same* coordinate. Matching on substring membership instead silently
+    deleted single digits that already appeared inside an earlier token ("1"
+    inside "91."), which is how "1-(2-Fluoroethoxy)-2-ethoxyethane" lost both
+    locants and how "2-MeTHF" lost its "Me".
+    """
+    block = [
+        token
+        for token in _block_tokens(start, scoped, next_start, include_label_line=True)
+        if token.x <= ROW_NAME_MAX_X
+    ]
+    groups = _line_groups(block)
+    start_group = next(
+        (index for index, group in enumerate(groups) if any(cell is start for cell in group)),
+        0,
+    )
+    formula_group = None
+    if formula_line:
+        formula_group = next(
+            (
+                index
+                for index, group in enumerate(groups)
+                if any(id(token) in formula_line for token in group)
+            ),
+            None,
+        )
     pieces: list[str] = []
-    for _, text in sorted(parts):
-        if pieces and text in " ".join(pieces):
+    seen: set[tuple[float, str]] = set()
+    for index, group in enumerate(groups):
+        if formula_group is not None and index >= formula_group:
+            # Everything from the formula line down belongs to the next entry.
+            break
+        ordered = sorted(group, key=lambda token: token.x)
+        if index != start_group and ordered[0].x > NAME_CONTINUATION_MIN_X:
+            # A line starting past the name column is a neighbouring value cell
+            # ("127.00"), not name text.
             continue
-        pieces.append(text)
-    return ROW_INDEX.sub("", " ".join(pieces), count=1).strip()
+        line: list[str] = []
+        for token in ordered:
+            if index != start_group and PURE_NUMBER.match(token.text):
+                continue
+            key = (round(token.x, 1), round(token.y, 1), token.text)
+            # pypdf sometimes emits a name twice on one line (once glued to the
+            # row number). Only a multi-character chunk that the line already
+            # carries is redundant; single digits must survive, because "1"
+            # inside "91." is a locant, not a repeat.
+            if key in seen or _already_present(token.text, " ".join(line)):
+                continue
+            seen.add(key)
+            line.append(token.text)
+        pieces.extend(line)
+    joined = ROW_INDEX.sub("", " ".join(pieces), count=1)
+    if not ROW_INDEX.match(start.text):
+        # The bare "279" label is a separate token from the "." that follows it.
+        joined = BARE_ROW_INDEX.sub("", joined, count=1)
+    return joined.strip()
 
 
 def _formula_for(
-    start: Token, scoped: Sequence[Token], next_row_y: float | None = None
-) -> str | None:
+    start: Token,
+    scoped: Sequence[Token],
+    next_start: Token | None = None,
+) -> tuple[str | None, frozenset[int]]:
     """Read the printed formula that sits under this row's name.
 
-    The window is bounded below by the *next* row label, not by a fixed depth:
-    on a 24.5 pt row pitch the next row's own name falls inside any fixed 35 pt
-    window and gets glued onto the formula, which is how Acetonitrile, Diglyme
-    and Vinylene carbonate previously came back as formula-less rows.
+    Lines are read one at a time and the first one that parses as a formula
+    wins; joining every token in the window would glue a wrapped name onto the
+    formula. The window is bounded by the next row label, so a taller row (the
+    SI uses a 48.7 pt pitch where names wrap) is still read while a neighbour's
+    formula is not.
     """
-    max_dy = FORMULA_MAX_DY
-    if next_row_y is not None:
-        max_dy = min(max_dy, start.y - next_row_y - 0.5)
-    cells = [
+    band = [
         token
-        for token in scoped
-        if token.page == start.page
-        and FORMULA_MIN_X <= token.x <= FORMULA_MAX_X
-        and FORMULA_MIN_DY <= start.y - token.y <= max_dy
-        and FORMULA_TOKEN.match(token.text)
+        for token in _block_tokens(start, scoped, next_start)
+        if FORMULA_MIN_X <= token.x <= FORMULA_MAX_X and FORMULA_TOKEN.match(token.text)
     ]
-    # Order by x, not by y: element symbols and their subscripts sit at slightly
-    # different baselines, so a y-major sort would produce "CHO343".
-    joined = "".join(text for _, text in sorted((cell.x, cell.text) for cell in cells))
-    return joined if FORMULA.match(joined) else None
+    for group in _line_groups(band):
+        # Order by x, not by y: element symbols and their subscripts sit at
+        # slightly different baselines, so a y-major sort gives "CHO343".
+        joined = "".join(text for _, text in sorted((cell.x, cell.text) for cell in group))
+        if FORMULA.match(joined):
+            return joined, frozenset(id(token) for token in group)
+    return None, frozenset()
 
 
 def _references_for(start: Token, scoped: Sequence[Token]) -> list[int]:
@@ -383,14 +521,10 @@ def extract_rows(
     starts, reached = row_starts(tokens, page_range)
     band = dielectric_band(scoped)
     cells, unclaimed = band_cells(starts, scoped, band)
-    next_y: dict[tuple[int, float], float | None] = {}
-    for position, start in enumerate(starts):
-        follower = starts[position + 1] if position + 1 < len(starts) else None
-        next_y[(start.page, start.y)] = (
-            follower.y if follower is not None and follower.page == start.page else None
-        )
     rows: list[dict] = []
-    for start in starts:
+    for position, start in enumerate(starts):
+        next_start = starts[position + 1] if position + 1 < len(starts) else None
+        formula, formula_line = _formula_for(start, scoped, next_start)
         raw_cells = sorted(cells.get((start.page, start.y), []), key=lambda token: token.x)
         status, cell, value = _cell_status([token.text for token in raw_cells])
         found = status == "value"
@@ -401,8 +535,8 @@ def extract_rows(
             {
                 "index": _row_index(start),
                 "page": start.page,
-                "name": _name_for(start, scoped),
-                "formula": _formula_for(start, scoped, next_y[(start.page, start.y)]),
+                "name": _name_for(start, scoped, next_start, formula_line),
+                "formula": formula,
                 "dielectric_cell": cell,
                 "dielectric_status": status,
                 "dielectric_value": value,

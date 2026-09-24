@@ -809,7 +809,9 @@ initially, now 14) after
   最终 16 条通过门控：5 条 ≤1%、6 条 ≤5%、5 条分歧。
   **（v0.3.8 修订）** 这组计数基于首版抽取器；对抗审查随后发现两个 Critical 缺陷
   （裸整数回退让表头与化学式下标抢占行号、公式窗口无下界导致 26 行公式丢失），修复后
-  权威计数为 **24 条门控：8 条 ≤1%、10 条 ≤5%、6 条分歧**，见 v0.3.8 条目。
+  权威计数为 **24 条门控：8 条 ≤1%、10 条 ≤5%、6 条分歧**，见 v0.3.8 条目；第二轮审查
+  再修三处身份门控缺口与两类抽取缺陷后，**权威计数改为 27 条：11 条 ≤1%、10 条 ≤5%、
+  6 条分歧**，见 v0.3.9 条目。
 - **FEC 维持开放。** 78.4（引 Deng 2020）vs 数据集 102（开放综述表），−23.1%；两侧
   原文本轮均未取得，不收敛，既有 `public_values_78.4_102_107` 票据不变。
 - **未改动数据集。** `data/dielectric_v03.csv` 仍为
@@ -884,3 +886,47 @@ initially, now 14) after
   与"公式窗口必须被下一行截断"两项回归测试；测试数 33 → 36。
 - **v0.3.8 证据哈希**：evidence `ad1d54346a889926ecca86859248ec4bd37d8afa3a2a0c57de3206e59698ab3d`、
   crosscheck `869c12790b3644bf9ae5ccbbb30bbac31cbe87424a6ea9be4dda9901c5d08326`，均纯 LF。
+  **（v0.3.9 已取代）** 这两份哈希随第二轮抽取修复失效，现行哈希见 v0.3.9 条目。
+
+
+## 2026-09-24: 第二轮对抗审查收口与抽取精度修复 (v0.3.9)
+
+- **审查结论。** 第二轮只读审查员在 v0.3.8 上判 **FAIL（1 Important + 2 Minor，无
+  Critical）**。重要项是身份门控不完整：至少还有三条**同一 CID**的同物异名没有进同义词表，
+  于是 `matched=24 / formula_only=20` 只是机械计数，不是完整门控。两条次要项分别是第
+  279 行名称粘连了行号，以及"无公式"状态里混着两行**公式印在页首**的条目。
+- **三条同物异名已补**（PubChem PUG-REST 同 CID 核验）：`n-Butyl acetate`→CID 31272、
+  `Dimethyl ketone`→CID 180、`N-methylpyrrolidinone`→CID 13387。三者由
+  `formula_only_candidate` 升为 ≤1% 一致（5.00 vs 5.01、20.50 vs 20.7、32.00 vs 32.2）。
+- **抽取精度修复（用户要求"数据爬取更准确"，故按根因修而不是改计数）。** 逐行 diff
+  证明：**+21 行公式、112 个名称恢复被吞掉的字符（含 66 处印刷连字符）、0 行回归**。
+  1. **两种行距。** SI 多数页行距 24.6 pt，名称换行的页为 48.7 pt，公式落在 36.3 pt 处，
+     超出旧的 35 pt 上界。改为"按印刷行聚类 + 上界 45 pt，真正的下界是下一行行标签"。
+     第 88/89 行（DFEME/TFEME）恢复公式。
+  2. **名称续行。** 名称按印刷行拼接，直到公式行为止；续行必须起于名称列（x≤250），
+     纯数字 token 不并入。第 88 行由 `1,1 - Difluoro 2 (2` 还原为完整名称。
+  3. **跨页条目。** 块边界由"同页 dy 窗口"改为**文档序 `(page, -y)`**，于是印在下一页
+     最上方的公式可读：第 43 行（MOPN）恢复 **C4H7NO**、第 116 行恢复 **C5H10O2**，
+     `ecw_no_formula` 由 4 → **0**（状态保留为安全网）。
+  4. **去重规则。** 旧规则"文本是已拼接串的子串就丢弃"把位次号当重复：`91.` 之后的
+     `1` 被删，`Methyl` 之后的 `Me`（2-MeTHF）也被删。现只丢弃**同一坐标**的重复
+     token，并对多字符块做词边界判断。
+- **修订后的权威计数。** 门控比较 **27 条：11 条 ≤1%、10 条 ≤5%、6 条分歧**；
+  `formula_only_candidate` **19**、`dataset_miss` 41、`ecw_no_formula` 0、
+  `ambiguous_formula` 0。第 43 行（MOPN）新的状态是 `formula_only_candidate` 而非匹配：
+  SI 只印 `Methoxypropionitrile` 没有位次号，而数据集是 `3-methoxypropionitrile`，
+  2-位异构体是另一个分子，故**不得**仅凭分子式判等。这条是新增的显式回归测试。
+- **未改动数据集。** `data/dielectric_v03.csv` 仍为
+  `f5256d164c814030a4b986db6c878f1d64edb2b4f91cf39af3a75ffeaeac853c`。本轮只动交叉
+  核对器与它的证据文件。
+- **v0.3.9 证据哈希**：evidence `ec6b2b5897df13c42d919cd2a3afd16eba1d9b6fcac12ee9692c3feb62fadc95`、
+  crosscheck `0c7e5d63bfcd2069914e89d9c17e7fdec7fe8ea5aae883dd4946d9db17bd4051`，均纯 LF。
+- **测试强度。** `tests/test_g1plus_ecw308_extract.py` 由 36 项扩到 **46 项**（新增：跨页
+  公式、换行行距、名称续行、位次号存活、第 279 行裸标签、三条同物异名、以及"没有位次号
+  就只能当候选"）。全仓 `pytest` **599 passed**，`ruff` 干净，抽取器 `--check` 复现为真。
+- **仍然开放（未静默关闭）。** VC `conflict_open`（Saadi & Lee 付费墙，且与 ECW-308 是
+  不同证据线）；FEC 78.4/102/107；GVL 36.1 vs 32/34（跨文献）；MOPN 仍 `model_ready=false`
+  （无 GFN2-xTB 特征行）；tetraglyme 7.816 的 arXiv↔DOI 对应关系待复核；tier 3-4
+  （Riddick 4th ed. 纸质、CRC "Permittivity of Liquids"、Reaxys/SciFinder-n、DIPPR 801）仍受阻。
+- **预算。** 本轮 0 次外部 API 调用（全部本地重算）；三条同物异名核验沿用上一轮已取回的
+  PubChem 结果。

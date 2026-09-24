@@ -150,14 +150,16 @@ def export_results(
     write_json(
         week_root / "week7_summary.json",
         {
-            "dataset_version": "0.3.8",
+            "dataset_version": "0.3.9",
             "dataset_version_note": (
                 "the 246-row set was frozen at v0.3.3; v0.3.4 fixed the "
                 "model_ready modelling gate; v0.3.5-v0.3.6 revised provenance; "
                 "v0.3.7 added the ECW-308 whole-table cross-check and its resolved "
                 "citation chain; v0.3.8 added the citation DOIs, the Perricone 2011 "
-                "thesis evidence and the corrected GVL conflict description. No "
-                "dielectric value moved in any of those revisions."
+                "thesis evidence and the corrected GVL conflict description; v0.3.9 "
+                "closed the second adversarial round (three same-CID synonyms) and "
+                "fixed four ECW-308 extraction defects (+21 formulas, 112 names "
+                "repaired). No dielectric value moved in any of those revisions."
             ),
             "v03": {
                 "row_count": v03_summary.get("compound_count"),
