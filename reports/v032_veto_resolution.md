@@ -105,7 +105,7 @@ Measured on the frozen 6,150 out-of-fold rows:
 | Rows flagged | 2,070 (33.66%) | 30 (0.49%) | 30 (0.49%) |
 | MAE outside domain | 11.51 | 22.32 | 1.97 |
 | MAE inside domain | 5.02 | -- | -- |
-| Measured eps>60 covered | **150/150** | 30/150 | **0/150** |
+| Measured eps>60 covered | **150/150** | 5/150 | **0/150** |
 
 Both rejected variants remain in `probes/applicability_domain_summary.json`
 under `rejected_variants`, with their rules, row counts, MAE and reasons, so the

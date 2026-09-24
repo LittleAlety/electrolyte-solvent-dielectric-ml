@@ -115,6 +115,7 @@ def run(
     high_zone_errors: list[float] = []
     high_zone_covered = 0
     high_zone_onsager_covered = 0
+    high_zone_legacy_covered = 0
     onsager_flagged_names: dict[str, str] = {}
 
     for row in read_csv_rows(predictions_path):
@@ -170,6 +171,8 @@ def run(
             high_zone_errors.append(absolute_error)
             if domain == OUTSIDE_ASSOCIATED_LIQUID:
                 high_zone_covered += 1
+            if legacy_flagged:
+                high_zone_legacy_covered += 1
             if onsager_flagged:
                 high_zone_onsager_covered += 1
 
@@ -217,6 +220,7 @@ def run(
                 "rule": "hbd >= 1 and predicted dielectric > 60",
                 "mean_absolute_error": _mean(onsager_errors.get("legacy", [])),
                 "row_count": len(onsager_errors.get("legacy", [])),
+                "high_permittivity_zone_covered": high_zone_legacy_covered,
                 "reason": (
                     "Circular: the trigger reads the model output the boundary "
                     "is supposed to qualify, and the model cannot predict the "

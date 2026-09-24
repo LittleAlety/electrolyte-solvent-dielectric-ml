@@ -468,7 +468,7 @@
   returns zero donors for water.
 - Measured on the frozen 6,150 out-of-fold rows: trigger rate 33.66%
   (2,070/6,150); mean absolute error 11.51 outside versus 5.02 inside;
-  measured-epsilon>60 coverage 150/150 (100%), against 30/150 for the original
+  measured-epsilon>60 coverage 150/150 (100%), against 5/150 for the original
   circular rule and 0/150 for the Onsager variant.
 - Both rejected variants are recorded with their rules, row counts, MAE and
   reasons in `probes/applicability_domain_summary.json`. The write-up is

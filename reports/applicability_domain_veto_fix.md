@@ -13,7 +13,7 @@ production, and the failure was found by measurement, not by inspection:
 
 | Attempt | Rule | Rows flagged | Share | Measured eps>60 covered |
 |---|---|---|---|---|
-| 1 (original, circular) | `HBD >= 1` and predicted dielectric `> 60` | 30 | 0.49% | 30/150 |
+| 1 (original, circular) | `HBD >= 1` and predicted dielectric `> 60` | 30 | 0.49% | 5/150 |
 | 2 (review-prescribed) | `HBD >= 1` and Onsager-estimated dielectric `> 60` | 30 | 0.49% | **0/150** |
 | 3 (adopted) | at least one structural H-bond donor site | 2,070 | 33.66% | **150/150** |
 
@@ -85,6 +85,7 @@ the features cannot support, it does not improve them.
 |---|---|
 | Rows with measured dielectric > 60 | 150 |
 | Those rows flagged by the adopted rule | 150 (100%) |
+| Those rows flagged by the original circular rule | 5 (3.3%) |
 | Those rows flagged by the Onsager variant | 0 (0%) |
 | MAE within the measured eps>60 zone | 72.45 |
 

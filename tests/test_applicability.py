@@ -200,6 +200,7 @@ def test_run_records_trigger_rate_and_rejected_variants(tmp_path: Path) -> None:
     rejected = summary["rejected_variants"]
     assert set(rejected) == {"legacy_prediction_threshold", "onsager_threshold"}
     assert rejected["legacy_prediction_threshold"]["row_count"] == 1
+    assert rejected["legacy_prediction_threshold"]["high_permittivity_zone_covered"] == 1
     assert rejected["onsager_threshold"]["row_count"] == 1
     assert rejected["onsager_threshold"]["high_permittivity_zone_covered"] == 0
     assert rejected["onsager_threshold"]["flagged_compounds"] == ["water"]
