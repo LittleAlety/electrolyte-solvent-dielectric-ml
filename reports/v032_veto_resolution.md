@@ -176,13 +176,13 @@ predicting PC and EC as external holdouts underestimates both:
 
 | Compound | True epsilon | Hybrid prediction | Abs error |
 |---|---|---|---|
-| Propylene carbonate | 64.9 | 29.8 +/- 1.1 | 35.1 |
-| Ethylene carbonate | 90.5 | 50.3 +/- 2.2 | 40.2 |
+| Propylene carbonate | 64.9 | 21.6 +/- 0.4 | 43.3 |
+| Ethylene carbonate | 90.5 | 33.7 +/- 1.5 | 56.8 |
 
 Adding PC and EC improves interpolation among the existing 234 compounds. It
 does not give the model extrapolation ability for unseen high-permittivity
-carbonates. The Physical representation is the least bad on EC (77.9 +/- 5.2)
-and the worst on PC is Morgan (20.7 +/- 1.3). This is a limitation of the
+carbonates. The Physical representation is the least bad on EC (49.1 +/- 2.9)
+and the worst on PC is Morgan (17.5 +/- 0.4). This is a limitation of the
 released model and is now stated as such in the paper.
 
 ## Audit P0: v0.3.2 broke v0.3.1 provenance

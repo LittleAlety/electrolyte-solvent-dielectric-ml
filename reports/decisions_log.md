@@ -525,3 +525,49 @@
   committed artifacts; `tests/test_dielectric_representation_ablation.py` pins
   the three-way split and the withheld-versus-failed distinction. Write-up:
   `reports/v034_model_ready_gate.md`.
+
+## 2026-09-24: 3-methoxypropionitrile provenance patch and the gamma-valerolactone ticket (v0.3.5)
+
+- Scope: **provenance only**. No numeric dielectric value is added, removed or
+  changed, so no benchmark metric moves; the fitted 236 rows and every published
+  table are untouched by this revision.
+- 3-methoxypropionitrile (`OOWFYDWAMOKVSF-UHFFFAOYSA-N`, dielectric 36.0 at
+  298.15 K, `model_ready=false`) previously recorded only the closed primary
+  (Perricone et al. 2013, DOI `10.1016/j.electacta.2013.01.084`) and the
+  compiling review (ECW-308, DOI `10.1002/adfm.202212342`), and its note said
+  the value could not be retrieved or confirmed. The same first author's
+  **open-access** doctoral thesis (Perricone 2011, Universite de Grenoble, NNT
+  `2011GRENI032`, HAL `tel-00630049`), Tableau 12 on page 65, states
+  `epsilon_r = 36` for methoxypropionitrile.
+- Decision: add `tel-00630049` to `source_dois_all` and rewrite the note to
+  record exactly what the thesis does and does not establish. The thesis gives
+  no temperature (ECW-308 asserts 25 C) and belongs to the same research line,
+  so this is **document-level corroboration, not a second measurement**: the
+  evidence level is unchanged and the row stays out of the model-ready set. The
+  ECW-308 Table S3 stacked `25.00` warning is preserved in the same note - not
+  averaged and not promoted.
+- Implementation: two rows edited in
+  `data/processed/dielectric_v03_provenance_patches.csv`. The patch layer is the
+  only place this row's provenance is written, so a rebuild is the only
+  propagation step.
+- Frozen hash: `data/dielectric_v03.csv` moves from
+  `2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b` to
+  `b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f`. The row
+  count stays 246 and a field-by-field diff against the previous revision shows
+  only the single 3-methoxypropionitrile row differs. Re-pinned in
+  `tests/test_build_dielectric_v03.py`; `dataset_sha256` in
+  `probes/dielectric_v03_representation_ablation_summary.json` and
+  `probes/v032_ablation_summary.json` updated to match.
+- Open ticket, **not** promoted in this revision: the Perricone 2011 thesis
+  Tableau 8 (ref [87]) gives gamma-valerolactone `epsilon_r = 32` at 25 C
+  against the dataset's `36.1` at 298.15 K from the iScience 2026 review table.
+  Both sides are secondary documents, the gap is 12.7%, and neither is a traced
+  primary measurement. Per the no-averaging / no-swapping discipline neither
+  value is changed; the disagreement is recorded for primary review and is not
+  written into the dataset `conflict_status` column. Evidence:
+  `reports/g1plus_perricone_thesis_crosscheck.md`.
+- Retrieval note: the HAL PDF sits behind an Anubis proof-of-work interstitial;
+  it was fetched through the user's Microsoft Edge via Playwright
+  (`chromium.launch(channel="msedge")`). The thesis is open access and is
+  cached git-ignored under `data/external/g1plus/mopn/`; it is never
+  redistributed.

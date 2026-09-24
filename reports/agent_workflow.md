@@ -222,7 +222,7 @@ conflict occurred, and the integration made zero external API calls.
 | Noether | ECW-308 Table S3 line-level re-extraction | Complete | Re-ran pypdf from the PDF; confirmed 8/8 target rows (page/value/reference) and the tetraglyme no-hit; classified ECW as a secondary compilation | None |
 | Franklin | Provenance-patch and modelling-path audit | Complete | Confirmed the patch layer can update `source_dois_all`, `notes`, and `conflict_status`, cannot update `model_ready`, and does not move the benchmark (round 4 later took the fitted set to 236 rows); identified the review-license gate for FEC/VC | None |
 | Euler | Paper/report consistency audit | Complete | Found the FEC/VC overstatements, nitrile conflict accounting, MOPN licence wording, patch-count drift, and stale agent status | None |
-| Main | Patch integration and freeze | Complete | 30 patches / 15 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b`; full suite `490 passed`; Ruff clean; all four dataset verifiers pass | None |
+| Main | Patch integration and freeze | Complete | 30 patches / 15 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f`; full suite `490 passed`; Ruff clean; all four dataset verifiers pass | None |
 
 The integration audit also found that `data/processed/*` had been ignoring
 `dielectric_v03_provenance_patches.csv`: the patch layer was present locally

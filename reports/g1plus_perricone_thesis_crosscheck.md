@@ -17,7 +17,7 @@ reference letters, which is the evidence discipline the dataset asks for.
 | Compound | Dataset (v0.3.3) | Thesis | Delta | Verdict |
 | --- | --- | --- | --- | --- |
 | Acetonitrile | 37.5 @ 293.15 K (NBS 514) | 36 @ 25 C (Tableau 5, ref [43]) | -1.5 | consistent with the temperature difference |
-| Sulfolane | 44 @ 298.15 K (TCA 2012) | 43 @ 30 C (Tableaux 5, 7, ref [43]) | -1.0 | consistent |
+| Sulfolane | 44 @ 298.15 K (TCA 2012) | 43 @ 30 C (Tableau 5 a = ref [43]; Tableau 7 a = ref [4]) | -1.0 | consistent |
 | **Propylene carbonate** | **64.9 @ 298.15 K (Simeral 1970)** | **65 @ 25 C (Tableaux 5, 8)** | **+0.1** | **corroborated** |
 | Ethylene carbonate | 90.5 @ 313.15 K (Chernyak 2006) | 90 @ 25 C (Tableau 5, ref [49]) | -0.5 | consistent; the thesis temperature implies a supercooled sample (mp 36 C) |
 | Ethyl acetate | 6.02 @ 298.15 K (NBS 514) | 6 @ 25 C (Tableau 8) | -0.02 | corroborated |
@@ -59,8 +59,11 @@ dataset's rounding-level agreement band. The dataset discipline applies:
 
 Promoting this ticket into the dataset's `conflict_status` column is a data
 revision (it changes the frozen hash and every probe that records
-`dataset_sha256`), so it is queued with the 3-methoxypropionitrile provenance
-patch for the v0.3.5 revision recorded in `reports/decisions_log.md`.
+`dataset_sha256`). It is **not** promoted in the v0.3.5 revision: v0.3.5 applies
+only the 3-methoxypropionitrile provenance patch, so this disagreement is
+recorded as an open ticket in `reports/decisions_log.md` and the dataset's
+numeric value and `conflict_status` column are left untouched pending a traced
+primary measurement.
 
 ## Method and limits
 

@@ -27,6 +27,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import RepeatedKFold
 
 from electrolyte_ml.exporting import canonical_text_sha256
+from probes.dielectric_representation_ablation import read_model_ready_map
 
 logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 warnings.filterwarnings(
@@ -69,11 +70,24 @@ REPEAT_COLUMNS = (
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
+    """Return the featurized rows that are eligible to be fitted.
+
+    Two filters apply, in this order: physical-feature failures
+    (`status == "error"`) and the dataset-level `model_ready` gate. The gate is
+    what the v0.3.4 correction introduced; routing through it here keeps this
+    probe consistent with every other fit, so a row the dataset flags as an
+    unresolved conflict or as awaiting primary confirmation can never reach a
+    Chemprop training fold. Every v0.2 row is `model_ready=true`, so this is a
+    no-op on the frozen 205-row input and only bites if the input moves to the
+    v0.3 table.
+    """
+
+    ready = read_model_ready_map()
     with path.open(encoding="utf-8", newline="") as handle:
         return [
             row
             for row in csv.DictReader(handle)
-            if row["status"] != "error"
+            if row["status"] != "error" and ready.get(row["inchikey"], False)
         ]
 
 

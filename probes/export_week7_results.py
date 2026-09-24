@@ -91,6 +91,7 @@ VERIFIERS = (
     "scripts/verify_dielectric_v02.py",
     "scripts/verify_dielectric_v032.py",
     "scripts/verify_dielectric_v03.py",
+    "scripts/verify_v032_benchmarks.py",
 )
 
 
@@ -122,8 +123,8 @@ def export_results(
         {
             "dataset_version": "0.3.3 (v0.3.4 candidate)",
             "v03": {
-                "row_count": v03_summary.get("row_count"),
-                "output_sha256": v03_summary.get("output_sha256"),
+                "row_count": v03_summary.get("compound_count"),
+                "output_sha256": (v03_summary.get("output") or {}).get("sha256"),
                 "addition_count": v03_summary.get("addition_count"),
             },
             "row_counts": {

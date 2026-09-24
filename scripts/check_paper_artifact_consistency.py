@@ -25,6 +25,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 
+from probes.dielectric_representation_ablation import read_modelling_rows
 from scripts.build_paper_full_draft import PAPER_DIR, render_full_draft
 
 DATA_DIR = REPOSITORY_ROOT / "data"
@@ -271,13 +272,16 @@ def constant_baseline_metrics() -> dict[str, float]:
     Predicts the training-fold mean for every held-out compound, using the fold
     assignment recorded in the committed v0.3.2 predictions file, and averages
     the ten repeat-level values exactly as the ablation summary does.
+
+    The target map is built through the same `model_ready` gate the models use.
+    Reading the feature table directly would add the withheld vinylene carbonate
+    row back in and make the reference row cover 237 compounds while every model
+    covers 236.
     """
-    features = read_csv_rows(DATA_DIR / "processed" / "dielectric_physical_features_v03.csv")
-    target = {
-        row["inchikey"]: float(row["dielectric"])
-        for row in features
-        if row.get("status") != "error"
-    }
+    modelling_rows, _, _ = read_modelling_rows(
+        DATA_DIR / "processed" / "dielectric_physical_features_v03.csv"
+    )
+    target = {row["inchikey"]: float(row["dielectric"]) for row in modelling_rows}
     predictions = read_csv_rows(DATA_DIR / "processed" / "v032_ablation_predictions.csv")
     morgan = [row for row in predictions if row["representation"] == "Morgan"]
 
@@ -365,15 +369,23 @@ def check_scaffold_table(paper_dir: Path) -> list[str]:
         "scaffold_cluster_5fold"
     ]
     for cells in table[1:]:
-        if len(cells) < 5:
+        if len(cells) < 5 or set("".join(cells)) <= {"-"}:
             continue
-        label, mode = cells[0].replace("*", "").strip(), cells[1].strip()
+        label = cells[0].replace("*", "").strip()
+        mode = cells[1].replace("*", "").strip()
         if label not in SCAFFOLD_KEYS or mode not in SCAFFOLD_TARGETS:
+            errors.append(
+                f"benchmark_and_figures.md: unrecognised scaffold row {label!r}/{mode!r}"
+            )
             continue
         entry = summary[SCAFFOLD_TARGETS[mode]][SCAFFOLD_KEYS[label]]
         for index, metric in ((2, "r2"), (3, "mae"), (4, "spearman")):
             cell = cells[index].strip()
             if "+/-" not in cell:
+                errors.append(
+                    f"benchmark_and_figures.md: {label}/{mode} {metric} is {cell!r}, "
+                    "which carries no +/- uncertainty to verify"
+                )
                 continue
             mean_cell, std_cell = (part.strip() for part in cell.split("+/-"))
             _compare(errors, "benchmark_and_figures.md", f"{label}/{mode}", metric, mean_cell,
@@ -547,6 +559,57 @@ def check_coverage_sensitivity_table(paper_dir: Path) -> list[str]:
     return errors
 
 
+def check_external_holdout(paper_dir: Path) -> list[str]:
+    """The quoted PC/EC external-holdout predictions must match the probe.
+
+    The pre-gate run predicted 29.8 +/- 1.1 for PC and 50.3 +/- 2.2 for EC;
+    withholding vinylene carbonate moved them to 21.6 +/- 0.4 and 33.7 +/- 1.5.
+    The prose kept the old numbers, so this check exists to keep them pinned.
+    """
+
+    holdout = read_json(PROBES_DIR / "v032_controlled_comparison_summary.json")[
+        "pc_ec_external_holdout"
+    ]["Morgan+Physical"]
+    by_name = {entry["name"]: entry for entry in holdout.values()}
+    patterns = (
+        (re.compile(r"predicts ([\d.]+) \+/- ([\d.]+) for PC \(true ([\d.]+)\)"), "propylene carbonate"),
+        (re.compile(r"([\d.]+) \+/- ([\d.]+) for EC \(true ([\d.]+)\)"), "ethylene carbonate"),
+    )
+    errors: list[str] = []
+    for name, text in paper_texts(paper_dir).items():
+        flat = re.sub(r"\s+", " ", text)
+        for pattern, compound in patterns:
+            entry = by_name.get(compound)
+            if entry is None:
+                continue
+            for match in pattern.finditer(flat):
+                _compare(
+                    errors,
+                    name,
+                    f"external holdout {compound}",
+                    "mean",
+                    match.group(1),
+                    float(entry["prediction_mean"]),
+                )
+                _compare(
+                    errors,
+                    name,
+                    f"external holdout {compound}",
+                    "std",
+                    match.group(2),
+                    float(entry["prediction_std"]),
+                )
+                _compare(
+                    errors,
+                    name,
+                    f"external holdout {compound}",
+                    "true",
+                    match.group(3),
+                    float(entry["target"]),
+                )
+    return errors
+
+
 def check_release_version(paper_dir: Path) -> list[str]:
     text = (paper_dir / "code_and_data.md").read_text(encoding="utf-8-sig")
     marker = f"**Release:** v{CURRENT_DATASET_VERSION}"
@@ -586,6 +649,7 @@ def verify_paper(paper_dir: Path = PAPER_DIR) -> list[str]:
         check_applicability_trigger_rate,
         check_modelling_set_and_controlled_delta,
         check_coverage_sensitivity_table,
+        check_external_holdout,
         check_full_draft,
         check_stale_phrases,
     ):

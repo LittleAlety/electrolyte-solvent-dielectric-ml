@@ -28,7 +28,7 @@ REVIEW_OBSERVATIONS_PATH = (
 V03_PATH = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 V03_SUMMARY_PATH = REPOSITORY_ROOT / "probes" / "dielectric_v03_summary.json"
 EXPECTED_V03_SHA256 = (
-    "2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b"
+    "b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f"
 )
 NONCANONICAL_CASSC_DOIS = (
     "10.1002/CSSC.202402091",
@@ -892,9 +892,16 @@ def test_mopn_gap_row_is_recorded_but_held_out_of_the_model() -> None:
     assert mopn["model_ready"] == "false"
     assert mopn["evidence_level"] == "secondary_compilation_unverified"
     assert mopn["conflict_status"] == "awaiting_primary_confirmation"
+    # v0.3.5 adds the open-access companion thesis (HAL tel-00630049) to the
+    # citation chain; the numeric value and the withheld status are unchanged.
     assert mopn["source_dois_all"] == (
-        "10.1016/j.electacta.2013.01.084;10.1002/adfm.202212342"
+        "10.1016/j.electacta.2013.01.084;10.1002/adfm.202212342;tel-00630049"
     )
+    notes = mopn["notes"]
+    assert "Perricone 2011" in notes
+    assert "tel-00630049" in notes
+    assert "document-level corroboration" in notes
+    assert "25.00" in notes, "the ECW-308 stacked-value warning must survive"
 
 
 def test_mopn_secondary_compilation_row_claims_no_open_licence() -> None:

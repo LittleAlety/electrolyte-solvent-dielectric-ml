@@ -503,7 +503,7 @@ measurable accuracy gain on the v0.3 compounds.
 **The added solvents stay outside the extrapolation range.** Training on all
 234 v0.3 compounds (the gate-fixed frozen fold set) and predicting PC and EC as
 external holdouts underestimates
-both: the hybrid predicts 29.8 +/- 1.1 for PC (true 64.9) and 50.3 +/- 2.2 for
+both: the hybrid predicts 21.6 +/- 0.4 for PC (true 64.9) and 33.7 +/- 1.5 for
 EC (true 90.5). Adding these two solvents improves interpolation among the
 existing 234 compounds; it does not give the model extrapolation ability for
 unseen high-permittivity carbonates. This limitation is consistent with the
@@ -642,7 +642,7 @@ creep before the v1.0 freeze.
 
 | Representation | Target | R2 | MAE | Spearman | AUC (eps > 30) | MAE (eps < 20) |
 |---|---|---|---|---|---|---|
-| Constant (train-fold mean) | raw | -0.013 | 11.97 | — | — | 8.30 |
+| Constant (train-fold mean) | raw | -0.012 | 11.75 | — | — | 7.84 |
 | Morgan (ECFP4) | raw | 0.240 | 7.61 | 0.722 | 0.837 | 4.38 |
 | Physical (13-dim) | raw | 0.342 | 7.10 | 0.802 | 0.937 | 4.33 |
 | Morgan+Physical | raw | **0.364** | **6.69** | **0.828** | 0.933 | 3.95 |
@@ -678,7 +678,7 @@ triggers (no v0.2 compound is flagged).
 | MLP-Physical | -0.172 | 7.43 | **0.884** | 0.940 |
 | MLP-Hybrid | -0.458 | 12.89 | 0.228 | 0.646 |
 | MLP-Physical (calibrated) | -0.309 | 7.81 | 0.865 | 0.937 |
-| Chemprop D-MPNN | 0.237 | 7.89 | 0.665 | — |
+| Chemprop D-MPNN | 0.237 | 7.89 | 0.665 | 0.857 |
 
 MLP-Physical achieves the highest Spearman correlation across all models (0.884)
 but with negative R2. A pre-registered linear calibration probe did not recover

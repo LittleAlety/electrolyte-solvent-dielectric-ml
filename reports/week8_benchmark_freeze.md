@@ -27,7 +27,7 @@ checker, so neither can silently return.
 
 | Representation | Target | R2 | MAE | Spearman | AUC (eps > 30) | MAE (eps < 20) |
 | --- | --- | --- | --- | --- | --- | --- |
-| Constant (train-fold mean) | raw | -0.013 | 11.97 | - | - | 8.30 |
+| Constant (train-fold mean) | raw | -0.012 | 11.75 | - | - | 7.84 |
 | Morgan (ECFP4) | raw | 0.240 | 7.61 | 0.722 | 0.837 | 4.38 |
 | Physical (13-dim) | raw | 0.342 | 7.10 | 0.802 | 0.937 | 4.33 |
 | **Morgan+Physical** | **raw** | **0.364** | **6.69** | **0.828** | 0.933 | 3.95 |
@@ -35,9 +35,11 @@ checker, so neither can silently return.
 | Physical | log(eps-1) | 0.290 | 6.37 | 0.880 | 0.926 | 2.70 |
 | Morgan+Physical | log(eps-1) | 0.293 | 6.27 | 0.878 | 0.927 | 2.55 |
 
-Source: `probes/v032_ablation_summary.json`. The constant row is a fold-matched
-predictor recomputed from `data/processed/v032_ablation_predictions.csv`; it has
-no ranking signal, so its Spearman and AUC are undefined rather than 0.5.
+Source: the raw rows come from `probes/v032_ablation_summary.json`; the
+`log(eps-1)` rows come from `probes/v032_target_scaffold_summary.json`
+(`random_repeated_kfold`). The constant row is a fold-matched predictor
+recomputed from `data/processed/v032_ablation_predictions.csv`; it has no
+ranking signal, so its Spearman and AUC are undefined rather than 0.5.
 
 ## Row accounting (the invariant that makes the table auditable)
 

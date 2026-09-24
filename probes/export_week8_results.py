@@ -31,7 +31,6 @@ ARTIFACTS = (
     ("paper/benchmark_and_figures.md", "paper/benchmark_and_figures.md"),
     ("paper/code_and_data.md", "paper/code_and_data.md"),
     ("paper/outline.md", "paper/outline.md"),
-    ("scripts/check_paper_artifact_consistency.py", "tools/check_paper_artifact_consistency.py"),
     ("probes/v032_ablation_summary.json", "v032_ablation_summary.json"),
     ("probes/v032_target_scaffold_summary.json", "v032_target_scaffold_summary.json"),
     (
@@ -110,6 +109,7 @@ ARTIFACTS = (
 VERIFIERS = (
     "scripts/verify_dielectric_representation_ablation.py",
     "scripts/verify_dielectric_target_scaffold.py",
+    "scripts/verify_v032_benchmarks.py",
     "scripts/check_paper_artifact_consistency.py",
 )
 

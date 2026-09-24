@@ -147,7 +147,7 @@ measurable accuracy gain on the v0.3 compounds.
 **The added solvents stay outside the extrapolation range.** Training on all
 234 v0.3 compounds (the gate-fixed frozen fold set) and predicting PC and EC as
 external holdouts underestimates
-both: the hybrid predicts 29.8 +/- 1.1 for PC (true 64.9) and 50.3 +/- 2.2 for
+both: the hybrid predicts 21.6 +/- 0.4 for PC (true 64.9) and 33.7 +/- 1.5 for
 EC (true 90.5). Adding these two solvents improves interpolation among the
 existing 234 compounds; it does not give the model extrapolation ability for
 unseen high-permittivity carbonates. This limitation is consistent with the

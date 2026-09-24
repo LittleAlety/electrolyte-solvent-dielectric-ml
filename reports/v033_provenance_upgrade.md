@@ -220,7 +220,9 @@ primary value, an xTB feature row and a re-run of the controlled benchmark.
 - `scripts/verify_dielectric_v03.py`: **7/7 checks pass**, 246 rows, 36 additions,
   output sha256 `2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b`
   after the citation-trace round in section 8 (previously
-  `88f0a1a609b4c462db51a507f72e2909a1a28de8eb4e887c936adaa6f74a7a33`).
+  `88f0a1a609b4c462db51a507f72e2909a1a28de8eb4e887c936adaa6f74a7a33`);
+  superseded in v0.3.5, which re-pins it to `b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f` after the
+  3-methoxypropionitrile provenance patch (see `reports/decisions_log.md`).
 - Frozen hash re-pinned in `tests/test_build_dielectric_v03.py`.
 - Raw fetch caches for the tier 0-3 passes live in `data/external/g1plus/`, which is
   git-ignored: it contains the text extraction of a closed-access publisher
@@ -302,7 +304,7 @@ Verification after the round: `pytest -q` **490 passed**, Ruff clean,
 `verify_dielectric_v032.py` 7/7, and
 `check_paper_artifact_consistency.py` reports that the paper drafts agree with
 the frozen artifacts. Frozen hashes re-pinned: dataset
-`2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b`, patches
+`2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b` (superseded in v0.3.5 by `b99327766b7b7f7369f7a55bbb1067508fe138e0c344f25c9cffbdf205a2d74f`), patches
 `76070535fb51eb64f50facc7501f617f052e26feda775dc7b2c40c776bae3a47`.
 
 Open items after this round: the Saadi & Lee 1966 two-page full text is still
