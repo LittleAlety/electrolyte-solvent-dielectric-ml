@@ -22,7 +22,7 @@ the controlled experiment supports.
 |---|---|---|---|
 | PC (and EC) absent from every earlier revision | Appendix I veto | RESOLVED | PC 64.9 @ 298.15 K; EC 90.5 @ 313.15 K |
 | Applicability-domain rule idle / circular | Appendix I veto | RESOLVED (re-derived 2026-09-24) | Onsager variant measured and rejected; structural HBD rule adopted, 33.66% trigger |
-| Benchmark gain not attributable to the added data | audit P0 | CORRECTED | paired control: **+0.0265** R2, not +0.056 |
+| Benchmark gain not attributable to the added data | audit P0 | CORRECTED, then **further corrected in v0.3.4** | paired control: **+0.0059** R2 (p = 0.11), not +0.056; the +0.0265 figure predates the `model_ready` gate |
 | v0.3.2 broke v0.3.1 provenance | audit P0 | RESOLVED | 243/243 shared rows byte-identical to v0.3.1 |
 | v0.3.2 verifier was a smoke test | audit P1 | RESOLVED | 7 named checks; VC absence now fails |
 
@@ -122,12 +122,14 @@ reshuffles `RepeatedKFold`: for the 235 shared compounds, **1272 of 2350**
 compound x repeat fold assignments (**54.1%**) differ between the 235-row
 v0.3 split and the 237-row v0.3.2 split, and the evaluation-set target
 variance grows by 8.1%. The audit reviewer independently reproduced the same
-54.1% churn figure.
+54.1% churn figure. **Corrected 2026-09-24 (v0.3.4):** with the `model_ready`
+gate enforced both arms fit 236 rows and the recomputed churn is **1224 of
+2340** assignments (**52.3%**); the conclusion is unchanged.
 
-### Controlled experiment
+### Controlled experiment (pre-gate figures)
 
 `probes/v032_controlled_comparison.py` freezes the v0.3 fold assignment, keeps
-all 235 v0.3 compounds in their original folds across all ten repeats, and
+all 234 v0.3 compounds in their original folds across all ten repeats, and
 appends PC and EC to the **training folds only**. Both arms therefore score
 exactly the same held-out compounds in exactly the same folds, and every
 number below is a paired per-repeat delta.
@@ -151,6 +153,11 @@ Secondary metrics, same pairing:
 
 ### What the corrected numbers say
 
+> **Superseded 2026-09-24 (v0.3.4).** The figures in this section were computed
+> before the `model_ready` gate. With vinylene carbonate withheld from both arms
+> the attributable hybrid gain is **+0.0059 (95% CI -0.002 to +0.013, p = 0.11)**:
+> indistinguishable from zero. See `reports/v034_model_ready_gate.md`.
+
 - The attributable hybrid gain is **+0.027 (95% CI +0.017 to +0.036)**,
   roughly half of the +0.056 previously claimed. The rest came from a
   different random partition, not from the two compounds.
@@ -164,15 +171,15 @@ Secondary metrics, same pairing:
 
 ### The added solvents are still outside the extrapolation range
 
-Training on all 235 v0.3 compounds and predicting PC and EC as external
-holdouts underestimates both:
+Training on all 234 v0.3 compounds (the gate-fixed frozen fold set) and
+predicting PC and EC as external holdouts underestimates both:
 
 | Compound | True epsilon | Hybrid prediction | Abs error |
 |---|---|---|---|
 | Propylene carbonate | 64.9 | 29.8 +/- 1.1 | 35.1 |
 | Ethylene carbonate | 90.5 | 50.3 +/- 2.2 | 40.2 |
 
-Adding PC and EC improves interpolation among the existing 235 compounds. It
+Adding PC and EC improves interpolation among the existing 234 compounds. It
 does not give the model extrapolation ability for unseen high-permittivity
 carbonates. The Physical representation is the least bad on EC (77.9 +/- 5.2)
 and the worst on PC is Morgan (20.7 +/- 1.3). This is a limitation of the
@@ -194,8 +201,13 @@ superset of `data/dielectric_v031.csv`:
   4 compounds withheld from model fitting through the curated exclusion list
   (FEC, TEP, TMP, ethyl isothiocyanate). **Corrected 2026-09-24:** this line
   previously read "5 compounds excluded from model fitting", which was wrong.
-  Vinylene carbonate is flagged `model_ready=false` but is still fitted, because
-  the modelling pipeline honours the exclusion list and not the flag.
+  **Further corrected 2026-09-24 (v0.3.4):** that correction stopped one step
+  short. Vinylene carbonate is flagged `model_ready=false`, and since v0.3.4
+  the modelling gate enforces the flag, so it is withheld from every fit as
+  well. The current accounting is 245 source rows = 236 fitted + 4 curated
+  exclusions + 4 physical-feature failures + 1 withheld; the v0.3.3 roster of
+  246 rows is 236 + 5 + 4 + 1, the fifth exclusion being
+  3-methoxypropionitrile.
 
 Because the provenance text changed, the v0.3 freeze hash was **re-frozen**
 deliberately rather than left stale: `3068a4ff...` -> `39d15e16...`, updated
@@ -245,9 +257,11 @@ asserted.
 
 - The premature `v1.0` tag remains deleted locally and from the remote; the
   release line is v0.3.2 and the paper says so.
-- `probes/v032_ablation_summary.json` retains the 237-row coverage numbers
-  (hybrid R2 0.3660). They are valid as *coverage* results and are no longer
-  cited as the causal effect of the two added compounds.
+- `probes/v032_ablation_summary.json` was rebuilt by the v0.3.4 gate: its
+  coverage numbers are now 236 fitted rows with hybrid R2 0.3636, matching the
+  v0.3.3 lineage exactly (both fit the same rows). They remain *coverage*
+  results and are not cited as the causal effect of the two added compounds; the
+  only valid causal statement is the paired control, `+0.0059` (p = 0.11).
 - `temp_header.txt` (an untracked scratch file) was removed.
 - Full suite: **457 passed** (up from 441 at the audit baseline);
   `ruff check scripts src probes tests` clean.

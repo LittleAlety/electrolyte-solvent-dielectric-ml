@@ -1,13 +1,13 @@
 ﻿"""Controlled benchmark for the v0.3.2 PC/EC contribution.
 
-The v0.3.2 ablation refits ``RepeatedKFold`` on the enlarged 237-compound
-table.  That reshuffles ~54% of the fold assignments relative to v0.3 and
-changes the target variance of the evaluation set, so the 0.3099 -> 0.3660
+The v0.3.2 ablation refits ``RepeatedKFold`` on the enlarged table.  That
+reshuffles about half of the fold assignments relative to v0.3 and changes the
+target variance of the evaluation set, so the raw version-to-version
 R^2 jump cannot be attributed to the two new compounds.
 
 This probe removes both confounds:
 
-* the evaluated set is the frozen v0.3 table (235 compounds) and the fold
+* the evaluated set is the frozen v0.3 table (234 eligible compounds) and the fold
   assignment is generated once, from the v0.3 row order, so both arms and
   all ten repeats score exactly the same compounds in exactly the same
   folds;
@@ -181,8 +181,8 @@ def run_comparison(
     summary_path: Path,
     plot_path: Path,
 ) -> dict:
-    base_rows, base_failed = read_modelling_rows(base_features_path)
-    v032_rows, v032_failed = read_modelling_rows(v032_features_path)
+    base_rows, base_failed, base_withheld = read_modelling_rows(base_features_path)
+    v032_rows, v032_failed, v032_withheld = read_modelling_rows(v032_features_path)
     base_keys = [row["inchikey"] for row in base_rows]
     v032_keys = [row["inchikey"] for row in v032_rows]
     if len(set(base_keys)) != len(base_keys):
@@ -363,7 +363,10 @@ def run_comparison(
         "schema_version": 1,
         "design": {
             "question": "does adding PC/EC improve generalisation on v0.3 compounds?",
-            "frozen_test_set": "the 235 modelled v0.3 compounds",
+            "frozen_test_set": (
+                f"the {len(base_rows)} v0.3 compounds that are model_ready=true "
+                "and have usable physical features"
+            ),
             "frozen_fold_source": "RepeatedKFold(5, 10, random_state=42) over the v0.3 row order",
             "added_to_training_only": sorted(extra_keys),
             "arms": ["baseline_v0.3", "augmented_pc_ec_train_only"],
@@ -384,14 +387,20 @@ def run_comparison(
             "augmented_compound_count": len(base_rows) + len(extra_rows),
             "baseline_failed_feature_count": len(base_failed),
             "v032_failed_feature_count": len(v032_failed),
+            "baseline_withheld_not_model_ready_count": len(base_withheld),
+            "v032_withheld_not_model_ready_count": len(v032_withheld),
+            "withheld_not_model_ready_names": sorted(
+                {row["name"] for row in (*base_withheld, *v032_withheld)}
+            ),
             "added_compound_keys": extra_keys,
         },
         "paired_deltas": paired,
         "fold_churn_diagnostic": {
             "note": (
-                "fold ids that differ between the 235-row v0.3 split and the "
-                "237-row v0.3.2 split, for shared compounds; this is why the "
-                "naive 0.3099 -> 0.3660 comparison is not controlled"
+                f"fold ids that differ between the {len(base_rows)}-row v0.3 split "
+                f"and the {len(v032_rows)}-row v0.3.2 split, for shared compounds; "
+                "this is why the raw version-to-version comparison is not "
+                "controlled"
             ),
             "shared_compounds": len(shared),
             "shared_compound_repeat_pairs": total,

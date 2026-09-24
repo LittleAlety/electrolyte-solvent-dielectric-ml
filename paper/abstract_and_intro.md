@@ -18,13 +18,15 @@ A companion benchmark evaluates three representations (Morgan fingerprints,
 13-dimensional physical features from GFN2-xTB and RDKit, and their
 equal-weight hybrid) under fixed 10x5 repeated cross-validation,
 scaffold/cluster holdout, and an external domain-gap test on 29 battery-relevant
-solvents. The v0.3.2 benchmark is carried unchanged into the v0.3.3 candidate,
-because v0.3.3 adds no model-ready row; the selected XGBoost Morgan+Physical
-hybrid on the raw target achieves R2 0.366, Spearman 0.814, and MAE 7.13 on 237
-fitted rows. A paired control that freezes the v0.3 fold assignment and appends
-the two added battery carbonates to the training folds only attributes +0.027 R2
-(95% CI +0.017 to +0.036) to the data addition, and both added solvents remain
-outside the model's extrapolation range. All builds and verifiers are
+solvents. The v0.3.2 benchmark is carried into the v0.3.3 candidate with one
+integrity change: rows the dataset flags `model_ready=false` are now withheld
+from every fit, which removes vinylene carbonate and takes the fitted set from
+237 to 236 rows. The selected XGBoost Morgan+Physical hybrid on the raw target
+achieves R2 0.364, Spearman 0.828, and MAE 6.69 on those 236 rows. A paired
+control that freezes the v0.3 fold assignment and appends the two added battery
+carbonates to the training folds only attributes +0.0059 R2 (95% CI -0.002 to
++0.013, p = 0.11) to the data addition -- a gain indistinguishable from zero --
+and both added solvents remain outside the model's extrapolation range. All builds and verifiers are
 deterministic and reproducible in continuous integration.
 
 # Background and Summary
@@ -53,9 +55,9 @@ The present dataset addresses these gaps by:
   status, license, redistribution conditions) for every row.
 - Maintaining explicit conflict records: disagreeing values are stored, never
   averaged, and the withholding decision is recorded per row rather than
-  applied as a blanket rule. The benchmark withholds the four rows on the
-  curated exclusion list; rows that are flagged but still fitted are labelled
-  as such.
+  applied as a blanket rule. The benchmark withholds the five rows on the
+  curated exclusion list and, since v0.3.4, every row the table flags
+  `model_ready=false` as well; no flagged row is fitted.
 - Providing a fixed multi-repeat cross-validation framework with three
   representations (fingerprint, physical descriptor, hybrid) and two targets
   (raw, log-transformed).

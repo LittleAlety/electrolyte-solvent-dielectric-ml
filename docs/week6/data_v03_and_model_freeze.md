@@ -65,15 +65,21 @@ negative result and robustness check.
 ## v0.3 model sensitivity
 
 The frozen Morgan, Physical, and equal-weight hybrid models were rerun on the
-235 v0.3 rows with physical features available:
+v0.3 rows with physical features available. The original week-6 rerun covered
+235 rows and reported Morgan `0.190`, Physical `0.273` and hybrid `0.310`;
+those values predate the `model_ready` gate and fitted vinylene carbonate, which
+the dataset flags `model_ready=false`. **Superseded 2026-09-24 (v0.3.4)** by the
+gate-fixed rerun on 236 rows:
 
-- Morgan: R2 `0.190`, MAE `7.879`, Spearman `0.697`;
-- Physical: R2 `0.273`, MAE `7.429`, Spearman `0.803`;
-- Morgan+Physical: R2 `0.310`, MAE `6.970`, Spearman `0.816`.
+- Morgan: R2 `0.240`, MAE `7.612`, Spearman `0.722`;
+- Physical: R2 `0.342`, MAE `7.098`, Spearman `0.802`;
+- Morgan+Physical: R2 `0.364`, MAE `6.686`, Spearman `0.828`.
 
-The hybrid R2 is slightly lower than the v0.2 result (`0.320`). The expansion
-therefore improves domain coverage but not predictive accuracy. This must be
-described as a coverage result, not a performance improvement.
+The hybrid R2 is essentially unchanged from the v0.2 result (`0.320`), and the
+controlled train-only PC/EC comparison shows no measurable gain (`+0.0059`,
+95% CI -0.002 to +0.013, p = 0.11). The expansion therefore improves domain
+coverage but not predictive accuracy. This must be described as a coverage
+result, not a performance improvement.
 
 ## Applicability domain
 

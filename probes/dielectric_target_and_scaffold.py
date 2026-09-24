@@ -565,7 +565,16 @@ def run(
     plot_path: Path,
     reuse_random: bool = False,
 ) -> dict[str, object]:
-    rows, failed = read_modelling_rows(input_path)
+    # Resolve once: every recorded path is written relative to the repo root, so
+    # a relative --input/--rows-output used to fail only after the whole run had
+    # already computed every fold.
+    input_path = input_path.resolve()
+    summary_path = summary_path.resolve()
+    rows_path = rows_path.resolve()
+    predictions_path = predictions_path.resolve()
+    scaffold_assignment_path = scaffold_assignment_path.resolve()
+    plot_path = plot_path.resolve()
+    rows, failed, withheld = read_modelling_rows(input_path)
     target = np.asarray([float(row["dielectric"]) for row in rows], dtype=float)
     morgan = morgan_count_features([row["smiles"] for row in rows])
     physical = physical_feature_matrix(rows)
@@ -602,6 +611,8 @@ def run(
         "input_sha256": canonical_text_sha256(input_path),
         "compound_count": len(rows),
         "failed_physical_feature_count": len(failed),
+        "withheld_not_model_ready_count": len(withheld),
+        "withheld_not_model_ready_names": [row["name"] for row in withheld],
         "target_modes": list(TARGET_MODES),
         "representations": list(REPRESENTATIONS),
         "random_cv": {
@@ -755,7 +766,7 @@ def main() -> int:
         )
         return 0
     if args.assignments_only:
-        rows, failed = read_modelling_rows(args.input)
+        rows, failed, withheld = read_modelling_rows(args.input)
         assignments = build_scaffold_assignments(rows)
         _write_csv_rows(
             args.scaffold_assignment_output,
@@ -767,6 +778,7 @@ def main() -> int:
                 {
                     "compound_count": len(rows),
                     "failed_physical_feature_count": len(failed),
+                    "withheld_not_model_ready_count": len(withheld),
                     "assignment_count": len(assignments),
                     "output": args.scaffold_assignment_output.relative_to(
                         REPOSITORY_ROOT

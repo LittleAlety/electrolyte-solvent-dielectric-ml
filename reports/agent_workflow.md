@@ -57,7 +57,7 @@ read-only evidence was gathered.
 | Applicability rule circular | Superseded: Onsager variant measured and rejected; structural donor rule adopted | `src/electrolyte_ml/applicability.py`, `probes/applicability_domain_summary.json` |
 | Premature v1.0 tag | Deleted local + remote | Release candidate renamed to v0.3.2 |
 | Glymes/dinitriles mis-reported absent | Corrected; already present under IUPAC names | `reports/g1_data_gate_review.md` |
-| Benchmark stale | Re-ran on 237 rows; v0.3 baseline reproduced exactly | `probes/v032_ablation_summary.json` |
+| Benchmark stale | Re-ran the v0.3.2 lineage and reproduced the v0.3 baseline exactly (**superseded in round 4:** 236 fitted rows once `model_ready` became a gate) | `probes/v032_ablation_summary.json` |
 
 ## VETO Fix Round 2 (parallel agent cluster, 2026-09-24)
 
@@ -73,13 +73,15 @@ read-only until it received an explicit, non-overlapping write scope.
 | Jason | P0-3 + P1: restore provenance, harden the verifier | `data/dielectric_v032.csv`, `data/dielectric_v03.csv`, `scripts/verify_dielectric_v032.py`, `tests/test_verify_dielectric_v032.py` | 243/243 strict superset; 7 named checks; 11 tests |
 | Averroes | Appendix J resource ladder | execution manual, outside the repository | Appendix J in both copies |
 | Linnaeus | v1.0 wording and section sync in the paper | `paper/abstract_and_intro.md`, `paper/benchmark_and_figures.md`, `paper/code_and_data.md`, `paper/outline.md`, `paper/technical_validation.md` | 13 wording/number alignments; flagged 12 further inconsistencies, one of which the main thread also fixed; the rest are listed under remaining gaps |
-| Main thread | P0-2 controlled benchmark and integration | `probes/v032_controlled_comparison.py`, `paper/full_draft.md`, `reports/`, `scripts/build_dielectric_v03.py`, `tests/test_build_dielectric_v03.py` | paired gain +0.0265 R2; validator fix; re-freeze |
+| Main thread | P0-2 controlled benchmark and integration | `probes/v032_controlled_comparison.py`, `paper/full_draft.md`, `reports/`, `scripts/build_dielectric_v03.py`, `tests/test_build_dielectric_v03.py` | paired gain +0.0265 R2; validator fix; re-freeze. **Superseded in round 4:** +0.0059 once `model_ready` became a gate |
 
 ### What the audit changed
 
 The first fix attempt claimed that adding PC/EC raised hybrid R2 by +0.056.
 The controlled re-run attributes **+0.0265** (95% CI +0.0171 to +0.0359) to
 the data addition; 1272 of 2350 compound x repeat fold assignments (54.1%)
+(superseded in round 4 -- with the `model_ready` gate the same control gives
++0.0059 and 1224 of 2340 = 52.3% churn)
 had silently changed between the two splits. The independently computed churn
 fraction from the audit reviewer and from the main-thread probe agree to three
 significant figures. The paper no longer cites +0.056 as a gain.
@@ -101,6 +103,73 @@ rule now carries a pinned trigger-rate check in
 `scripts/check_paper_artifact_consistency.py` so the figure cannot drift again.
 See `reports/applicability_domain_veto_fix.md`.
 
+### model_ready gate enforced (2026-09-24, round 4)
+
+A read-only audit of the paper's own claim -- "5 withheld, 236 fitted" -- found
+that no fitting script could have produced that split. The feature tables carry
+no `model_ready` column, so `read_modelling_rows` had no way to honour the flag:
+it dropped rows on the curated exclusion list and rows whose features failed,
+and silently kept everything else. Vinylene carbonate, flagged
+`model_ready=false` and `conflict_open`, was therefore inside the fitted set in
+every revision up to v0.3.3, while 3-methoxypropionitrile was outside it only
+because its feature row happened to be missing.
+
+`probes/dielectric_representation_ablation.py::read_modelling_rows` is the
+single choke point for every dielectric fit. It now reads `model_ready` from
+`data/dielectric_v03.csv` (join on InChIKey) and returns a three-way split --
+fitted, feature-failed, withheld. Withheld rows are returned to the caller
+instead of being dropped, a source row that has no roster entry raises
+`ValueError` (its status would be unknowable), and the accounting invariant is
+extended to `fitted + failed + withheld + excluded == source`, with the
+exclusion list intersected against the source lineage and any unmatched
+exclusion reported.
+
+| Lineage | Source | Fitted | Excluded | Feature failures | Withheld |
+| --- | --- | --- | --- | --- | --- |
+| v0.3.2 | 245 | 236 | 4 | 4 | 1 |
+| v0.3.3 | 246 | 236 | 5 | 4 | 1 |
+
+Vinylene carbonate is the withheld row in both lineages.
+3-Methoxypropionitrile was implicitly out before (no feature row, no exclusion
+entry) and is now an explicit fifth exclusion row.
+
+The benchmark was re-derived on 236 rows, and the controlled PC/EC gain did not
+survive the gate:
+
+| Representation | Baseline R2 | +PC/EC | Paired delta | 95% CI | p |
+| --- | --- | --- | --- | --- | --- |
+| Morgan | 0.2203 | 0.2191 | -0.0012 | [-0.006, +0.003] | 0.59 |
+| Physical | 0.3201 | 0.3194 | -0.0007 | [-0.016, +0.014] | 0.92 |
+| Morgan+Physical | 0.3456 | 0.3515 | **+0.0059** | [-0.002, +0.013] | 0.11 |
+
+The previously reported +0.0265 hybrid and +0.0502 Physical gains were carried
+by the withheld row: PC and EC are structural analogues of vinylene carbonate,
+so appending them to the training folds mostly improved the prediction of that
+one contested compound. Fold churn between the two splits is now 1224 of 2340
+compound x repeat assignments (52.3%). `data/dielectric_v03.csv` is unchanged
+(sha256 `2cd58144...a1b`): no `dielectric`, `T_K` or `model_ready` value moved,
+and the v0.3.2 and v0.3.3 lineages now fit the *same* 236 rows and return
+identical metrics, so the old row-wise v0.3 -> v0.3.2 "coverage gain" was fold
+churn plus the ungated row.
+
+Enforcement added in this round:
+
+- `scripts/check_paper_artifact_consistency.py` gained
+  `check_modelling_set_and_controlled_delta` (re-derives the fitted-row count,
+  the paired delta and its CI from the artifacts), `check_coverage_sensitivity_table`
+  (validates the per-version coverage table against the ablation summaries), and
+  stale-phrase guards for the superseded benchmark tables.
+- `tests/test_dielectric_representation_ablation.py` pins the three-way split,
+  the withheld-versus-failed distinction, the unknown-roster `ValueError`, and
+  the shipped tables (exactly one withheld row, vinylene carbonate).
+- `tests/test_build_dielectric_v03.py` asserts that the gate withholds exactly
+  the pinned offender set.
+- `probes/dielectric_target_and_scaffold.py` now resolves every output path up
+  front, and `probes/v032_controlled_comparison.py` derives its frozen-test-set
+  note and churn figure from the data instead of hard-coding them.
+
+Write-up: `reports/v034_model_ready_gate.md`.
+
 ### Paper draft inconsistencies: closed (2026-09-24, v0.3.3 round)
 
 Linnaeus' section-level review flagged nine inconsistencies that the first round
@@ -114,11 +183,11 @@ removed: the section files are the single source of truth and
 | --- | --- | --- |
 | 1 | glyme diethers and adiponitrile described as missing | rewritten; they are present under IUPAC names, and the named gaps are now 3-methoxypropionitrile and FEC |
 | 2 | neural baselines labelled "same 10x5 folds" without a version | header now names the 205-row v0.2 feature table, and the Chemprop comparison was re-based on like-for-like 205-row numbers (0.203, not 0.190) |
-| 3 | scaffold/cluster table carried old values and no version label | replaced with `probes/v032_target_scaffold_summary.json` (v0.3.2, 237 rows); several std values in the existing six-row table were wrong too, e.g. `7.104 +/- 0.257` -> `7.103 +/- 0.168` |
+| 3 | scaffold/cluster table carried old values and no version label | replaced with `probes/v032_target_scaffold_summary.json` (v0.3.2 lineage, 236 fitted rows); several std values in the existing six-row table were wrong too, e.g. `7.104 +/- 0.257` -> `7.103 +/- 0.168` |
 | 4 | Figure 1 said `v0.3 (243)` | now `v0.1 (100) -> v0.2 (210) -> v0.3 (243) -> v0.3.3 (246)` |
 | 5 | repository listing omitted `dielectric_v032.csv` and the v0.3.2 verifier | tree rewritten with v0.3.1/v0.3.2/v0.3.3, both verifiers, the exclusion table and the provenance patch table |
 | 6 | `immutable release commit` conflicting with candidate status | reworded, and a stale-phrase check now fails the build if the phrase returns |
-| 7 | conflict count not version-labelled | now stated as 9 conflict statuses / 6 `model_ready=false` / 4 withheld / 237 fitted, each re-derived from the table |
+| 7 | conflict count not version-labelled | now stated as 9 conflict statuses / 6 `model_ready=false` / 5 withheld / 236 fitted, each re-derived from the table |
 | 8 | older benchmark values lacked an explicit version tag | every benchmark table now names its dataset version and row count |
 | 9 | known data gaps disagreed with the corrected G1 list | rewritten around 3-methoxypropionitrile (no physical-feature row) and FEC (excluded) |
 
@@ -151,7 +220,7 @@ conflict occurred, and the integration made zero external API calls.
 | Agent | Scope | State | Result or evidence | Blocker |
 | --- | --- | --- | --- | --- |
 | Noether | ECW-308 Table S3 line-level re-extraction | Complete | Re-ran pypdf from the PDF; confirmed 8/8 target rows (page/value/reference) and the tetraglyme no-hit; classified ECW as a secondary compilation | None |
-| Franklin | Provenance-patch and modelling-path audit | Complete | Confirmed the patch layer can update `source_dois_all`, `notes`, and `conflict_status`, cannot update `model_ready`, and does not move the 237-row benchmark; identified the review-license gate for FEC/VC | None |
+| Franklin | Provenance-patch and modelling-path audit | Complete | Confirmed the patch layer can update `source_dois_all`, `notes`, and `conflict_status`, cannot update `model_ready`, and does not move the benchmark (round 4 later took the fitted set to 236 rows); identified the review-license gate for FEC/VC | None |
 | Euler | Paper/report consistency audit | Complete | Found the FEC/VC overstatements, nitrile conflict accounting, MOPN licence wording, patch-count drift, and stale agent status | None |
 | Main | Patch integration and freeze | Complete | 30 patches / 15 compounds; 246 rows; 9 conflict statuses / 6 `model_ready=false`; output sha256 `2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b`; full suite `490 passed`; Ruff clean; all four dataset verifiers pass | None |
 
@@ -185,8 +254,10 @@ untouched. Evidence: `reports/g1plus_citation_trace_findings.md`,
 ### Enforcement added
 
 `scripts/check_paper_artifact_consistency.py` re-derives row counts, conflict
-counts, the main benchmark table, the scaffold table, the release version and
-the generated draft from the committed artifacts, and fails on any mismatch.
+counts, the main benchmark table, the scaffold table, the per-version coverage
+table, the fitted-row count and the controlled PC/EC delta, the release version
+and the generated draft from the committed artifacts, and fails on any mismatch;
+superseded number strings are rejected outright.
 `tests/test_paper_artifact_consistency.py` pins it with injected-drift tests, so
 each mutation must produce an error. Both run in CI alongside the dataset
 verifiers.
@@ -218,6 +289,15 @@ verifiers.
 | 2026-09-24 | `.venv\Scripts\python.exe scripts/build_paper_full_draft.py --check` | `paper/full_draft.md` up to date |
 | 2026-09-24 | `.venv\Scripts\python.exe scripts/check_paper_artifact_consistency.py` | `paper drafts agree with the frozen artifacts` |
 | 2026-09-24 | `.venv\Scripts\python.exe -m pytest tests/test_paper_artifact_consistency.py -q` | `8 passed` (includes 6 injected-drift tests) |
+| 2026-09-24 | `.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider` | `509 passed` (v0.3.4 model_ready gate round) |
+| 2026-09-24 | `.venv\Scripts\python.exe -m ruff check scripts src probes tests` | All checks passed |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_representation_ablation.py` | every fold, repeat and summary metric recomputed from the shipped tables; `passed=true` |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_target_scaffold.py` | scaffold balance and input hash verified; `passed=true` |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v03.py` | `passed=true`, 7/7 checks, 246 rows, sha256 `2cd58144...a1b` |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v032.py` | `passed=true`, 7/7 checks, 245 rows |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_dielectric_v02.py` | 9/9 checks passed |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/verify_week1.py` | 15/15 checks passed |
+| 2026-09-24 | `.venv\Scripts\python.exe scripts/check_paper_artifact_consistency.py` | `paper drafts agree with the frozen artifacts` (now also checks the coverage table, the fitted-row count and the controlled delta) |
 
 ## Visibility Rule
 

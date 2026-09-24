@@ -102,6 +102,18 @@ STALE_PHRASES = (
         "Onsager-estimated static dielectric above 60 are flagged",
         "the Onsager variant was measured and rejected; the adopted trigger is structural",
     ),
+    # Superseded benchmark tables. The coverage table's historical rows are
+    # labelled "pre-gate (superseded)" and carry no row-count suffix, so these
+    # phrases only match prose that still presents the old numbers as current.
+    ("237-row", "the model_ready gate took every v0.3 lineage to 236 fitted rows"),
+    ("237 rows", "the model_ready gate took every v0.3 lineage to 236 fitted rows"),
+    (
+        "Morgan (ECFP4 count)",
+        (
+            "the duplicate per-section ablation table was replaced by a pointer "
+            "to the checked main benchmark table"
+        ),
+    ),
 )
 
 
@@ -203,6 +215,31 @@ def _table_after_heading(text: str, heading: str) -> list[list[str]]:
         cells = [cell.strip() for cell in stripped.strip("|").split("|")]
         table.append(cells)
     return table
+
+
+def _tables(text: str) -> list[list[list[str]]]:
+    """Every markdown table in the text, as a list of rows of stripped cells."""
+    tables: list[list[list[str]]] = []
+    current: list[list[str]] = []
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("|"):
+            current.append([cell.strip() for cell in stripped.strip("|").split("|")])
+            continue
+        if current:
+            tables.append(current)
+            current = []
+    if current:
+        tables.append(current)
+    return tables
+
+
+def _table_with_header(text: str, header: tuple[str, ...]) -> list[list[str]]:
+    """The first table whose header row matches `header` exactly."""
+    for table in _tables(text):
+        if tuple(cell.replace("*", "").strip() for cell in table[0]) == header:
+            return table
+    raise KeyError(" | ".join(header))
 
 
 def _decimals(cell: str) -> int | None:
@@ -393,6 +430,123 @@ def check_applicability_trigger_rate(paper_dir: Path) -> list[str]:
     return errors
 
 
+def check_modelling_set_and_controlled_delta(paper_dir: Path) -> list[str]:
+    """The fitted-row count and the controlled PC/EC gain must match the artifacts.
+
+    Both numbers moved once already: enforcing `model_ready` took the fitted set
+    from 237 to 236 rows and the paired hybrid gain from +0.0265 to +0.0059. This
+    check re-derives them and fails the build if the prose drifts again.
+    """
+
+    ablation = read_json(PROBES_DIR / "v032_ablation_summary.json")
+    fitted = int(ablation["compound_count"])
+    withheld = int(ablation.get("withheld_not_model_ready_count", 0))
+    accounted = (
+        fitted
+        + withheld
+        + int(ablation["failed_physical_feature_count"])
+        + int(ablation["excluded_count"])
+    )
+    errors: list[str] = []
+    if accounted != int(ablation["source_count"]):
+        errors.append(
+            "v032_ablation_summary.json does not balance: "
+            f"{accounted} != {ablation['source_count']}"
+        )
+
+    paired = read_json(PROBES_DIR / "v032_controlled_comparison_summary.json")[
+        "paired_deltas"
+    ]["Morgan+Physical"]["r2"]
+    delta = float(paired["delta_mean"])
+    low, high = (float(value) for value in paired["delta_ci95"])
+
+    for name, text in paper_texts(paper_dir).items():
+        flat = re.sub(r"\s+", " ", text)
+        for match in re.finditer(r"(\d+) fitted rows", flat):
+            if int(match.group(1)) != fitted:
+                errors.append(
+                    f"{name}: claims {match.group(1)} fitted rows, but "
+                    f"v032_ablation_summary.json records {fitted}"
+                )
+        for match in re.finditer(r"attributes[^.]{0,40}?([+-]\d+\.\d{3,4})", flat):
+            if abs(float(match.group(1)) - delta) > 5e-5:
+                errors.append(
+                    f"{name}: claims a {match.group(1)} controlled R2 gain, but "
+                    f"the paired control records {delta:+.4f}"
+                )
+        for match in re.finditer(
+            r"95% CI ([+-]\d+\.\d{3}) to ([+-]\d+\.\d{3})",
+            flat,
+        ):
+            if abs(float(match.group(1)) - low) > 5e-4 or abs(float(match.group(2)) - high) > 5e-4:
+                errors.append(
+                    f"{name}: quotes a controlled CI of [{match.group(1)}, "
+                    f"{match.group(2)}], but the probe records [{low:+.3f}, {high:+.3f}]"
+                )
+    return errors
+
+
+def check_coverage_sensitivity_table(paper_dir: Path) -> list[str]:
+    """The per-version coverage table must match the gate-fixed ablation summaries.
+
+    Two rows of that table moved in v0.3.4: the fitted-row counts (235/237 -> 236
+    in both v0.3 lineages) and the metrics themselves. Rows the prose marks
+    `pre-gate (superseded)` are historical and are not re-derived, but every
+    current row is checked against the artifact that produced it.
+    """
+
+    header = ("Dataset", "Fitted rows", "Morgan R2", "Physical R2", "Hybrid R2")
+    sources = {
+        "v0.2": ("dielectric_representation_ablation_summary.json", "Morgan"),
+        "gate enforced": ("v032_ablation_summary.json", "Morgan"),
+    }
+    text = (paper_dir / "technical_validation.md").read_text(encoding="utf-8-sig")
+    try:
+        table = _table_with_header(text, header)
+    except KeyError:
+        return [
+            (
+                "technical_validation.md: the coverage-sensitivity table is "
+                "missing or its header changed"
+            )
+        ]
+
+    errors: list[str] = []
+    for cells in table[2:]:
+        if len(cells) < 5:
+            continue
+        label = cells[0].replace("*", "").strip()
+        if "pre-gate" in label:
+            continue
+        source = next(
+            (name for key, (name, _) in sources.items() if key in label), None
+        )
+        if source is None:
+            errors.append(
+                f"technical_validation.md: unrecognised coverage row {label!r}"
+            )
+            continue
+        summary = read_json(PROBES_DIR / source)
+        fitted = int(summary["compound_count"])
+        claimed = cells[1].replace("*", "").strip()
+        if not claimed.isdigit() or int(claimed) != fitted:
+            errors.append(
+                f"technical_validation.md: row {label!r} claims {claimed} fitted "
+                f"rows, but {source} records {fitted}"
+            )
+        for index, metric in ((2, "r2"), (3, "r2"), (4, "r2")):
+            representation = ("Morgan", "Physical", "Morgan+Physical")[index - 2]
+            _compare(
+                errors,
+                "technical_validation.md",
+                label,
+                representation,
+                cells[index],
+                float(summary["summary"][representation][metric]["mean"]),
+            )
+    return errors
+
+
 def check_release_version(paper_dir: Path) -> list[str]:
     text = (paper_dir / "code_and_data.md").read_text(encoding="utf-8-sig")
     marker = f"**Release:** v{CURRENT_DATASET_VERSION}"
@@ -430,6 +584,8 @@ def verify_paper(paper_dir: Path = PAPER_DIR) -> list[str]:
         check_scaffold_table,
         check_release_version,
         check_applicability_trigger_rate,
+        check_modelling_set_and_controlled_delta,
+        check_coverage_sensitivity_table,
         check_full_draft,
         check_stale_phrases,
     ):

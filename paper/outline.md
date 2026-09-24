@@ -58,7 +58,7 @@ holdout performance, and poor transfer to associated liquids.
 - `data/dielectric_v02.csv`
 - `data/dielectric_v03.csv` (v0.3.3, 246 compounds, current)
 - `data/dielectric_v031.csv` (243) and `data/dielectric_v032.csv` (245), historical
-- `data/processed/dielectric_v03_exclusions.csv` (4-row curated exclusion list)
+- `data/processed/dielectric_v03_exclusions.csv` (5-row curated exclusion list)
 - `data/processed/dielectric_v03_provenance_patches.csv` (30 reproducible patches)
 - `data/processed/modern_solvent_public_review_observations.csv`
 - `data/processed/dielectric_physical_features_density.csv`
@@ -71,15 +71,15 @@ holdout performance, and poor transfer to associated liquids.
 - Chodera 2015 cross-check.
 - SpringerMaterials restricted cross-check with median absolute delta `0.05`.
 - Ethyl isothiocyanate conflict remains explicitly unresolved and is withheld.
-- Vinylene carbonate is flagged `model_ready=false` but is still fitted: the
-  modelling pipeline honours the exclusion list, not the flag. Reported openly.
+- Vinylene carbonate is flagged `model_ready=false`; since v0.3.4 the modelling
+  gate withholds it from every fit and the accounting reports it explicitly.
 - Deterministic builders and independent verifiers.
 - v0.3.2 model sensitivity: broader modern-solvent coverage without a
-  controlled accuracy gain (`R2 0.366` hybrid on 237 rows versus `0.320` on the
-  205-row v0.2 table). A paired train-only control attributes `+0.0265`
-  (95% CI `+0.017` to `+0.036`) to the PC/EC addition; 1272 of 2350 fold
-  assignments (54.1%) also changed, so the raw version-to-version difference is
-  not a controlled estimate.
+  controlled accuracy gain (`R2 0.364` hybrid on 236 fitted rows versus `0.320`
+  on the 205-row v0.2 table). A paired train-only control attributes only
+  `+0.0059` (95% CI `-0.002` to `+0.013`, p = 0.11) to the PC/EC addition; 1224
+  of 2340 fold assignments (52.3%) also changed, so the raw version-to-version
+  difference is not a controlled estimate.
 - Cross-platform CI over all committed artifacts.
 
 ## Benchmark Tables

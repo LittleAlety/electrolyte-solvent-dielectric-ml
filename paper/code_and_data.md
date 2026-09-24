@@ -17,7 +17,7 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── dielectric_v031.csv          # v0.3.1: G1 revision (243, historical)
 │   ├── dielectric_v032.csv          # v0.3.2: PC+EC freeze (245, historical)
 │   ├── processed/
-│   │   ├── dielectric_v03_exclusions.csv           # 4-row curated exclusion list
+│   │   ├── dielectric_v03_exclusions.csv           # 5-row curated exclusion list
 │   │   ├── dielectric_v03_provenance_patches.csv   # 30 reproducible patches
 │   └── restricted/                  # Non-redistributable cross-check evidence
 ├── scripts/
@@ -34,7 +34,7 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── dielectric_mlp_calibration_probe.py      # Pre-registered calibration probe
 │   ├── dielectric_chemprop_baseline.py          # Chemprop D-MPNN baseline
 │   ├── g2_domain_gap_test.py                    # External domain-gap test
-│   ├── v032_ablation_summary.json               # v0.3.2 237-row benchmark
+│   ├── v032_ablation_summary.json               # v0.3.2 236-row benchmark
 │   ├── v032_target_scaffold_summary.json        # v0.3.2 scaffold holdout
 │   ├── v032_controlled_comparison_summary.json  # Paired PC/EC control
 │   └── artifacts/                               # Figures and plots

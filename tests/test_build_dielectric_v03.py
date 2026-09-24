@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from electrolyte_ml.exporting import canonical_text_sha256
+from probes.dielectric_representation_ablation import read_modelling_rows
 from scripts.build_dielectric_v03 import (
     PROVENANCE_PATCH_PROTECTED_FIELDS,
     apply_provenance_patches,
@@ -842,19 +843,17 @@ def test_build_summary_records_patch_provenance() -> None:
 
 KNOWN_NON_MODEL_READY_MODELLING_ROWS = frozenset(
     {
-        # Vinylene carbonate is flagged model_ready=false / conflict_open in
-        # v0.3.2, yet it is still present in the modelling feature file and is
-        # therefore trained on today.  The modelling pipeline gates on the
-        # exclusion list plus feature success, not on model_ready; recorded in
-        # reports/v033_findings.md.  Fixing the wiring changes the benchmark and
-        # must be a deliberate, separately reported decision.
+        # Vinylene carbonate is flagged model_ready=false / conflict_open, so it
+        # stays in the feature table as inventory but must never be fitted.
+        # Since 2026-09-24 `read_modelling_rows` withholds such rows and returns
+        # them explicitly; this guard keeps the set from growing unnoticed.
         "VAYTZRYEBVHVLE-UHFFFAOYSA-N",
     }
 )
 
 
 def test_only_known_non_model_ready_rows_reach_the_modelling_feature_file() -> None:
-    """Guard against quietly growing the model_ready / modelling-set mismatch."""
+    """Guard against quietly growing the model_ready / feature-file mismatch."""
 
     features_path = (
         REPOSITORY_ROOT / "data" / "processed" / "dielectric_physical_features_v03.csv"
@@ -872,6 +871,14 @@ def test_only_known_non_model_ready_rows_reach_the_modelling_feature_file() -> N
     }
 
     assert offenders == set(KNOWN_NON_MODEL_READY_MODELLING_ROWS)
+
+    # ...and the modelling gate must actually withhold them from every fit.
+    successful, _, withheld = read_modelling_rows(
+        features_path,
+        dataset_path=V03_PATH,
+    )
+    assert {row["inchikey"] for row in withheld} == offenders
+    assert not (offenders & {row["inchikey"] for row in successful})
 
 
 def test_mopn_gap_row_is_recorded_but_held_out_of_the_model() -> None:

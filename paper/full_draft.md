@@ -18,13 +18,15 @@ A companion benchmark evaluates three representations (Morgan fingerprints,
 13-dimensional physical features from GFN2-xTB and RDKit, and their
 equal-weight hybrid) under fixed 10x5 repeated cross-validation,
 scaffold/cluster holdout, and an external domain-gap test on 29 battery-relevant
-solvents. The v0.3.2 benchmark is carried unchanged into the v0.3.3 candidate,
-because v0.3.3 adds no model-ready row; the selected XGBoost Morgan+Physical
-hybrid on the raw target achieves R2 0.366, Spearman 0.814, and MAE 7.13 on 237
-fitted rows. A paired control that freezes the v0.3 fold assignment and appends
-the two added battery carbonates to the training folds only attributes +0.027 R2
-(95% CI +0.017 to +0.036) to the data addition, and both added solvents remain
-outside the model's extrapolation range. All builds and verifiers are
+solvents. The v0.3.2 benchmark is carried into the v0.3.3 candidate with one
+integrity change: rows the dataset flags `model_ready=false` are now withheld
+from every fit, which removes vinylene carbonate and takes the fitted set from
+237 to 236 rows. The selected XGBoost Morgan+Physical hybrid on the raw target
+achieves R2 0.364, Spearman 0.828, and MAE 6.69 on those 236 rows. A paired
+control that freezes the v0.3 fold assignment and appends the two added battery
+carbonates to the training folds only attributes +0.0059 R2 (95% CI -0.002 to
++0.013, p = 0.11) to the data addition -- a gain indistinguishable from zero --
+and both added solvents remain outside the model's extrapolation range. All builds and verifiers are
 deterministic and reproducible in continuous integration.
 
 # Background and Summary
@@ -53,9 +55,9 @@ The present dataset addresses these gaps by:
   status, license, redistribution conditions) for every row.
 - Maintaining explicit conflict records: disagreeing values are stored, never
   averaged, and the withholding decision is recorded per row rather than
-  applied as a blanket rule. The benchmark withholds the four rows on the
-  curated exclusion list; rows that are flagged but still fitted are labelled
-  as such.
+  applied as a blanket rule. The benchmark withholds the five rows on the
+  curated exclusion list and, since v0.3.4, every row the table flags
+  `model_ready=false` as well; no flagged row is fitted.
 - Providing a fixed multi-repeat cross-validation framework with three
   representations (fingerprint, physical descriptor, hybrid) and two targets
   (raw, log-transformed).
@@ -170,10 +172,12 @@ nitrile values. No ECW-308 numeric value replaces a primary row.
 When independent public sources disagree materially, the conflicting values
 are recorded and the row is flagged; conflicts are never averaged. Nine rows
 carry an explicit conflict_status and six are flagged model_ready=false. The
-benchmark withholds four rows through a curated exclusion list
+benchmark withholds five rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (values 78.4, 102, 107),
-TEP (10, 13), TMP (10, 21.6), and ethyl isothiocyanate (NBS 19.5 at 294.15 K vs.
-restricted cross-check 29.7 at 293.2 K). Methyl propionate (NBS 5.5 vs. review
+TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate (NBS 19.5 at 294.15 K vs.
+restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308
+secondary compilation 36.0, awaiting primary confirmation). A sixth row,
+vinylene carbonate, is withheld by the `model_ready` gate itself. Methyl propionate (NBS 5.5 vs. review
 6.2) is also documented and retained. Adiponitrile and glutaronitrile retain
 their ThermoML primary values (32.12 and 34.6); ECW-308 compilation values
 (30.00 and 37.00) are recorded as disagreements, not replacements.
@@ -322,8 +326,8 @@ The v0.2 predecessor built from ThermoML and NBS Circular 514.
 | probes/g2_domain_gap_summary.json | Domain-gap external test (frozen v0.2 model) |
 | probes/dielectric_density_feature_summary.json | Experimental-density comparison |
 | probes/dielectric_target_scaffold_summary.json | Scaffold/cluster holdout benchmark (v0.2, 205 rows) |
-| probes/v032_target_scaffold_summary.json | v0.3.2 target-transform and scaffold benchmark (237 rows) |
-| probes/v032_ablation_summary.json | v0.3.2 main ablation benchmark (237 rows) |
+| probes/v032_target_scaffold_summary.json | v0.3.2 target-transform and scaffold benchmark (236 rows) |
+| probes/v032_ablation_summary.json | v0.3.2 main ablation benchmark (236 rows) |
 | probes/v032_controlled_comparison_summary.json | Paired PC/EC train-only control |
 | probes/dielectric_v03_summary.json | v0.3.3 build manifest, patches and SHA256 |
 | 
@@ -380,30 +384,27 @@ For compounds with multiple NBS entries (different temperatures or purity
 grades), the selection rank and figure quality determine the preferred record.
 
 **Conflict exclusions (v0.3.3 conventions).** Nine rows carry a non-empty
-conflict_status and six carry model_ready=false. Four of them are withheld from
+conflict_status and six carry model_ready=false. Five of them are withheld from
 model fitting through the curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (reported values 78.4, 102,
-107), TEP (10, 13), TMP (10, 21.6), and ethyl isothiocyanate, whose NBS value
+107), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate, whose NBS value
 (19.5 at 294.15 K) and restricted cross-check value (29.7 at 293.2 K) differ by
-10.2. Methyl propionate (NBS 5.5 vs. review 6.2) and the two ECW-308
+10.2, and 3-methoxypropionitrile, whose 36.0 rests on a secondary compilation
+awaiting primary confirmation. Methyl propionate (NBS 5.5 vs. review 6.2) and the two ECW-308
 nitrile disagreements are recorded with their primary rows retained.
 
-Two flagged rows need qualification rather than a clean exclusion claim.
-Vinylene carbonate (literature range 78-127; ECW-308 independently reports
-126.00, but this study did not trace 126 to an original measurement) carries
-model_ready=false and conflict_open but still reaches the feature table, because
-`probes/dielectric_representation_ablation.py` filters on the exclusion list and
-not on the model_ready column; its epsilon of 126 therefore remains inside the
-237-row benchmark. Eight benchmark rows have epsilon > 60, and vinylene
-carbonate accounts for about 17.8% of the total epsilon > 60 absolute error of
-the hybrid model; dropping it would move that stratum MAE from 63.93 to 60.04.
-That is material but not dominant, and the row is reported rather than removed.
-3-Methoxypropionitrile carries model_ready=false and
-awaiting_primary_confirmation and is absent from the fitted set because it has no
-GFN2-xTB physical-feature row, not because of the flag. The operative filter is
-metadata, not the model_ready column. The frozen accounting is 245 source rows
-= 237 fitted rows + 4 curated exclusions + 4 physical-feature failures (three
-ionic liquids and iron pentacarbonyl).
+Two flagged rows need qualification. Vinylene carbonate (literature range
+78-127; ECW-308 independently reports 126.00, but this study did not trace 126
+to an original measurement) carries model_ready=false and conflict_open. Since
+the v0.3.4 revision the modelling gate enforces that flag, so the row is
+**withheld from every fit** and reported under `withheld_not_model_ready_names`
+instead of being trained on. 3-Methoxypropionitrile also carries
+model_ready=false and is additionally absent from the fitted set because it has
+no GFN2-xTB physical-feature row. The frozen accounting for the v0.3.2 lineage
+is 245 source rows = 236 fitted rows + 4 curated exclusions + 4 physical-feature
+failures (three ionic liquids and iron pentacarbonyl) + 1 withheld
+model_ready=false row (vinylene carbonate); for the v0.3.3 roster of 246 rows
+the same split is 236 + 5 + 4 + 1.
 
 ## Reproducibility
 
@@ -447,51 +448,64 @@ version**. Growing a dataset reshuffles the split, so a row-wise comparison
 across versions is a coverage result, not a controlled estimate of what the
 added compounds contribute.
 
-**v0.3.2 coverage sensitivity.** The frozen Morgan, Physical, and Hybrid
-representations were rerun under the identical fixed 10x5 protocol as each
-dataset expanded. Every version was rebuilt from pinned inputs and the v0.3
-baseline was reproduced exactly (R2 0.3099):
+**Coverage sensitivity under the `model_ready` gate.** The frozen Morgan,
+Physical, and Hybrid representations were rerun under the identical fixed 10x5
+protocol as each dataset expanded, and every version was rebuilt from pinned
+inputs. The v0.3.4 re-derivation enforced the `model_ready` gate, which changed
+both the fitted-row count and the values earlier drafts printed:
 
 | Dataset | Fitted rows | Morgan R2 | Physical R2 | Hybrid R2 |
 |---|---|---|---|---|
 | v0.2 | 205 | 0.2025 | 0.2829 | 0.3201 |
-| v0.3 | 235 | 0.1898 | 0.2731 | 0.3099 |
-| **v0.3.2** | **237** | **0.2230** | **0.3538** | **0.3660** |
+| v0.3, pre-gate (superseded) | 235 | 0.1898 | 0.2731 | 0.3099 |
+| v0.3.2, pre-gate (superseded) | 237 | 0.2230 | 0.3538 | 0.3660 |
+| **v0.3.3 / v0.3.2, gate enforced** | **236** | **0.2402** | **0.3422** | **0.3636** |
 
-These values are not attributable to the two added compounds. Enlarging the
-table from 235 to 237 rows reshuffles `RepeatedKFold`: 1272 of 2350
-compound x repeat fold assignments (54.1%) differ between the two splits, and
-the evaluation-set target variance grows by 8.1%. The v0.3 -> v0.3.2 row above
-therefore mixes the data addition with a different random partition.
+The two pre-gate rows are kept only as a record of what the earlier revisions
+printed; both fitted vinylene carbonate, which the dataset flags
+`model_ready=false`. With the gate enforced the v0.3 and v0.3.2 lineages share
+the *same* 236-row modelling set (245 source rows = 236 fitted + 4 curated
+exclusions + 4 physical-feature failures + 1 withheld; for the 246-row v0.3.3
+roster the same split is 236 + 5 + 4 + 1), so their reruns agree to every
+reported digit and the gate-fixed row replaces both.
+
+These row-wise differences are not attributable to the two added compounds.
+Enlarging the table from 234 to 236 fitted rows reshuffles `RepeatedKFold`:
+1224 of 2340 compound x repeat fold assignments (52.3%) differ between the two
+splits, so the pre-gate v0.3 -> v0.3.2 row mixes the data addition with a
+different random partition.
 
 To isolate the data contribution we ran a paired control
 (`probes/v032_controlled_comparison.py`). The v0.3 fold assignment was frozen,
-all 235 v0.3 compounds kept their original folds in every repeat, and
+all 234 eligible v0.3 compounds kept their original folds in every repeat, and
 propylene carbonate (epsilon 64.9) and ethylene carbonate (epsilon 90.5) were
 appended to the **training folds only**, so both arms score exactly the same
 held-out compounds:
 
 | Representation | v0.3 R2 | + PC/EC (train only) | Paired delta | 95% CI | Paired p |
 |---|---|---|---|---|---|
-| Morgan | 0.1898 | 0.1899 | +0.0001 | [-0.006, +0.006] | 0.97 |
-| Physical | 0.2731 | 0.3233 | **+0.0502** | [+0.032, +0.068] | 1.3e-4 |
-| Morgan+Physical | 0.3099 | 0.3364 | **+0.0265** | [+0.017, +0.036] | 1.3e-4 |
+| Morgan | 0.2203 | 0.2191 | -0.0012 | [-0.006, +0.003] | 0.59 |
+| Physical | 0.3201 | 0.3194 | -0.0007 | [-0.016, +0.014] | 0.92 |
+| Morgan+Physical | 0.3456 | 0.3515 | **+0.0059** | [-0.002, +0.013] | 0.11 |
 
-The controlled hybrid gain is **+0.027**, about half of the +0.056 implied by
-the raw version-to-version comparison. The effect sits in the Physical
-representation (+0.050) while the Morgan fingerprint representation is flat
-(+0.0001) and its MAE and Spearman deteriorate (p = 0.006 and p = 0.008).
-That is consistent with the stated mechanism: the carbonate dipole feature,
-not fingerprint bits, separates high-permittivity cyclic carbonates. The
-hybrid MAE improves only slightly (6.970 -> 6.906, p = 0.14) while RMSE
-improves by 0.31 (p = 9.5e-5), so the addition is a real but moderate
-generalization gain rather than a step change.
+**The controlled gain does not survive the model_ready gate.** With vinylene
+carbonate withheld from both arms, the paired hybrid delta falls from the
+previously reported +0.0265 to **+0.0059**, with a 95% CI that spans zero
+(p = 0.11), and the Physical delta falls from +0.0502 to -0.0007. The earlier
+figures were carried by a single held-out row: propylene carbonate and ethylene
+carbonate are structural analogues of vinylene carbonate, so appending them to
+the training folds mostly improved the prediction of that one contested
+compound. Hybrid MAE is slightly worse (+0.032, p = 0.30), RMSE slightly better
+(-0.067, p = 0.10), and Spearman is significantly worse (-0.0085, p = 0.0028).
+The honest reading is that PC/EC broaden coverage but do **not** deliver a
+measurable accuracy gain on the v0.3 compounds.
 
 **The added solvents stay outside the extrapolation range.** Training on all
-235 v0.3 compounds and predicting PC and EC as external holdouts underestimates
+234 v0.3 compounds (the gate-fixed frozen fold set) and predicting PC and EC as
+external holdouts underestimates
 both: the hybrid predicts 29.8 +/- 1.1 for PC (true 64.9) and 50.3 +/- 2.2 for
 EC (true 90.5). Adding these two solvents improves interpolation among the
-existing 235 compounds; it does not give the model extrapolation ability for
+existing 234 compounds; it does not give the model extrapolation ability for
 unseen high-permittivity carbonates. This limitation is consistent with the
 applicability-domain rule recorded in the dataset.
 
@@ -506,24 +520,19 @@ space that the classic-organic model cannot interpolate.
 
 ## Physical-feature ablation
 
-Under fixed 10x5 cross-validation:
-
-| Representation | R2 (raw) | MAE (raw) | Spearman | AUC (eps > 30) |
-|---|---|---|---|---|
-| Morgan (ECFP4 count) | 0.223 | 8.22 | 0.689 | 0.826 |
-| Physical (13-dim) | 0.354 | 7.50 | 0.801 | 0.936 |
-| Morgan+Physical (hybrid) | **0.366** | **7.13** | **0.814** | **0.929** |
-
-(All values are the v0.3.2 237-row benchmark; the v0.2 205-row reference
-values remain 0.203 / 0.283 / 0.320 for the corresponding representations.)
+The gate-fixed raw-target ablation is the v0.3.3 row of the main benchmark
+table in `paper/benchmark_and_figures.md`: Morgan R2 0.240 / MAE 7.612 /
+Spearman 0.722, Physical 0.342 / 7.098 / 0.802, and the equal-weight hybrid
+0.364 / 6.686 / 0.828, on 236 fitted rows. The v0.2 205-row reference values
+remain 0.203 / 0.283 / 0.320 for the corresponding representations.
 
 The log(epsilon - 1) target improves the Physical representation on MAE
-(7.50 to 6.53) and Spearman (0.801 to 0.883) while leaving R2 slightly lower
-(0.354 to 0.338); it does not transfer to the hybrid (R2 0.315).
+(7.10 to 6.37) and Spearman (0.802 to 0.880) while leaving R2 lower
+(0.342 to 0.290); it does not transfer to the hybrid (R2 0.293).
 
-**Scaffold/cluster holdout (v0.3.2, 237 rows).** Physical with
-log(epsilon - 1) has the best mean R2 (0.299 +/- 0.018) and MAE
-(7.103 +/- 0.168) under structure-based holdout, confirming that physical
+**Scaffold/cluster holdout (v0.3.3, 236 rows).** Physical with
+log(epsilon - 1) has the best mean R2 (0.276 +/- 0.044) and MAE
+(6.669 +/- 0.218) under structure-based holdout, confirming that physical
 features generalize better to novel scaffolds than fingerprint-based
 representations (probes/v032_target_scaffold_summary.json).
 
@@ -556,7 +565,7 @@ reference the R2 exceeds Morgan (0.237 vs. 0.203) but the Spearman is lower
 (0.665 vs. 0.697 for Morgan and 0.821 for Physical), reinforcing the narrative
 that graph representations carry fingerprint-level information while physical
 features provide the ranking signal. Neither neural baseline was recomputed on
-the v0.3.2 237-row folds.
+the v0.3.2 236-row folds.
 
 # Limitations
 
@@ -609,16 +618,16 @@ absent are in fact present in the dataset under their IUPAC names (diglyme =
 items constitute explicit targets for the v1.1 revision. Contributions from the
 community via the GitHub repository are welcome.
 
-**The model_ready flag is advisory, not a gate.** The modelling pipeline filters
-on the physical-feature status column and on the curated exclusion list; nothing
-in it reads model_ready. Vinylene carbonate is therefore flagged
-model_ready=false and conflict_open yet remains fitted, and so does methyl
-propionate (conflict_open, model_ready=true). Two consequences are reported
-rather than hidden: the 237-row benchmark contains one row the table itself marks
-as unresolved, and 3-methoxypropionitrile is absent only because it never
-received a physical-feature row. Closing the flag gap changes the fitted set and
-invalidates the +0.0265 paired control, so it is recorded here as an open
-decision instead of being applied silently.
+**The model_ready flag is now a gate.** Until v0.3.4 the modelling pipeline
+filtered only on the physical-feature status column and on the curated exclusion
+list, so vinylene carbonate was flagged `model_ready=false` and `conflict_open`
+yet still fitted. `read_modelling_rows` now withholds every row whose dataset
+record is not `model_ready=true`, returns those rows to the caller instead of
+dropping them, and the accounting invariant counts them explicitly. The fitted
+set fell from 237 to 236 rows and the controlled PC/EC gain fell from +0.0265 to
++0.0059 (p = 0.11) as a direct consequence -- the earlier value was driven by
+the withheld row. Methyl propionate is `conflict_open` but `model_ready=true`
+and remains fitted.
 
 **Neural architectures.** Graph neural networks and transformer-based models
 were not systematically explored beyond the single-probe MLP and Chemprop
@@ -629,20 +638,23 @@ creep before the v1.0 freeze.
 
 # Benchmark Tables
 
-## Main benchmark: 10x5 repeated cross-validation (v0.3.2 benchmark, 237 fitted rows)
+## Main benchmark: 10x5 repeated cross-validation (v0.3.2 benchmark, 236 fitted rows)
 
 | Representation | Target | R2 | MAE | Spearman | AUC (eps > 30) | MAE (eps < 20) |
 |---|---|---|---|---|---|---|
-| Constant (train-fold mean) | raw | -0.010 | 12.33 | — | — | 8.20 |
-| Morgan (ECFP4) | raw | 0.223 | 8.22 | 0.689 | 0.826 | 4.74 |
-| Physical (13-dim) | raw | 0.354 | 7.50 | 0.801 | 0.936 | 4.53 |
-| Morgan+Physical | raw | **0.366** | **7.13** | **0.814** | 0.929 | 4.22 |
-| Morgan | log(eps-1) | 0.192 | 7.66 | 0.767 | 0.851 | 3.24 |
-| Physical | log(eps-1) | 0.338 | 6.53 | **0.883** | 0.931 | 2.68 |
-| Morgan+Physical | log(eps-1) | 0.315 | 6.54 | 0.881 | 0.931 | 2.58 |
+| Constant (train-fold mean) | raw | -0.013 | 11.97 | — | — | 8.30 |
+| Morgan (ECFP4) | raw | 0.240 | 7.61 | 0.722 | 0.837 | 4.38 |
+| Physical (13-dim) | raw | 0.342 | 7.10 | 0.802 | 0.937 | 4.33 |
+| Morgan+Physical | raw | **0.364** | **6.69** | **0.828** | 0.933 | 3.95 |
+| Morgan | log(eps-1) | 0.187 | 7.32 | 0.766 | 0.845 | 3.20 |
+| Physical | log(eps-1) | 0.290 | 6.37 | 0.880 | 0.926 | 2.70 |
+| Morgan+Physical | log(eps-1) | 0.293 | 6.27 | 0.878 | 0.927 | 2.55 |
 
 The reference row is a constant predictor set to the training-fold mean on the
 same 10x5 folds, recomputed from `data/processed/v032_ablation_predictions.csv`.
+The 236 fitted rows are the 241 featurized v0.3.2 rows minus four xTB failures
+and minus vinylene carbonate, which the dataset flags `model_ready=false`;
+`read_modelling_rows` withholds it and reports it separately.
 It replaces an earlier `Dummy (mean)` row whose 21.66 MAE could not be
 reproduced from any committed artifact. A constant predictor has no ranking
 signal, so its Spearman and AUC are undefined rather than 0.5.
@@ -655,8 +667,10 @@ representation but does not transfer to the hybrid.
 ## Neural baselines (205-row v0.2 feature table, same 10x5 folds)
 
 These rows were computed on `data/processed/dielectric_physical_features.csv`
-(205 compounds, v0.2). They were **not** recomputed on the v0.3.2 237-row folds,
+(205 compounds, v0.2). They were **not** recomputed on the v0.3.2 236-row folds,
 so they may only be compared against like-for-like 205-row XGBoost references.
+They also predate the `model_ready` gate, which the 205-row v0.2 table never
+triggers (no v0.2 compound is flagged).
 
 | Model | R2 | MAE | Spearman | AUC (eps > 30) |
 |---|---|---|---|---|
@@ -675,9 +689,9 @@ XGBoost baseline (0.203) but its Spearman (0.665) is lower than both Morgan
 representations carry fingerprint-level information while physical features
 drive ranking quality. The neural rows are retained as representation-ceiling
 evidence on the v0.2 feature table; they were not recomputed on the v0.3.2
-237-row fold set.
+236-row fold set.
 
-## Extrapolation: scaffold/cluster holdout (v0.3.2, 237 rows)
+## Extrapolation: scaffold/cluster holdout (v0.3.2, 236 rows)
 
 Source: `probes/v032_target_scaffold_summary.json` (ring Murcko scaffolds plus
 acyclic ECFP4 clusters, five balanced partitions). These values supersede the
@@ -685,12 +699,12 @@ older 205-row scaffold table.
 
 | Representation | Target | R2 | MAE | Spearman |
 |---|---|---|---|---|
-| Morgan | raw | 0.129 +/- 0.017 | 9.861 +/- 0.280 | 0.558 +/- 0.042 |
-| Physical | raw | 0.213 +/- 0.047 | 8.950 +/- 0.549 | 0.735 +/- 0.033 |
-| Morgan+Physical | raw | 0.289 +/- 0.033 | 8.406 +/- 0.420 | 0.739 +/- 0.027 |
-| Morgan | log(eps-1) | 0.138 +/- 0.022 | 8.964 +/- 0.228 | 0.619 +/- 0.034 |
-| **Physical** | **log(eps-1)** | **0.299 +/- 0.018** | **7.103 +/- 0.168** | **0.855 +/- 0.017** |
-| Morgan+Physical | log(eps-1) | 0.279 +/- 0.016 | 7.274 +/- 0.205 | 0.832 +/- 0.016 |
+| Morgan | raw | 0.138 +/- 0.014 | 9.097 +/- 0.239 | 0.597 +/- 0.014 |
+| Physical | raw | 0.268 +/- 0.051 | 8.082 +/- 0.317 | 0.747 +/- 0.016 |
+| Morgan+Physical | raw | 0.295 +/- 0.027 | 7.806 +/- 0.105 | 0.756 +/- 0.017 |
+| Morgan | log(eps-1) | 0.130 +/- 0.020 | 8.442 +/- 0.188 | 0.639 +/- 0.024 |
+| **Physical** | **log(eps-1)** | **0.276 +/- 0.044** | **6.669 +/- 0.218** | **0.862 +/- 0.016** |
+| Morgan+Physical | log(eps-1) | 0.261 +/- 0.029 | 6.885 +/- 0.129 | 0.838 +/- 0.015 |
 
 Physical with log(eps-1) is the best representation for scaffold extrapolation,
 confirming that physical descriptors generalize better to novel chemical
@@ -748,10 +762,10 @@ outside_associated_liquid region marked. The structural donor rule triggers on
 
 **Figure 8. Cross-source agreement.**
 Scatter plot of NBS Circular 514 values vs. ThermoML values for overlapping
-compounds, with median absolute deviation annotated. The four withheld
-compounds (FEC, TEP, TMP, ethyl isothiocyanate) are highlighted as excluded
-points, and the flagged-but-fitted row (vinylene carbonate) is annotated
-separately.
+compounds, with median absolute deviation annotated. The five withheld
+compounds (FEC, TEP, TMP, ethyl isothiocyanate, 3-methoxypropionitrile) are
+highlighted as excluded points, and vinylene carbonate, withheld by the
+`model_ready` gate, is annotated separately.
 
 # Code and Data Availability
 
@@ -772,7 +786,7 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── dielectric_v031.csv          # v0.3.1: G1 revision (243, historical)
 │   ├── dielectric_v032.csv          # v0.3.2: PC+EC freeze (245, historical)
 │   ├── processed/
-│   │   ├── dielectric_v03_exclusions.csv           # 4-row curated exclusion list
+│   │   ├── dielectric_v03_exclusions.csv           # 5-row curated exclusion list
 │   │   ├── dielectric_v03_provenance_patches.csv   # 30 reproducible patches
 │   └── restricted/                  # Non-redistributable cross-check evidence
 ├── scripts/
@@ -789,7 +803,7 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── dielectric_mlp_calibration_probe.py      # Pre-registered calibration probe
 │   ├── dielectric_chemprop_baseline.py          # Chemprop D-MPNN baseline
 │   ├── g2_domain_gap_test.py                    # External domain-gap test
-│   ├── v032_ablation_summary.json               # v0.3.2 237-row benchmark
+│   ├── v032_ablation_summary.json               # v0.3.2 236-row benchmark
 │   ├── v032_target_scaffold_summary.json        # v0.3.2 scaffold holdout
 │   ├── v032_controlled_comparison_summary.json  # Paired PC/EC control
 │   └── artifacts/                               # Figures and plots

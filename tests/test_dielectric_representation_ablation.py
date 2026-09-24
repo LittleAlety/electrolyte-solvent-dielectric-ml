@@ -4,20 +4,26 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 import probes.dielectric_representation_ablation as ablation
 from probes.dielectric_representation_ablation import (
+    DATASET_PATH,
     evaluate_repeat,
     fit_predict_representation,
     physical_feature_matrix,
+    read_model_ready_map,
     read_modelling_rows,
     summarize_repeats,
 )
 
+REPOSITORY_ROOT = DATASET_PATH.parents[1]
 
-def _feature_row(status: str = "ok") -> dict[str, str]:
+
+def _feature_row(status: str = "ok", inchikey: str = "KEY-A") -> dict[str, str]:
     return {
         "status": status,
+        "inchikey": inchikey,
         "T_K": "298.15",
         "formal_charge": "0",
         "heavy_atom_count": "6",
@@ -35,26 +41,104 @@ def _feature_row(status: str = "ok") -> dict[str, str]:
     }
 
 
-def test_read_modelling_rows_separates_failed_features(tmp_path: Path) -> None:
-    path = tmp_path / "features.csv"
-    columns = tuple(_feature_row())
-    rows = [_feature_row(), _feature_row("error")]
+def _write_csv(path: Path, columns: tuple[str, ...], rows: list[dict[str, str]]) -> None:
     path.write_text(
         ",".join(columns)
         + "\n"
-        + ",".join(rows[0][column] for column in columns)
-        + "\n"
-        + ",".join(rows[1][column] for column in columns)
+        + "\n".join(",".join(row[column] for column in columns) for row in rows)
         + "\n",
         encoding="utf-8",
     )
 
-    successful, failed = read_modelling_rows(path)
 
-    assert len(successful) == 1
-    assert len(failed) == 1
+def _roster(path: Path, ready: dict[str, str]) -> None:
+    _write_csv(
+        path,
+        ("inchikey", "model_ready"),
+        [{"inchikey": key, "model_ready": value} for key, value in ready.items()],
+    )
+
+
+def test_read_modelling_rows_separates_failed_and_withheld_rows(tmp_path: Path) -> None:
+    features_path = tmp_path / "features.csv"
+    roster_path = tmp_path / "dataset.csv"
+    _write_csv(
+        features_path,
+        tuple(_feature_row()),
+        [
+            _feature_row("ok", "KEY-A"),
+            _feature_row("error", "KEY-B"),
+            _feature_row("ok", "KEY-C"),
+        ],
+    )
+    _roster(roster_path, {"KEY-A": "true", "KEY-B": "true", "KEY-C": "false"})
+
+    successful, failed, withheld = read_modelling_rows(
+        features_path,
+        dataset_path=roster_path,
+    )
+
+    assert [row["inchikey"] for row in successful] == ["KEY-A"]
+    assert [row["inchikey"] for row in failed] == ["KEY-B"]
+    assert [row["inchikey"] for row in withheld] == ["KEY-C"]
     assert physical_feature_matrix(successful).shape == (1, 13)
 
+
+def test_a_withheld_row_is_never_treated_as_a_feature_failure(tmp_path: Path) -> None:
+    # A contested value is withheld for provenance reasons, not because its
+    # xTB/descriptor computation failed. Conflating the two would hide it.
+    features_path = tmp_path / "features.csv"
+    roster_path = tmp_path / "dataset.csv"
+    _write_csv(
+        features_path,
+        tuple(_feature_row()),
+        [_feature_row("ok", "KEY-A"), _feature_row("ok", "KEY-C")],
+    )
+    _roster(roster_path, {"KEY-A": "true", "KEY-C": "false"})
+
+    successful, failed, withheld = read_modelling_rows(
+        features_path,
+        dataset_path=roster_path,
+    )
+
+    assert failed == []
+    assert [row["inchikey"] for row in successful] == ["KEY-A"]
+    assert len(withheld) == 1
+
+
+def test_a_feature_row_outside_the_dataset_roster_is_an_error(tmp_path: Path) -> None:
+    features_path = tmp_path / "features.csv"
+    roster_path = tmp_path / "dataset.csv"
+    _write_csv(
+        features_path,
+        tuple(_feature_row()),
+        [_feature_row("ok", "KEY-A"), _feature_row("ok", "KEY-UNKNOWN")],
+    )
+    _roster(roster_path, {"KEY-A": "true"})
+
+    with pytest.raises(ValueError, match="unknown"):
+        read_modelling_rows(features_path, dataset_path=roster_path)
+
+
+def test_shipped_feature_tables_only_hold_known_rows() -> None:
+    """Every shipped feature row must resolve to a model_ready status."""
+
+    ready = read_model_ready_map()
+    assert len(ready) == 246
+    assert sum(1 for value in ready.values() if not value) == 6
+    for name in (
+        "dielectric_physical_features.csv",
+        "dielectric_physical_features_density.csv",
+        "dielectric_physical_features_v03.csv",
+    ):
+        path = REPOSITORY_ROOT / "data" / "processed" / name
+        rows, _, withheld = read_modelling_rows(path)
+        expected = 1 if name.endswith("v03.csv") else 0
+        assert len(withheld) == expected, name
+        assert {row["name"] for row in withheld} == (
+            {"vinylene carbonate"} if expected else set()
+        ), name
+        assert rows, name
 
 def test_fit_predict_representation_returns_one_prediction_per_test_row() -> None:
     morgan = np.arange(60, dtype=float).reshape(6, 10)

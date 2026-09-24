@@ -110,8 +110,10 @@ the features cannot support, it does not improve them.
 ## 5. What this does not change
 
 No `dielectric`, `T_K`, `model_ready` or `source_doi` value changes. The
-6,150-row out-of-fold table, the 246-row dataset, the 237-row benchmark and
-the controlled `+0.0265` R2 result are untouched. This is a disclosure boundary
+6,150-row out-of-fold table, the 246-row dataset, the then-current 237-row
+benchmark and the then-reported `+0.0265` R2 result were untouched by this
+change. (Both were later revised by the separate v0.3.4 `model_ready` gate,
+which is not part of this veto.) This is a disclosure boundary
 and a reporting fix, not a data revision or a model improvement.
 
 ## 6. Reproducing

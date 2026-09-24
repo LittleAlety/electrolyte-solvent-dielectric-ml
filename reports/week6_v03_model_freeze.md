@@ -9,7 +9,9 @@ upgrades without weakening the evidence standard.
 - The public additions are 33 observations: ten primary/archive additions and
   23 open-access article/table additions.
 - Thirty additions are model-ready; three review-source additions remain
-  explicit conflicts and four rows in total are excluded from fitting.
+  explicit conflicts and four rows in total were excluded from fitting at the
+  time of this report (five in the current v0.3.3 exclusion table, which adds
+  3-methoxypropionitrile).
 - Every review-source addition retains its DOI, citation, table, license, and
   explicit redistribution condition; no row is labelled unrestricted.
 - The independent v0.3 verifier passes 6/6.
@@ -21,10 +23,14 @@ upgrades without weakening the evidence standard.
 
 ## Coverage and sensitivity result
 
-The count target is met, but the expanded model does not improve:
-Morgan+Physical mean R2 is `0.310` on 235 fitted rows versus `0.320` on the
-205-row frozen v0.2 set. The result is evidence for broader chemical coverage,
-not better prediction. Review-table values that lack a clearly stated
+The count target is met, and the gate-fixed rerun confirms the expanded model
+does not improve. The original week-6 rerun reported Morgan+Physical mean R2
+`0.310` on 235 rows, but that fit still contained vinylene carbonate, which the
+dataset flags `model_ready=false`; the v0.3.4 gate-fixed rerun on 236 rows gives
+hybrid R2 `0.364`, MAE `6.686` and Spearman `0.828` against `0.320` on the
+205-row frozen v0.2 set, with a controlled train-only PC/EC delta of `+0.0059`
+(p = 0.11). The result is evidence for broader chemical coverage, not better
+prediction. Review-table values that lack a clearly stated
 temperature remain candidate evidence pending primary-source confirmation.
 
 ## Model decision

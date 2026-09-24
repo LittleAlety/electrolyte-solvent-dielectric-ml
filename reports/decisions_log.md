@@ -449,6 +449,13 @@
   `0.320` on the 205-row v0.2 set; Physical R2 is `0.273` versus `0.283`.
   Decision: treat v0.3 expansion as a coverage and domain-relevance result,
   not as evidence of improved predictive accuracy.
+  **Corrected 2026-09-24 (v0.3.4):** that rerun fitted vinylene carbonate,
+  which the dataset already flagged `model_ready=false`. With the flag enforced
+  as a gate the fitted set is 236 rows and the gate-fixed rerun gives hybrid
+  R2 `0.364` (MAE `6.686`, Spearman `0.828`) against `0.320` on the
+  205-row v0.2 set, with a controlled train-only delta of `+0.0059`
+  (95% CI -0.002 to +0.013, p = 0.11). The coverage-not-accuracy decision
+  stands and is now stronger; see the v0.3.4 entry below.
 
 ## 2026-09-24: applicability-domain veto re-derived (structural donor rule)
 
@@ -475,3 +482,46 @@
   `reports/applicability_domain_veto_fix.md`. No `dielectric`, `T_K` or
   `model_ready` value changes, so the datasets and the controlled benchmark
   are untouched.
+
+## 2026-09-24: model_ready becomes a gate (v0.3.4)
+
+- The paper claimed "5 withheld, 236 fitted rows", but no fitting script could
+  produce that split. The feature tables carry no `model_ready` column, so the
+  single fitting choke point `read_modelling_rows` filtered only on the curated
+  exclusion list and on feature success. Vinylene carbonate (`model_ready=false`,
+  `conflict_open`) was therefore fitted in every revision up to v0.3.3.
+- Decision: `read_modelling_rows` reads `model_ready` from
+  `data/dielectric_v03.csv` (join on InChIKey) and returns a three-way split --
+  fitted, feature-failed, withheld. Withheld rows are returned rather than
+  dropped, a source row without a roster entry raises `ValueError` because its
+  status would be unknowable, and the accounting invariant is extended to
+  `fitted + failed + withheld + excluded == source` with the exclusion list
+  intersected against the source lineage.
+- Frozen accounting: the v0.3.2 lineage is 245 source rows = 236 fitted + 4
+  curated exclusions + 4 physical-feature failures + 1 withheld (vinylene
+  carbonate); the v0.3.3 roster of 246 rows is 236 + 5 + 4 + 1, the fifth
+  exclusion being 3-methoxypropionitrile, which had been implicitly out because
+  it has no physical-feature row.
+- The controlled benchmark was re-derived. The paired train-only PC/EC hybrid
+  gain fell from `+0.0265` to `+0.0059` (95% CI -0.002 to +0.013, p = 0.11)
+  and the Physical gain from `+0.0502` to `-0.0007`: the earlier effect was
+  carried by the withheld row, since PC and EC are structural analogues of
+  vinylene carbonate. Fold churn is 1224 of 2340 compound x repeat assignments
+  (52.3%).
+- The main 10x5 benchmark on 236 rows: Morgan R2 `0.240` / MAE `7.612` /
+  Spearman `0.722`; Physical `0.342` / `7.098` / `0.802`; hybrid `0.364` /
+  `6.686` / `0.828`. Scaffold/cluster holdout on the same 236 rows keeps
+  Physical `log(epsilon-1)` as the best representation (R2 `0.276 +/- 0.044`,
+  MAE `6.669 +/- 0.218`).
+- No data value moved: `data/dielectric_v03.csv` sha256 stays
+  `2cd58144deac6b3b4b88045de7f53564f1a9c95ff3cc9c06707d776f43e42a1b`. The
+  v0.3.2 and v0.3.3 lineages now fit the *same* 236 rows and return identical
+  metrics, so the row-wise v0.3 -> v0.3.2 "coverage gain" is fold churn plus the
+  previously ungated row.
+- Enforcement: `check_modelling_set_and_controlled_delta` and
+  `check_coverage_sensitivity_table` in
+  `scripts/check_paper_artifact_consistency.py` re-derive the fitted-row count,
+  the paired delta and its CI, and the per-version coverage table from the
+  committed artifacts; `tests/test_dielectric_representation_ablation.py` pins
+  the three-way split and the withheld-versus-failed distinction. Write-up:
+  `reports/v034_model_ready_gate.md`.

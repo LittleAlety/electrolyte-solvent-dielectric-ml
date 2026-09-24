@@ -33,6 +33,8 @@ from xgboost import XGBRegressor
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
 
+DATASET_PATH = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
+
 SEED = 42
 N_SPLITS = 5
 N_REPEATS = 10
@@ -153,19 +155,59 @@ def physical_feature_matrix(rows: Sequence[Mapping[str, str]]) -> np.ndarray:
     return values
 
 
+def read_model_ready_map(dataset_path: Path = DATASET_PATH) -> dict[str, bool]:
+    """Return `inchikey -> model_ready` for the authoritative dataset roster.
+
+    `model_ready` is the dataset-level gate: a row is `false` when its value is
+    an unresolved source conflict or is awaiting primary confirmation. Because
+    every dielectric fit goes through `read_modelling_rows`, this map is what
+    stops a contested label from reaching a training fold.
+    """
+
+    status = {
+        row["inchikey"]: row.get("model_ready", "").strip().lower() == "true"
+        for row in read_csv_rows(dataset_path)
+    }
+    if not status:
+        raise ValueError(f"empty dataset roster: {dataset_path}")
+    return status
+
+
 def read_modelling_rows(
     path: Path,
-) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    *,
+    dataset_path: Path = DATASET_PATH,
+) -> tuple[
+    list[dict[str, str]],
+    list[dict[str, str]],
+    list[dict[str, str]],
+]:
+    """Split a physical-feature table into (modelling, failed, withheld).
+
+    `withheld` holds rows whose dataset record is `model_ready != true`. They
+    are returned instead of dropped, so every caller has to account for them
+    rather than quietly fitting a contested value.
+    """
+
     records = read_csv_rows(path)
-    successful = [row for row in records if row["status"] != "error"]
-    failed = [row for row in records if row["status"] == "error"]
+    ready = read_model_ready_map(dataset_path)
+    unknown = sorted({row["inchikey"] for row in records} - set(ready))
+    if unknown:
+        raise ValueError(
+            "physical-feature rows are absent from the dataset roster, so their "
+            "model_ready status is unknown: " + ", ".join(unknown)
+        )
+    eligible = [row for row in records if ready[row["inchikey"]]]
+    withheld = [row for row in records if not ready[row["inchikey"]]]
+    successful = [row for row in eligible if row["status"] != "error"]
+    failed = [row for row in eligible if row["status"] == "error"]
     for row in successful:
         missing = [column for column in PHYSICAL_COLUMNS if row[column] == ""]
         if missing:
             raise ValueError(
                 f"{row['name']} is missing physical columns: {', '.join(missing)}"
             )
-    return successful, failed
+    return successful, failed, withheld
 
 
 def _fit_predict_model(
@@ -375,19 +417,35 @@ def run_experiment(
     input_path: Path,
     source_path: Path,
     exclusions_path: Path,
+    dataset_path: Path = DATASET_PATH,
     cv_path: Path,
     repeat_path: Path,
     predictions_path: Path,
     summary_path: Path,
     plot_path: Path,
 ) -> dict[str, object]:
-    rows, failed_rows = read_modelling_rows(input_path)
+    rows, failed_rows, withheld_rows = read_modelling_rows(
+        input_path,
+        dataset_path=dataset_path,
+    )
     source_rows = read_csv_rows(source_path)
     exclusions = read_csv_rows(exclusions_path) if exclusions_path.is_file() else []
-    excluded_keys = {row["inchikey"] for row in exclusions}
-    if len(rows) + len(failed_rows) + len(excluded_keys) != len(source_rows):
+    source_keys = {row["inchikey"] for row in source_rows}
+    # An exclusion only applies to a lineage that actually contains the row;
+    # rows excluded from a different revision are reported, never ignored.
+    all_excluded_keys = {row["inchikey"] for row in exclusions}
+    excluded_keys = all_excluded_keys & source_keys
+    excluded_not_in_source = sorted(all_excluded_keys - source_keys)
+    if (
+        len(rows)
+        + len(failed_rows)
+        + len(withheld_rows)
+        + len(excluded_keys)
+        != len(source_rows)
+    ):
         raise ValueError(
-            "accounting mismatch: successful + failed + excluded != source rows"
+            "accounting mismatch: successful + failed + withheld + excluded "
+            "!= source rows"
         )
     if len(rows) < N_SPLITS:
         raise ValueError("not enough successful physical feature rows")
@@ -501,6 +559,8 @@ def run_experiment(
         "compound_count": len(rows),
         "excluded_count": len(excluded_keys),
         "excluded_inchikeys": sorted(excluded_keys),
+        "exclusion_file_count": len(all_excluded_keys),
+        "excluded_not_in_source": excluded_not_in_source,
         "exclusions_path": portable_relative_path(
             exclusions_path,
             root=REPOSITORY_ROOT,
@@ -510,8 +570,19 @@ def run_experiment(
             if exclusions_path.is_file()
             else None
         ),
+        "dataset_path": portable_relative_path(dataset_path, root=REPOSITORY_ROOT),
+        "dataset_sha256": canonical_text_sha256(dataset_path),
+        "model_ready_gate": (
+            "rows whose dataset record is model_ready != true are withheld "
+            "from every fit and reported explicitly"
+        ),
         "failed_physical_feature_count": len(failed_rows),
         "failed_physical_feature_names": [row["name"] for row in failed_rows],
+        "withheld_not_model_ready_count": len(withheld_rows),
+        "withheld_not_model_ready_names": [row["name"] for row in withheld_rows],
+        "withheld_not_model_ready_inchikeys": [
+            row["inchikey"] for row in withheld_rows
+        ],
         "representations": {
             "Morgan": {
                 "type": "Morgan count fingerprint",
@@ -609,6 +680,12 @@ def _parse_args() -> argparse.Namespace:
         default=REPOSITORY_ROOT / "data" / "processed" / "dielectric_v02_exclusions.csv",
     )
     parser.add_argument(
+        "--dataset",
+        type=Path,
+        default=DATASET_PATH,
+        help="dataset roster that supplies the model_ready gate",
+    )
+    parser.add_argument(
         "--repeat-output",
         type=Path,
         default=REPOSITORY_ROOT
@@ -656,6 +733,7 @@ def main() -> int:
         input_path=args.input,
         source_path=args.source,
         exclusions_path=args.exclusions,
+        dataset_path=args.dataset,
         cv_path=args.cv_output,
         repeat_path=args.repeat_output,
         predictions_path=args.predictions_output,

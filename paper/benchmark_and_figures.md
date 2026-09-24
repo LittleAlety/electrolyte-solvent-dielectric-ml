@@ -1,19 +1,22 @@
 # Benchmark Tables
 
-## Main benchmark: 10x5 repeated cross-validation (v0.3.2 benchmark, 237 fitted rows)
+## Main benchmark: 10x5 repeated cross-validation (v0.3.2 benchmark, 236 fitted rows)
 
 | Representation | Target | R2 | MAE | Spearman | AUC (eps > 30) | MAE (eps < 20) |
 |---|---|---|---|---|---|---|
-| Constant (train-fold mean) | raw | -0.010 | 12.33 | — | — | 8.20 |
-| Morgan (ECFP4) | raw | 0.223 | 8.22 | 0.689 | 0.826 | 4.74 |
-| Physical (13-dim) | raw | 0.354 | 7.50 | 0.801 | 0.936 | 4.53 |
-| Morgan+Physical | raw | **0.366** | **7.13** | **0.814** | 0.929 | 4.22 |
-| Morgan | log(eps-1) | 0.192 | 7.66 | 0.767 | 0.851 | 3.24 |
-| Physical | log(eps-1) | 0.338 | 6.53 | **0.883** | 0.931 | 2.68 |
-| Morgan+Physical | log(eps-1) | 0.315 | 6.54 | 0.881 | 0.931 | 2.58 |
+| Constant (train-fold mean) | raw | -0.013 | 11.97 | — | — | 8.30 |
+| Morgan (ECFP4) | raw | 0.240 | 7.61 | 0.722 | 0.837 | 4.38 |
+| Physical (13-dim) | raw | 0.342 | 7.10 | 0.802 | 0.937 | 4.33 |
+| Morgan+Physical | raw | **0.364** | **6.69** | **0.828** | 0.933 | 3.95 |
+| Morgan | log(eps-1) | 0.187 | 7.32 | 0.766 | 0.845 | 3.20 |
+| Physical | log(eps-1) | 0.290 | 6.37 | 0.880 | 0.926 | 2.70 |
+| Morgan+Physical | log(eps-1) | 0.293 | 6.27 | 0.878 | 0.927 | 2.55 |
 
 The reference row is a constant predictor set to the training-fold mean on the
 same 10x5 folds, recomputed from `data/processed/v032_ablation_predictions.csv`.
+The 236 fitted rows are the 241 featurized v0.3.2 rows minus four xTB failures
+and minus vinylene carbonate, which the dataset flags `model_ready=false`;
+`read_modelling_rows` withholds it and reports it separately.
 It replaces an earlier `Dummy (mean)` row whose 21.66 MAE could not be
 reproduced from any committed artifact. A constant predictor has no ranking
 signal, so its Spearman and AUC are undefined rather than 0.5.
@@ -26,8 +29,10 @@ representation but does not transfer to the hybrid.
 ## Neural baselines (205-row v0.2 feature table, same 10x5 folds)
 
 These rows were computed on `data/processed/dielectric_physical_features.csv`
-(205 compounds, v0.2). They were **not** recomputed on the v0.3.2 237-row folds,
+(205 compounds, v0.2). They were **not** recomputed on the v0.3.2 236-row folds,
 so they may only be compared against like-for-like 205-row XGBoost references.
+They also predate the `model_ready` gate, which the 205-row v0.2 table never
+triggers (no v0.2 compound is flagged).
 
 | Model | R2 | MAE | Spearman | AUC (eps > 30) |
 |---|---|---|---|---|
@@ -46,9 +51,9 @@ XGBoost baseline (0.203) but its Spearman (0.665) is lower than both Morgan
 representations carry fingerprint-level information while physical features
 drive ranking quality. The neural rows are retained as representation-ceiling
 evidence on the v0.2 feature table; they were not recomputed on the v0.3.2
-237-row fold set.
+236-row fold set.
 
-## Extrapolation: scaffold/cluster holdout (v0.3.2, 237 rows)
+## Extrapolation: scaffold/cluster holdout (v0.3.2, 236 rows)
 
 Source: `probes/v032_target_scaffold_summary.json` (ring Murcko scaffolds plus
 acyclic ECFP4 clusters, five balanced partitions). These values supersede the
@@ -56,12 +61,12 @@ older 205-row scaffold table.
 
 | Representation | Target | R2 | MAE | Spearman |
 |---|---|---|---|---|
-| Morgan | raw | 0.129 +/- 0.017 | 9.861 +/- 0.280 | 0.558 +/- 0.042 |
-| Physical | raw | 0.213 +/- 0.047 | 8.950 +/- 0.549 | 0.735 +/- 0.033 |
-| Morgan+Physical | raw | 0.289 +/- 0.033 | 8.406 +/- 0.420 | 0.739 +/- 0.027 |
-| Morgan | log(eps-1) | 0.138 +/- 0.022 | 8.964 +/- 0.228 | 0.619 +/- 0.034 |
-| **Physical** | **log(eps-1)** | **0.299 +/- 0.018** | **7.103 +/- 0.168** | **0.855 +/- 0.017** |
-| Morgan+Physical | log(eps-1) | 0.279 +/- 0.016 | 7.274 +/- 0.205 | 0.832 +/- 0.016 |
+| Morgan | raw | 0.138 +/- 0.014 | 9.097 +/- 0.239 | 0.597 +/- 0.014 |
+| Physical | raw | 0.268 +/- 0.051 | 8.082 +/- 0.317 | 0.747 +/- 0.016 |
+| Morgan+Physical | raw | 0.295 +/- 0.027 | 7.806 +/- 0.105 | 0.756 +/- 0.017 |
+| Morgan | log(eps-1) | 0.130 +/- 0.020 | 8.442 +/- 0.188 | 0.639 +/- 0.024 |
+| **Physical** | **log(eps-1)** | **0.276 +/- 0.044** | **6.669 +/- 0.218** | **0.862 +/- 0.016** |
+| Morgan+Physical | log(eps-1) | 0.261 +/- 0.029 | 6.885 +/- 0.129 | 0.838 +/- 0.015 |
 
 Physical with log(eps-1) is the best representation for scaffold extrapolation,
 confirming that physical descriptors generalize better to novel chemical
@@ -119,7 +124,7 @@ outside_associated_liquid region marked. The structural donor rule triggers on
 
 **Figure 8. Cross-source agreement.**
 Scatter plot of NBS Circular 514 values vs. ThermoML values for overlapping
-compounds, with median absolute deviation annotated. The four withheld
-compounds (FEC, TEP, TMP, ethyl isothiocyanate) are highlighted as excluded
-points, and the flagged-but-fitted row (vinylene carbonate) is annotated
-separately.
+compounds, with median absolute deviation annotated. The five withheld
+compounds (FEC, TEP, TMP, ethyl isothiocyanate, 3-methoxypropionitrile) are
+highlighted as excluded points, and vinylene carbonate, withheld by the
+`model_ready` gate, is annotated separately.

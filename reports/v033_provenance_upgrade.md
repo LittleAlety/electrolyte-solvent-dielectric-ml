@@ -55,9 +55,10 @@ mojibake after). It has been rewritten from the evidence actually collected,
 and `test_shipped_patch_file_is_complete_and_auditable` now rejects runs of
 `????` in any patch value.
 
-## 3. P0-2: `model_ready` is not enforced by the modelling pipeline (open)
+## 3. P0-2: `model_ready` is now enforced by the modelling pipeline (FIXED in v0.3.4)
 
-**This is a live defect and it is not fixed by v0.3.3.**
+**This was a live defect in v0.3.3. It is fixed in v0.3.4; the description
+below is kept as the record of what was wrong.**
 
 `probes/dielectric_representation_ablation.py::read_modelling_rows` filters only
 on `status != "error"`. Nothing in the modelling path reads `model_ready`; the
@@ -77,15 +78,19 @@ rows in modelling set with model_ready != true: 1
 ```
 
 Fixing the wiring removes VC from the modelling set and therefore **changes the
-controlled benchmark**, including the reported paired delta of +0.0265 R2.
-That is a deliberate, separately reported decision, so v0.3.3 deliberately
-leaves it alone. It is now guarded:
-`test_only_known_non_model_ready_rows_reach_the_modelling_feature_file` pins the
-current offender set, so the mismatch cannot grow silently, and any future fix
-fails loudly and forces the guard to be updated.
+controlled benchmark**, including the reported paired delta of +0.0265 R2. That
+was treated as a deliberate, separately reported decision, so v0.3.3 left it
+alone.
 
-Recommended follow-up: either enforce `model_ready` in `read_modelling_rows` or
-move VC into the exclusions file, then re-run the controlled comparison.
+**Resolution (v0.3.4).** `read_modelling_rows` now enforces `model_ready` and
+returns the withheld rows explicitly; the accounting invariant counts them. VC
+is withheld, the fitted set fell 237 -> 236, and the controlled PC/EC gain fell
+from +0.0265 to **+0.0059** (95% CI -0.002 to +0.013, p = 0.11) -- the earlier
+value was carried by the withheld row, which is a structural analogue of the two
+added carbonates. The guard
+`test_only_known_non_model_ready_rows_reach_the_modelling_feature_file` now also
+asserts that the gate withholds exactly the pinned offender set. See
+`reports/v034_model_ready_gate.md`.
 
 ## 4. G1+ evidence: tiers 0-3
 
@@ -224,8 +229,9 @@ primary value, an xTB feature row and a re-run of the controlled benchmark.
 
 ## 7. Open items
 
-1. **P0-2 above** - `model_ready` is not enforced; VC is trained on. Fixing it
-   invalidates the +0.0265 controlled benchmark and needs its own report.
+1. ~~**P0-2 above** - `model_ready` is not enforced; VC is trained on.~~ Fixed in
+   v0.3.4: the gate withholds it and the controlled benchmark was re-run
+   (+0.0265 -> +0.0059).
 2. FEC keeps an unresolved 78.4/102/107 conflict; ECW-308 now supports the low
    branch but the row stays out of the model.
 3. Tier 4 (Reaxys / SciFinder-n / DIPPR 801) is still unchecked; it is the most

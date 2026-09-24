@@ -85,10 +85,12 @@ nitrile values. No ECW-308 numeric value replaces a primary row.
 When independent public sources disagree materially, the conflicting values
 are recorded and the row is flagged; conflicts are never averaged. Nine rows
 carry an explicit conflict_status and six are flagged model_ready=false. The
-benchmark withholds four rows through a curated exclusion list
+benchmark withholds five rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (values 78.4, 102, 107),
-TEP (10, 13), TMP (10, 21.6), and ethyl isothiocyanate (NBS 19.5 at 294.15 K vs.
-restricted cross-check 29.7 at 293.2 K). Methyl propionate (NBS 5.5 vs. review
+TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate (NBS 19.5 at 294.15 K vs.
+restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308
+secondary compilation 36.0, awaiting primary confirmation). A sixth row,
+vinylene carbonate, is withheld by the `model_ready` gate itself. Methyl propionate (NBS 5.5 vs. review
 6.2) is also documented and retained. Adiponitrile and glutaronitrile retain
 their ThermoML primary values (32.12 and 34.6); ECW-308 compilation values
 (30.00 and 37.00) are recorded as disagreements, not replacements.
@@ -237,8 +239,8 @@ The v0.2 predecessor built from ThermoML and NBS Circular 514.
 | probes/g2_domain_gap_summary.json | Domain-gap external test (frozen v0.2 model) |
 | probes/dielectric_density_feature_summary.json | Experimental-density comparison |
 | probes/dielectric_target_scaffold_summary.json | Scaffold/cluster holdout benchmark (v0.2, 205 rows) |
-| probes/v032_target_scaffold_summary.json | v0.3.2 target-transform and scaffold benchmark (237 rows) |
-| probes/v032_ablation_summary.json | v0.3.2 main ablation benchmark (237 rows) |
+| probes/v032_target_scaffold_summary.json | v0.3.2 target-transform and scaffold benchmark (236 rows) |
+| probes/v032_ablation_summary.json | v0.3.2 main ablation benchmark (236 rows) |
 | probes/v032_controlled_comparison_summary.json | Paired PC/EC train-only control |
 | probes/dielectric_v03_summary.json | v0.3.3 build manifest, patches and SHA256 |
 | 

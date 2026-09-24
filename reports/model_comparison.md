@@ -13,19 +13,23 @@ ten repeat-level out-of-fold metric values.
 | MLP Morgan+Physical | log(epsilon - 1) | -0.458 | 12.885 | 0.228 | 0.646 |
 | Chemprop D-MPNN | raw | 0.237 | 7.887 | 0.665 | 0.857 |
 
-## v0.3 coverage sensitivity
+## v0.3 coverage sensitivity (gate-fixed)
 
-The same XGBoost representations on the expanded 235-row v0.3 feature set:
+The same XGBoost representations on the expanded v0.3 feature set. The week-6
+row-wise rerun (235 rows, hybrid R2 `0.310`) predates the v0.3.4
+`model_ready` gate and still fitted vinylene carbonate; the gate-fixed rerun
+covers 236 rows:
 
 | model | R2 | MAE | Spearman | AUC >30 |
 |---|---:|---:|---:|---:|
-| Morgan | 0.190 | 7.879 | 0.697 | 0.823 |
-| Physical | 0.273 | 7.429 | 0.803 | 0.935 |
-| Morgan+Physical | 0.310 | 6.970 | 0.816 | 0.927 |
+| Morgan | 0.240 | 7.612 | 0.722 | 0.837 |
+| Physical | 0.342 | 7.098 | 0.802 | 0.937 |
+| Morgan+Physical | 0.364 | 6.686 | 0.828 | 0.933 |
 
-The hybrid R2 decreases slightly from the 205-row v0.2 result (`0.320`).
-The expansion therefore addresses chemical-domain coverage, not predictive
-accuracy.
+The hybrid R2 is essentially unchanged from the 205-row v0.2 result
+(`0.320`), and the controlled train-only PC/EC test finds no measurable gain
+(`+0.0059`, 95% CI -0.002 to +0.013, p = 0.11). The expansion therefore
+addresses chemical-domain coverage, not predictive accuracy.
 
 Interpretation:
 

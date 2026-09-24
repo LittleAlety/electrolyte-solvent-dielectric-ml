@@ -236,7 +236,7 @@ def run(
     summary_path: Path,
     plot_path: Path,
 ) -> dict[str, object]:
-    rows, failed = read_modelling_rows(input_path)
+    rows, failed, withheld = read_modelling_rows(input_path)
     target = np.asarray([float(row["dielectric"]) for row in rows], dtype=np.float64)
     morgan = morgan_count_features([row["smiles"] for row in rows])
     physical_xtb = _variant_physical(rows, use_experimental=False)
@@ -348,6 +348,8 @@ def run(
         "input_sha256": canonical_text_sha256(input_path),
         "compound_count": len(rows),
         "failed_physical_feature_count": len(failed),
+        "withheld_not_model_ready_count": len(withheld),
+        "withheld_not_model_ready_names": [row["name"] for row in withheld],
         "experimental_density_count": sum(
             bool(row[EXPERIMENTAL_MU_SQ_COLUMN]) for row in rows
         ),

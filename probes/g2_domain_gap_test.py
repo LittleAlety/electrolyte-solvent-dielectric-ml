@@ -33,7 +33,7 @@ def r2_score(y, p):
     return 1-ss_res/ss_tot if ss_tot>0 else float("nan")
 
 # Load training data (v0.2 physical features)
-train_rows, _ = read_modelling_rows(Path("data/processed/dielectric_physical_features.csv"))
+train_rows, _, _ = read_modelling_rows(Path("data/processed/dielectric_physical_features.csv"))
 train_morgan = morgan_count_features([r["smiles"] for r in train_rows])
 train_y = np.array([float(r["dielectric"]) for r in train_rows])
 print(f"Train: {len(train_rows)} compounds, Morgan={train_morgan.shape[1]}")
