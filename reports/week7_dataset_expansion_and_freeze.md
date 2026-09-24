@@ -6,6 +6,11 @@
 **Status:** candidate release. The `v1.0` tag stays deleted until the freeze
 conditions in Appendix I are met.
 
+> **Historical snapshot (2026-09-24).** The v0.3.3/v0.3.4 wording and the FEC
+> "78.4 / 102 / 107" statements below record the state at the Week-7 freeze.
+> The current dataset is **v0.3.11** (`765fd8e0...646b60`): the stored 102 was
+> shown to be the flash point, leaving 78.4 vs 107 as the dielectric legs.
+
 ## Outcome
 
 Week 7 closed the two Appendix I **veto** items (the PC/EC gap and the circular
@@ -74,8 +79,10 @@ Playwright, i.e. the same route a human reader takes.
 - **Vinylene carbonate** carries `conflict_open`: the literature range is
   78-127 and the ECW-308 value 126 could not be traced to an original
   measurement. The 1966 paper that first measured it (Saadi & Lee) is paywalled.
-- **FEC**: reported values 78.4, 102 and 107 disagree; the row is excluded
-  pending primary review.
+- **FEC**: resolved down to two legs in v0.3.11. The stored 102 was shown to
+  be the flash point rather than a permittivity, leaving 78.4 (ECW-308) and
+  107 (Ue 2014 Table 2.3); neither has a readable primary measurement, so the
+  row stays excluded from the model-ready set.
 - **3-methoxypropionitrile**: the value and its 25 C condition are both
   citable to the open-access thesis (Tableau 4 and Tableau 14). The row still
   stays out of the model-ready set for two independent reasons, neither of them
@@ -98,10 +105,10 @@ Playwright, i.e. the same route a human reader takes.
 ## Verification
 
 - `scripts/verify_dielectric_v03.py`: 7/7 checks, 246 rows,
-  sha256 `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab` (re-pinned in v0.3.6 by the PubChem tier-1 cross-check
+  sha256 `765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60` (re-pinned in v0.3.6 by the PubChem tier-1 cross-check
   notes on acetonitrile and sulfolane, then in v0.3.10 by the
-  3-methoxypropionitrile temperature correction; neither revision changed a
-  numeric value)
+  3-methoxypropionitrile temperature correction, then in v0.3.11 by the FEC
+  flash-point conflict correction; no revision changed a numeric value)
 - `scripts/verify_dielectric_v032.py`: 7/7 checks, 245 rows, 243/243
   field-by-field superset of v0.3.1
 - `scripts/verify_dielectric_v02.py`: 9/9 checks

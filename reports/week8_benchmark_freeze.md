@@ -115,14 +115,16 @@ the generated draft. Superseded number strings fail the build.
 | `scripts/check_paper_artifact_consistency.py` | paper drafts agree with the frozen artifacts |
 | `scripts/verify_dielectric_representation_ablation.py` | all fold, repeat and summary metrics recomputed |
 | `scripts/verify_dielectric_target_scaffold.py` | scaffold balance and input hash verified |
-| `scripts/verify_dielectric_v03.py` | 7/7 checks, 246 rows, sha256 unchanged |
+| `scripts/verify_dielectric_v03.py` | 7/7 checks, 246 rows; the dataset digest is `765fd8e0...646b60` (re-pinned by the separate v0.3.11 FEC revision; no benchmark row moved) |
 | `scripts/verify_dielectric_v032.py` | 7/7 checks, 245 rows |
 
 ## What is not frozen
 
 - Vinylene carbonate remains `conflict_open` and is now withheld from every
   fit; the paper must keep saying so.
-- FEC stays excluded; its 78.4 / 102 / 107 values are unresolved.
+- FEC stays excluded. The stored 102 was shown to be the flash point in
+  v0.3.11, so the two surviving dielectric legs are 78.4 and 107 and neither
+  has a readable primary measurement.
 - The dataset is still a **candidate**: `model_ready` is a protected field and
   the release line says so.
 

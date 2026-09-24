@@ -436,3 +436,29 @@ def test_gate_evaluation_requires_every_pre_registered_gate() -> None:
     assert gates["per_arm"]["D2_delta_log"]["passed"] is False
     assert gates["headline_arm"] == "D0_delta_core"
     assert gates["passed"] is True
+
+
+def test_the_summary_binds_its_dataset_digest_to_the_working_tree() -> None:
+    """The Onsager summary names the dataset it consumed; re-bind that pairing.
+
+    ``scripts/verify_v032_benchmarks.py`` re-binds the v0.3.2 and v0.3.3 lineage
+    summaries but does not cover this one, so the pairing is asserted here.  A
+    provenance revision that moves the digest without re-deriving this summary
+    would otherwise go unnoticed.
+    """
+
+    import hashlib
+    import json
+
+    from electrolyte_ml.exporting import canonical_text_sha256
+
+    summary = json.loads(
+        (probe.REPOSITORY_ROOT / "probes" / "dielectric_onsager_delta_summary.json")
+        .read_text(encoding="utf-8")
+    )
+    dataset = probe.REPOSITORY_ROOT / summary["dataset_path"]
+    recorded = summary["dataset_sha256"]
+    assert recorded in {
+        hashlib.sha256(dataset.read_bytes()).hexdigest(),
+        canonical_text_sha256(dataset),
+    }

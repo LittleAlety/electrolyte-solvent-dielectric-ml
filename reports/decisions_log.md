@@ -1339,3 +1339,150 @@ reproduces 126 / independently reproduces the contested）在仓库与两个输�
 `check_paper_artifact_consistency.py` 报 paper drafts agree with the frozen artifacts；
 `verify_dielectric_v03.py` 报 output_sha256 = 57387b98…（规范数据集未变）；
 week7 输出包 59 个文件、week8 输出包 63 个文件，SHA256SUMS 均 missing/extra/mismatch = 0。
+
+## 2026-09-25（续八）v0.3.11：FEC 量纲错误落地 + G1+ 第四轮爬取
+
+### A. v0.3.11：FEC 的 102 被正式改写为「闪点，非介电常数」
+
+第三轮留下的 `pending_patch_rows` 已原样落地为一次**独立数据修订**：
+
+- `conflict_status`：`public_values_78.4_102_107` → `stored_value_102_is_flash_point_not_permittivity`
+- `notes`：**原地合并**，不是新增第二行。`apply_provenance_patches` 对同一 `(inchikey, field)` 有唯一性约束，
+  因此已有的 FEC notes 行被改写为「102 是闪点 + 78.4/107 两条腿 + 两腿都没有可读原始测量 + 不做平均、不改值」，
+  上一轮的 ECW-308 与 Hall 2018 / Ue 2014 转述证据全部保留在合并后的文本里。
+
+**受保护字段一律未动**：`dielectric` 仍为 102、`T_K` 仍为 298.15、`model_ready` 仍为 `false`。
+逐格比对（对 `git show HEAD:data/dielectric_v03.csv`）确认：**246 行、行序、38 列全部不变，只有 FEC 的 2 个单元格变化**。
+
+| 项目 | 值 |
+|---|---|
+| 新规范哈希 | `765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60` |
+| 旧规范哈希 | `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab` |
+| patch 行数 | 33（原 32 + 新增 conflict_status 1 行；notes 为原地改写） |
+| 行 × 列 | 246 × 38 |
+
+**钉点同步策略（重要，避免把历史写成现状）**：8 个探针摘要 + 5 个测试常量 + 报告中「当前值」性质的表述全部重钉到新哈希；
+`f5256d16…`、`2cd58144…` 以及「superseded by v0.3.10」「later re-pinned by v0.3.10」这类**明确的历史叙述一律保留**。
+两个爬取证据 JSON（round2 / round3）重钉的同时新增 `canonical_sha256_revision_note` 字段，
+说明「重新钉定是 v0.3.11 造成的，该轮爬取本身没有改任何单元格」，避免与文件内「本轮未改动」的陈述互相矛盾。
+
+**重跑 vs 重钉**：三个轻量探针（`nbs514_frequency_gate_audit`、`manual_appendix_reconciliation`、
+`nbs514_alpha_harmonization_probe`）**重跑重生成**；三个 ML 摘要（`v032_ablation_summary`、
+`dielectric_v03_representation_ablation_summary`、`dielectric_onsager_delta_summary`）按仓库既有 re-pin 惯例
+只重钉 `dataset_sha256`——其输入特征表未变，FEC 又是 `model_ready=false` 的被扣留行，
+`verify_v032_benchmarks.py` 的 27 项检查覆盖的是其中**两个** lineage 摘要（v0.3.2 与 v0.3.3），可独立证明这两个钉点正确；**它不覆盖 Onsager 摘要**，Onsager 的 `dataset_path` / `dataset_sha256` 配对改由本轮新增的绑定测试（`tests/test_dielectric_onsager_delta_probe.py`）覆盖。
+
+**顺手修复的 LF 问题**：`probes/dielectric_v03_representation_ablation_summary.json` 与
+`probes/v032_ablation_summary.json` 的工作区副本为 CRLF（git 归一化后提交为 LF），已统一为纯 LF。
+
+**本轮验证**：`pytest -q` **712 passed**；`ruff check .` All checks passed；7 个 verifier 全通过，
+其中 `verify_dielectric_v03.py` 报 output_sha256 = `765fd8e0…646b60`。
+
+### B. G1+ 第四轮爬取：三名只读研究者（本轮改动数据集 0 个单元格）
+
+证据 `probes/g1plus_crawl_round4_evidence.json`，报告 `reports/g1plus_crawl_round4_findings.md`，
+回归测试 `tests/test_g1plus_crawl_round4.py`（8 项，使本轮每条关键断言都可被机器证伪）。
+
+#### B1. 最重要的发现：此前「本地 ThermoML 未命中」读的是局部子集（用户的怀疑成立）
+
+`data/processed/thermoml_normalized.csv` **不是全语料抽取结果**——它自己的 provenance 就写着
+`raw_file_count: 5`、`row_count: 625`、`filter: dielectric_only`。独立重解析全部 **242 个本地 XML**：
+91 个文件带结构化介电观测，共 **11,646** 条介电 `PropertyValue`，其中**归一化表漏掉 11,021 条**，
+且**反向差异为 0**（91 个来源里 87 个在归一化表中完全无匹配）。
+
+**但必须分开说**：被追踪的逐条抽取 `data/processed/dielectric_raw.csv` 是**完整**的——
+独立重解析与它按 `DOI + data_number + property_name + value + temperature + InChIKey` 多重集比对
+**11,646 / 11,646 完全一致**（唯一差异是零频 `frequency` 字段写作 `'0'` 与空串）。
+所以这是**辅助文件的文档缺陷**，不是被追踪抽取的缺陷，两者不能混为一谈。
+
+十个目标分子的 XML 级回答：diglyme 9、triglyme 15、tetraglyme 11、己二腈 31、戊二腈 31 条纯液体观测
+（全部已由现有 DOI 代表）；PC、EC、MOPN、VC、FEC 为 **0**，且这是按精确 InChIKey / CAS / 别名得到的结论，
+不是「归一化表未命中」。**THF / NMP 的假阴性风险同时被排除并精确化**：THF 精确命中 9 个 XML、
+NMP 7 个，均无结构化介电属性；但纯文本子串检索不安全（`tetrahydrofuran` 会误命中 `2-tetrahydrofurylmethanol`）。
+
+补录 backlog 全部被现有闸门挡在门外：A 类新分子零频 33 条（18-crown-6、butanedinitrile，均在近室温带**之上**）、
+B 类高压 145 条（dimethyl ether，2,200–29,400 kPa）、变频候选 550 + 344 条。
+附带发现：`data/raw/thermoml_archive/ThermoML.v2020-09-30.tgz` 首 8 字节为全零、**不是 gzip magic**、
+非零字节仅 8,359,677（4.41%），**不可用**，本地 242 个 XML 才是有效证据基础。
+
+#### B2. DC-200：数据集确实存在，但成员没有公开
+
+论文锁定为 Zhang et al., ACS Nano 2026，PMC13422007，DOI `10.1021/acsnano.6c06255`。原文明确
+「200 aprotic samples measured experimentally at room temperature」，即 **DC-200 是实验值**；
+论文里计算的是辅助建模用的偶极矩，不是计算介电常数。但 PMC Associated Data 只挂 SI PDF，
+SI 里 `DC-200` 出现 13 次**全部是正文或图注**，没有成员表、没有逐行数值、也没有逐行温度（只有 `"room temperature"`）。
+
+SI PDF 经 AWS 开放镜像取得（5,244,112 字节，SHA-256 `E6AFBAF9…C077BA57`），
+与仓库既有缓存 `data/external/g1plus/compilations/nn6c06255_si_001.pdf` **逐字节一致**，
+主线程据此在独立副本上重导了「13 处全是图注」的复核。作者 GitHub 递归 207 个对象（`truncated=false`）无 DC-200；
+Figshare 33005827 只有同一份 SI。ref 82 = He et al. 2025（`10.1063/5.0267184`，closed）、ref 83 = MNSOL 2012（92 个溶剂），
+论文未给选出 200 条的规则，**无法唯一重建名单**。
+
+**结论：与本地 246 行的交集 = UNKNOWN，不是 0。** 这一条已写成回归测试，防止后续被美化成「无重叠」。
+
+#### B3. 四篇未闭环主源：题录全部确证，数值全部仍被挡；并发现一处**标识符错配**
+
+四篇的题录均经 Crossref / OpenAlex / Semantic Scholar 确证。开放途径全部失败（OUP 403、RSC 403、
+Springer 303 跳转身份认证、HAL `numFound=0`、Google Books / Internet Archive / NDL 无响应、Europe PMC 四篇 `hitCount=0`）。
+
+**关键更正**：DOI `10.1039/j29660000005` 的题名是
+*Physicochemical studies of some cyclic carbonates. Part V. The alkaline hydrolysis of vinylene carbonate*——
+**这是一篇碳酸亚乙烯酯（VC）论文，不是己二腈/戊二腈论文**；按作者 Saadi + 1966 + 腈类/介电检索也不存在这样一篇。
+工作数据集里己二腈 30、戊二腈 37 实际追到的是 Duncan 2013。
+→ 该阻塞票据必须改名或换标识符，澄清之前**不得**写成「己二腈的原始测量」。
+
+另两条边界更正：**Ue 2014 Table 2.3** 的 FEC = 107 腿本轮仍未读到，仓库早先的转录
+`… (FEC) 106 1.50 107 4.1 -13.30 1.45` 是**此前的人工观察**，不得当作本轮新读到的证据；
+**Flamme 2017** 在链条中承载的是 PC 64.9 / EC 89 / VC 黏度，并未被确立为 FEC 78.4 的原始测量，读到表前不得升级。
+
+#### B4. 请求预算（如实记账）
+
+| agent | 目标 | 请求数 | 40 次子上限 | 是否突破 |
+|---|---|---:|---:|---|
+| Volta | ThermoML 本地完整性复核 | 0（纯本地） | 40 | 否 |
+| Dirac | DC-200 抓取 | 35 | 40 | 否 |
+| Banach | 四篇未闭环主源 | 33 | 40 | 否 |
+| **合计** | | **68** | | |
+
+用户 500 次/小时硬上限**未被接近**；主线程外部调用 0 次；无 429 重试风暴。
+**这是第一轮每个 agent 都守住了 40 次/人子上限**（此前第三轮有两名突破）。所有 blocked 路径都具名到
+具体文献与具体 HTTP 状态，「查无此值」与「权限阻断」严格区分，本轮没有任何一条写成「无数据」。
+
+### C. 收尾
+
+- 成果包重导：week7 **57 个复制工件、目录共 60 个文件**；week8 **66 个复制工件、目录共 69 个文件**（其中 7 个在 `paper/` 下）。两个导出器各自报 `verification_passed: true`；`verify_export_manifests.py` **默认**只检查 week1–week6；显式传入 `--output-dir` 后 week7 与 week8 同样 PASS（本轮已实测）。
+  week8 本次补入了此前遗漏的 **第三轮**爬取产物（报告 + 证据），以及第四轮的报告、证据与回归测试。
+- 执行手册附录 J-补记的「待办 5（FEC 数据集修订）」已在本轮结清，新增第四轮补记。
+- 仍未闭环（按优先级）：温度带决策（33 条 A 类）、压力闸门（145 条）、频率闸门（894 条）、
+  Saadi 1966 标识符更正、Ue 1994、Hagiyama 2008、Flamme 2017、DC-200 成员表（需向作者索取）。
+
+### D. 对抗复审（同一 reviewer）的 4 项 Important 与 2 项 Minor
+
+把精确 diff 交给只读 reviewer（Euclid）复审。结论：**0 Critical、4 Important、2 Minor**。
+四项 Important 全部已修（主线程是唯一写者，串行修改）：
+
+1. **week7 交付包仍自称 v0.3.10，并把已解决的 FEC 冲突列为 open item。** 生成物同时含 `dataset_version: "0.3.10"`
+   与新哈希，`open_items` 仍写「78.4 / 102 / 107 unresolved」。
+   → 修复：`dataset_version` 改 `0.3.11`，`dataset_version_note` 追加 v0.3.11 一句，open item 改写为
+   「102 是闪点，存活的两条腿为 78.4 vs 107 且都无原始测量」。同类陈述在 `reports/week7_dataset_expansion_and_freeze.md`、
+   `reports/g1_data_gate_review.md`、`reports/v033_provenance_upgrade.md`（3 处）一并更正，避免同一交付包里自相矛盾。
+2. **`reports/manual_appendix_reconciliation.md` 直接否认了实际发生的 `conflict_status` 变化。** 原文写
+   "No ... conflict status ... moved"。
+   → 修复：改为「本探针自身未改任何数据」，并明写「规范哈希在撰写时为 `57387b98…`，v0.3.11 修订后为 `765fd8e0…`，
+   该修订只改了 FEC 的 `conflict_status` 与 `notes`」。
+3. **第三轮报告仍把 FEC 修订列为未落地。**
+   → 修复：给该节加「以下为本轮当时的历史状态，修订已于 v0.3.11 落地」封闭标记，
+   并把「仍未闭环」第 5 项改为已结清；同时把「conflict_status 保持原样」限定为「本轮当时」。
+4. **「27 项检查可独立证明三个 ML 钉点」的覆盖范围不成立。** `verify_v032_benchmarks.py` 的 `LINEAGES`
+   只含 v0.3.2 与 v0.3.3 两个摘要，**不含 Onsager**。
+   → 修复：把这句限定为两个摘要；并为本轮新增 Onsager 的独立绑定测试
+   （`tests/test_dielectric_onsager_delta_probe.py` 断言 `dataset_path` / `dataset_sha256` 与工作区一致），
+   使三个钉点都各自有机器校验，而不是只靠声明。
+
+两项 Minor 也一并修：**①** Duncan 归属措辞把「ECW-308 的争议值 30/37」与「数据集存储的 32.12/34.6
+（来自 `10.1021/je300958c`）」混为一谈，已在报告与证据 JSON 中分开表述；
+**②** 成果包文件数口径含混，已改为「week7 = 57 个复制工件 / 目录共 60 个文件；week8 = 66 个复制工件 / 目录共 69 个文件
+（其中 7 个在 `paper/` 下）」，并注明 `verify_export_manifests.py` 只覆盖 week1–week6。
+
+修复后重跑：`pytest -q` **712 passed**（新增 Onsager 绑定测试 1 项）；`ruff check .` All checks passed；
+7 个 verifier 全通过；两个成果包重导并各自自校验通过。

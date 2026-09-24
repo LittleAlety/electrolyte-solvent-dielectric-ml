@@ -147,8 +147,8 @@ by the withheld row: PC and EC are structural analogues of vinylene carbonate,
 so appending them to the training folds mostly improved the prediction of that
 one contested compound. Fold churn between the two splits is now 1224 of 2340
 compound x repeat assignments (52.3%). `data/dielectric_v03.csv` was unchanged in
-that round (sha256 `2cd58144...a1b` as of v0.3.4; the current revision is `57387b98...26fab` as
-of v0.3.10): no `dielectric`, `T_K` or `model_ready` value moved,
+that round (sha256 `2cd58144...a1b` as of v0.3.4; the current revision is `765fd8e0...646b60` as
+of v0.3.11): no `dielectric`, `T_K` or `model_ready` value moved,
 and the v0.3.2 and v0.3.3 lineages now fit the *same* 236 rows and return
 identical metrics, so the old row-wise v0.3 -> v0.3.2 "coverage gain" was fold
 churn plus the ungated row.

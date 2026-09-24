@@ -152,7 +152,7 @@ Cross-checks against the frozen dataset (compilation vs. primary, never averaged
 |---|---|---|---|
 | PC | 64.9 | 64.90 | exact reproduction |
 | VC | 126 | 126.00 | lists the contested high value; ECW-308 includes Hall et al. 2018 [3] among its source refs, so independence from Hall is not established |
-| FEC | 78.4/102/107 conflict | 78.40 | supports the low branch; conflict stays open |
+| FEC | 78.4 vs 107 (the 102 branch was shown to be a flash point in v0.3.11) | 78.40 | supports the low branch; both legs still lack a readable primary measurement |
 | diglyme | 7.3815 | 7.40 | +0.25% |
 | triglyme | 7.604 | 7.53 | -0.97% |
 | tetraglyme | 7.798 | not present | no third-party check |
@@ -238,8 +238,9 @@ primary value, an xTB feature row and a re-run of the controlled benchmark.
 1. ~~**P0-2 above** - `model_ready` is not enforced; VC is trained on.~~ Fixed in
    v0.3.4: the gate withholds it and the controlled benchmark was re-run
    (+0.0265 -> +0.0059).
-2. FEC keeps an unresolved 78.4/102/107 conflict; ECW-308 now supports the low
-   branch but the row stays out of the model.
+2. ~~FEC keeps an unresolved 78.4/102/107 conflict~~ Closed in v0.3.11: the
+   stored 102 is the flash point, so the two surviving legs are 78.4 and 107;
+   the row stays out of the model.
 3. Tier 4 (Reaxys / SciFinder-n / DIPPR 801) is still unchecked; it is the most
    likely route to a primary MOPN value.
 4. The DC-200 per-molecule table remains unlocated in the accessible sources (paper, SI, author GitHub tree, and the inspected Zenodo manifest, whose only file is a 4.75 GB fine-tuning/generator archive that was not downloaded).
@@ -287,7 +288,8 @@ Two further independent relays were recorded in `notes` without changing any
 value: Hall et al. 2018 gives PC as `64.9` (a 1972 measurement, DOI
 `10.1021/j100664a019`), methyl propionate as `6.07`, and FEC as `107` (citing
 the Ue et al. 2014 book chapter, DOI `10.1007/978-1-4939-0302-3_2`), which
-supports the high endpoint of the unresolved 78.4/102/107 FEC spread.
+supports the high endpoint of the 78.4 vs 107 FEC spread. The 102 branch was
+subsequently shown to be the flash point rather than a permittivity (v0.3.11).
 
 Hall et al. 2018 is CC BY 4.0 and therefore redistributable, but it was still
 recorded in `notes` rather than added to VC's `source_dois_all`: a dataset row

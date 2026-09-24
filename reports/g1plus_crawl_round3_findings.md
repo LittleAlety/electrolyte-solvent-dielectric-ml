@@ -64,10 +64,11 @@ Ue 1994 本体：OpenAlex 标 OA=False，仅见 CiteSeerX submittedVersion 记�
 | 项目 | 值 |
 |---|---|
 | 行数 | 246 |
-| 规范数据集 SHA-256 | 57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab |
+| 规范数据集 SHA-256 | 765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60 |
+> **v0.3.11 重新钉定（2026-09-25）**：本表原记录的是本轮结束时的规范哈希；FEC 元数据修订把当前规范哈希更新为 `765fd8e0…646b60`。本轮自身仍未改动任何单元格。
 | 改动的字段 | **无** |
 
-数值、温度、位数、证据等级、model_ready 与 conflict_status 全部保持原样。FEC 的 102 是**受保护字段**，
+数值、温度、位数、证据等级与 model_ready 全部保持原样；conflict_status 在**本轮当时**也保持原样。FEC 的 102 是**受保护字段**，
 在冻结期内不原地改写；更正需要一次新的数据集修订。**下一条修订应原样采用的两行 patch 已写入证据文件的 pending_patch_rows**：
 
 | inchikey | field | value |
@@ -77,6 +78,8 @@ Ue 1994 本体：OpenAlex 标 OA=False，仅见 CiteSeerX submittedVersion 记�
 
 为什么不当场改：data/dielectric_v03.csv 是被约 25 份报告、探针摘要与 5 个测试硬钉哈希的冻结产物；
 改写它需要同步重建数据集、更新全部钉点并重跑基准。这属于一次**新的数据修订**，不适合在分析封版的同时静默进行。
+
+> **本节上述内容与「仍未闭环」第 5 项均为本轮当时的历史状态。**该修订已于 2026-09-25 的 **v0.3.11** 原样落地：当前规范哈希为 `765fd8e0…646b60`，只有 FEC 的 `conflict_status` 与 `notes` 两格变化。
 
 ## 5. 请求预算
 
@@ -108,5 +111,5 @@ Ue 1994 本体：OpenAlex 标 OA=False，仅见 CiteSeerX submittedVersion 记�
 2. **Saadi & Lee 1966（DOI 10.1039/j29660000005）**：VC 的原始测量，两页全文。
 3. **Hagiyama et al. 2008（DOI 10.1246/cl.2008.210）**：FEC 107 分支的候选原始测量。
 4. **Flamme et al. 2017（DOI 10.1039/c7gc00252a）**：FEC 78.4 分支的上游（RSC 403）。
-5. **FEC 数据集修订**：把 conflict_status 与 notes 按 pending_patch_rows 落地到下一次修订。
+5. ~~**FEC 数据集修订**：把 conflict_status 与 notes 按 pending_patch_rows 落地到下一次修订。~~ **已于 2026-09-25 的 v0.3.11 结清**（见上节封闭标记）。
 

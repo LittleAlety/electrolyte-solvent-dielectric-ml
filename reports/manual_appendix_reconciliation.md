@@ -43,7 +43,7 @@ Dataset versions re-read (canonical LF-normalized SHA-256):
 | v0.2 | 210 | absent | 24 | `569cebdf...3cc28a` |
 | v0.3.1 | 243 | present, all `room_temperature` | 38 | `08941a76...938d78` |
 | v0.3.2 | 245 | 244 room + 1 extended | 38 | `39d15e16...75b30be` |
-| v0.3 | 246 | 245 room + 1 extended | 38 | `57387b98...d26fab` |
+| v0.3 | 246 | 245 room + 1 extended | 38 | `765fd8e0...646b60` |
 
 The v0.1/v0.2 files predate the `temperature_band` column, so "the extended
 band was empty" is only meaningful from v0.3.1 on. The probe records the column
@@ -94,13 +94,16 @@ the v0.3 build. Those three are data work that has been done, not open items.
 
 ## 5. What did not change
 
-No dielectric value, temperature, evidence level, `model_ready` flag, conflict
-status or dataset byte moved. The current dataset is still 246 rows x 38
-columns with canonical SHA-256
-`57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab`. This is a
-provenance-and-QA correction: it prevents a reviewer-facing document from
-spending its first three resource tiers rediscovering data the repository has
-shipped since v0.1.
+This probe moved no dielectric value, temperature, evidence level, `model_ready`
+flag, conflict status or dataset byte; the manual reconciliation it describes is
+itself the change. The dataset is 246 rows x 38 columns. Its canonical SHA-256
+was `57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab` when this
+reconciliation was written, and is
+`765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60` after the
+separate v0.3.11 revision, which changed only fluoroethylene carbonate's
+`conflict_status` and `notes`. The reconciliation is a provenance-and-QA
+correction: it prevents a reviewer-facing document from spending its first three
+resource tiers rediscovering data the repository has shipped since v0.1.
 
 ## 6. Reproducing
 

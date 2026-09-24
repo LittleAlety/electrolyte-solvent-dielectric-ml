@@ -13,7 +13,7 @@ from probes.nbs514_frequency_gate_audit import (
 
 ARTIFACT = REPOSITORY_ROOT / "probes" / "nbs514_frequency_gate_audit.json"
 CURRENT_DATASET_SHA256 = (
-    "57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab"
+    "765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60"
 )
 
 

@@ -49,7 +49,7 @@ def test_a_stale_recorded_dataset_hash_is_rejected(tmp_path: Path) -> None:
     summary = root / "probes" / "v032_ablation_summary.json"
     summary.write_text(
         summary.read_text(encoding="utf-8").replace(
-            "57387b98f899c6c0eff12716cc5b754f65d2ee0edd5523330af049ddded26fab",
+            "765fd8e04270f3e277681d6ae8e6200bfcc77c8841a89ebe0f8a3a70bc646b60",
             "0" * 64,
         ),
         encoding="utf-8",
