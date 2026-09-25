@@ -40,8 +40,9 @@ SECTION_FILES = (
     "outline.md",
 )
 
-# The dataset version that data/dielectric_v03.csv currently represents.
-CURRENT_DATASET_VERSION = "0.3.3"
+# The release the manuscript advertises. The dataset inside it is v0.3.3, but the
+# release line names the versioned release, which Zenodo archives.
+CURRENT_RELEASE_VERSION = "1.0"
 
 # Version label -> the CSV that holds that version's row count.
 # Plain "0.3" maps to the v0.3.1 file because the v0.3 lineage produced 243 rows;
@@ -654,9 +655,9 @@ def check_external_holdout(paper_dir: Path) -> list[str]:
 
 def check_release_version(paper_dir: Path) -> list[str]:
     text = (paper_dir / "code_and_data.md").read_text(encoding="utf-8-sig")
-    marker = f"**Release:** v{CURRENT_DATASET_VERSION}"
+    marker = f"**Release:** v{CURRENT_RELEASE_VERSION}"
     if marker not in text:
-        return [f"code_and_data.md: release line does not match v{CURRENT_DATASET_VERSION}"]
+        return [f"code_and_data.md: release line does not match v{CURRENT_RELEASE_VERSION}"]
     return []
 
 

@@ -135,8 +135,8 @@ effects require multi-body descriptions outside the candidate model.
 
 ## Code and Data Availability
 
-List the GitHub repository, the candidate release commit (which becomes the
-immutable v1.0 commit only after the Appendix I freeze conditions are met), the
-Zenodo DOI, environment versions, and the command for each verifier. Do not
-describe the release commit as immutable while the release is still a
-candidate.
+List the GitHub repository, the v1.0 release commit, the Zenodo DOI,
+environment versions, and the command for each verifier. The DOI is minted by
+Zenodo only when the GitHub release is created, so the archived v1.0 snapshot
+carries a "pending" DOI line and the DOI becomes part of the repository from the
+backfill commit onwards.

@@ -194,7 +194,7 @@ recorded with their numbers in `probes/applicability_domain_summary.json` and
 # Data Records
 
 All dataset versions, intermediate tables, and probe outputs are stored in the
-GitHub repository at https://github.com/[repository].
+GitHub repository at https://github.com/LittleAlety/electrolyte-solvent-dielectric-ml.
 
 ## Core dataset files
 

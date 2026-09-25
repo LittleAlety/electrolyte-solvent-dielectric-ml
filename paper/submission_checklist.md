@@ -1,61 +1,74 @@
 # 投稿与发布机械清单（v1.0）
 
-> 打 tag 与投稿都是**不可逆的外部动作**。本清单只列机械前置，逐条勾掉再执行。
-> 生成日期：2026-09-25；最近一次修订补齐发布闸门与完整占位符清单（当前 HEAD 见 `git log -1`）。
+> 打 release 与投稿都是**不可逆的外部动作**。本清单只列机械前置，逐条勾掉再执行。
+> 生成日期：2026-09-25；最近修订：把发布闸门改为分相位，并修正「Zenodo 只归档 GitHub **Release**、裸 tag 不触发」这一步（当前 HEAD 见 `git log -1`）。
 
-## A. v1.0 tag 前置条件
+## A. v1.0 release 前置条件
 
-objective 把 tag 条件定义为「D1/D2 digest 重钉完成」，当前状态：
+objective 把发布条件定义为「D1/D2 digest 重钉完成」，当前状态：
 
 - [x] **D2** 四行（3 个离子液体 + Fe(CO)5）重分类为 `out_of_scope_ionic_or_organometallic`，
       不动任何拟合行；digest 一次性重钉为 `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`。
 - [x] **D1** EC 313.15 K 例外口径（schema `temperature_band=extended_temperature` + Methods 规则）
       与预注册 leave-EC-out 敏感性分析（7,080 个冻结预测逐位复现；该探针不改任何 digest）。
 - [x] 四类 verifier 全绿：一致性、图、v0.3 数据集、导出清单 **10/10**。
-- [x] 全量测试 **851 passed**，`ruff` 与 `compileall` exit 0。
-- [ ] `python scripts/check_release_readiness.py` exit 0 —— 占位符清零、release 行写成 v1.0、DOI 与仓库 URL 已替换（B 节）。
-- [ ] **Zenodo 集成 + 真实 DOI 回填** —— 见下节 B/C。这是当前唯一未闭环的前置。
+- [x] 全量测试 **868 passed**，`ruff` 与 `compileall` exit 0（2026-09-25）。
+- [x] `python scripts/check_release_readiness.py --phase pre-release` exit 0 ——
+      手稿无占位符、release 行写成 v1.0、DOI 为显式 `pending`（DOI 由 release 铸出，见 C 节）。
+- [ ] **创建 GitHub Release v1.0** → Zenodo 生成 DOI → 回填 → `--phase released` exit 0。
 
-## B. 必须替换的占位符（不替换会被带进发布物）
+## B. 版本与占位符
 
-| 位置 | 当前值 | 替换为 |
+| 位置 | 发布前状态 | 需要的最终值 |
 | --- | --- | --- |
-| `paper/code_and_data.md:6` | `https://github.com/[repository-name]` | 真实 GitHub 仓库 URL |
-| `paper/code_and_data.md:7` | `v0.3.3 (candidate; ...)` | `v1.0 (tagged <日期>)` |
-| `paper/methods_data_records.md:197` | `https://github.com/[repository]` | 真实 GitHub 仓库 URL |
-| `paper/code_and_data.md:8` | `https://doi.org/10.5281/zenodo.[XXXXX]` | 真实 Zenodo DOI |
-| `paper/full_draft.md`（生成物） | 同上 | 改完源文件后重建，不要手改 |
-| `paper/cover_letter.md` | `[TODO: repository]` / `[TODO: v1.0]` / `[TODO: DOI]` / 作者三项 | 真实值 |
+| `paper/code_and_data.md` 仓库行 | ✅ 已填真实 URL | 不变 |
+| `paper/methods_data_records.md` 仓库行 | ✅ 已填真实 URL | 不变 |
+| `paper/code_and_data.md` release 行 | ✅ `v1.0 (GitHub release 2026-09-25; dataset v0.3.3)` | 不变 |
+| `paper/code_and_data.md` DOI 行 | ⏳ `pending (...)` | ⬜ 真实 Zenodo DOI |
+| `paper/full_draft.md`（生成物） | ✅ 已随源文件重建 | DOI 回填后再重建一次 |
+| `paper/cover_letter.md` | `[TODO: ...]` | ⬜ 作者三项 + 仓库 + tag + DOI（**投稿前**，不随 release 归档） |
 
-替换后**必须**重跑（顺序不可省）：
+DOI 回填后**必须**重跑（顺序不可省）：
 
 ```
 python scripts/build_paper_full_draft.py
 python scripts/build_paper_full_draft.py --check
 python scripts/check_paper_artifact_consistency.py
-python scripts/check_release_readiness.py
+python scripts/check_release_readiness.py --phase released
 ```
 
-最后一条是**发布闸门**，只在打 tag 时运行：任一占位符（`[TODO: ...]` / `[repository]` / `zenodo.[XXXXX]`）残留、
-release 行仍写着 candidate、DOI 不是真实 Zenodo DOI、或仓库 URL 不是真实 GitHub 地址，它都会 exit 1 并逐条打印位置。
-它**故意不并入** `check_paper_artifact_consistency.py`：发布前占位符是正确状态，日常一致性闸门必须保持全绿，而这条闸门在全绿之前必须保持红。
+`check_release_readiness.py` 有三个相位：`pre-release`（默认；DOI 只允许写成显式 `pending`）、
+`released`（DOI 必须是真 Zenodo DOI）、`submission`（在 released 之上再要求 cover letter 无 `[TODO: ...]`）。
+它**故意不并入** `check_paper_artifact_consistency.py`：发布前 `pending` 是正确状态，
+日常一致性闸门必须保持全绿，而这条闸门在对应相位满足前必须保持红。
 
-## C. tag 与存档顺序（**Zenodo 集成必须先于打 tag**）
+## C. 发布顺序（**Zenodo 只归档 GitHub Release；只推 tag 不会触发**）
 
-1. 在 GitHub 仓库启用 Zenodo 集成（**你在网页操作**）。
-2. 打 tag 并推送：`git tag -a v1.0 -m "..."` → `git push origin v1.0`。
-3. Zenodo 捕获该 release 并生成 DOI（版本化 DOI 与 concept DOI 各一）。
-4. 把 DOI 回填到 `paper/code_and_data.md`，重建 `full_draft.md`，再走一次 B 的检查。
-5. 更新 `paper/outline.md` 的 release line 表述——现在写的是 candidate，打 tag 后不再称 candidate。
+1. 在 Zenodo 设置里对 `LittleAlety/electrolyte-solvent-dielectric-ml` 启用集成
+   （**你在网页完成，2026-09-25**）。
+2. 在 Zenodo 的 GitHub 列表里点该仓库的 **Create release**，它会引导到 GitHub 的新建 release 页面。
+3. 在 GitHub 创建 **Release**（tag = `v1.0`，target = `main` 的发布提交）：
 
-> 注意顺序：先打 tag 会得到一个**没有 DOI 指向**的 release，第 4 步还要再动一次正文，所以集成在前。
+   ```
+   gh release create v1.0 --title "v1.0: auditable dielectric dataset (246 rows)" \
+     --notes-file paper/release_notes_v1.0.md --target main
+   ```
+
+   仅 `git tag -a v1.0 && git push origin v1.0` **不会**让 Zenodo 建档。
+4. 等 Zenodo 处理该 release（时间取决于 Zenodo 负载），生成版本化 DOI 与 concept DOI。
+5. 把 DOI 回填到 `paper/code_and_data.md`，重建 `full_draft.md`，跑 B 的检查（`--phase released`），提交。
+6. 在 Zenodo 记录页面核对/补全标题、作者、描述与许可（记录元数据可改，DOI 不变）。
+
+> 顺序由 Zenodo 的机制决定：DOI 由 release 铸出，所以被归档的 v1.0 快照里 DOI 行写的是
+> `pending`，仓库里的真实 DOI 从回填提交开始生效。
 
 ## D. 投稿包清单（`Scientific Data`）
 
 - [x] cover letter 草稿 —— `paper/cover_letter.md`（本清单同日生成）
-- [ ] 正文 —— `paper/full_draft.md`（1044 行，5 节拼装）
-- [ ] 6 张图 —— `probes/artifacts/*.png`，或成果输出 `week10/artifacts/`
-- [ ] 数据与代码可用性声明 —— Zenodo DOI + GitHub tag（依赖 A/B）
+- [x] 正文 —— `paper/full_draft.md`（5 节拼装，`--check` 绿）
+- [x] 6 张图 —— `probes/artifacts/*.png`，成果输出 `week10/artifacts/`
+- [x] 发布说明 —— `paper/release_notes_v1.0.md`
+- [ ] 数据与代码可用性声明 —— Zenodo DOI + GitHub release tag（依赖 A/B/C）
 - [ ] 作者贡献与利益冲突声明
 - [ ] 推荐审稿人（可选）
 - [ ] 按期刊要求拆分 Abstract / Methods / Data Records 等节

@@ -3,9 +3,9 @@
 The complete dataset, all build scripts, probe scripts, verifiers, and
 benchmark outputs are deposited in a public GitHub repository:
 
-**Repository:** https://github.com/[repository-name]
-**Release:** v0.3.3 (candidate; v1.0 tag will be applied only after the Appendix I freeze conditions are met)
-**DOI:** https://doi.org/10.5281/zenodo.[XXXXX]
+**Repository:** https://github.com/LittleAlety/electrolyte-solvent-dielectric-ml
+**Release:** v1.0 (GitHub release 2026-09-25; dataset v0.3.3)
+**DOI:** pending (Zenodo mints the DOI from the v1.0 GitHub release; backfilled in the next commit)
 
 ## Repository structure
 
@@ -13,7 +13,7 @@ benchmark outputs are deposited in a public GitHub repository:
 ├── data/
 │   ├── dielectric_v01.csv           # v0.1: 100 ThermoML compounds
 │   ├── dielectric_v02.csv           # v0.2: 210 NBS + ThermoML compounds
-│   ├── dielectric_v03.csv           # v0.3.3: 246 compounds (current candidate)
+│   ├── dielectric_v03.csv           # v0.3.3: 246 compounds (released in v1.0)
 │   ├── dielectric_v031.csv          # v0.3.1: G1 revision (243, historical)
 │   ├── dielectric_v032.csv          # v0.3.2: PC+EC freeze (245, historical)
 │   ├── processed/
