@@ -2195,8 +2195,8 @@ ruff `EXE001` 读**文件系统执行位**；Windows 上该位不可表达，ruf
 这是自 2026-09-23T12:08 成功之后的**首次**绿色运行。Linux 侧 `pytest` **783 passed / 18 skipped / 0 failed**（66.96s），
 `Lint project`、`Compile project` 与全部 verifier 步骤通过。本机同轮 `ruff`（0.16.8 与 0.16.9）全绿、`pytest` **801 passed**。
 
-**18 个 skip 的口径**：全部是「git 忽略的本地缓存缺失」（ECW-308 SI PDF、round2/round4 抓取缓存等），
-本机因缓存存在多跑 4 个用例（本机 0 skip）。**不是平台差异，也没有断言被削弱。**
+**18 个 skip 的口径**：来自 git 忽略的本地缓存、本机 xTB 可执行文件或外部手册缺失（ECW-308 SI PDF、round2/round4 抓取缓存等），
+本机因这些本地资源存在而多跑若干用例（本机 0 skip）。**不是数据集或模型平台差异，也没有断言被削弱。**
 
 ### 新增纪律（写入长期口径）
 
@@ -2208,3 +2208,11 @@ ruff `EXE001` 读**文件系统执行位**；Windows 上该位不可表达，ruf
 
 本轮只改了一个文件的**索引模式**与一条新增测试，**未动任何数据值**：规范数据集 digest 仍为
 `a446c216…c01085`。上一轮记录的 3 处 v0.2 时代历史 pin 仍按「历史证据不追改」保留。
+
+## 2026-09-25 · 审查 Minor 优化轮：护栏与 scratch 输出收口
+
+- **范围。** 只改工程护栏、CLI 输出路径与文档口径，不改数据、特征、基准或论文数值。
+- **护栏收紧。** `tests/test_repo_hygiene.py` 的 shebang 执行位检查现与 CI 的 ruff 范围一致，只覆盖五个 lint 根目录下的 Python 类文件；文件内容改从 git 索引 blob 读取，而不是工作区，因此本地脏改动不能再掩盖干净克隆会触发的 `EXE001`。新增纯逻辑回归覆盖 `.sh` 不误报、`EXE001` 会报、`EXE002` 会报。
+- **CLI 修复。** `probes/manual_appendix_reconciliation.py` 新增 `describe_path()`，仓库外 `--output` 写绝对路径而不是在 `relative_to()` 抛错。新增 scratch 目录端到端回归。此前该缺陷表现为文件已写出但进程非零。
+- **文档校正。** 18 个 skip 不再写成“全部是 git 忽略缓存”：实际来源还包括本机 xTB 可执行文件与外部手册缺失；断言没有削弱。同步修正 `tests/fixtures/manual_appendix_j_snapshot.md` 与外部执行手册。
+- **验证。** 定向环境/手册测试 30 passed；`ruff check scripts src probes tests notebooks` 全绿；本机全量 `pytest -q -p no:cacheprovider` **803 passed / 0 skipped**（184.52 s）；真实 CI 以本轮推送结果为准。规范数据集 digest 保持 `a446c216…c01085`。

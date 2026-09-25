@@ -775,6 +775,16 @@ def _summarize(
     }
 
 
+def describe_path(path: Path) -> str:
+    """Describe a generated path as relative when possible, absolute otherwise."""
+
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPOSITORY_ROOT).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -810,7 +820,7 @@ def main(argv: list[str] | None = None) -> int:
             encoding="utf-8",
             newline="\n",
         )
-        print(f"wrote {MANUAL_FIXTURE.relative_to(REPOSITORY_ROOT).as_posix()}")
+        print(f"wrote {describe_path(MANUAL_FIXTURE)}")
         return 0
 
     report = build_reconciliation(manual_path=args.manual)
@@ -822,7 +832,7 @@ def main(argv: list[str] | None = None) -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(report, indent=2, ensure_ascii=False, sort_keys=False)
     args.output.write_text(payload + "\n", encoding="utf-8", newline="\n")
-    print(f"wrote {args.output.relative_to(REPOSITORY_ROOT).as_posix()}")
+    print(f"wrote {describe_path(args.output)}")
     for claim in report["claims"]:
         print(f"  {claim['verdict']:<32} {claim['claim_id']}")
     summary = report["summary"]

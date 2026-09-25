@@ -22,6 +22,7 @@ from probes.manual_appendix_reconciliation import (
     _evaluate_claims,
     _probe_manual,
     build_reconciliation,
+    describe_path,
     manual_fixture_text,
     name_search_safety,
     read_csv_rows,
@@ -442,3 +443,14 @@ def test_the_round5_guards_fire_on_an_injected_manual(tmp_path) -> None:
     assert probe["round5_verbatim"]["verbatim_present"] is True
     assert probe["round5_verbatim"]["truncated_variant_hit_count"] == 1
     assert probe["round5_verbatim"]["ok"] is False
+
+
+def test_output_path_outside_repository_returns_zero(tmp_path) -> None:
+    """A scratch output directory outside the repo must not fail after writing."""
+
+    from probes.manual_appendix_reconciliation import main
+
+    output = tmp_path / "reconciliation.json"
+    assert main(["--output", str(output)]) == 0
+    assert output.is_file()
+    assert describe_path(output) == output.resolve().as_posix()

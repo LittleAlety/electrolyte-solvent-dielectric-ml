@@ -506,8 +506,20 @@ Windows 无法表达该位 ⇒ 同一棵树在本机 lint 全绿、在 ubuntu-la
 这是自 2026-09-23T12:08 以来**首次**成功。Linux 侧 `pytest` 为 **783 passed / 18 skipped / 0 failed**（66.96s），
 `Lint`、`Compile` 与其余全部校验步骤通过。
 
-**18 个 skip 的口径。** 全部是「git 忽略的本地缓存缺失」（ECW-308 SI PDF、round2/round4 抓取缓存等）；
-本机因这些缓存存在而多跑 4 个用例（本机 **801 passed / 0 skip**）——不是平台差异，也没有任何断言被削弱。
+**18 个 skip 的口径。** 来自 git 忽略的本地缓存、本机 xTB 可执行文件或外部手册缺失（ECW-308 SI PDF、round2/round4 抓取缓存等）；
+本机因这些本地资源存在而多跑若干用例（本机 **801 passed / 0 skip**）——不是数据集或模型平台差异，也没有任何断言被削弱。
 
 **新增纪律。** 凡判据依赖**文件系统元数据**（执行位即是一例），必须以 **git 索引或真实 CI** 为准；
 本机 lint 全绿**不构成**这类判据的证据。
+
+## 附录 J-补记八：审查 Minor 优化轮（2026-09-25）
+
+**起因。** 真实 CI 转绿后，只读对抗复查仍留下三个可复现的工程 Minor：仓库卫生护栏的扫描集大于 ruff 实际 lint 集，且 shebang 取自工作区而非 git 索引 blob；`manual_appendix_reconciliation.py --output` 指向仓库外时文件已写出但 `relative_to()` 抛错、进程返回非零；skip 口径被写成“全部是 git 忽略的缓存缺失”，而实际还包含本机 xTB 可执行文件与外部手册缺失。
+
+**处置。**
+
+1. `tests/test_repo_hygiene.py` 现在只覆盖 CI 实际 lint 的五个根目录（`notebooks`、`probes`、`scripts`、`src`、`tests`）与 Python 类后缀，并用 `git cat-file --batch` 读取索引 blob 头部；脏工作区不能再掩盖干净克隆的 `EXE001`。回归固定三种行为：`.sh` 钩子不误报、`.py` shebang 缺执行位会报、反向 `EXE002` 会报。
+2. `probes/manual_appendix_reconciliation.py` 新增 `describe_path()`：仓库内写相对路径，仓库外写绝对路径；`--output` 指向 scratch 目录时正常返回 0。新增端到端回归。
+3. 手册与决策日志的 skip 口径改为“git 忽略缓存 + 缺失的 xTB 可执行文件 + 缺失的外部手册”，并保留“断言一条不削弱”的边界。
+
+**验证。** 定向测试 30 passed；`ruff` 全绿；本机全量 `pytest -q -p no:cacheprovider` **803 passed / 0 skipped**（184.52 s）；真实 CI 见本轮推送结果。数据面未改：规范数据集 digest 仍为 `a446c216…c01085`。

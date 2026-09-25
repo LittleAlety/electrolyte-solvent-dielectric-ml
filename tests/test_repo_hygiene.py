@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pytest
 
@@ -39,6 +39,9 @@ TEXT_SUFFIXES = frozenset(
 # ``git ls-files`` is the only reliable way to see exactly what a clean clone
 # would receive, but the repository metadata has to exist to ask the question.
 GIT_METADATA_PRESENT = (REPOSITORY_ROOT / ".git").exists()
+
+LINT_ROOTS = frozenset({"notebooks", "probes", "scripts", "src", "tests"})
+LINT_SUFFIXES = frozenset({".ipynb", ".py", ".pyi"})
 
 
 def _sha256(payload: bytes) -> str:
@@ -104,6 +107,119 @@ def test_tracked_text_files_are_checked_out_with_lf_endings() -> None:
     )
 
 
+def test_executable_shebang_guard_uses_lint_scope_and_index_blobs() -> None:
+    """The guard must mirror ruff's lint scope and trust index blobs.
+
+    Ruff checks only Python-ish files under the five project roots.  A shell
+    hook elsewhere may legitimately have a shebang and mode 100644.  The guard
+    must also read the blob that git would check out, not the worktree, or a
+    dirty local edit can hide a clean-checkout EXE001.
+    """
+
+    entries = {
+        "scripts/demo_hook.sh": ("100644", "a" * 40),
+        "scripts/demo.py": ("100644", "b" * 40),
+        "scripts/verify_week0.py": ("100755", "c" * 40),
+    }
+    blob_heads = {
+        "a" * 40: b"#!/bin/sh\n",
+        "b" * 40: b"#!/usr/bin/env python\n",
+        "c" * 40: b"print('ok')\n",
+    }
+    assert _executable_bit_findings(entries, blob_heads) == (
+        ["scripts/demo.py"],
+        ["scripts/verify_week0.py"],
+    )
+
+
+def _is_lint_path(relative: str) -> bool:
+    """Return whether CI's ruff invocation covers this repository path."""
+
+    path = PurePosixPath(relative)
+    return (
+        bool(path.parts)
+        and path.parts[0] in LINT_ROOTS
+        and path.suffix.lower() in LINT_SUFFIXES
+    )
+
+
+def _index_entries() -> dict[str, tuple[str, str]]:
+    """Map each tracked path to ``(mode, object-id)`` from the git index."""
+
+    completed = subprocess.run(
+        ["git", "ls-files", "-s", "-z"],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+        capture_output=True,
+    )
+    entries: dict[str, tuple[str, str]] = {}
+    for entry in completed.stdout.split(b"\x00"):
+        if not entry:
+            continue
+        meta, raw_path = entry.split(b"\t", 1)
+        mode, oid = meta.split()[:2]
+        entries[raw_path.decode("utf-8")] = (
+            mode.decode("ascii"),
+            oid.decode("ascii"),
+        )
+    return entries
+
+
+def _blob_heads(entries: dict[str, tuple[str, str]]) -> dict[str, bytes]:
+    """Read the first 256 bytes of each distinct lint-scope index blob."""
+
+    oids = sorted(
+        oid
+        for relative, (_, oid) in entries.items()
+        if _is_lint_path(relative)
+    )
+    if not oids:
+        return {}
+    completed = subprocess.run(
+        ["git", "cat-file", "--batch"],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+        input=b"".join(oid.encode("ascii") + b"\n" for oid in oids),
+        capture_output=True,
+    )
+    data = completed.stdout
+    heads: dict[str, bytes] = {}
+    offset = 0
+    for oid in oids:
+        header_end = data.index(b"\n", offset)
+        header = data[offset:header_end].split()
+        if len(header) != 3 or header[1] != b"blob":
+            raise AssertionError(f"unexpected cat-file header for {oid}: {header!r}")
+        size = int(header[2])
+        content_start = header_end + 1
+        content_end = content_start + size
+        if content_end > len(data):
+            raise AssertionError(f"truncated cat-file blob for {oid}")
+        heads[oid] = data[content_start:content_start + 256]
+        offset = content_end + 1
+    return heads
+
+
+def _executable_bit_findings(
+    entries: dict[str, tuple[str, str]],
+    blob_heads: dict[str, bytes],
+) -> tuple[list[str], list[str]]:
+    """Return EXE001-like and EXE002-like findings for the CI lint scope."""
+
+    not_executable = []
+    executable_without_shebang = []
+    for relative, (mode, oid) in sorted(entries.items()):
+        if not _is_lint_path(relative):
+            continue
+        has_shebang = blob_heads.get(oid, b"").startswith(b"#!")
+        is_executable = mode == "100755"
+        if has_shebang and not is_executable:
+            not_executable.append(relative)
+        if is_executable and not has_shebang:
+            executable_without_shebang.append(relative)
+    return not_executable, executable_without_shebang
+
+
 @pytest.mark.skipif(not GIT_METADATA_PRESENT, reason="no git metadata to query")
 def test_executable_bit_agrees_with_the_shebang() -> None:
     """Critical: ruff EXE001/EXE002 only fire on a posix checkout.
@@ -114,23 +230,11 @@ def test_executable_bit_agrees_with_the_shebang() -> None:
     The git index mode is the portable source of truth for what CI checks out.
     """
 
-    modes = _index_modes()
-    not_executable = []
-    executable_without_shebang = []
-    for relative, mode in sorted(modes.items()):
-        path = REPOSITORY_ROOT / relative
-        if not path.is_file():
-            continue
-        try:
-            head = path.open("rb").read(256)
-        except OSError:
-            continue
-        has_shebang = head.startswith(b"#!")
-        is_executable = mode == "100755"
-        if has_shebang and not is_executable:
-            not_executable.append(relative)
-        if is_executable and not has_shebang:
-            executable_without_shebang.append(relative)
+    entries = _index_entries()
+    not_executable, executable_without_shebang = _executable_bit_findings(
+        entries,
+        _blob_heads(entries),
+    )
 
     assert not_executable == [], (
         "ruff EXE001 on a posix runner: these files carry a shebang but the "
