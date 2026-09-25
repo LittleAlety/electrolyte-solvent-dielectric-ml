@@ -1,7 +1,7 @@
 # 投稿与发布机械清单（v1.0）
 
 > 打 tag 与投稿都是**不可逆的外部动作**。本清单只列机械前置，逐条勾掉再执行。
-> 生成日期：2026-09-25；对应 HEAD `318de4d`（本文件落库后 HEAD 会前进一格）。
+> 生成日期：2026-09-25；最近一次修订补齐发布闸门与完整占位符清单（当前 HEAD 见 `git log -1`）。
 
 ## A. v1.0 tag 前置条件
 
@@ -13,12 +13,16 @@ objective 把 tag 条件定义为「D1/D2 digest 重钉完成」，当前状态�
       与预注册 leave-EC-out 敏感性分析（7,080 个冻结预测逐位复现；该探针不改任何 digest）。
 - [x] 四类 verifier 全绿：一致性、图、v0.3 数据集、导出清单 **10/10**。
 - [x] 全量测试 **851 passed**，`ruff` 与 `compileall` exit 0。
+- [ ] `python scripts/check_release_readiness.py` exit 0 —— 占位符清零、release 行写成 v1.0、DOI 与仓库 URL 已替换（B 节）。
 - [ ] **Zenodo 集成 + 真实 DOI 回填** —— 见下节 B/C。这是当前唯一未闭环的前置。
 
 ## B. 必须替换的占位符（不替换会被带进发布物）
 
 | 位置 | 当前值 | 替换为 |
 | --- | --- | --- |
+| `paper/code_and_data.md:6` | `https://github.com/[repository-name]` | 真实 GitHub 仓库 URL |
+| `paper/code_and_data.md:7` | `v0.3.3 (candidate; ...)` | `v1.0 (tagged <日期>)` |
+| `paper/methods_data_records.md:197` | `https://github.com/[repository]` | 真实 GitHub 仓库 URL |
 | `paper/code_and_data.md:8` | `https://doi.org/10.5281/zenodo.[XXXXX]` | 真实 Zenodo DOI |
 | `paper/full_draft.md`（生成物） | 同上 | 改完源文件后重建，不要手改 |
 | `paper/cover_letter.md` | `[TODO: repository]` / `[TODO: v1.0]` / `[TODO: DOI]` / 作者三项 | 真实值 |
@@ -29,7 +33,12 @@ objective 把 tag 条件定义为「D1/D2 digest 重钉完成」，当前状态�
 python scripts/build_paper_full_draft.py
 python scripts/build_paper_full_draft.py --check
 python scripts/check_paper_artifact_consistency.py
+python scripts/check_release_readiness.py
 ```
+
+最后一条是**发布闸门**，只在打 tag 时运行：任一占位符（`[TODO: ...]` / `[repository]` / `zenodo.[XXXXX]`）残留、
+release 行仍写着 candidate、DOI 不是真实 Zenodo DOI、或仓库 URL 不是真实 GitHub 地址，它都会 exit 1 并逐条打印位置。
+它**故意不并入** `check_paper_artifact_consistency.py`：发布前占位符是正确状态，日常一致性闸门必须保持全绿，而这条闸门在全绿之前必须保持红。
 
 ## C. tag 与存档顺序（**Zenodo 集成必须先于打 tag**）
 
