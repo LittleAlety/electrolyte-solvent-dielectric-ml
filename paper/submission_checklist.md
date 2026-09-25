@@ -69,7 +69,8 @@ python scripts/check_release_readiness.py --phase released
    修改 release body 会**再次触发归档**，生成一个内容相同的重复版本
    （`10.5281/zenodo.22957976`，与 `10.5281/zenodo.22957696` 同属 concept
    `10.5281/zenodo.22957695`）。要补元数据就改 Zenodo 记录本身，不要动 release。
-   - [ ] 在 Zenodo 记录页删除重复版本 `10.5281/zenodo.22957976`（删除后勾掉本行）。
+   - [x] 在 Zenodo 记录页删除重复版本 `10.5281/zenodo.22957976`（2026-09-25 已删；
+        该 DOI 现返回 HTTP `410 Gone`，`/api/records/22957696/versions` 只剩 **1** 个版本）。
 
 > 顺序由 Zenodo 的机制决定：DOI 由 release 铸出，所以被归档的 v1.0 快照里 DOI 行写的是
 > `pending`，仓库里的真实 DOI 从回填提交开始生效。
