@@ -2250,3 +2250,20 @@ ruff `EXE001` 读**文件系统执行位**；Windows 上该位不可表达，ruf
 > and the 236-row frozen benchmark are byte-identical. Every earlier hash quoted
 > above remains the historical pin of its own revision and is deliberately not
 > rewritten.
+
+## 2026-09-25 · D1：EC 的 extended_temperature 例外写成正式规则
+
+- **裁决。** EC 的 `313.15 K / epsilon=90.5` 保留为显式 `extended_temperature` 例外，
+  `model_ready` 保持 `true`，数据行**不改**。
+- **理由。** EC 熔点约 36.4 °C，在主窗口（293.15–303.15 K）根本不存在纯组分液态介电测量；
+  排除它会让“电池溶剂介电数据集”名不副实。
+- **落法（本轮已完成）。** 把窗口定义从**代码常量**提升为**正式规则**：
+  主窗口 `293.15-303.15 K` = `room_temperature`；扩展窗口 `313.15-323.15 K` = `extended_temperature`，
+  **仅限无法在主窗口保持液态的化合物**。同步写入
+  `paper/methods_data_records.md`、`paper/outline.md`、`docs/week3/manual_dielectric_entry_schema.md`。
+  此前该窗口只存在于 `scripts/build_dielectric_v03.py:177-178` 的常量与
+  `verify_dielectric_v03.py:70-77` 的重算里，schema 与 Methods 只有个例叙述。
+- **仍待落地（本轮未做，明确标记为欠缺）。** 预注册的
+  **leave-EC-out 敏感性分析**（固定折叠、只把 EC 移出训练折、报告 235 行配对指标与 EC 自身误差）
+  尚未实现。该分析定位为 **报告型稳健性探针，不参与 v1.0 模型选择**；
+  即使排序翻转也只作为 limitation 记录，不触发后验模型切换。

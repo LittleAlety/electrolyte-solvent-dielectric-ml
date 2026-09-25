@@ -24,7 +24,9 @@ holdout performance, and poor transfer to associated liquids.
 
 ### Dataset scope
 
-- Main room-temperature window: 293.15-303.15 K.
+- Main room-temperature window: 293.15-303.15 K; explicit extended window
+  313.15-323.15 K reserved for compounds that cannot be liquid in the main
+  window (v0.3: ethylene carbonate only, m.p. about 36.4 C).
 - Pure-component, zero-frequency or explicitly documented static-equivalent
   observations.
 - Structure standardization by RDKit and InChIKey.

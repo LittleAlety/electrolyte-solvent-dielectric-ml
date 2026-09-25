@@ -43,6 +43,12 @@ notes
 - `inchikey` and canonical `smiles` are mandatory. `canonical_structure_verified`
   must be `true`; otherwise the row is `awaiting_manual_review`.
 - `T_K` is in kelvin. The v0.2 target window is `293.15-303.15 K`.
+  The v0.3 revision keeps that window as `temperature_band =
+  room_temperature` and adds exactly one explicitly enumerated extended
+  window, `313.15-323.15 K` (`temperature_band = extended_temperature`),
+  reserved for compounds that cannot be measured as a liquid inside the
+  primary window. v0.3 uses it for ethylene carbonate (m.p. about 36.4 C)
+  only; no other compound may take the extended band.
 - `pure_component` must be `true`; mixture rows are not eligible for v0.2.
 - `frequency_type` must be `zero_frequency` or an explicitly justified
   `static_low_frequency` protocol. Frequency-dependent values remain separate.

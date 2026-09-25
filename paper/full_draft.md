@@ -107,6 +107,18 @@ conflict status.
 The dataset was assembled in three incremental versions, each independently
 buildable and verifiable.
 
+**Temperature bands.** The primary window is the closed interval
+`293.15-303.15 K`, recorded as `temperature_band = room_temperature`. A second,
+explicitly enumerated window `313.15-323.15 K` is recorded as
+`temperature_band = extended_temperature` and is reserved for compounds that
+cannot be measured as a liquid inside the primary window. The exception exists
+because ethylene carbonate melts at about 36.4 C, so no room-temperature liquid
+permittivity measurement of the pure compound exists. Its stored 90.5 at
+313.15 K is the only extended-band row in v0.3, and it is labelled rather than
+silently folded into the main window. No other compound may use the extended
+band, and extended-band rows are reported separately so a reader can remove
+them without editing the dataset.
+
 **v0.1 (100 compounds).** Extracted from the NIST ThermoML archive
 (https://trc.nist.gov/ThermoML/) using the thermoml-io parser. Only
 zero-frequency, pure-component observations within 293.15-303.15 K were
@@ -138,7 +150,8 @@ absent from every earlier revision:
   J. Phys. Chem. 74, 1443 (https://doi.org/10.1021/j100702a008).
 - Ethylene carbonate (EC, epsilon=90.5 at 313.15 K) from Chernyak (2006)
   J. Chem. Eng. Data 51, 416 (https://doi.org/10.1021/je050341y); EC melts at
-  36.4 C, so the measurement is flagged extended_temperature.
+  36.4 C, so the measurement is flagged extended_temperature (the only
+  extended-band row in v0.3; see the temperature-band rule above).
 
 **v0.3.3 (246 compounds).** Adds one row and repairs provenance. The new row is
 3-methoxypropionitrile (epsilon=36.0 at 298.15 K), transcribed from the ECW-308
