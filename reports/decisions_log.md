@@ -2212,7 +2212,7 @@ ruff `EXE001` 读**文件系统执行位**；Windows 上该位不可表达，ruf
 ## 2026-09-25 · 审查 Minor 优化轮：护栏与 scratch 输出收口
 
 - **范围。** 只改工程护栏、CLI 输出路径与文档口径，不改数据、特征、基准或论文数值。
-- **护栏收紧。** `tests/test_repo_hygiene.py` 的 shebang 执行位检查现与 CI 的 ruff 范围一致，只覆盖五个 lint 根目录下的 Python 类文件；文件内容改从 git 索引 blob 读取，而不是工作区，因此本地脏改动不能再掩盖干净克隆会触发的 `EXE001`。新增纯逻辑回归覆盖 `.sh` 不误报、`EXE001` 会报、`EXE002` 会报。
+- **护栏收紧。** `tests/test_repo_hygiene.py` 的 shebang 执行位检查覆盖 CI 执行 ruff 的五个根目录与 Python 类后缀；ruff 的解析 include 另含 `*.md`，但当前 93 个跟踪 Markdown 全为 `100644` 且无 shebang，未形成 `EXE001`/`EXE002` 实际漏报。文件内容改从 git 索引 blob 读取，而不是工作区，因此本地脏改动不能再掩盖干净克隆会触发的 `EXE001`。新增纯逻辑回归覆盖 `.sh` 不误报、`EXE001` 会报、`EXE002` 会报。
 - **CLI 修复。** `probes/manual_appendix_reconciliation.py` 新增 `describe_path()`，仓库外 `--output` 写绝对路径而不是在 `relative_to()` 抛错。新增 scratch 目录端到端回归。此前该缺陷表现为文件已写出但进程非零。
 - **文档校正。** 18 个 skip 不再写成“全部是 git 忽略缓存”：实际来源还包括本机 xTB 可执行文件与外部手册缺失；断言没有削弱。同步修正 `tests/fixtures/manual_appendix_j_snapshot.md` 与外部执行手册。
 - **验证。** 定向环境/手册测试 30 passed；`ruff check scripts src probes tests notebooks` 全绿；本机全量 `pytest -q -p no:cacheprovider` **803 passed / 0 skipped**（184.52 s）；真实 CI 以本轮推送结果为准。规范数据集 digest 保持 `a446c216…c01085`。

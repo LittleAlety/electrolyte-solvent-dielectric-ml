@@ -518,7 +518,7 @@ Windows 无法表达该位 ⇒ 同一棵树在本机 lint 全绿、在 ubuntu-la
 
 **处置。**
 
-1. `tests/test_repo_hygiene.py` 现在只覆盖 CI 实际 lint 的五个根目录（`notebooks`、`probes`、`scripts`、`src`、`tests`）与 Python 类后缀，并用 `git cat-file --batch` 读取索引 blob 头部；脏工作区不能再掩盖干净克隆的 `EXE001`。回归固定三种行为：`.sh` 钩子不误报、`.py` shebang 缺执行位会报、反向 `EXE002` 会报。
+1. `tests/test_repo_hygiene.py` 现在覆盖 CI 执行 ruff 的五个根目录（`notebooks`、`probes`、`scripts`、`src`、`tests`）与 Python 类后缀，并用 `git cat-file --batch` 读取索引 blob 头部。ruff 的解析 include 另含 `*.md`，但当前 93 个跟踪 Markdown 全为 `100644` 且无 shebang，未形成 `EXE001`/`EXE002` 实际漏报；护栏以 Python 类后缀为适用范围；脏工作区不能再掩盖干净克隆的 `EXE001`。回归固定三种行为：`.sh` 钩子不误报、`.py` shebang 缺执行位会报、反向 `EXE002` 会报。
 2. `probes/manual_appendix_reconciliation.py` 新增 `describe_path()`：仓库内写相对路径，仓库外写绝对路径；`--output` 指向 scratch 目录时正常返回 0。新增端到端回归。
 3. 手册与决策日志的 skip 口径改为“git 忽略缓存 + 缺失的 xTB 可执行文件 + 缺失的外部手册”，并保留“断言一条不削弱”的边界。
 

@@ -108,11 +108,14 @@ def test_tracked_text_files_are_checked_out_with_lf_endings() -> None:
 
 
 def test_executable_shebang_guard_uses_lint_scope_and_index_blobs() -> None:
-    """The guard must mirror ruff's lint scope and trust index blobs.
+    """The guard covers the executable-bit lint scope and trusts index blobs.
 
-    Ruff checks only Python-ish files under the five project roots.  A shell
-    hook elsewhere may legitimately have a shebang and mode 100644.  The guard
-    must also read the blob that git would check out, not the worktree, or a
+    Ruff resolves the five project roots and also includes Markdown in its file
+    resolver; EXE001/EXE002 are checked here for the Python-ish suffixes where
+    those rules are meaningful.
+
+    A shell hook elsewhere may legitimately have a shebang and mode 100644.  The
+    guard must also read the blob that git would check out, not the worktree, or a
     dirty local edit can hide a clean-checkout EXE001.
     """
 
@@ -133,7 +136,7 @@ def test_executable_shebang_guard_uses_lint_scope_and_index_blobs() -> None:
 
 
 def _is_lint_path(relative: str) -> bool:
-    """Return whether CI's ruff invocation covers this repository path."""
+    """Return whether the executable-bit guard covers this repository path."""
 
     path = PurePosixPath(relative)
     return (
