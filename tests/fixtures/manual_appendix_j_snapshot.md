@@ -478,3 +478,36 @@ deep check 现逐行复验缓存 manifest 的可执行文件指纹）；专项�
 （`database_recheck.json` 与 `springer_materials_crosscheck_summary.json` 的 `v02_sha256`、
 `v03_baseline_reproduction_summary.json` 的 `exclusions_sha256`）指向**当前仓库中已不存在的旧版本字节**，
 其生成脚本已不在仓库内。它们不参与任何 CI 断言，本轮按「历史证据不追改」记录，不臆造重钉。
+
+## 附录 J-补记七：真实 CI 首次转绿——EXE001 与「本机复刻」的盲区（2026-09-25）
+
+**补记六的边界。** 补记六记录的「全新工作树复刻 CI 24/24 步通过」是**在 Windows 上**完成的。
+真实 CI（`ubuntu-latest`）在当次推送的 **`Lint project`** 就失败了——本机复刻与真实 CI **不等价**：
+两者都要过，但**只有真实 CI 能执行「读文件系统元数据」的那一类判据**。
+
+**证据链（GitHub Actions 实查，非推断）。**
+
+- 当次推送（`a5e6686`，run `36093292552`）的失败步骤是 `Lint project`，日志为
+  `EXE001 Shebang is present but file is not executable --> probes/g1plus_ecw308_extract.py:1:1`。
+- 往前追溯：`a5419aa`（run `36088228353`）与更早的 `1f31f218`（run `35966915981`，2026-09-24T06:55）
+  **同样停在 `Lint project`**。即**自 2026-09-24 起 CI 从未越过 lint**，`Run tests` 一步根本没被执行——
+  上一轮修掉的那批 pytest 缺口是**真实缺陷，但当时从未被 CI 触达**。
+
+**根因。** 该文件第一行是 shebang，而 git 索引模式是 `100644`（不可执行）。ruff 的 `EXE001` 读**文件系统执行位**，
+Windows 无法表达该位 ⇒ 同一棵树在本机 lint 全绿、在 ubuntu-latest 报错。
+**不是 ruff 版本漂移**：本机 0.16.8 与 CI 实装的 0.16.9 在 Windows 上都不报该错；差异来自平台。
+
+**处置。** 该文件确实是可运行脚本（以 `raise SystemExit(main())` 收尾），所以保留 shebang，把索引模式改为 `100755`。
+另加**平台无关护栏** `tests/test_repo_hygiene.py::test_executable_bit_agrees_with_the_shebang`：
+直接读 git 索引模式，覆盖 `EXE001`（有 shebang 无执行位）与 `EXE002`（有执行位无 shebang）两类；
+负向证明：把执行位去掉，该护栏**变红**（1 failed），还原后复绿。
+
+**结果。** 提交 `44c5136`（run `36093852395`）的 `verify` 5m53s、`environment` 1m3s，**两个 job 全绿**——
+这是自 2026-09-23T12:08 以来**首次**成功。Linux 侧 `pytest` 为 **783 passed / 18 skipped / 0 failed**（66.96s），
+`Lint`、`Compile` 与其余全部校验步骤通过。
+
+**18 个 skip 的口径。** 全部是「git 忽略的本地缓存缺失」（ECW-308 SI PDF、round2/round4 抓取缓存等）；
+本机因这些缓存存在而多跑 4 个用例（本机 **801 passed / 0 skip**）——不是平台差异，也没有任何断言被削弱。
+
+**新增纪律。** 凡判据依赖**文件系统元数据**（执行位即是一例），必须以 **git 索引或真实 CI** 为准；
+本机 lint 全绿**不构成**这类判据的证据。

@@ -2155,3 +2155,56 @@ manifest SHA 与缓存 `input.xyz` 校验都会被静默跳过**；其最小反�
 （手册 102,974 B / 1,094 行 sha256 `06e897ed…e32598`；fixture 37,756 B / 480 行 sha256 `1d22e696…a943d`），
 `probes/manual_appendix_reconciliation.py` 违禁 token 0、陈旧句 0、逐字闸门 `ok: true`，规范数据集 digest
 保持 `a446c216…c01085` 不变（**本轮未动任何数据值**）。提交 `32a8b7f`。
+
+## 2026-09-25 · CI 修复轮（续）：EXE001 与平台盲区 —— 真实 CI 首次转绿
+
+### 触发：上一轮的「CI 修复」被真实 CI 证伪
+
+上一轮（提交 `32a8b7f` / `a5e6686`）把 `.github/workflows/ci.yml` 在**本机 detach 工作树**复刻为 24/24 通过，
+并据此宣称 CI 判据恢复。推送后 GitHub Actions 实查：
+
+| 运行 | 提交 | 失败步骤 |
+| --- | --- | --- |
+| `36093292552` | `a5e6686` | `Lint project` |
+| `36088228353` | `a5419aa` | `Lint project` |
+| `35966915981` | `1f31f218`（2026-09-24T06:55） | `Lint project` |
+
+日志：`EXE001 Shebang is present but file is not executable --> probes/g1plus_ecw308_extract.py:1:1`。
+**结论：自 2026-09-24 起 CI 从未越过 lint**，`Run tests` 从未执行——上一轮修的 pytest 缺口是真实缺陷，
+但当时并未被 CI 触达；同时「本机复刻 24/24」**不等价于**真实 CI 通过。
+
+### 根因：判据读文件系统元数据，而 Windows 无法表达
+
+`probes/g1plus_ecw308_extract.py` 首行为 shebang，而 git 索引模式为 `100644`。
+ruff `EXE001` 读**文件系统执行位**；Windows 上该位不可表达，ruff 直接跳过 ⇒ 本机全绿、ubuntu-latest 报错。
+**排除版本漂移**：本机 0.16.8 与 CI 实装 0.16.9 在 Windows 上都不报；把 `pyproject.toml` 的 `[tool.ruff]`
+（仅 `line-length` / `target-version`，无自定义 `select`）与本机 `--show-settings` 对照后确认差异来自平台，不是规则集。
+
+### 处置
+
+1. 该文件确实是可运行脚本（以 `raise SystemExit(main())` 收尾），所以**保留 shebang**、用
+   `git update-index --chmod=+x` 把索引模式改为 `100755`（最小且保义的修法）。
+2. 新增**平台无关护栏** `tests/test_repo_hygiene.py::test_executable_bit_agrees_with_the_shebang`：
+   读 `git ls-files -s` 的索引模式，双向覆盖 `EXE001`（有 shebang 无执行位）与 `EXE002`（有执行位无 shebang）。
+   负向证明：`--chmod=-x` 后该护栏**变红**（1 failed），`--chmod=+x` 后复绿。
+3. 顺带用 CI 同版本 ruff 0.16.9 在本机预跑（`All checks passed`），排除其余版本漂移规则。
+
+### 结果与验证
+
+提交 `44c5136`（run `36093852395`）：`verify` 5m53s、`environment` 1m3s，**两个 job 全绿**；
+这是自 2026-09-23T12:08 成功之后的**首次**绿色运行。Linux 侧 `pytest` **783 passed / 18 skipped / 0 failed**（66.96s），
+`Lint project`、`Compile project` 与全部 verifier 步骤通过。本机同轮 `ruff`（0.16.8 与 0.16.9）全绿、`pytest` **801 passed**。
+
+**18 个 skip 的口径**：全部是「git 忽略的本地缓存缺失」（ECW-308 SI PDF、round2/round4 抓取缓存等），
+本机因缓存存在多跑 4 个用例（本机 0 skip）。**不是平台差异，也没有断言被削弱。**
+
+### 新增纪律（写入长期口径）
+
+- 凡判据依赖**文件系统元数据**（执行位是本次的实例），必须以 **git 索引或真实 CI** 为准；
+  本机 lint 全绿**不构成**这类判据的证据。
+- 「本机复刻 CI」只能证明**平台无关**的那部分判据；绿色结论必须以 GitHub Actions 的实跑为准。
+
+### 诚实边界
+
+本轮只改了一个文件的**索引模式**与一条新增测试，**未动任何数据值**：规范数据集 digest 仍为
+`a446c216…c01085`。上一轮记录的 3 处 v0.2 时代历史 pin 仍按「历史证据不追改」保留。
