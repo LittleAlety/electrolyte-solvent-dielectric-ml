@@ -12,6 +12,10 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+
+from electrolyte_ml.exporting import write_export_manifest
+
 DEFAULT_OUTPUT_ROOT = REPOSITORY_ROOT.parent / "成果输出"
 
 
@@ -36,13 +40,14 @@ def read_json(path: Path) -> dict:
 
 
 def write_sha256s(directory: Path) -> None:
-    files = sorted(
-        path for path in directory.rglob("*") if path.is_file() and path.name != "SHA256SUMS"
-    )
-    lines = [f"{sha256_file(path)}  {path.relative_to(directory).as_posix()}" for path in files]
-    # Pin the newline so the manifest itself is byte-stable across platforms.
-    with (directory / "SHA256SUMS").open("w", encoding="utf-8", newline="\n") as handle:
-        handle.write("\n".join(lines) + "\n")
+    """Write the canonical SHA256SUMS manifest for an export directory.
+
+    This delegates to ``electrolyte_ml.exporting`` so an export written from a
+    probe is byte-identical to one written by the repository's own manifest
+    writer (same POSIX-relative ordering, same manifest exclusion).
+    """
+
+    write_export_manifest(directory)
 
 
 def copy_artifacts(

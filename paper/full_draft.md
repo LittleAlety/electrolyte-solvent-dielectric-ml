@@ -779,9 +779,12 @@ the domain gap that v0.3's expanded coverage aims to close.
 
 # Figures
 
-The v1.0 manuscript carries six figures. Each one names the committed script
-that generates it and the artifact that holds the rendered file, so a reader can
-re-derive every panel without the authors. Panels that earlier drafts listed as
+The v1.0 manuscript carries six figures. Each one names the artifact that holds
+the rendered file and a committed command that re-renders it, so a reader can
+reproduce every panel without the authors. Two of the six (Figures 1 and 4) are
+produced by a purpose-built figure probe that fails when the numbers it draws
+stop matching the committed summaries; the other four are re-rendered from the
+committed benchmark summaries by the probes that computed them. Panels that earlier drafts listed as
 separate figures (chemical-space projection, applicability-domain error split,
 cross-source scatter) are reported as tables or prose instead: they either
 duplicated a panel above or rested on fewer than ten compounds, and a six-figure
@@ -791,7 +794,8 @@ budget is easier to audit than an eight-figure one that repeats itself.
 Panel A: compounds in each released roster (v0.1 100, v0.2 210, v0.3 243,
 v0.3.2 245, v0.3.3 246) with the 236-row modelling subset marked. That subset is
 frozen on the v0.3.2 table and is re-derived in the figure as 245 rows - 4 rows
-named in the exclusion file - 4 rows failing the xTB physical features - 1 row
+named in the five-row curated exclusion list that are present in that source -
+4 rows failing the xTB physical features - 1 row
 withheld by `model_ready` = 236.
 Panel B: provenance mix of the current 246-row roster by `evidence_level` (208
 v0.2 core values, 20 open-access review-table values, 17 open-access primary
@@ -810,6 +814,8 @@ with error bars of +/- 1 SD across the ten repeats. The hybrid representation is
 the best of the three on R2 (0.364), Spearman (0.828) and MAE (6.69), and the
 physical block is what carries the improvement over Morgan.
 Artifact: `probes/artifacts/v032_ablation.png` (`probes/v032_ablation_summary.json`).
+Script: `python probes/dielectric_representation_ablation.py --plot-only --summary-output probes/v032_ablation_summary.json --plot probes/artifacts/v032_ablation.png` (re-rendering this artifact from the committed summary reproduces the
+tracked file byte for byte).
 
 **Figure 3. Domain-gap parity plot.**
 Frozen v0.2 model predictions against experimental permittivity for the 29
@@ -820,6 +826,7 @@ The two worst calls are the polar solvents at the right edge: gamma-valerolacton
 (36.1) and N-methylpyrrolidone (32.2) are both predicted near 13-16, the same
 range as the non-polar diluents.
 Artifact: `probes/artifacts/domain_gap_parity.png` (`probes/g2_domain_gap_summary.json`).
+Script: `python probes/g2_domain_gap_test.py`.
 
 **Figure 4. Split-conformal coverage is marginal and collapses above eps 60.**
 Panel A: empirical coverage of the nominal 90% split-conformal interval inside
@@ -846,6 +853,7 @@ where Morgan falls to 0.14, which is the quantitative form of the extrapolation
 claim: what survives leaving the scaffold neighbourhood is the physical block,
 not the fingerprint.
 Artifact: `probes/artifacts/v032_target_scaffold.png` (`probes/v032_target_scaffold_summary.json`).
+Script: `python probes/dielectric_target_and_scaffold.py --plot-only --summary-output probes/v032_target_scaffold_summary.json --plot probes/artifacts/v032_target_scaffold.png` (likewise byte-identical to the tracked artifact).
 
 **Figure 6. NBS Circular 514 temperature harmonization to 298.15 K.**
 Panel A: the shift eps(298.15 K) - eps(tabulated) implied by the coefficients
@@ -858,6 +866,7 @@ range that excludes it, and only those 18 would need the harmonization to be
 treated as an extrapolation. No value in the frozen dataset is modified by this
 probe.
 Artifact: `probes/artifacts/nbs514_alpha_harmonization.png` (`probes/nbs514_alpha_harmonization_summary.json`).
+Script: `python probes/nbs514_alpha_harmonization_probe.py`.
 
 ## Applicability domain (reported as prose, not a figure)
 

@@ -726,11 +726,25 @@ def _parse_args() -> argparse.Namespace:
         / "artifacts"
         / "dielectric_representation_ablation.png",
     )
+    parser.add_argument(
+        "--plot-only",
+        action="store_true",
+        help=(
+            "re-render --plot from the committed --summary-output instead of "
+            "re-running the benchmark; use this to reproduce a figure whose "
+            "rendered file has to be regenerated without refitting a model"
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = _parse_args()
+    if args.plot_only:
+        payload = json.loads(args.summary_output.read_text(encoding="utf-8"))
+        _write_plot(payload["summary"], args.plot)
+        print(json.dumps({"plot": args.plot.relative_to(REPOSITORY_ROOT).as_posix()}))
+        return 0
     payload = run_experiment(
         input_path=args.input,
         source_path=args.source,

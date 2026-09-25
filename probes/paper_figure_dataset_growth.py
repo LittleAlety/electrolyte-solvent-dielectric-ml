@@ -79,6 +79,17 @@ def _flag_counts(rows: list[dict[str, str]], column: str) -> dict[str, int]:
     return dict(counter)
 
 
+def _missing_evidence_rows(evidence: dict[str, int]) -> int:
+    """Return how many rows carry no evidence_level at all.
+
+    ``_flag_counts`` buckets an empty cell as ``unlabelled``, so summing the
+    counter can never disagree with the row count; the missing rows have to be
+    counted by name or the check is dead code.
+    """
+
+    return int(evidence.get("unlabelled", 0))
+
+
 def collect() -> dict:
     """Return the figure payload plus the digest of every input it read."""
     counts: dict[str, int] = {}
@@ -109,8 +120,11 @@ def collect() -> dict:
         for row in current_rows
         if (row.get("model_ready") or "").strip().lower() != "true"
     ]
-    if sum(evidence.values()) != len(current_rows):
-        raise SystemExit("evidence_level does not cover every row of the current roster")
+    missing_evidence = _missing_evidence_rows(evidence)
+    if missing_evidence:
+        raise SystemExit(
+            f"evidence_level is missing on {missing_evidence} row(s) of the current roster"
+        )
 
     with (REPOSITORY_ROOT / ABLATION_SUMMARY_PATH).open(encoding="utf-8") as handle:
         ablation = json.load(handle)

@@ -261,7 +261,7 @@ def main() -> int:
     args = _parse_args()
     result = export_results(output_root=args.output_root, overwrite=args.overwrite)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0
+    return 0 if result["verification_passed"] else 1
 
 
 if __name__ == "__main__":
