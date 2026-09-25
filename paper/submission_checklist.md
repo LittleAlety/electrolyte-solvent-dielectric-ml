@@ -65,6 +65,11 @@ python scripts/check_release_readiness.py --phase released
 4. 等 Zenodo 处理该 release（时间取决于 Zenodo 负载），生成版本化 DOI 与 concept DOI。
 5. 把 DOI 回填到 `paper/code_and_data.md`，重建 `full_draft.md`，跑 B 的检查（`--phase released`），提交。
 6. 在 Zenodo 记录页面核对/补全标题、作者、描述与许可（记录元数据可改，DOI 不变）。
+7. **DOI 铸出后，绝不要再编辑 GitHub release 的标题或正文。** 实测（2026-09-25）：
+   修改 release body 会**再次触发归档**，生成一个内容相同的重复版本
+   （`10.5281/zenodo.22957976`，与 `10.5281/zenodo.22957696` 同属 concept
+   `10.5281/zenodo.22957695`）。要补元数据就改 Zenodo 记录本身，不要动 release。
+   - [ ] 在 Zenodo 记录页删除重复版本 `10.5281/zenodo.22957976`（删除后勾掉本行）。
 
 > 顺序由 Zenodo 的机制决定：DOI 由 release 铸出，所以被归档的 v1.0 快照里 DOI 行写的是
 > `pending`，仓库里的真实 DOI 从回填提交开始生效。
