@@ -1879,7 +1879,7 @@ xTB 6.7.1 把该串打印到 **stderr**（实测 stderr 逐字 `b'normal termina
 抽检冻结成功产物 `data/interim/xtb_features/AFBPFSWMIHJQDM-UHFFFAOYSA-N/xtb.out`（42 614 字节）确认不含该串、但哨兵文件在。
 本轮探针改为**逐字对齐冻结运行器**的接受判据：`exit==0` ∧ `xtbopt.xyz` 存在 ∧（stdout 标记 ∨ `.xtboptok`）∧ 四个特征全部解析成功。
 
-### 离子对：4 个协议对三者全部成功（另有 1 个只对 2/3 成功）
+### 离子对：4 个协议对三者全部被接受（其中 3 个几何全部收敛；另有 1 个只对 2/3 成功）
 
 起点为逐片段打包几何。冻结口径与 `--acc 5.0` 三个分子全部 exit 128；
 `--etemp 1000`、`--etemp 5000`、`--etemp 5000 --acc 5.0`、`--alpb acetonitrile` 三个分子全部被接受。
@@ -1916,8 +1916,8 @@ GFN-FF 预优化对 2/3 有效（1-丁基-3-甲基咪唑鎓 PF₆ 仍 exit 128�
 
 ### 判定
 
-**这 4 行技术上可救回，但不能在原地救回。** 只对新行换口径 ⇒ 特征表内混入按分子类别分布的系统偏差；
-全表换口径 ⇒ 四个特征逐行改变，236 行拟合集与全部基准数字随之改变。
+**这 4 行技术上可救回，但不能在原地救回。** 只对新行换口径 ⇒ 引入按分子类别分布的系统偏差隐患（本轮仅一个离子液体对照）；
+全表换口径 ⇒ **不能假定逐行逐特征都会变**（丙-1-醇的偶极与 HL-Gap 已实测完全未变），236 行拟合集与全部基准必须整表重跑后重钉。
 因此 v0.3.14 若落地，必须定位为**整表协议迁移**，而不是「补 4 行」的增量修复。本轮不替项目做这个取舍。
 
 ### 产物
@@ -1933,3 +1933,32 @@ GFN-FF 预优化对 2/3 有效（1-丁基-3-甲基咪唑鎓 PF₆ 仍 exit 128�
 
 定向用例 `tests/test_xtb_recovery_probe.py` **15 passed**；`--check` 通过；
 Fe(CO)₅ 的结构空间另由第二路**只读** agent 独立扫描，结论与本轮一致。
+
+### 收口复审（adversarial-review-optimize，只读 Reviewer）
+
+在 `d3de14c` 冻结基线上，只读复审员审计本轮报告、结构化证据与成果汇总稿，判 **Not Ready（0 Critical / 4 Important / 2 Minor）**；4 项 Important 经本地逐条复核**全部成立**并已最小修复：
+
+| 级别 | 位置 | 问题 | 修复 |
+| --- | --- | --- | --- |
+| Important | 报告 `:15` | 「有 5 个可复现协议」与 JSON 冲突：对三者**全部接受**的是 4 个，**接受且几何全收敛**的是 3 个 | 改为 4 个全部接受、其中 3 个几何全收敛 |
+| Important | 报告 `:23`、本节标题、汇总 §15.2/§16 | 「4 个协议对三者全部成功」把「运行器接受」压缩成「成功」，易误读为几何全收敛 | 统一改为「全部被接受（其中 3 个几何全部收敛）」 |
+| Important | 报告 `:119`、本节「判定」段、汇总 §15.5 | 「四个特征逐行都会变」与本轮 JSON 直接冲突：丙-1-醇的偶极与 HL-Gap 绝对/相对变化均为 0 | 改为「不能假定逐行逐特征都会变」并举丙-1-醇反例，保留「须整表重跑重钉基准」的结论 |
+| Important | 汇总 §12 表 | 「当前工作区」表仍写 `756 passed` | 改为当前 `771 passed`，756/753 标为历史轮次快照 |
+
+**Delta 复审新发现（1 Important，已修）：** 报告 §五原把 `GFN-FF 预优化` 与 `--etemp 5000` / ALPB 并列为三者统一替代方案；
+但同一报告的 §2.2 表格与 JSON 都显示 GFN-FF 预优化只对 2/3 有效（`IXQYBUDWDLYNMA-UHFFFAOYSA-N` 仍 `exit 128`）。
+已改为「`--etemp 5000` 或 `--alpb acetonitrile`（这两者对三者都既被接受又几何收敛）」，
+并显式注明 GFN-FF 只对 2/3 有效、不能作为三者统一替代。
+
+本地复核用的判据（可复现）：对 `probes/g1plus_xtb_recovery_probe.json` 逐策略统计三者
+「全部 `frozen_runner_accepts`」= 4 个（`etemp_1000`、`etemp_5000`、`etemp_5000_acc_5`、`alpb_acetonitrile`），
+「全部接受且 `geoopt_converged`」= 3 个；`etemp_1000` 只在 1/3 上收敛，GFN-FF 预优化只对 2/3 成功。
+
+**残留 Minor（已登记、本轮不修）：** `probes/g1plus_xtb_recovery_probe.json` 的 Fe 结构记录只保存重试后的
+`embed_return`，未分列 `default_embed_return` / `random_coords_embed_return`，也没有形式电荷与 DATIVE 方向字段。
+复审员独立重跑 RDKit 确认报告声明（默认嵌入 -1 / 随机坐标 0 / 净电荷 0 / 5 条 C→Fe DATIVE）**本身属实**，
+影响限于结构化证据的可审计性，不影响任何数值、判定或冻结产物。
+
+**计数复核（复审员独立执行）：** `reports/*.md` 54、`probes/*.json` 67、week1–8 递归 Markdown 72 / JSON 73、
+week7 61 文件 / 60 manifest 行、week8 75 文件 / 74 manifest 行、
+`data/dielectric_v03.csv` digest `a446c216…c01085`，均与文档一致。
