@@ -2086,3 +2086,72 @@ manifest SHA 与缓存 `input.xyz` 校验都会被静默跳过**；其最小反�
 
 **残留 Minor（本轮新增 1 项，记录不做）**：`_deep_row_problems()` 仅用 `Path(cache_dir).name.startswith(key)` 校验目录归属，未额外断言解析后的 `manifest_path` 位于 `FROZEN_CACHE` 之下。当前三类拦截（目录归属 / manifest SHA / 起始几何绑定）已挡住全部实际攻击，未复现出通过路径，因此不改代码，仅记为后续加固项。
 
+## 2026-09-25 · CI 修复轮：本机绿而全新克隆红的两条根因（v0.3.14 后置）
+
+### 触发
+
+`a5419aa`（v0.3.14 整表协议迁移证据）在本机 **798 passed**、全部 verifier 绿，但
+`.github/workflows/ci.yml` 判据是**干净克隆**。用 `git worktree add --detach <tmp> HEAD` 复刻后，
+以该提交为基线实测 **40 failed / 747 passed**（父提交 `34370f8` 为 39 failed）。逐条归因后确认：
+**其中 2 条是本提交引入的回归，其余为该提交之前就已存在的 CI 阻塞缺口**——本地之所以看不到，是因为
+验证只发生在「最脏」的工作区，而判据作用在「最干净」的克隆上。
+
+### A. 回归（本提交引入，2 条）
+
+`tests/test_xtb_protocol_migration_probe.py` 的两个用例依赖 git 忽略的本地状态
+（`data/interim/xtb_features` 冻结缓存、`data/interim/xtb_protocol_migration` 候选运行日志）与 xTB 可执行文件，
+却没有 skip 守卫，干净克隆里直接 `FileNotFoundError` / `EVIDENCE MISMATCH`。
+处置：加**诚实 skip 守卫**（本地状态缺失才 skip），**断言一条不削弱**。
+注意 `resolve_xtb()` 会沿工作树找到仓库旁的 venv，所以「能不能找到 xTB」不能作为缓存是否存在的代理——
+守卫必须显式要求 `FROZEN_CACHE.is_dir()` / 候选日志目录存在。
+
+### B. 行尾漂移：pin 的是 CRLF 字节（既有缺口）
+
+`.gitattributes` 规定文本按 LF 入库（`* text=auto eol=lf`，另有显式 `*.csv` 规则），
+但本机有 **16 个被跟踪文件**在工作区漂成 CRLF（git 因其 clean filter 而不报 diff，肉眼不可见）。
+`probes/g1plus_round5_crosscheck_summary.json` 的 `raw_sha256` 用 `path.read_bytes()` 计算，
+钉的正是那份 CRLF 字节 ⇒ **只有漂移过的本机成立**。
+处理方式是**重跑而非重钉**：把工作区归一为 LF 后，用 `probes/g1plus_round5_crosscheck.py` 自身重生成该 JSON，
+与旧文件逐字段比对**只差 `raw_sha256` 一个字段**（`3b42b3f7…` CRLF → `6f6c2eb9…654fd0` LF），
+与 `probes/thermoml_local_coverage_summary.json` 早已记录的 LF 摘要一致。week8 交付包随之重生成
+（顺带把包内 11 份 CRLF 副本归一为 LF；逐文件比对证明差异**只有行尾**）。
+
+### C. ignore 黑洞：验证脚本要读的工件从未入库（既有缺口）
+
+`data/processed/*` 与 `data/interim/*` 默认忽略、只对白名单放行，于是 **9 个被验证脚本读取的工件从未被跟踪**：
+
+| 工件 | 谁在读 |
+| --- | --- |
+| `data/processed/v032_ablation_predictions.csv` | `verify_v032_benchmarks.py`、`check_paper_artifact_consistency.py`、`export_week8_results.py` |
+| `data/processed/v032_ablation_repeats.csv`、`v032_ablation_cv.csv` | 同上 |
+| `data/processed/v032_scaffold_folds.csv`、`v032_target_scaffold_predictions.csv`、`v032_target_scaffold_metrics.csv` | 同上 |
+| `data/processed/dielectric_mlp_calibration_predictions.csv`、`_repeats.csv` | `export_week8_results.py` |
+| `data/interim/v03_features_original.csv` | 排序头、分裂共形、Onsager-δ、v0.3.2 受控对照四类探针 |
+
+处置：加显式 `!` 白名单并入库（体量与已跟踪的同族工件同量级，非异常）。**这一条不是靠猜补的**：
+先用 `git ls-files` 与导出脚本的 `ARTIFACTS` 表做了一次系统性交叉扫描，后来又在模拟里被
+`test_export_week7_week8_results.py` 抓出漏掉的 MLP 两个文件。
+
+### D. 新增护栏（并证明它们会红）
+
+`tests/test_repo_hygiene.py` 两条：①被跟踪文本文件在工作区出现 CRLF 即红；②`<stem>_path`/`<stem>_sha256`
+成对的 pin 只被 CRLF 字节满足、与 LF 摘要不符即红（匹配不了任何一形的**历史 pin 明确放行**，见 E）。
+负向证明：临时把 `dielectric_raw.csv` 改回 CRLF 并把 pin 改回 CRLF 摘要，两条**都变红**（2 failed），
+还原后复绿——避免「恒真护栏」。
+`scripts/verify_export_manifests.py` 的默认范围由 week1–week6 扩到 **week1–week8**（交付根实际有 8 周）。
+
+### E. 诚实边界（记录、不回写）
+
+仓库仍有 3 处 v0.2 时代的历史 pin 指向**当前仓库中已不存在的旧版本字节**：
+`probes/database_recheck.json` 与 `probes/springer_materials_crosscheck_summary.json` 的 `v02_sha256`、
+`probes/v03_baseline_reproduction_summary.json` 的 `exclusions_sha256`。其生成脚本已不在仓库内，
+且不参与任何 CI 断言 ⇒ 按「历史证据不追改」记录，**不臆造重钉**。
+
+### F. 验证快照
+
+全新 detach 工作树内逐步复刻 CI：**24/24 步通过、0 失败**（ruff + compileall + `pytest` + 21 个脚本步骤），
+其中 `pytest -q` 为 **786 passed / 14 skipped / 0 failed**；本机含全部本地缓存为 **800 passed**；
+8 周交付包 manifest 8/8 `[PASS]`。外部手册追加 `附录 J-补记六` 并重生成 CI fixture
+（手册 102,974 B / 1,094 行 sha256 `06e897ed…e32598`；fixture 37,756 B / 480 行 sha256 `1d22e696…a943d`），
+`probes/manual_appendix_reconciliation.py` 违禁 token 0、陈旧句 0、逐字闸门 `ok: true`，规范数据集 digest
+保持 `a446c216…c01085` 不变（**本轮未动任何数据值**）。提交 `32a8b7f`。

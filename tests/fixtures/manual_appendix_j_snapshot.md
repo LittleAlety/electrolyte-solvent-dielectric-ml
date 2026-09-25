@@ -434,3 +434,47 @@ deep check 现逐行复验缓存 manifest 的可执行文件指纹）；专项�
 新增 2 条回归（专项 26 项），「删光 cache_dir」与「借另一行的合法缓存」两个攻击向量现均被拒。
 
 第五轮 delta 复审（只验本项修复）：**Ready（0 Critical / 0 Important / 1 Minor）**。`..\` 穿越、同 InChIKey 多目录、同步篡改 `start_geometry_sha256` 三个变体均被拒；真实证据 `--check` 仍通过。残留 Minor：`cache_dir` 只用目录名前缀校验归属，未额外断言解析后路径落在冻结缓存之下（三类现有拦截已挡住实际攻击，未复现通过路径，记为后续加固项）。
+
+## 附录 J-补记六：CI 修复轮——全新克隆为什么是红的（2026-09-25）
+
+**起因。** v0.3.14 证据轮（`a5419aa`）在本机全绿，但**全新克隆**的 CI 是红的。
+两条根因都与数值无关，而是仓库卫生问题；本地看不到，是因为本机工作区恰好与仓库的存储形态不一致。
+
+### 一、行尾漂移：pin 的是 CRLF 字节
+
+`.gitattributes` 规定文本按 LF 入库（`* text=auto eol=lf`，另有显式 `*.csv` 规则），
+但本机有 16 个被跟踪文件在工作区漂成了 CRLF。`probes/g1plus_round5_crosscheck_summary.json`
+的 `raw_sha256` 钉的正是那份 CRLF 字节的摘要，于是出现「本机通过、干净克隆不一致」。
+
+处置：把工作区归一为 LF，并**用探针自身重生成** `raw_sha256`（LF 摘要 `6f6c2eb9…654fd0`），
+不是手改证据；重生成结果与旧文件逐字段比对**只差这一个字段**。
+
+### 二、ignore 黑洞：验证脚本要读的文件从未入库
+
+`data/processed/*` 与 `data/interim/*` 默认被忽略，只对白名单放行。结果是
+`verify_v032_benchmarks.py`、`check_paper_artifact_consistency.py`、`export_week8_results.py`
+要读的 9 个文件从未被跟踪：6 个 v0.3.2 消融/CV/骨架产物、2 个 MLP 校准产物、1 份基特征矩阵
+（`data/interim/v03_features_original.csv`）。干净克隆里它们不存在，导出与校验必然失败。
+处置：加显式 `!` 白名单并入库；week8 交付包随之重生成（包内 11 份 CRLF 副本一并归一为 LF）。
+
+### 三、新增护栏（并做了负向证明）
+
+| 护栏 | 位置 | 作用 |
+| --- | --- | --- |
+| 行尾策略 | `tests/test_repo_hygiene.py` | 被跟踪文本文件在工作区出现 CRLF 即红 |
+| pin 与行尾无关 | 同上 | pin 只被 CRLF 字节满足、与 LF 摘要不符即红 |
+| 缺本地缓存的诚实 skip | `tests/test_xtb_protocol_migration_probe.py`、`tests/test_thermoml_local_coverage_probe.py` | 只在 git 忽略的本地状态缺失时 skip，**断言不削弱** |
+| 交付包默认范围 | `scripts/verify_export_manifests.py` | 默认覆盖 week1–week8 |
+
+负向证明：临时把 `dielectric_raw.csv` 改回 CRLF 并把 pin 改回 CRLF 摘要，两道护栏**都变红**（2 failed）；
+还原后复绿。这是「护栏不是恒真断言」的证据。
+
+### 四、实测与边界
+
+全新 detach 工作树复刻 CI：**24/24 步通过**，其中 `pytest -q` 为 **786 passed / 14 skipped**；
+本机含全部本地缓存时为 **800 passed**。提交 `32a8b7f`。
+
+**诚实边界（不回写、不追改）：** 仓库里仍有 3 处 v0.2 时代的历史 pin
+（`database_recheck.json` 与 `springer_materials_crosscheck_summary.json` 的 `v02_sha256`、
+`v03_baseline_reproduction_summary.json` 的 `exclusions_sha256`）指向**当前仓库中已不存在的旧版本字节**，
+其生成脚本已不在仓库内。它们不参与任何 CI 断言，本轮按「历史证据不追改」记录，不臆造重钉。
