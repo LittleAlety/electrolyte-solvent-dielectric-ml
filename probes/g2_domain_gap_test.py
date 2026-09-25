@@ -99,7 +99,7 @@ ph = 0.5*pm + 0.5*pp
 metrics = {"Morgan":{"R2":r2_score(test_y,pm),"Spearman":float(spearmanr(test_y,pm)[0])},
            "RDKit_Phys":{"R2":r2_score(test_y,pp),"Spearman":float(spearmanr(test_y,pp)[0])},
            "Hybrid":{"R2":r2_score(test_y,ph),"Spearman":float(spearmanr(test_y,ph)[0])}}
-print("\n=== External Test Results (v0.2 model -> 30 new compounds) ===")
+print(f"\n=== External Test Results (v0.2 model -> {len(test_y)} new compounds) ===")
 print(f"{'Model':15s}  {'R2':>8s}  {'Spearman':>10s}")
 for k,v in metrics.items():
     print(f"{k:15s}  {v['R2']:8.4f}  {v['Spearman']:10.4f}")
@@ -118,7 +118,7 @@ for ax, title, pred, c in zip(axes, ["Morgan","RDKit Phys","Hybrid"], [pm,pp,ph]
         if abs(test_y[i]-pred[i]) > 10:
             ax.annotate(n.split()[0][:8], (test_y[i], pred[i]), fontsize=6, alpha=0.6)
     ax.grid(alpha=0.2); ax.set_xlim(mn,mx); ax.set_ylim(mn,mx)
-fig.suptitle("Domain-Gap: v0.2 frozen model -> 30 new battery solvents", fontsize=11)
+fig.suptitle(f"Domain-Gap: v0.2 frozen model -> {len(test_y)} new battery solvents", fontsize=11)
 fig.tight_layout()
 fig.savefig("probes/artifacts/domain_gap_parity.png", dpi=180)
 print("\nPlot saved: probes/artifacts/domain_gap_parity.png")
@@ -130,7 +130,7 @@ detail = [{"name":n,"dielectric":float(test_y[i]),
 for d in detail:
     print(f"  {d['name']:30s} true={d['dielectric']:6.1f}  morgan={d['pred_morgan']:6.1f}  phys={d['pred_phys']:6.1f}  hybrid={d['pred_hybrid']:6.1f}")
 
-with Path("probes/g2_domain_gap_summary.json").open("w", encoding="utf-8") as handle:
+with Path("probes/g2_domain_gap_summary.json").open("w", encoding="utf-8", newline="\n") as handle:
     json.dump(
         {
             "probe": "G2_domain_gap",
