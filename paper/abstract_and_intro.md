@@ -70,9 +70,9 @@ equal-weight Morgan+Physical ensemble). Graph neural networks and deeper
 architectures are evaluated as probes (MLP, Chemprop D-MPNN) but are not
 promoted to the candidate model. The benchmark results establish a clear
 representation ceiling: physical features provide the ranking signal
-(Spearman 0.801 for Physical alone vs. 0.689 for Morgan), fingerprints
-provide complementary breadth (R2 0.223 vs. 0.354), and their hybrid ensemble
-outperforms either alone (R2 0.366, Spearman 0.814). Neural probes confirm
+(Spearman 0.802 for Physical alone vs. 0.722 for Morgan), fingerprints
+provide complementary breadth (R2 0.240 vs. 0.342), and their hybrid ensemble
+outperforms either alone (R2 0.364, Spearman 0.828). Neural probes confirm
 this ceiling: the best MLP (Physical, Spearman 0.884) outperforms XGBoost in
 ranking but has negative R2 that is not recoverable by linear calibration.
 

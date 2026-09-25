@@ -43,6 +43,27 @@ def test_a_stale_benchmark_number_is_rejected(paper_copy: Path) -> None:
     assert any("0.377" in error for error in errors), errors
 
 
+def test_a_stale_abstract_ceiling_number_is_rejected(paper_copy: Path) -> None:
+    """The ceiling sentence is prose, so it needs its own guard.
+
+    A pre-gate copy of all six numbers (0.801 / 0.689 / 0.223 / 0.354 / 0.366 /
+    0.814) survived until the M-1 review because the table checker never reads
+    the abstract.
+    """
+    path = paper_copy / "abstract_and_intro.md"
+    text = path.read_text(encoding="utf-8")
+    assert "Spearman 0.802 for Physical alone" in text
+    path.write_text(
+        text.replace(
+            "Spearman 0.802 for Physical alone",
+            "Spearman 0.801 for Physical alone",
+        ),
+        encoding="utf-8",
+    )
+    errors = verify_paper(paper_copy)
+    assert any("Physical spearman" in error for error in errors), errors
+
+
 def test_a_stale_row_count_is_rejected(paper_copy: Path) -> None:
     path = paper_copy / "methods_data_records.md"
     text = path.read_text(encoding="utf-8")

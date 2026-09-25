@@ -361,6 +361,48 @@ def check_main_benchmark_table(paper_dir: Path) -> list[str]:
     return errors
 
 
+def check_abstract_ceiling_numbers(paper_dir: Path) -> list[str]:
+    """Pin the abstract's representation-ceiling numbers to the frozen artifact.
+
+    The ceiling sentence is prose, so the table checker never inspected it and a
+    pre-gate copy of all six numbers survived review until M-1. Each value is
+    matched by a regex that only fits that one sentence, so a rewrite of the
+    sentence fails loudly instead of silently dropping the guard.
+    """
+    errors: list[str] = []
+    text = (paper_dir / "abstract_and_intro.md").read_text(encoding="utf-8-sig")
+    raw = read_json(PROBES_DIR / "v032_ablation_summary.json")["summary"]
+    checks = (
+        (r"Spearman ([0-9.]+) for Physical alone", "Physical", "spearman"),
+        (r"for Physical alone vs\. ([0-9.]+) for Morgan", "Morgan", "spearman"),
+        (r"complementary breadth \(R2 ([0-9.]+) vs\.", "Morgan", "r2"),
+        (r"complementary breadth \(R2 [0-9.]+ vs\. ([0-9.]+)\)", "Physical", "r2"),
+        (r"outperforms either alone \(R2 ([0-9.]+),", "Morgan+Physical", "r2"),
+        (
+            r"outperforms either alone \(R2 [0-9.]+, Spearman ([0-9.]+)\)",
+            "Morgan+Physical",
+            "spearman",
+        ),
+    )
+    for pattern, model, metric in checks:
+        match = re.search(pattern, text)
+        if match is None:
+            errors.append(
+                f"abstract_and_intro.md: ceiling sentence no longer matches {pattern!r}; "
+                "update this guard with the rewritten sentence"
+            )
+            continue
+        _compare(
+            errors,
+            "abstract_and_intro.md",
+            model,
+            metric,
+            match.group(1),
+            _means(raw[model]).get(metric),
+        )
+    return errors
+
+
 def check_scaffold_table(paper_dir: Path) -> list[str]:
     errors: list[str] = []
     text = (paper_dir / "benchmark_and_figures.md").read_text(encoding="utf-8-sig")
@@ -644,6 +686,7 @@ def verify_paper(paper_dir: Path = PAPER_DIR) -> list[str]:
         check_row_count_claims,
         check_conflict_counts,
         check_main_benchmark_table,
+        check_abstract_ceiling_numbers,
         check_scaffold_table,
         check_release_version,
         check_applicability_trigger_rate,

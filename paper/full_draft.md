@@ -70,9 +70,9 @@ equal-weight Morgan+Physical ensemble). Graph neural networks and deeper
 architectures are evaluated as probes (MLP, Chemprop D-MPNN) but are not
 promoted to the candidate model. The benchmark results establish a clear
 representation ceiling: physical features provide the ranking signal
-(Spearman 0.801 for Physical alone vs. 0.689 for Morgan), fingerprints
-provide complementary breadth (R2 0.223 vs. 0.354), and their hybrid ensemble
-outperforms either alone (R2 0.366, Spearman 0.814). Neural probes confirm
+(Spearman 0.802 for Physical alone vs. 0.722 for Morgan), fingerprints
+provide complementary breadth (R2 0.240 vs. 0.342), and their hybrid ensemble
+outperforms either alone (R2 0.364, Spearman 0.828). Neural probes confirm
 this ceiling: the best MLP (Physical, Spearman 0.884) outperforms XGBoost in
 ranking but has negative R2 that is not recoverable by linear calibration.
 
@@ -193,7 +193,7 @@ carry an explicit conflict_status and six are flagged model_ready=false. The
 benchmark withholds five rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
 107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
-Hagiyama et al. 2008 still unread and now confirmed to have no open full text (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
+Hagiyama et al. 2008 still unread, with no open full text discoverable as of 2026-09-25 (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
 same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
 (NBS 19.5 at 294.15 K vs.
 restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308
@@ -373,7 +373,12 @@ checks over all 242 local ThermoML dielectric files and all 636 transcribed NBS
 Circular 514 organic rows returned no permittivity observation for it. The value
 rests on the ECW-308 battery-solvent compilation, and its cited primary source
 (Perricone et al. 2013, https://doi.org/10.1016/j.electacta.2013.01.084) is
-closed access with no open full text. It is the single named solvent gap.
+closed access, with no open full text discoverable as of 2026-09-25. It is the
+single named solvent gap. Tier-3 (print handbooks and physical library holdings)
+and Tier-4 (subscription databases such as Reaxys, SciFinder-n and DIPPR) were
+attempted but not closed this round; every open item is blocked by entitlement or
+entry point rather than by an absent value, and the blocking evidence is recorded
+in `reports/g1plus_tier34_access_findings.md`.
 
 **Resolved gap reports.** The glyme diethers and the dinitriles that earlier
 internal reports listed as absent are present in the table under their IUPAC
@@ -416,8 +421,9 @@ purification*, 4th ed. (1986) - the compilation the restricted cross-check was
 standing in for. The stored rows are 64.9 at 298.15 K (difference 0.02, 0.03%)
 and 90.5 at 313.15 K (difference 0.72, 0.80%); both comparisons are
 temperature-aligned, so neither needs a temperature correction. Two further open
-papers (*Electrochemistry* 2013, 81(10) 817-819 and 820-822) reproduce the same
-two figures, so neither rests on a single transcription. This is agreement with a
+papers (*Electrochemistry* 2013, 81(10) 817-819 and 820-822) reproduce the two
+figures between them (PC in the first, PC and EC in the second), so neither rests
+on a single transcription. This is agreement with a
 compilation restatement and not an independent measurement, and it changes no
 stored value; its role is to show that the restricted catalog was never the only
 route to these two numbers. The remaining restricted targets, GVL and DME, are not
@@ -434,7 +440,7 @@ conflict_status and six carry model_ready=false. Five of them are withheld from
 model fitting through the curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
 107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
-Hagiyama et al. 2008 still unread and now confirmed to have no open full text (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
+Hagiyama et al. 2008 still unread, with no open full text discoverable as of 2026-09-25 (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
 same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl
 isothiocyanate, whose NBS value
 (19.5 at 294.15 K) and restricted cross-check value (29.7 at 293.2 K) differ by
@@ -870,7 +876,7 @@ scaffold/cluster holdout, crossed with the raw and log(eps-1) targets. Under
 cluster holdout the physical and hybrid representations retain R2 = 0.27-0.29
 where Morgan falls to 0.14, which is the quantitative form of the extrapolation
 claim: what survives leaving the scaffold neighbourhood is the physical block,
-not the fingerprint.
+not the fingerprint. Error bars are +/-1 SD across the five partitions.
 Artifact: `probes/artifacts/v032_target_scaffold.png` (`probes/v032_target_scaffold_summary.json`).
 Script: `python probes/dielectric_target_and_scaffold.py --plot-only --summary-output probes/v032_target_scaffold_summary.json --plot probes/artifacts/v032_target_scaffold.png` (likewise byte-identical to the tracked artifact).
 
@@ -879,11 +885,12 @@ Panel A: the shift eps(298.15 K) - eps(tabulated) implied by the coefficients
 printed in the circular, over the 74 transcribed records that carry one; the
 median shift is 0.0 and the mean is -0.15.
 Panel B: the same shift as a percentage of the tabulated value (mean absolute
-1.4%). The panel exists to bound a systematic error, not to move data: 0.762 of
-the coefficient rows state a validity range that covers 25 C, 18 records state a
-range that excludes it, and only those 18 would need the harmonization to be
-treated as an extrapolation. No value in the frozen dataset is modified by this
-probe.
+1.4%). The panel exists to bound a systematic error, not to move data: of the 74
+coefficient rows, 56 (0.757) state a validity range that covers 25 C and 18 state
+a range that excludes it, so only those 18 would need the harmonization to be
+treated as an extrapolation; within the 42 coefficient rows carried into the
+frozen dataset, 32 (0.762) cover 25 C. No value in the frozen dataset is modified
+by this probe.
 Artifact: `probes/artifacts/nbs514_alpha_harmonization.png` (`probes/nbs514_alpha_harmonization_summary.json`).
 Script: `python probes/nbs514_alpha_harmonization_probe.py` (recomputes the
 summary from the frozen transcript, so it rewrites that summary with a fresh

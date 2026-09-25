@@ -162,7 +162,7 @@ scaffold/cluster holdout, crossed with the raw and log(eps-1) targets. Under
 cluster holdout the physical and hybrid representations retain R2 = 0.27-0.29
 where Morgan falls to 0.14, which is the quantitative form of the extrapolation
 claim: what survives leaving the scaffold neighbourhood is the physical block,
-not the fingerprint.
+not the fingerprint. Error bars are +/-1 SD across the five partitions.
 Artifact: `probes/artifacts/v032_target_scaffold.png` (`probes/v032_target_scaffold_summary.json`).
 Script: `python probes/dielectric_target_and_scaffold.py --plot-only --summary-output probes/v032_target_scaffold_summary.json --plot probes/artifacts/v032_target_scaffold.png` (likewise byte-identical to the tracked artifact).
 
@@ -171,11 +171,12 @@ Panel A: the shift eps(298.15 K) - eps(tabulated) implied by the coefficients
 printed in the circular, over the 74 transcribed records that carry one; the
 median shift is 0.0 and the mean is -0.15.
 Panel B: the same shift as a percentage of the tabulated value (mean absolute
-1.4%). The panel exists to bound a systematic error, not to move data: 0.762 of
-the coefficient rows state a validity range that covers 25 C, 18 records state a
-range that excludes it, and only those 18 would need the harmonization to be
-treated as an extrapolation. No value in the frozen dataset is modified by this
-probe.
+1.4%). The panel exists to bound a systematic error, not to move data: of the 74
+coefficient rows, 56 (0.757) state a validity range that covers 25 C and 18 state
+a range that excludes it, so only those 18 would need the harmonization to be
+treated as an extrapolation; within the 42 coefficient rows carried into the
+frozen dataset, 32 (0.762) cover 25 C. No value in the frozen dataset is modified
+by this probe.
 Artifact: `probes/artifacts/nbs514_alpha_harmonization.png` (`probes/nbs514_alpha_harmonization_summary.json`).
 Script: `python probes/nbs514_alpha_harmonization_probe.py` (recomputes the
 summary from the frozen transcript, so it rewrites that summary with a fresh

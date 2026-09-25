@@ -106,7 +106,7 @@ carry an explicit conflict_status and six are flagged model_ready=false. The
 benchmark withholds five rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
 107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
-Hagiyama et al. 2008 still unread and now confirmed to have no open full text (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
+Hagiyama et al. 2008 still unread, with no open full text discoverable as of 2026-09-25 (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
 same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
 (NBS 19.5 at 294.15 K vs.
 restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308
@@ -286,7 +286,12 @@ checks over all 242 local ThermoML dielectric files and all 636 transcribed NBS
 Circular 514 organic rows returned no permittivity observation for it. The value
 rests on the ECW-308 battery-solvent compilation, and its cited primary source
 (Perricone et al. 2013, https://doi.org/10.1016/j.electacta.2013.01.084) is
-closed access with no open full text. It is the single named solvent gap.
+closed access, with no open full text discoverable as of 2026-09-25. It is the
+single named solvent gap. Tier-3 (print handbooks and physical library holdings)
+and Tier-4 (subscription databases such as Reaxys, SciFinder-n and DIPPR) were
+attempted but not closed this round; every open item is blocked by entitlement or
+entry point rather than by an absent value, and the blocking evidence is recorded
+in `reports/g1plus_tier34_access_findings.md`.
 
 **Resolved gap reports.** The glyme diethers and the dinitriles that earlier
 internal reports listed as absent are present in the table under their IUPAC
