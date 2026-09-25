@@ -106,7 +106,7 @@ carry an explicit conflict_status and six are flagged model_ready=false. The
 benchmark withholds five rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
 107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
-Hagiyama et al. 2008 still unread, and a 2007 downstream paper restating the
+Hagiyama et al. 2008 still unread and now confirmed to have no open full text (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
 same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
 (NBS 19.5 at 294.15 K vs.
 restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308

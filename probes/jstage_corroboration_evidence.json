@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-09-25T08:19:24+00:00",
+  "generated_at_local": "2026-09-25 (Asia/Shanghai)",
+  "probe": "jstage_corroboration",
+  "scope": {
+    "task": "Resolve the two questions the Week 9 plan left on the J-STAGE route: (a) does J-STAGE carry a free full text of Hagiyama et al. 2008, the named primary source of the FEC 107 leg, so that leg can be closed at primary-measurement level; (b) how far does the open-literal citation chain already on disk corroborate the two restricted-catalog targets PC and EC.",
+    "method": "Open metadata and identifier resolution over HTTPS (Crossref REST, OpenAlex REST, and the DOI resolver with redirects disabled), direct probes of both the J-STAGE article URL pattern and the journal root, and PyMuPDF re-extraction of the three open-access Electrochemistry PDFs already held under data/external/g1plus/tier3/.",
+    "restricted_sources_used": "none",
+    "external_requests": 14
+  },
+  "access_gate": {
+    "gate_id": "hagiyama_2008_open_full_text",
+    "question": "Is the full text of Hagiyama et al. 2008 available free of charge, in particular on J-STAGE?",
+    "target": "K. Hagiyama, K. Suzuki, M. Ohtake, M. Shimada, N. Nanbu, M. Takehara, M. Ue, Y. Sasaki, \"Physical Properties of Substituted 1,3-Dioxolan-2-ones\", Chem. Lett. 2008, 37(2), 210-211",
+    "doi": "10.1246/cl.2008.210",
+    "premise_under_test": "Chemistry Letters is published by the Chemical Society of Japan and its J-STAGE full text is free, so this article can be read from J-STAGE.",
+    "verdict": "falsified",
+    "evidence": [
+      {
+        "source": "OpenAlex REST",
+        "query": "https://api.openalex.org/works/doi:10.1246/cl.2008.210",
+        "observed": "is_oa=false; open_access.oa_status=closed; open_access.oa_url=null; any_repository_has_fulltext=false; locations holds exactly one entry, the DOI landing page, with is_oa=false and no pdf_url",
+        "reading": "No open copy exists among the locations OpenAlex indexes, and the only registered location is the publisher landing page. Title, author list, journal, volume, issue and pages all match the citation."
+      },
+      {
+        "source": "Crossref REST",
+        "query": "https://api.crossref.org/works/10.1246/cl.2008.210",
+        "observed": "publisher=Oxford University Press (OUP); resource.primary.URL=https://academic.oup.com/chemlett/article/37/2/210/7386188; every link[] entry targets an academic.oup.com article PDF",
+        "reading": "The publisher of record is OUP, not the Chemical Society of Japan, and every registered full-text link points at OUP."
+      },
+      {
+        "source": "DOI resolver with redirects disabled",
+        "query": "https://doi.org/10.1246/cl.2008.210",
+        "observed": "HTTP 302 -> https://academic.oup.com/chemlett/article/37/2/210/7386188",
+        "reading": "The identifier itself resolves to OUP. No J-STAGE route can be reconstructed by correcting a URL pattern, because J-STAGE is not a registered location for this DOI."
+      },
+      {
+        "source": "direct J-STAGE probes",
+        "observed": [
+          "https://www.jstage.jst.go.jp/article/cl/37/2/37_210/_article -> HTTP 404",
+          "https://www.jstage.jst.go.jp/article/cl/37/2/37_210/_pdf -> HTTP 404",
+          "https://www.jstage.jst.go.jp/browse/cl -> HTTP 404",
+          "https://www.jstage.jst.go.jp/browse/cl/37/2/_contents/-char/en -> HTTP 404"
+        ],
+        "reading": "Both the article-level pattern and the journal root return 404, so the negative is not an artefact of a single wrong article identifier."
+      },
+      {
+        "source": "OpenAlex source record for the journal",
+        "query": "https://api.openalex.org/sources?search=Chemistry%20Letters",
+        "observed": "display_name=Chemistry Letters; host_organization_name=Oxford University Press; works_count=30317",
+        "reading": "The journal is registered to OUP as host organisation, which agrees with the publisher field rather than with a J-STAGE-hosted journal record."
+      }
+    ],
+    "consequence": "Tier 1 of the three-tier fallback is exhausted and cannot succeed: there is no open copy to retrieve, which is a different statement from a mistyped URL. Only tier 2 (interlibrary loan or document delivery against DOI 10.1246/cl.2008.210) can still close the 107 leg at primary-measurement level. If it does not, tier 3 applies and the paper states two unreconciled primary legs with the FEC row withheld.",
+    "what_would_change_this": "A repository deposit, a J-STAGE record, or a change of open status appearing after 2026-09-25. The claim recorded here is about the state of the indexes on that date.",
+    "honest_boundary": "This gate shows that no open copy is discoverable. It does not show that the article is unreadable by other means (institutional entitlement, interlibrary loan, print), and it says nothing about whether 107 is the right number."
+  },
+  "corroboration_gate": {
+    "gate_id": "restricted_catalog_free_corroboration",
+    "question": "Can the two restricted-catalog cross-check targets PC and EC be corroborated without access to SpringerMaterials?",
+    "answer": "Yes, for both, from open-access primary literature that names Riddick 4th ed. as its own source.",
+    "chain": {
+      "open_literal": {
+        "citation": "N. Nanbu, K. Suzuki, N. Yagi, M. Sugahara, M. Takehara, M. Ue, Y. Sasaki, \"Use of Fluoroethylene Carbonate as Solvent for Electric Double-Layer Capacitors\", Electrochemistry 2007, 75(8), 607-610",
+        "doi": "10.5796/electrochemistry.75.607",
+        "access": "open access on J-STAGE",
+        "local_copy": "data/external/g1plus/tier3/jstage_2007_607.pdf",
+        "local_copy_sha256": "4669a783d6064bb61297580d73159d7c35f3e127bd1b7c6f61ed36ca342376e0",
+        "verbatim": "The dynamic viscosity of FEC (4.1 mPa s at 40 C)4) is higher than those of EC (1.930 mPa s at 40 C)12) and PC (2.530 mPa s at 25 C).12) Strange to say, the relative permittivity of FEC (78.4 at 40 C)4) is lower than that of EC (89.78 at 40 C).12) The relative permittivity of PC is 64.92 at 25 C.12)"
+      },
+      "upstream": {
+        "named_reference": "ref 12) of the above",
+        "verbatim": "J. A. Riddick, W. B. Bunger, and T. K. Sakano, Organic Solvents: physical properties and methods of purification, 4th ed., Wiley-Interscience, New York (1986).",
+        "reading": "Both corroborating permittivities are attributed by the open paper to Riddick 4th ed., which is the same compilation the restricted-catalog cross-check was standing in for."
+      },
+      "second_open_literal": {
+        "citation": "Electrochemistry 2013, 81(10), 820-822, and Electrochemistry 2013, 81(10), 817-819",
+        "access": "open access on J-STAGE",
+        "local_copies": {
+          "electrochemistry_2013_81_820": {
+            "path": "data/external/g1plus/tier3/jstage_2013_820.pdf",
+            "sha256": "421d46368d60b9d54d86bd1e13852ab7dabe7f0f6cf2959fde8b6a345e985c67",
+            "verbatim": "The relative permittivity of methoxypropylene carbonate (MetPC ...) (about 102 at 25 C)4) was considerably higher than that of PC (64.92 at 25 C)5) and was comparable with that of FEC (about 107 at 25 C).4) In contrast, the relative permittivities of alkylated cyclic carbonates ... are lower than those of PC and ethylene carbonate (EC) (89.78 at 40 C).5)"
+          },
+          "electrochemistry_2013_81_817": {
+            "path": "data/external/g1plus/tier3/jstage_2013_817.pdf",
+            "sha256": "3719e896e21a17c9a3b8e74f05f4e2871e441127c7d6993df03f0c652d0eb24f",
+            "verbatim": "The relative permittivity of FEC (about 107 at 25 C)5) is considerably higher than that of PC (64.92 at 25 C).6)"
+          }
+        },
+        "reading": "Two further open papers reproduce the same PC and EC figures and the same 'about 107' FEC claim, so neither number is a single-transcription artefact."
+      }
+    },
+    "targets": [
+      {
+        "compound": "propylene carbonate",
+        "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+        "stored": {
+          "value": 64.9,
+          "T_K": 298.15,
+          "T_C": 25.0,
+          "evidence_level": "primary",
+          "model_ready": true,
+          "source_doi": "10.1021/j100702a008"
+        },
+        "corroborating": {
+          "value": 64.92,
+          "T_C": 25
+        },
+        "absolute_deviation": 0.02,
+        "relative_deviation_percent": 0.0308,
+        "temperature_aligned": true,
+        "verdict": "corroborated"
+      },
+      {
+        "compound": "ethylene carbonate",
+        "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+        "stored": {
+          "value": 90.5,
+          "T_K": 313.15,
+          "T_C": 40.0,
+          "evidence_level": "primary",
+          "model_ready": true,
+          "source_doi": "10.1021/je050341y"
+        },
+        "corroborating": {
+          "value": 89.78,
+          "T_C": 40
+        },
+        "absolute_deviation": 0.72,
+        "relative_deviation_percent": 0.802,
+        "temperature_aligned": true,
+        "verdict": "corroborated"
+      }
+    ],
+    "not_corroborated": [
+      {
+        "target": "GVL",
+        "reason": "no open-literal value found in this probe"
+      },
+      {
+        "target": "DME",
+        "reason": "no open-literal value found in this probe"
+      }
+    ],
+    "honest_boundary": "Corroboration is agreement with a compilation restatement, not an independent measurement. Riddick 4th ed. is itself a compilation, and neither number is claimed here to be a new measurement. What the chain establishes is that the two stored values can be checked against the same compilation from a free source, so the restricted-catalog cross-check is no longer the only route to them."
+  },
+  "dataset_impact": {
+    "rows": 246,
+    "canonical_sha256": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "changed_fields": [],
+    "statement": "This probe changed no cell of the canonical dataset. It read data/dielectric_v03.csv to quote the stored values, and wrote only its own evidence files."
+  },
+  "fec_107_leg_status_after_this_probe": "Still open at primary-measurement level. The open-literal chain now holds three independent open restatements of 'about 107 at 25 C', all pointing at Hagiyama et al. 2008, but the underlying article is closed access and was not read. The FEC row keeps model_ready=false and its curated-exclusion entry."
+}

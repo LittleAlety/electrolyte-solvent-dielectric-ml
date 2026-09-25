@@ -39,6 +39,11 @@ README_TEXT = """# Week 9 交付包
 - **六图收敛**：论文图节从 8 图（其中 2 图无产物）收敛为 6 图，每图都在图注里
   写明产物路径与生成脚本；适用域内容改为散文但保留 33.66% 触发率。
 - **G2 口径修正**：parity 图标题的样本数由数据推出（29），不再硬编码 30。
+- **J-STAGE 前提证伪 + PC/EC 免费旁证**：计划里「走错了门、J-STAGE 开放」的前提被三重独立证据推翻
+  （Crossref 出版商为 OUP、DOI 302 解析到 academic.oup.com、OpenAlex oa_status=closed 且
+  any_repository_has_fulltext=false；**期刊根 /browse/cl 亦 404**，故不是 URL 写错）；同时 PC/EC 由
+  Nanbu 2007（J-STAGE 开放）ref 12 = Riddick 4th ed. (1986) 取得免费旁证，已写入论文
+  Technical Validation。证据见 jstage_corroboration.md。
 
 ## 六图清单
 1. paper_fig1_dataset_growth.png - 语料增长与来源构成（新探针）
@@ -60,7 +65,10 @@ python scripts/verify_export_manifests.py --output-dir <本目录>
 - VC 与 FEC 维持 model_ready=false；FEC 78.4@296.15 K 与 ~107@298.15 K 两条腿
   仍不平均、不裁决，仅登记为下游引文温度漂移冲突；
 - 3-methoxypropionitrile 无独立一手测量，维持 secondary_compilation_unverified；
-- Hagiyama 2008 原文仍未读到（J-STAGE 实际 404/403），PC/EC 只用 2013 转引旁证；
+- Hagiyama 2008 原文仍未读到，且**该文不在 J-STAGE**（期刊根目录同样 404），DOI 解析到 OUP 闭源页，
+  OpenAlex 判定 closed 且无任何仓储全文；第①级 URL 重试已判定不可能成功，只剩馆际互借；
+- PC/EC 已取得免费独立旁证（Nanbu 2007 -> ref 12 = Riddick 4th ed.）：PC 64.92@25 C 对库存 64.9
+  （偏差 0.03%）、EC 89.78@40 C 对库存 90.5（偏差 0.80%），两者同温；
 - eps > 60 条件覆盖率只有 5 个化合物支撑，只能作为 exploratory diagnostic。
 """
 
@@ -77,6 +85,9 @@ ARTIFACTS = (
         "probes/g1plus_fec_temperature_attribution_evidence.json",
         "g1plus_fec_temperature_attribution_evidence.json",
     ),
+    ("reports/jstage_corroboration.md", "jstage_corroboration.md"),
+    ("probes/jstage_corroboration_evidence.json", "jstage_corroboration_evidence.json"),
+    ("tests/test_jstage_corroboration.py", "test_jstage_corroboration.py"),
     ("probes/g2_domain_gap_summary.json", "g2_domain_gap_summary.json"),
     ("probes/artifacts/domain_gap_parity.png", "artifacts/domain_gap_parity.png"),
     ("probes/paper_figure_dataset_growth.py", "paper_figure_dataset_growth.py"),
@@ -160,6 +171,7 @@ def export_results(
     fec = read_json(
         source_root / "probes" / "g1plus_fec_temperature_attribution_evidence.json"
     )
+    jstage = read_json(source_root / "probes" / "jstage_corroboration_evidence.json")
 
     write_json(
         week_root / "week9_summary.json",
@@ -235,6 +247,23 @@ def export_results(
             "fec_status": {
                 "answer": fec["answer"],
                 "decision": fec["decision"],
+            },
+            "jstage_route": {
+                "hagiyama_premise_verdict": jstage["access_gate"]["verdict"],
+                "hagiyama_doi": jstage["access_gate"]["doi"],
+                "open_full_text_exists": False,
+                "remaining_primary_route": "interlibrary loan / document delivery",
+                "free_corroboration": [
+                    {
+                        "compound": target["compound"],
+                        "stored_value": target["stored"]["value"],
+                        "stored_T_K": target["stored"]["T_K"],
+                        "corroborating_value": target["corroborating"]["value"],
+                        "corroborating_T_C": target["corroborating"]["T_C"],
+                        "relative_deviation_percent": target["relative_deviation_percent"],
+                    }
+                    for target in jstage["corroboration_gate"]["targets"]
+                ],
             },
             "verification": verification["passed"],
         },

@@ -58,6 +58,16 @@ def test_week9_summary_carries_the_six_figures_and_the_gate_numbers(tmp_path: Pa
         assert representation["coverage_gt60"] < 0.3
         assert representation["normalized_coverage_gt60"] < 0.6
 
+    # The package must not repeat the retired claim that J-STAGE carries the
+    # Hagiyama article: the premise was falsified at identifier level.
+    route = summary["jstage_route"]
+    assert route["hagiyama_premise_verdict"] == "falsified"
+    assert route["open_full_text_exists"] is False
+    assert route["hagiyama_doi"] == "10.1246/cl.2008.210"
+    corroborated = {entry["compound"] for entry in route["free_corroboration"]}
+    assert corroborated == {"propylene carbonate", "ethylene carbonate"}
+    assert "J-STAGE" not in WEEK9_README_TEXT or "不在 J-STAGE" in WEEK9_README_TEXT
+
 
 def test_week9_paper_snapshot_matches_the_repository(tmp_path: Path) -> None:
     """A stale paper snapshot is the failure mode this package must not have."""

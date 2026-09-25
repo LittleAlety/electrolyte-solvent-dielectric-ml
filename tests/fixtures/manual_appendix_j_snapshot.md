@@ -552,9 +552,67 @@ Windows 无法表达该位 ⇒ 同一棵树在本机 lint 全绿、在 ubuntu-la
 
 ---
 
+## 附录 J-补记九：J-STAGE 路线核查——Hagiyama 2008 前提证伪 + PC/EC 免费旁证（2026-09-25）
+
+对应仓库产物：`reports/jstage_corroboration.md`、`probes/jstage_corroboration_evidence.json`、
+`tests/test_jstage_corroboration.py`（9 项）。**未消耗任何受限源，未改动任何数据单元。**
+
+### 一、被判定的前提
+
+计划里写「Chem. Lett. 由日本化学会出版、J-STAGE 全文免费，DOI `10.1246/cl.2008.210`，
+走 OUP 是走错了门」。本轮对这条前提做了**标识符级**核查。
+
+### 二、结论：前提不成立（三重独立证据）
+
+| 来源 | 观测 |
+| --- | --- |
+| DOI 解析（禁跳转） | `HTTP 302 → https://academic.oup.com/chemlett/article/37/2/210/7386188` |
+| Crossref | `publisher = Oxford University Press (OUP)`；全部 `link[]` 指向 `academic.oup.com` 的 PDF |
+| OpenAlex（work） | `is_oa=false`、`oa_status=closed`、`oa_url=null`、`any_repository_has_fulltext=false` |
+| OpenAlex（journal） | *Chemistry Letters* 的 host organisation = **Oxford University Press**，30 317 works |
+| J-STAGE 直探 | `/article/cl/37/2/37_210/_article`、`.../_pdf`、**期刊根 `/browse/cl`**、`/browse/cl/37/2/_contents/-char/en` 全部 **404** |
+
+两个关键点：**（1）期刊根目录同样 404**，所以这不是"文章号写错"；
+**（2）OpenAlex 只登记了一个 location 且就是出版商落地页**，`any_repository_has_fulltext=false`
+说明任何仓储都没有副本。因此「打不开」应升级为**「没有开放副本可取」**——这两句话效力不同，只有后者能关闭检索。
+
+### 三、对三级兜底的影响
+
+- 第①级（精确 URL 重试）**已穷尽，不可能成功**；
+- 第②级（馆际互借 / 文献传递，DOI `10.1246/cl.2008.210`）是**唯一剩余路径**；
+- 第③级（两条未调和一手腿 + 维持 `model_ready=false`）是第②级失败时的默认，论文已写好。
+
+FEC 行保持 `model_ready=false` 与排除清单条目不变。
+
+### 四、附带红利：PC/EC 免费旁证（原 D5）
+
+链：**Nanbu et al. 2007, *Electrochemistry* 75(8) 607-610（J-STAGE 开放）→ ref 12 = Riddick, Bunger & Sakano,
+*Organic Solvents*, 4th ed., Wiley-Interscience (1986)**。印刷页 608 原文逐字：
+
+> "… the relative permittivity of FEC (78.4 at 40 ℃)⁴⁾ is lower than that of EC (**89.78 at 40 ℃**).¹²⁾
+> The relative permittivity of PC is **64.92 at 25℃**.¹²⁾"
+
+| 目标 | 库存值（规范 CSV） | 开放旁证 | 同温 | 绝对偏差 | 相对偏差 |
+| --- | --- | --- | --- | ---: | ---: |
+| 碳酸丙烯酯 PC | **64.9** @ 298.15 K (25 ℃) | 64.92 @ 25 ℃ | 是 | 0.02 | 0.031% |
+| 碳酸乙烯酯 EC | **90.5** @ 313.15 K (40 ℃) | 89.78 @ 40 ℃ | 是 | 0.72 | 0.802% |
+
+另有两篇开放的 *Electrochemistry* 2013（81(10) 817-819、820-822）复现同样两个数字，排除单次转录假象。
+
+**边界（必须守住）**：这是与**汇编层转述**的一致，不是独立测量；Riddick 本身即汇编。本轮**不改任何库存值**，
+其作用是证明「受限目录从来不是拿到这两个数字的唯一路径」。GVL/DME 未被本路径覆盖。
+
+### 五、明确未闭环
+
+Hagiyama 2008 的 107 腿**仍在原始测量层未读**：开放引文链现持有三处独立的「about 107 at 25 ℃」转述，
+全部指向该文，但原文闭源未读。DC-200 成员表同样仍未定位（见补记四与第四轮：SI 本地 50 页 OCR 全文里
+`DC-200` 出现 13 次全是正文/图注，无成员表；作者 GitHub 递归 207 对象无该数据；Figshare 只有同一份 SI）。
+
+---
+
 ## 附录 K（修订版）：Week 7/8 总结、阻塞裁决 D1–D6 与 Week 9–12 方向
 
-> 修订说明（2026-09-25）：本版取代初版附录 K 的两处判断——①Hagiyama 2008 的 J-STAGE 可达性已被实测 404（见补记四），D3 改为"精确 URL 序列 → 馆际互借 → 汇编层如实声明"三级兜底；②D2 收敛为补记五的建议（保持 236 行冻结、4 行记 `blocked`、另立 v0.4），不再提议 gate_flag 重分类（避免 schema 搅动）。
+> 修订说明二（2026-09-25 晚，取代同日早间的修订说明）：① Hagiyama 2008 的 J-STAGE 可达性已判定为**前提不成立**——不是 URL 写错，而是该文根本不在 J-STAGE（期刊根目录 `/browse/cl` 同样 404；Crossref 出版商为 OUP、DOI 302 解析到 `academic.oup.com`、OpenAlex `oa_status=closed` 且 `any_repository_has_fulltext=false`），证据见**附录 J-补记九**与 `reports/jstage_corroboration.md`；D3 仍走"精确 URL → 馆际互借 → 汇编层如实声明"三级，但第①级已判定**不可能成功**。② D2 **最终采纳 gate_flag 重分类**：v0.3.14（提交 `b45e1fa`）已给 4 行加 `out_of_scope_ionic_or_organometallic`，236 行拟合集与 `model_ready` 均不动，digest 一次重钉 `a446c216→ff214293`。早间修订说明曾按补记五写成"4 行维持 `blocked`、不再重分类"，该表述已被实际落地取代。
 
 ### Week 7/8 状态（已定案，此处只留索引）
 v0.3.3 冻结 246 行（digest `a446c216…c01085`）；PC/EC 入库；适用域改结构 SMARTS 规则（触发率 33.66%，ε>60 覆盖 150/150）；model_ready 闸门泄漏修复，PC/EC 增益坍缩为 +0.0059（p=0.11）；冻结基准（236 行）：hybrid raw R²=0.364 / Spearman 0.828，scaffold 留出 Physical-log R²=0.276 / 0.862；MLP 校准=真负结果；C1 共形边际 0.915 / ε>60 条件覆盖 1.5–26%；C2 排序头负结果；C4 delta 层真实但不具竞争力；C6 温度混合=次要限制。803 测试全绿，真实 CI 绿。
@@ -564,10 +622,10 @@ v0.3.3 冻结 246 行（digest `a446c216…c01085`）；PC/EC 入库；适用域
 
 ### 阻塞裁决 D1–D6（修订版）
 - **D1 EC 313.15 K**：保留为显式 `extended_temperature` 例外（mp 36.4 °C，无 298 K 常态液态测量）。落法见附录 L-1.1。
-- **D2 四条无特征行**：采纳补记五建议——v1.0 保持 236 行拟合集不动，4 行维持 `blocked`（不写"无值"、不写"已恢复"），论文 Limitations 如实说明；若未来要统一带电体系口径，另立 v0.4 一次性整表重跑并重钉全部基准。**不授权 v0.3.14 整表迁移。**
-- **D3 FEC 107 腿**：三级兜底——① 精确 URL 重试（`https://www.jstage.jst.go.jp/article/cl/37/2/37_210/_article`，注意补记四的 404 可能来自错误 URL 模式；同时试 CiNii 与 CSJ Journal Archive）；② 学校图书馆馆际互借（通常 1–3 工作日）；③ 若终不可得：论文写"两条未调和的一手腿——78.4@23 °C（Kobayashi 2003 Table 2，已读）vs ~107@25 °C（经 Ue 2014 Table 2.3 及两篇 Electrochemistry 2013 论文转引自 Hagiyama 2008，原文未读）"，维持 `model_ready=false`。**此声明本身即闭环。**
+- **D2 四条无特征行**：**已于 v0.3.14 落地**（提交 `b45e1fa`）——4 行（3 个离子液体 + 五羰基铁）加共享 gate_flag `out_of_scope_ionic_or_organometallic` 并写入范围说明，经 `data/processed/dielectric_v03_provenance_patches.csv` 落地，保证数据集仍可由输入重建；236 行拟合集与 `data/dielectric_v032.csv` 不动；`model_ready=true` **刻意保留**（该列语义是"取值无争议"，不是"分子在范围内"，翻转会破坏 7 条既有断言并把行误标成来源冲突）。digest 一次重钉 `a446c216→ff214293`，并**重跑**而非仅重钉（v0.3.3 消融探针 89 s + 4 个轻量探针 + round5 crosscheck：所有指标/折号/预测逐字节不变）。**不授权 v0.3.14 整表迁移**（补记五：74/237 行位移 >1%，必须整表重跑）；离子液体是否单开一层留给 v2.0。
+- **D3 FEC 107 腿**：三级兜底——① 精确 URL 重试**已执行并判定不可能成功**（见附录 J-补记九：`https://www.jstage.jst.go.jp/article/cl/37/2/37_210/_article` 与 `_pdf`、以及**期刊根** `/browse/cl` 均返回 404；DOI `10.1246/cl.2008.210` 302 解析到 `academic.oup.com/chemlett/article/37/2/210/7386188`，Crossref 出版商为 Oxford University Press，OpenAlex `oa_status=closed`、`oa_url=null`、`any_repository_has_fulltext=false`。结论是"没有开放副本可取"，而非"URL 写错"）；② 学校图书馆馆际互借（通常 1–3 工作日）是**唯一剩余路径**；③ 若终不可得：论文写"两条未调和的一手腿——78.4@23 °C（Kobayashi 2003 Table 2，已读）vs ~107@25 °C（经 Ue 2014 Table 2.3 及两篇 Electrochemistry 2013 论文转引自 Hagiyama 2008，原文未读）"，维持 `model_ready=false`。**此声明本身即闭环。**
 - **D4 MOPN**：维持排除；thesis 为 corroboration；Limitations 记"独立一手测量缺失"。
-- **D5 受限 4 目标**：PC/EC 已由 Electrochemistry 2013 转引 Riddick 获得免费旁证（PC 64.92@25 °C vs 库存 64.9；EC 89.78@40 °C vs 库存 90.5@313.15 K，温度对齐）——写入 Technical Validation；GVL/DME 保留为 limitation。
+- **D5 受限 4 目标**：PC/EC 已由 Electrochemistry 2013 转引 Riddick 获得免费旁证（PC 64.92@25 °C vs 库存 64.9，偏差 0.02/0.03%；EC 89.78@40 °C vs 库存 90.5@313.15 K（同温），偏差 0.72/0.80%）——**已写入论文 Technical Validation 的 "Restricted-catalog-free corroboration" 段**；引文链已回溯到 Nanbu 2007（J-STAGE 开放）**ref 12 = Riddick 4th ed. (1986)**；可复现证据见 `reports/jstage_corroboration.md`、`probes/jstage_corroboration_evidence.json`、`tests/test_jstage_corroboration.py`。GVL/DME 保留为 limitation。
 - **D6 DC-200**：先查 GSDS 论文 SI（ACS SI 通常免费），无则邮件通讯作者（模板见附录 L-1.6）；发表后交叉验证资产，不阻塞。
 
 ### 科学叙事升级（论文主故事线）

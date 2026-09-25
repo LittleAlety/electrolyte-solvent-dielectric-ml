@@ -193,7 +193,7 @@ carry an explicit conflict_status and six are flagged model_ready=false. The
 benchmark withholds five rows through a curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
 107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
-Hagiyama et al. 2008 still unread, and a 2007 downstream paper restating the
+Hagiyama et al. 2008 still unread and now confirmed to have no open full text (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
 same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl isothiocyanate
 (NBS 19.5 at 294.15 K vs.
 restricted cross-check 29.7 at 293.2 K), and 3-methoxypropionitrile (ECW-308
@@ -407,6 +407,23 @@ the public dataset. The two values taken from paywalled primary articles (FEC
 78.4 and vinylene carbonate 126) are individual measurement facts, and their
 source PDFs are kept outside the repository.
 
+**Restricted-catalog-free corroboration (PC, EC).** Two of the compounds whose
+only cross-check was the restricted catalog can be corroborated without it.
+Nanbu et al. (2007, *Electrochemistry* 75(8) 607-610, open access) restates PC at
+**64.92 at 25 C** and EC at **89.78 at 40 C**, and its reference 12 is Riddick,
+Bunger & Sakano, *Organic Solvents: physical properties and methods of
+purification*, 4th ed. (1986) - the compilation the restricted cross-check was
+standing in for. The stored rows are 64.9 at 298.15 K (difference 0.02, 0.03%)
+and 90.5 at 313.15 K (difference 0.72, 0.80%); both comparisons are
+temperature-aligned, so neither needs a temperature correction. Two further open
+papers (*Electrochemistry* 2013, 81(10) 817-819 and 820-822) reproduce the same
+two figures, so neither rests on a single transcription. This is agreement with a
+compilation restatement and not an independent measurement, and it changes no
+stored value; its role is to show that the restricted catalog was never the only
+route to these two numbers. The remaining restricted targets, GVL and DME, are not
+covered by this route. The J-STAGE access question is recorded in
+reports/jstage_corroboration.md.
+
 **NBS Circular 514 internal consistency.** All values sourced from NBS Circular
 514 carry the original page number, entry figure quality, and selection rank.
 For compounds with multiple NBS entries (different temperatures or purity
@@ -417,7 +434,7 @@ conflict_status and six carry model_ready=false. Five of them are withheld from
 model fitting through the curated exclusion list
 (data/processed/dielectric_v03_exclusions.csv): FEC (primary 78.4 at 296.15 K,
 107 read at compilation level in Ue et al. 2014, Table 2.3, with named primary
-Hagiyama et al. 2008 still unread, and a 2007 downstream paper restating the
+Hagiyama et al. 2008 still unread and now confirmed to have no open full text (the DOI resolves to Oxford University Press as a closed-access article, and J-STAGE returns 404 for both the article pattern and the journal root), and a 2007 downstream paper restating the
 same 78.4 leg as 40 C that the primary table footnote "At 23 C." overrides), TEP (10, 13), TMP (10, 21.6), ethyl
 isothiocyanate, whose NBS value
 (19.5 at 294.15 K) and restricted cross-check value (29.7 at 293.2 K) differ by
