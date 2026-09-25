@@ -2292,3 +2292,28 @@ ruff `EXE001` 读**文件系统执行位**；Windows 上该位不可表达，ruf
 - **冻结边界。** 本探针只产生新的报告型产物，不修改 `data/dielectric_v03.csv`、
   236 行冻结拟合集或 `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4` digest；
   不触发任何后验模型切换、特征变更或数据修订。CI 新增步骤 `Verify D1 leave-EC-out sensitivity`。
+
+## 2026-09-25（续）：GSDS Zenodo 归档条目级核对，D6 的免费路径走完
+
+- **触发。** `decisions_log` 一直把 4.75 GB 的 `GSDS_Prior_Finetune.zip` 标为「未下载、未解包」，
+  这是 D6（DC-200 成员表）唯一没走完、又不需要用户授权的路径。用户已明确「做完 week10 就截止」，
+  因此本轮只做这一件收口工作，未启动任何新研究任务。
+- **方法。** ZIP 中央目录在文件尾部 + Zenodo 支持 Range ⇒ 只取 64 KiB 尾部与 3.89 MB 中央目录，
+  即可列出全部条目；需要内容时再对单条目做「取头部 + 就地半解压」。
+  `zenodo.org` 在本环境不解析、`www.zenodo.org` 可解析，连接钉 IP 而 TLS 仍校验 `zenodo.org`。
+- **结果。** **15,524 条条目名全部列出，与中央目录声明数一致**：6 次微调运行（PriorI/PriorII × 3 seeds）
+  的生成产物、配置、日志、177 个 `.pth`、以及 MACEOFF 的 dipole/HOMO/LUMO/IP/EA 预测。
+  路径关键词 `dielectric`/`permittiv`/`epsilon`/`MNSOL` 均为 **0** 次。
+- **介电常数的真实形态。** 1,892 条路径含 `DielecConst`；逐条看头部后确认
+  `job_0/input.csv` 是 **GraphINVENT 配置**（`score_components` 含 `DielecConstLog`，
+  `sol_ref_smiles_path` 指向未发布的 `2_SolvRef`），而 `ValidUniqueUnseenStrucViscProp.csv`
+  的表头是 `index;SMILES;DN;DC;RedPot;OxPot` —— **生成分子的预测值**，不是 DC-200 的实验成员表。
+- **结论。** DC-200 逐分子实验表**不在该归档内**；旧措辞由「未下载未解包、无法判断包内」升级为
+  「15,524 条条目名已核对、包内无该表」。**限制保留**：3,348 个 CSV 未逐个解压，
+  不能排除某个通用命名文件内部恰好内嵌该表。D6 剩余路径只有向通讯作者索取（需授权）与 tier-4 商业库。
+- **产物。** `probes/inspect_gsds_zenodo_archive.py`（仅标准库，可离线测试）、
+  `probes/artifacts/gsds_zenodo_archive_entries.txt`、`probes/artifacts/gsds_zenodo_archive_listing.json`、
+  `tests/test_inspect_gsds_zenodo_archive.py`（6 passed）、`reports/g1plus_gsds_archive_listing.md`。
+- **预算。** 10 次未认证 HTTP GET（无 API key、不计费），未下载 4.75 GB 正文，未触发服务端限速。
+- **不变量。** 未触碰 `data/dielectric_v03.csv`、任何 digest、论文正文与图；本轮无论文侧改动，
+  故无需重建 `paper/full_draft.md`。

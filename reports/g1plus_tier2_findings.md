@@ -59,9 +59,9 @@ MOPN 身份不是只靠名字判断：PubChem PUG REST 查询 CAS `110-67-8` 返
 
 1. **SI 不含数据表。** 50 页 SI 只在 pp. S22-S23 讨论 LF-MLR-DC-200 和作图，没有 200 分子的名单、实验值或计算值。
 2. **GitHub 不含 DC-200。** `Teoroo-CMC/Batt-SLM` 递归树共 207 项，只有 Batt-SLM、Batt-P30K、Redox-Pot、CPI 和 RX-392 类资产；没有 DC-200、dielectric 或 dielectric-constant 数据文件。
-3. **Zenodo 配套记录经清单核对后仍不含 DC-200。** DataCite 搜索找到 `10.5281/zenodo.21061161` 与 `10.5281/zenodo.21061162`（两者指向同一记录），许可证为 CC-BY-4.0 + MIT，且 IsSupplementTo 该论文。首轮探测时 `zenodo.org` 在本环境 DNS 不可达；后续复核把主机名钉到已解析 IP（`137.138.52.235`）后记录 API 可访问，清单实际为 1 个文件 `GSDS_Prior_Finetune.zip`（4,746,199,417 字节，md5 `f1736827b1a9f31e85587ca2eae913a7`），描述为 fine-tuning results 与 final generators，**没有**逐分子 DC-200 表。结论不变，但依据由“端点不可达”升级为“清单已核对”。
+3. **Zenodo 配套记录经清单核对后仍不含 DC-200。** DataCite 搜索找到 `10.5281/zenodo.21061161` 与 `10.5281/zenodo.21061162`（两者指向同一记录），许可证为 CC-BY-4.0 + MIT，且 IsSupplementTo 该论文。首轮探测时 `zenodo.org` 在本环境 DNS 不可达；后续复核把主机名钉到已解析 IP（`137.138.52.235`）后记录 API 可访问，清单实际为 1 个文件 `GSDS_Prior_Finetune.zip`（4,746,199,417 字节，md5 `f1736827b1a9f31e85587ca2eae913a7`），描述为 fine-tuning results 与 final generators，**没有**逐分子 DC-200 表。结论不变，但依据由“端点不可达”升级为“清单已核对”。**（2026-09-25 追加）** 该归档随后做了**条目级**核对：以 HTTP Range 只取中央目录，读出全部 **15,524** 条条目名（与中央目录声明数一致），包内无逐分子 DC-200 表——介电常数只以 `DielecConstLog` 打分组件出现，其参考集指向未发布的 `2_SolvRef` 路径。方法与产物见 `reports/g1plus_gsds_archive_listing.md`。
 4. **DC-200 的原始组装来源在已取得材料中不可判定。** 正文只写 “curated 200 aprotic samples measured experimentally at room temperature from the literature and public databases”；该句句尾的引文角标在 Europe PMC 全文 XML 中被整体丢弃（全文 `ref-type="bibr"` 的 xref 数为 0），原始 ACS 页面返回 HTTP 403，因此这句实际引用了哪些文献**无法判定**。参考文献列表中相邻的 ref82 = He et al. 2025 (`10.1063/5.0267184`) 与 ref83 = Minnesota Solvation Database (MNSOL) Version 2012 只是**落在该句引文区间内**，不足以断言二者是 DC-200 的组装来源；且 ref82 经 Crossref/OpenAlex 核验为闭源的分子动力学论文（*J. Chem. Phys.* 2025, 162, 194706，主题是纳米限域下 EC 基二元混合体系的介电常数），**不应被表述为 DC-200 的实验数据来源**。MNSOL 官网当前连接超时；没有下载或使用未核验镜像。
-5. **因此 10 个目标的 DC-200 字段全部为 `found=false`。** 这不是“查无此分子”的结论，而是“在已取得的论文资产与**已核对清单**的 Zenodo 记录中都没有逐分子 DC-200 表”。注意：4.75 GB 的 `GSDS_Prior_Finetune.zip` **未下载、未解包**，因此不能据此外推“包内没有该表”或“该资产未发布”。
+5. **因此 10 个目标的 DC-200 字段全部为 `found=false`。** 这不是“查无此分子”的结论，而是“在已取得的论文资产与**已核对清单**的 Zenodo 记录中都没有逐分子 DC-200 表”。注意：4.75 GB 的 `GSDS_Prior_Finetune.zip` **正文未下载**，但其全部 15,524 条条目名已核对，**包内没有以介电常数命名的数据集文件**，故“包内无逐分子 DC-200 表”这一句已可成立；限制在于 3,348 个 CSV 未逐个解压，无法排除某个通用命名文件内部恰好内嵌该表。
 
 ## 与现有 dielectric v0.3.2 的对照
 
@@ -104,6 +104,10 @@ MOPN 身份不是只靠名字判断：PubChem PUG REST 查询 CAS `110-67-8` 返
 
 R1-R3 是 v0.3.9 收尾时的后续复核：3 次未认证 GET（无 API key、不计费），把主机名钉到
 `137.138.52.235`，只读取记录元数据，未下载 4.75 GB 资产。
+
+**追加（2026-09-25，独立运行）：** 另有 10 次未认证 GET 用于条目级核对——1 次记录元数据、1 次尾部探测、
+6 次中央目录列取（其中 4 次因探针自身的解析 bug 未产出结论，已记录）、2 次单条目头部解压。
+同样未下载 4.75 GB 正文，服务端 `x-ratelimit-limit: 133` 未触发限速。
 
 成功的关键请求包括 Crossref 元数据、Europe PMC 全文/补充包、GitHub 仓库树、PubChem 身份确认、DataCite Zenodo 元数据，以及应用内浏览器对 Wiley 文章页和 SI 的访问。浏览器页面自身静态子资源未逐条计入；本报告统计的是显式发起的逻辑请求/下载。
 

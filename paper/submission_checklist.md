@@ -66,7 +66,7 @@ release 行仍写着 candidate、DOI 不是真实 Zenodo DOI、或仓库 URL 不
   不平均、不裁决，维持 `model_ready=false`。其命名的原始文献 Hagiyama 2008 无开放全文，只剩馆际互借。
 - **VC**：Knovel 区间与一手值冲突，维持 `model_ready=false`。
 - **MOPN**：36.0 仅来自 ECW-308 二级汇编，无独立一手测量，已在 Limitations 与 Known data gaps 点明。
-- **DC-200**：成员表需向通讯作者索取（ACS Nano SI 与作者仓库均无），列为发表后交叉验证资产。
+- **DC-200**：成员表需向通讯作者索取（ACS Nano SI 与作者仓库均无；Zenodo 归档 15,524 条条目名已于 2026-09-25 全部核对，包内只有微调产物与配置，介电常数以打分组件接入、参考集未发布），列为发表后交叉验证资产。
 
 ## F. 发表后 backlog
 
