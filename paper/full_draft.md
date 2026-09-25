@@ -697,8 +697,9 @@ and the previously stored 102 was its flash point. 3-Methoxypropionitrile rests
 on the
 ECW-308 secondary compilation (36.0 at 298.15 K): Tier-0 checks of all 242 local
 ThermoML dielectric files and all 636 transcribed NBS Circular 514 organic rows
-returned no observation, and the cited primary source (Perricone et al. 2013) is
-closed access. The glyme diethers and dinitriles that earlier drafts listed as
+returned no observation, the cited primary source (Perricone et al. 2013) is
+closed access, and no independent primary measurement is available for this
+solvent. The glyme diethers and dinitriles that earlier drafts listed as
 absent are in fact present in the dataset under their IUPAC names (diglyme =
 2,5,8-trioxanonane, and so on) and are now documented explicitly. The remaining
 items constitute explicit targets for the v1.1 revision. Contributions from the
