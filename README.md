@@ -6,8 +6,8 @@ temperature, together with the frozen benchmark and the verifiers that recompute
 every reported number.
 
 **Release:** v1.0 (GitHub release 2026-09-25) · **Dataset:** v0.3.3 ·
-**DOI:** pending — Zenodo mints it from the v1.0 release and the repository
-carries it from the backfill commit onwards ·
+**DOI:** https://doi.org/10.5281/zenodo.22957696 (concept DOI
+https://doi.org/10.5281/zenodo.22957695) ·
 **Licences:** data CC BY 4.0 (`LICENSE-DATA.md`), code MIT (`LICENSE`)
 
 ## What is here

@@ -59,7 +59,7 @@ figure.
 
 **Data and code availability.** The dataset and the benchmark code are released
 under CC BY 4.0 at https://github.com/[TODO: repository] under tag `[TODO: v1.0]`
-and archived at https://doi.org/10.5281/zenodo.[TODO: DOI].
+and archived at https://doi.org/10.5281/zenodo.22957696.
 
 **Declarations.** This manuscript is original, is not under consideration
 elsewhere, and all authors have approved the submission. The authors declare no

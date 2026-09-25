@@ -1,8 +1,8 @@
 # v1.0 release notes
 
 **Released:** 2026-09-25 · **Dataset:** v0.3.3 · **Archived by:** Zenodo
-**DOI:** pending in this snapshot — Zenodo mints it from this GitHub release and
-the repository carries it from the backfill commit onwards.
+**DOI:** https://doi.org/10.5281/zenodo.22957696 (concept DOI
+https://doi.org/10.5281/zenodo.22957695), minted from this GitHub release.
 
 ## What this release contains
 

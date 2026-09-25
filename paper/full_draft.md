@@ -930,7 +930,8 @@ benchmark outputs are deposited in a public GitHub repository:
 
 **Repository:** https://github.com/LittleAlety/electrolyte-solvent-dielectric-ml
 **Release:** v1.0 (GitHub release 2026-09-25; dataset v0.3.3)
-**DOI:** pending (Zenodo mints the DOI from the v1.0 GitHub release; backfilled in the next commit)
+**DOI:** https://doi.org/10.5281/zenodo.22957696
+**Concept DOI:** https://doi.org/10.5281/zenodo.22957695 (version-independent)
 
 ## Repository structure
 
