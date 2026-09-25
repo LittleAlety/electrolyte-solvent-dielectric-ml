@@ -88,43 +88,96 @@ the domain gap that v0.3's expanded coverage aims to close.
 
 # Figures
 
+The v1.0 manuscript carries six figures. Each one names the committed script
+that generates it and the artifact that holds the rendered file, so a reader can
+re-derive every panel without the authors. Panels that earlier drafts listed as
+separate figures (chemical-space projection, applicability-domain error split,
+cross-source scatter) are reported as tables or prose instead: they either
+duplicated a panel above or rested on fewer than ten compounds, and a six-figure
+budget is easier to audit than an eight-figure one that repeats itself.
+
 **Figure 1. Dataset growth and source composition.**
-Panel A: Cumulative compound count from v0.1 (100) through v0.2 (210) and
-v0.3 (243) to v0.3.3 (246), annotated by source type (ThermoML, NBS Circular
-514, open-access review tables, primary literature).
-Panel B: Source-type proportions in the final v0.3.3 table.
+Panel A: compounds in each released roster (v0.1 100, v0.2 210, v0.3 243,
+v0.3.2 245, v0.3.3 246) with the 236-row modelling subset marked. That subset is
+frozen on the v0.3.2 table and is re-derived in the figure as 245 rows - 4 rows
+named in the exclusion file - 4 rows failing the xTB physical features - 1 row
+withheld by `model_ready` = 236.
+Panel B: provenance mix of the current 246-row roster by `evidence_level` (208
+v0.2 core values, 20 open-access review-table values, 17 open-access primary
+measurements, 1 secondary compilation with no traceable primary source),
+annotated with the gate counts (240 `model_ready=true`, 6 withheld), the single
+extended-temperature row (EC at 313.15 K) and the 45 ThermoML rows that also
+appear in the independent Chodera et al. (2015) extraction from the same archive.
+Artifact: `probes/artifacts/paper_fig1_dataset_growth.png`.
+Script: `python probes/paper_figure_dataset_growth.py` (the probe re-reads every
+roster digest and fails if the row counts or the exclusion arithmetic drift).
 
-**Figure 2. Chemical space visualization.**
-UMAP or t-SNE projection of Morgan fingerprints (radius 2, 2048 bits) with
-compounds colored by dielectric constant magnitude and battery-solvent families
-(carbonates, ethers, nitriles, phosphates, fluorinated compounds) highlighted.
+**Figure 2. Main benchmark across representations and targets.**
+R2, MAE, RMSE and Spearman rho for the Morgan, RDKit-physical and hybrid
+representations under the frozen 10x5 repeated cross-validation on 236 rows,
+with error bars of +/- 1 SD across the ten repeats. The hybrid representation is
+the best of the three on R2 (0.364), Spearman (0.828) and MAE (6.69), and the
+physical block is what carries the improvement over Morgan.
+Artifact: `probes/artifacts/v032_ablation.png` (`probes/v032_ablation_summary.json`).
 
-**Figure 3. Model benchmark comparison.**
-Grouped bar chart of R2, MAE, and Spearman across all representations (Morgan,
-Physical, Hybrid) and targets (raw, log), with error bars showing +/- 1 std
-across 10 repeats.
+**Figure 3. Domain-gap parity plot.**
+Frozen v0.2 model predictions against experimental permittivity for the 29
+battery-relevant solvents added in v0.3, one panel per representation; points
+whose absolute error exceeds 10 are labelled. On this external set the frozen
+model reaches R2 = 0.122 (Morgan), 0.154 (RDKit physical) and 0.286 (hybrid).
+The two worst calls are the polar solvents at the right edge: gamma-valerolactone
+(36.1) and N-methylpyrrolidone (32.2) are both predicted near 13-16, the same
+range as the non-polar diluents.
+Artifact: `probes/artifacts/domain_gap_parity.png` (`probes/g2_domain_gap_summary.json`).
 
-**Figure 4. Prediction error by dielectric stratum.**
-Stratified MAE for low (eps < 20), medium (20-60), and high (eps > 60)
-permittivity ranges, comparing Morgan, Physical, and Hybrid representations.
+**Figure 4. Split-conformal coverage is marginal and collapses above eps 60.**
+Panel A: empirical coverage of the nominal 90% split-conformal interval inside
+eps < 20 (n = 182), 20-60 (n = 47) and eps > 60 (n = 5), for the three
+representations. Marginal coverage sits at the nominal level for all three
+(0.9153-0.9156), but the same intervals cover 0.0145 (Morgan), 0.2568 (physical)
+and 0.0382 (hybrid) of the eps > 60 compounds.
+Panel B: re-scaling the residual by 1+|prediction| raises eps > 60 coverage to
+0.1995, 0.4778 and 0.2881 respectively, and still does not restore nominal
+coverage, because a marginal interval does not become conditional by rescaling
+its width. The eps > 60 stratum holds five compounds, so these conditional
+values are an exploratory diagnostic and are not claimed as a coverage
+guarantee. The analogous failure of the point predictions is in the benchmark
+tables: hybrid MAE is 3.9 below eps 20 and 63.8 above eps 60.
+Artifact: `probes/artifacts/paper_fig4_conformal_strata.png`.
+Script: `python probes/paper_figure_conformal_strata.py` (the probe fails if the
+marginal guarantee stops holding or the high-permittivity collapse disappears).
 
-**Figure 5. Domain-gap parity plot.**
-Frozen v0.2 model predictions vs. experimental values for 29 new battery
-solvents. High-permittivity outliers (GVL, NMP) are labeled. This figure
-directly visualizes the coverage improvement in v0.3.
+**Figure 5. Target transform and scaffold/cluster holdout.**
+R2, MAE, Spearman rho and AUC > 30 for random cross-validation against
+scaffold/cluster holdout, crossed with the raw and log(eps-1) targets. Under
+cluster holdout the physical and hybrid representations retain R2 = 0.27-0.29
+where Morgan falls to 0.14, which is the quantitative form of the extrapolation
+claim: what survives leaving the scaffold neighbourhood is the physical block,
+not the fingerprint.
+Artifact: `probes/artifacts/v032_target_scaffold.png` (`probes/v032_target_scaffold_summary.json`).
 
-**Figure 6. Scaffold/cluster holdout comparison.**
-R2 under random CV vs. scaffold/cluster holdout for each representation,
-demonstrating the extrapolation advantage of physical features.
+**Figure 6. NBS Circular 514 temperature harmonization to 298.15 K.**
+Panel A: the shift eps(298.15 K) - eps(tabulated) implied by the coefficients
+printed in the circular, over the 74 transcribed records that carry one; the
+median shift is 0.0 and the mean is -0.15.
+Panel B: the same shift as a percentage of the tabulated value (mean absolute
+1.4%). The panel exists to bound a systematic error, not to move data: 0.762 of
+the coefficient rows state a validity range that covers 25 C, 18 records state a
+range that excludes it, and only those 18 would need the harmonization to be
+treated as an extrapolation. No value in the frozen dataset is modified by this
+probe.
+Artifact: `probes/artifacts/nbs514_alpha_harmonization.png` (`probes/nbs514_alpha_harmonization_summary.json`).
 
-**Figure 7. Applicability domain boundary.**
-Absolute error split by applicability domain, with the
-outside_associated_liquid region marked. The structural donor rule triggers on
-2,070 of the 6,150 out-of-fold rows (33.66%).
+## Applicability domain (reported as prose, not a figure)
 
-**Figure 8. Cross-source agreement.**
-Scatter plot of NBS Circular 514 values vs. ThermoML values for overlapping
-compounds, with median absolute deviation annotated. The five withheld
-compounds (FEC, TEP, TMP, ethyl isothiocyanate, 3-methoxypropionitrile) are
-highlighted as excluded points, and vinylene carbonate, withheld by the
-`model_ready` gate, is annotated separately.
+The adopted boundary is structural rather than a predicted-dielectric
+threshold: the SMARTS pattern `[O,S,N;!H0]` counts textbook
+hydrogen-bond donors, so the trigger is independent of any model output. The
+structural donor rule triggers on 2,070 of the 6,150 out-of-fold rows (33.66%)
+and covers all 150 rows whose experimental permittivity exceeds 60. Mean
+absolute error is 5.02 permittivity units inside the domain and 11.51 outside
+it. The superseded variant, which combined the donor count with a predicted
+dielectric above 60, reached only 5 of those 150 rows and was retired for
+reading the model output the boundary exists to qualify. An earlier draft
+carried this material as Figure 7; it is two numbers and a flag table
+(`data/processed/dielectric_applicability_flags.csv`), so it is reported here instead.
