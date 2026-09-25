@@ -208,12 +208,14 @@ space that the classic-organic model cannot interpolate.
 **A third boundary.** The carbonate holdout above and this domain-gap test are the
 same failure mode seen from two directions: non-associated polar aprotic solvents in
 the epsilon 32-90 range (the cyclic carbonates, and the lactam NMP) are
-underpredicted by a factor of two to three, even when the model ranks them near the
-top. It is a third boundary of the candidate model, distinct from the association
-blind spot, which the structural donor rule handles (33.66% trigger rate covering all
-150 rows above epsilon 60), and from scaffold extrapolation (best R2 0.276): here the
-training distribution contains no unassociated high-permittivity class to interpolate
-from.
+underpredicted by a factor of two to three, even when the model ranks them in the
+upper third of the set. It is a third boundary of the candidate model, distinct from
+the association blind spot, which the structural donor rule handles (33.66% trigger
+rate covering all 150 rows above epsilon 60), and from scaffold extrapolation (best
+R2 0.276): the training distribution does carry unassociated polar aprotic solvents,
+but only up to epsilon about 46 (acetonitrile 37.5, DMF 36.6, gamma-butyrolactone
+42.0, sulfolane 44.0, DMSO 46.1), so the epsilon 60-90 carbonate tail has no
+unassociated near neighbour to interpolate from.
 
 ## Physical-feature ablation
 
