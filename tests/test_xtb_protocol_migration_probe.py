@@ -26,6 +26,9 @@ from probes.xtb_protocol_migration_probe import (
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DATASET = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
+# Both of these are git-ignored, so a fresh checkout (and CI) has neither:
+# the candidate run logs and the frozen cache live under data/interim.
+CANDIDATE_RUN_ROOT = REPOSITORY_ROOT / "data" / "interim" / "xtb_protocol_migration"
 
 try:
     LOCAL_XTB: Path | None = resolve_xtb()
@@ -517,11 +520,15 @@ def test_deep_check_rejects_a_truncated_evidence_payload() -> None:
     assert any("frozen roster" in problem for problem in problems), problems
 
 
+@pytest.mark.skipif(
+    not FROZEN_CACHE.is_dir() or LOCAL_XTB is None,
+    reason="the git-ignored frozen xTB cache or executable is unavailable",
+)
 def test_deep_check_rejects_rows_relabelled_as_unmeasured() -> None:
     """Critical: relabelling resolvable rows as unmeasured must not pass."""
 
-    if not EVIDENCE_PATH.is_file() or LOCAL_XTB is None:
-        pytest.skip("probe evidence or local xTB is unavailable")
+    if not EVIDENCE_PATH.is_file():
+        pytest.skip("probe evidence is not built")
     full = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
     relabelled = [
         {"inchikey": row["inchikey"], "name": row["name"], "reason": "fabricated"}
@@ -540,11 +547,15 @@ def test_deep_check_rejects_rows_relabelled_as_unmeasured() -> None:
     assert any("reported as unmeasured" in problem for problem in problems), problems
 
 
+@pytest.mark.skipif(
+    not CANDIDATE_RUN_ROOT.is_dir(),
+    reason="the git-ignored candidate run logs are unavailable",
+)
 def test_deep_check_rejects_a_flipped_self_reported_verdict() -> None:
     """Critical: a self-reported False must not disable the log re-verification."""
 
-    if not EVIDENCE_PATH.is_file() or LOCAL_XTB is None:
-        pytest.skip("probe evidence or local xTB is unavailable")
+    if not EVIDENCE_PATH.is_file():
+        pytest.skip("probe evidence is not built")
     full = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
     measured = copy.deepcopy(full["measured"])
     measured[0]["frozen_runner_accepts"] = False

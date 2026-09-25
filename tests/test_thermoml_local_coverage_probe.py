@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+import glob
+
+import pytest
+
 from probes.thermoml_local_coverage_probe import (
+    REPOSITORY_ROOT,
     TARGETS,
+    THERMOML_GLOB,
     build_summary,
     classify,
     component_indices,
@@ -105,6 +111,15 @@ def test_scan_corpus_detects_inchikey_cas_and_alias(tmp_path) -> None:
     assert counters["xml_files_with_permittivity_text"] == 1
 
 
+CORPUS_AVAILABLE = bool(
+    glob.glob(str(REPOSITORY_ROOT / THERMOML_GLOB), recursive=True)
+)
+
+
+@pytest.mark.skipif(
+    not CORPUS_AVAILABLE,
+    reason="the git-ignored local ThermoML XML corpus is unavailable",
+)
 def test_real_corpus_reproduces_the_tier0_split(tmp_path) -> None:
     payload = build_summary(
         summary_path=tmp_path / "summary.json", rows_path=tmp_path / "rows.csv"
