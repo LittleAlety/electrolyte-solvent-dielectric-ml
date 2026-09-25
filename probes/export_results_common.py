@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shlex
 import shutil
 import subprocess
 import sys
@@ -62,12 +63,16 @@ def copy_artifacts(
 
 
 def run_verifiers(source_root: Path, verifiers: Sequence[str]) -> dict[str, object]:
-    """Run each verifier script and record its exit status and JSON body."""
+    """Run each verifier script and record its exit status and JSON body.
+
+    The entry may carry arguments (for example ``build_paper_full_draft.py
+    --check``), so it is split the way a shell would split it.
+    """
 
     checks: list[dict[str, object]] = []
     for relative in verifiers:
         completed = subprocess.run(
-            [sys.executable, relative],
+            [sys.executable, *shlex.split(relative)],
             cwd=source_root,
             capture_output=True,
             text=True,
