@@ -1803,3 +1803,64 @@ ML 摘要 diff **按文件**为：`v032_ablation_summary` 只有 `dataset_sha256
 - **MOPN**：缺独立一手确认 + GFN2-xTB 特征行。
 - 受限目录 4 个未取值目标（EC/GVL/DME/环丁砜）；DC-200 成员表未接入；EC 的温度带决策（extended 313.15 K）。
 - 环境现状：SpringerMaterials、上海有机所数据库打不开；RSC/ScienceDirect 部分刊无权限。
+
+---
+
+## 2026-09-25 · 诊断轮：4 条 `model_ready=true` 行的 xTB 特征为何失败（v0.3.14 前置）
+
+**本轮只做只读诊断，不改任何冻结产物**（数据集、特征表、digest、排除单、交付包、论文草稿一律未动）。
+
+### 触发
+
+清点"240 条 `model_ready=true` vs 236 行拟合集"的差额时发现：差额那 4 行早就被记录为
+`failed_physical_feature_count = 4`，四个分子名也在
+`probes/dielectric_v03_representation_ablation_summary.json` 和
+`probes/artifacts/v03_features_baseline_input.csv`（`status=error`）里，
+但**全仓没有任何产物解释过它们为什么失败**——只有一句 `xTB failed ... with exit code 128`。
+
+### 确认的缺陷（可复现）
+
+四个失败分子**全部是多片段物种**，而 `generate_3d_xyz()` 对整个不连通图只调用一次 `EmbedMolecule`。
+从 git-ignored 缓存 `data/interim/xtb_features/<InChIKey>/input.xyz` 实测**跨片段**最短原子间距：
+
+| 分子 | 片段数 | 现管线跨片段最短距离 |
+| --- | ---: | ---: |
+| 1,3-二甲基咪唑鎓二甲基磷酸酯 | 2 | 0.163 Å |
+| 1-丁基-3-甲基咪唑鎓六氟磷酸盐 | 2 | 0.762 Å |
+| 1-丁基-2,3-二甲基咪唑鎓六氟磷酸盐 | 2 | 0.840 Å |
+| 五羰基铁 | 6 | 0.000 Å |
+
+四条起始几何在物理上都不可能存在。已记录到的 xTB 表现分两类：五羰基铁被直接拒绝
+（`Found *very* short distance of  0.000E+00`），三个离子液体 SCF 不收敛
+（`scf: Self consistent charge iterator did not converge`）。
+**四条失败都能追到同一段嵌入代码的几何缺陷；但复跑显示缺陷消除后四条仍全部 exit 128，故几何缺陷真实存在、并足以让 xTB 在五羰基铁上直接拒绝起始几何，却不能单独解释三个离子液体的 SCF 失败。**
+
+### 修法的验证与边界
+
+逐片段嵌入 + 按片段半径打包（padding 3.0 Å）把跨片段最短距离提到
+3.850 / 4.328 / 4.136 / 3.000 Å，最近原子对重新变回片段内正常键。
+**但四条重跑 xTB 仍是 exit 128**，残余问题性质不同：
+
+- 三个离子液体即便从合法几何出发仍不收敛；本轮只证明“几何修法不足以解锁”，未确定应采用哪种 SCF 策略，
+  故不报告 HL-Gap 等数值。
+- 五羰基铁的 SMILES 忠实转写自 `InChI=1S/5CO.Fe`，根本不含 Fe–C 键（即"5 个孤立 CO + 自由铁"），
+  属**结构表示问题**；`O=C=[Fe](=C=O)(=C=O)(=C=O)=C=O` 能通过 RDKit 净化但无法嵌入，`[Fe](C#O)...` 才触发价键检查，故单纯换 SMILES 不够。
+
+### 为什么不落地代码修改
+
+改 `generate_3d_xyz()` 会改变多片段分子的特征值，令冻结的特征表与代码不再自洽；
+而修法本身又不足以救回这 4 行。因此修法只以探针形式提供，落地需作为独立一轮 v0.3.14。
+
+### 产物
+
+| 文件 | 作用 |
+| --- | --- |
+| `probes/xtb_fragment_geometry_defect.py` | 诊断 + 打包修法；`--check` 校验证据，`--check-cache` 用本地缓存实测 |
+| `probes/g1plus_xtb_fragment_geometry_defect.json` | 结构化证据（含逐字 xTB 报错与全部实测距离） |
+| `reports/g1plus_xtb_fragment_geometry_defect.md` | 本报告 |
+| `tests/test_xtb_fragment_geometry_defect.py` | 15 项回归（含"4 条失败行都是 model_ready=true"与"240−4=236"；缓存缺失时自动 skip） |
+
+### 验证快照
+
+定向用例 `tests/test_xtb_fragment_geometry_defect.py` **15 passed**；
+探针 `--check` 通过；`--check-cache` 用本地缓存实测 **4/4 全部复现**记录值。
