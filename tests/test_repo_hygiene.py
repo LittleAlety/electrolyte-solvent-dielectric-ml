@@ -63,6 +63,24 @@ def _looks_binary(payload: bytes) -> bool:
     return b"\x00" in payload[:8192]
 
 
+def _index_modes() -> dict[str, str]:
+    """Map every tracked path to the file mode git would check out."""
+
+    completed = subprocess.run(
+        ["git", "ls-files", "-s", "-z"],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+        capture_output=True,
+    )
+    modes: dict[str, str] = {}
+    for entry in completed.stdout.split(b"\x00"):
+        if not entry:
+            continue
+        meta, raw_path = entry.split(b"\t", 1)
+        modes[raw_path.decode("utf-8")] = meta.split()[0].decode("ascii")
+    return modes
+
+
 @pytest.mark.skipif(not GIT_METADATA_PRESENT, reason="no git metadata to query")
 def test_tracked_text_files_are_checked_out_with_lf_endings() -> None:
     """Critical: a CRLF worktree silently diverges from every clean clone."""
@@ -83,6 +101,44 @@ def test_tracked_text_files_are_checked_out_with_lf_endings() -> None:
     assert offenders == [], (
         "these tracked text files hold CRLF in the worktree while .gitattributes "
         f"commits them as LF: {offenders}"
+    )
+
+
+@pytest.mark.skipif(not GIT_METADATA_PRESENT, reason="no git metadata to query")
+def test_executable_bit_agrees_with_the_shebang() -> None:
+    """Critical: ruff EXE001/EXE002 only fire on a posix checkout.
+
+    EXE001 is "shebang present but the file is not executable" and EXE002 is
+    the mirror image.  Both read the filesystem mode bit, which Windows cannot
+    express, so the same tree lints clean here and fails on the Linux runner.
+    The git index mode is the portable source of truth for what CI checks out.
+    """
+
+    modes = _index_modes()
+    not_executable = []
+    executable_without_shebang = []
+    for relative, mode in sorted(modes.items()):
+        path = REPOSITORY_ROOT / relative
+        if not path.is_file():
+            continue
+        try:
+            head = path.open("rb").read(256)
+        except OSError:
+            continue
+        has_shebang = head.startswith(b"#!")
+        is_executable = mode == "100755"
+        if has_shebang and not is_executable:
+            not_executable.append(relative)
+        if is_executable and not has_shebang:
+            executable_without_shebang.append(relative)
+
+    assert not_executable == [], (
+        "ruff EXE001 on a posix runner: these files carry a shebang but the "
+        f"index mode is 100644: {not_executable}"
+    )
+    assert executable_without_shebang == [], (
+        "ruff EXE002 on a posix runner: these files are executable but carry "
+        f"no shebang: {executable_without_shebang}"
     )
 
 
