@@ -71,6 +71,8 @@ def test_week10_paper_snapshot_matches_the_repository(tmp_path: Path) -> None:
         "paper/abstract_and_intro.md",
         "paper/full_draft.md",
         "paper/benchmark_and_figures.md",
+        "paper/cover_letter.md",
+        "paper/submission_checklist.md",
     ):
         shipped = (tmp_path / "week10" / relative).read_bytes()
         current = (REPOSITORY_ROOT / relative).read_bytes()

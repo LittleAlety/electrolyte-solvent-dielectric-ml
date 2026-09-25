@@ -53,6 +53,10 @@ README_TEXT = """# Week 10 交付包（M-1 论文对抗审读）
 原先的 `check_main_benchmark_table()` 只读 `benchmark_and_figures.md`，摘要散文是校验盲区，
 这正是 C-1 能活到本轮的原因。守卫已自检：把 0.802 改回 0.801 会让检查器非零退出。
 
+## 投稿包（Week 11–12）
+- paper/cover_letter.md - Scientific Data 投稿信草稿（含 [TODO] 占位，发信前必须替换）
+- paper/submission_checklist.md - 打 tag / 投稿的机械清单（含 Zenodo 必须先于 tag 的顺序规则）
+
 ## 校验
 从仓库根目录运行（scripts/ 不在交付包内，此处同名脚本为副本）:
 python scripts/check_paper_artifact_consistency.py
@@ -80,6 +84,8 @@ ARTIFACTS = (
     ("paper/benchmark_and_figures.md", "paper/benchmark_and_figures.md"),
     ("paper/code_and_data.md", "paper/code_and_data.md"),
     ("paper/outline.md", "paper/outline.md"),
+    ("paper/cover_letter.md", "paper/cover_letter.md"),
+    ("paper/submission_checklist.md", "paper/submission_checklist.md"),
     ("probes/artifacts/paper_fig1_dataset_growth.png", "artifacts/paper_fig1_dataset_growth.png"),
     ("probes/artifacts/v032_ablation.png", "artifacts/v032_ablation.png"),
     ("probes/artifacts/domain_gap_parity.png", "artifacts/domain_gap_parity.png"),
