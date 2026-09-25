@@ -160,3 +160,14 @@ The gate withholds whole compounds, not individual temperature rows, and it
 fails closed only for the `model_ready` flag. A row whose value is wrong but
 marked ready is still fitted; the conflict records and the cross-source
 verifiers remain the defence there.
+
+> **Re-pinned for v0.3.14 (2026-09-25).** The current canonical digest of
+> `data/dielectric_v03.csv` is
+> `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`.
+> The v0.3.14/D2 scope relabel added the `out_of_scope_ionic_or_organometallic`
+> gate flag plus a scope note to the four rows whose xTB feature generation
+> failed. It changed no numeric value, temperature, `model_ready` flag or
+> `conflict_status`; the 246 rows x 38 columns, the 240 `model_ready=true` rows
+> and the 236-row frozen benchmark are byte-identical. Every earlier hash quoted
+> above remains the historical pin of its own revision and is deliberately not
+> rewritten.

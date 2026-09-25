@@ -42,6 +42,7 @@ GATE_FLAGS = (
     "frequency_1mhz",
     "nbs514_circular_514",
     "crosscheck_only",
+    "out_of_scope_ionic_or_organometallic",
 )
 
 

@@ -227,7 +227,7 @@ def test_the_frozen_dataset_digest_is_still_pinned() -> None:
 
     digest = hashlib.sha256(DATASET.read_bytes()).hexdigest()
     assert digest == (
-        "a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085"
+        "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4"
     )
 
 

@@ -2216,3 +2216,37 @@ ruff `EXE001` 读**文件系统执行位**；Windows 上该位不可表达，ruf
 - **CLI 修复。** `probes/manual_appendix_reconciliation.py` 新增 `describe_path()`，仓库外 `--output` 写绝对路径而不是在 `relative_to()` 抛错。新增 scratch 目录端到端回归。此前该缺陷表现为文件已写出但进程非零。
 - **文档校正。** 18 个 skip 不再写成“全部是 git 忽略缓存”：实际来源还包括本机 xTB 可执行文件与外部手册缺失；断言没有削弱。同步修正 `tests/fixtures/manual_appendix_j_snapshot.md` 与外部执行手册。
 - **验证。** 定向环境/手册测试 30 passed；`ruff check scripts src probes tests notebooks` 全绿；本机全量 `pytest -q -p no:cacheprovider` **803 passed / 0 skipped**（184.52 s）；真实 CI 以本轮推送结果为准。规范数据集 digest 保持 `a446c216…c01085`。
+
+## 2026-09-25 · v0.3.14(D2)：四条越界行改用 gate_flag 显式标注
+
+- **决策。** v0.3.14 整表特征协议迁移**不授权**。为 4 行边界分子迁移 246 行的协议，代价/收益不成立，且违反冻结纪律。
+- **落法。** 共享词表新增 `out_of_scope_ionic_or_organometallic`；经
+  `data/processed/dielectric_v03_provenance_patches.csv` 以 4 条 `gate_flags` patch 追加到
+  `GSGLHYXFTXGIAQ-UHFFFAOYSA-M`、`IXQYBUDWDLYNMA-UHFFFAOYSA-N`、`JWFPQAXAGSAKRF-UHFFFAOYSA-N`、`FYOFOKCECDGJBF-UHFFFAOYSA-N`，
+  并各补一条 `notes`。`build_dielectric_v03.py` 可从输入逐字节重建（重建前已验证旧输入能重现旧 CSV）。
+- **`model_ready` 保持 `true`。** 该列语义是「取值是否因来源冲突/待主证确认而不应进入拟合」，不是「化合物是否在模型适用域内」；
+  这 4 行无来源冲突。两条独立只读审计一致确认：改为 `false` 会同时打破
+  `tests/test_xtb_fragment_geometry_defect.py`、`tests/test_verify_v032_benchmarks.py`、
+  `tests/test_dielectric_representation_ablation.py` 等 7 处硬断言，并把它们错误地重新定义成「来源冲突待确认」。
+- **钉点。** `a446c216874538d900e9f3ebbf18178926b812b77a213a395f4ff8cddfc01085` → `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`。
+- **重跑而不是空口重钉。** v0.3.3 消融探针本轮真正重跑（89 s），
+  `cv.csv`、`predictions.csv`（7081 行）、`repeats.csv`、PNG 与全部 summary 指标逐字节一致
+  （两个产物 CSV 的字节差异仅为探针写出的 CRLF 与仓库 `eol=lf` 行尾，内容逐行相同）；
+  四个轻量探针（nbs514 频率闸门、nbs514 alpha 谐调、手册对账、Onsager delta）与
+  `g1plus_round5_crosscheck` 亦全部重跑，diff 仅限 digest 与 `generated_at`；四个静态证据 JSON 按旧例重钉并累积修订注记。
+- **未改动。** 236 行冻结拟合集、`model_ready=true` 集合、`data/dielectric_v032.csv`、排除单 5 行。
+- **已知残留。** `read_modelling_rows` 仍把这 4 行归入 `failed_physical_feature`（它们确实 xTB 失败），
+  越界语义由 `gate_flags` 承担；把 `out_of_scope` 提升为独立记账分桶属 schema 变更，留给后续版本。
+- **验证。** 本机全量 `pytest -q -p no:cacheprovider` **803 passed**（153.15 s）；
+  `ruff check scripts src probes tests notebooks` 全绿；7/7 verifier 与论文一致性、全稿同步均通过；真实 CI 以本轮推送结果为准。
+
+> **Re-pinned for v0.3.14 (2026-09-25).** The current canonical digest of
+> `data/dielectric_v03.csv` is
+> `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`.
+> The v0.3.14/D2 scope relabel added the `out_of_scope_ionic_or_organometallic`
+> gate flag plus a scope note to the four rows whose xTB feature generation
+> failed. It changed no numeric value, temperature, `model_ready` flag or
+> `conflict_status`; the 246 rows x 38 columns, the 240 `model_ready=true` rows
+> and the 236-row frozen benchmark are byte-identical. Every earlier hash quoted
+> above remains the historical pin of its own revision and is deliberately not
+> rewritten.
