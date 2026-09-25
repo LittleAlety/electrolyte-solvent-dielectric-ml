@@ -13,7 +13,7 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 from electrolyte_ml.exporting import verify_export_manifest
 
 DEFAULT_OUTPUT_ROOT = REPOSITORY_ROOT.parent / "成果输出"
-WEEK_DIRECTORIES = tuple(f"week{week}" for week in range(1, 10))
+WEEK_DIRECTORIES = tuple(f"week{week}" for week in range(1, 11))
 
 
 def default_output_dirs(output_root: Path) -> tuple[Path, ...]:
@@ -28,7 +28,7 @@ def select_output_dirs(
     explicit_output_dirs: tuple[Path, ...] = (),
     allow_missing: bool = False,
 ) -> tuple[Path, ...]:
-    """Select explicit directories or all nine conventional week directories."""
+    """Select explicit directories or all ten conventional week directories."""
 
     if explicit_output_dirs:
         selected = explicit_output_dirs
@@ -54,7 +54,7 @@ def main(argv: list[str] | None = None) -> int:
         "--output-root",
         type=Path,
         default=DEFAULT_OUTPUT_ROOT,
-        help="Root containing conventional week1-week9 output directories.",
+        help="Root containing conventional week1-week10 output directories.",
     )
     parser.add_argument(
         "--allow-missing",

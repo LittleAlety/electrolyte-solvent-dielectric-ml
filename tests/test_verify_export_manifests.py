@@ -28,11 +28,12 @@ def test_default_export_dirs_cover_all_week_outputs_portably() -> None:
         "week7",
         "week8",
         "week9",
+        "week10",
     ]
     assert all(path.parent == output_root for path in output_dirs)
 
 
-def test_default_selection_returns_all_nine_paths_even_when_missing(tmp_path) -> None:
+def test_default_selection_returns_all_ten_paths_even_when_missing(tmp_path) -> None:
     output_root = tmp_path / "exports"
 
     selected = select_output_dirs(output_root=output_root)
@@ -127,7 +128,7 @@ def test_missing_output_root_fails_with_explicit_errors(tmp_path, capsys) -> Non
     result = json.loads(capsys.readouterr().out)
     assert exit_code != 0
     assert result["passed"] is False
-    assert len(result["results"]) == 9
+    assert len(result["results"]) == 10
     assert all(
         any("missing manifest" in error for error in errors)
         for errors in result["results"].values()
