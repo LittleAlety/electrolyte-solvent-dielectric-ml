@@ -205,6 +205,16 @@ gamma-valerolactone: true 36.1, predicted 13.3; NMP: true 32.2, predicted
 15.7), confirming that the v0.3 expansion captures genuinely novel chemical
 space that the classic-organic model cannot interpolate.
 
+**A third boundary.** The carbonate holdout above and this domain-gap test are the
+same failure mode seen from two directions: non-associated polar aprotic solvents in
+the epsilon 32-90 range (the cyclic carbonates, and the lactam NMP) are
+underpredicted by a factor of two to three, even when the model ranks them near the
+top. It is a third boundary of the candidate model, distinct from the association
+blind spot, which the structural donor rule handles (33.66% trigger rate covering all
+150 rows above epsilon 60), and from scaffold extrapolation (best R2 0.276): here the
+training distribution contains no unassociated high-permittivity class to interpolate
+from.
+
 ## Physical-feature ablation
 
 The gate-fixed raw-target ablation is the v0.3.3 row of the main benchmark
