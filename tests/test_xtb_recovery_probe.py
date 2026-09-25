@@ -186,6 +186,30 @@ def test_the_screening_helper_is_reproducible_and_matches_the_evidence() -> None
         assert fresh["embed_return"] == candidate["embed_return"]
 
 
+def test_embed_attempts_charge_and_dative_direction_are_recorded() -> None:
+    """The reviewer's last Minor: the evidence must show *how* a candidate embedded,
+    not just the final return code, and must expose the Fe-C bond order/direction."""
+
+    candidates = {
+        candidate["id"]: candidate
+        for candidate in _evidence()["fe_structures"]["candidates"]
+    }
+    best = candidates["dative_neutral_bracket"]
+    assert best["default_embed_return"] == -1
+    assert best["random_coords_embed_return"] == 0
+    assert best["embed_return"] == 0
+    assert best["formal_charge"] == 0
+    assert len(best["fe_c_bond_types"]) == 5
+    assert all(kind.startswith("C->Fe:") for kind in best["fe_c_bond_types"])
+    assert all("DATIVE" in kind for kind in best["fe_c_bond_types"])
+    assert len(best["fe_c_bond_types"]) == len(best["fe_c_bond_lengths_angstrom"])
+
+    stored = candidates["stored"]
+    assert stored["formal_charge"] == 0
+    assert stored["fe_c_bond_types"] == []
+    assert stored["has_fe_c_bond"] is False
+
+
 def test_check_flags_a_tampered_recovery_flag() -> None:
     tampered = copy.deepcopy(_evidence())
     key = ION_PAIR_KEYS[0]

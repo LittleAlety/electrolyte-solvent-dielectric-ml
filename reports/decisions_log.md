@@ -1954,10 +1954,20 @@ Fe(CO)₅ 的结构空间另由第二路**只读** agent 独立扫描，结论�
 「全部 `frozen_runner_accepts`」= 4 个（`etemp_1000`、`etemp_5000`、`etemp_5000_acc_5`、`alpb_acetonitrile`），
 「全部接受且 `geoopt_converged`」= 3 个；`etemp_1000` 只在 1/3 上收敛，GFN-FF 预优化只对 2/3 成功。
 
-**残留 Minor（已登记、本轮不修）：** `probes/g1plus_xtb_recovery_probe.json` 的 Fe 结构记录只保存重试后的
-`embed_return`，未分列 `default_embed_return` / `random_coords_embed_return`，也没有形式电荷与 DATIVE 方向字段。
-复审员独立重跑 RDKit 确认报告声明（默认嵌入 -1 / 随机坐标 0 / 净电荷 0 / 5 条 C→Fe DATIVE）**本身属实**，
-影响限于结构化证据的可审计性，不影响任何数值、判定或冻结产物。
+**残留 Minor（已于收官优化轮关闭）：** `probes/g1plus_xtb_recovery_probe.json` 的 Fe 结构记录原先只保存重试后的
+`embed_return`，未分列 `default_embed_return` / `random_coords_embed_return`，也没有形式电荷与 Fe–C 键型/方向字段。
+复审员独立重跑 RDKit 已确认报告声明（默认嵌入 -1 / 随机坐标 0 / 净电荷 0 / 5 条 C→Fe DATIVE）**本身属实**，
+影响限于结构化证据的可审计性。
+
+收官优化轮已补齐该缺口：`screen_fe_candidate()` 分别记录 `default_embed_return` 与
+`random_coords_embed_return`、`formal_charge`，并从**分子图**（而非构象）取 `fe_c_bond_types`
+（含 `C->Fe:DATIVE` 这样的方向与键级），因此**即使嵌入失败也能读出键型**。
+`check_payload()` 新增对应不变量（首次即成功不得记成重试、默认失败必须配平重试、
+`has_fe_c_bond` 必须与键型列表一致、可测时键型数须等于键长数）；
+`tests/test_xtb_recovery_probe.py` 新增 `test_embed_attempts_charge_and_dative_direction_are_recorded`，
+固定最优候选的 `-1 / 0 / 0 / 5×C->Fe:DATIVE` 与库存值的 `6 片段 / 无 Fe–C 键`。
+JSON 只重算了 `fe_structures` 段（`--fe-structures --write`），xTB 派生的 `ion_pairs` 与
+`protocol_sensitivity` 两段未被触碰；规范数据集 digest 不变。
 
 **计数复核（复审员独立执行）：** `reports/*.md` 54、`probes/*.json` 67、week1–8 递归 Markdown 72 / JSON 73、
 week7 61 文件 / 60 manifest 行、week8 75 文件 / 74 manifest 行、

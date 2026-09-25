@@ -519,25 +519,45 @@ def screen_fe_candidate(candidate: dict[str, str]) -> dict[str, object]:
     }
     if molecule is None:
         record["embed_return"] = None
+        record["default_embed_return"] = None
+        record["random_coords_embed_return"] = None
         record["has_fe_c_bond"] = False
         record["fragments"] = None
+        record["formal_charge"] = None
         record["fe_c_bond_lengths_angstrom"] = []
+        record["fe_c_bond_types"] = []
         return record
 
     record["fragments"] = len(Chem.GetMolFrags(molecule))
-    record["has_fe_c_bond"] = any(
-        sorted((bond.GetBeginAtom().GetAtomicNum(), bond.GetEndAtom().GetAtomicNum()))
-        == [6, 26]
+    record["formal_charge"] = int(Chem.GetFormalCharge(molecule))
+    fe_c_bonds = [
+        bond
         for bond in molecule.GetBonds()
+        if sorted((bond.GetBeginAtom().GetAtomicNum(), bond.GetEndAtom().GetAtomicNum()))
+        == [6, 26]
+    ]
+    record["has_fe_c_bond"] = bool(fe_c_bonds)
+    # Bond order and direction come from the graph, so they stay available even when
+    # the conformer embedding fails and no lengths can be measured.
+    bond_types = sorted(
+        f"{bond.GetBeginAtom().GetSymbol()}->{bond.GetEndAtom().GetSymbol()}"
+        f":{bond.GetBondType().name}"
+        for bond in fe_c_bonds
     )
+    record["fe_c_bond_types"] = bond_types
     working = Chem.AddHs(molecule)
     parameters = AllChem.ETKDGv3()
     parameters.randomSeed = 42
     embed = AllChem.EmbedMolecule(working, parameters)
+    default_embed = int(embed)
+    random_embed: int | None = None
     if embed < 0:
         parameters.useRandomCoords = True
         parameters.maxIterations = 200
         embed = AllChem.EmbedMolecule(working, parameters)
+        random_embed = int(embed)
+    record["default_embed_return"] = default_embed
+    record["random_coords_embed_return"] = random_embed
     record["embed_return"] = int(embed)
     lengths: list[float] = []
     if embed >= 0:
@@ -687,6 +707,43 @@ def check_payload(payload: dict[str, object]) -> list[str]:
                 problems.append("fe_structures.viable_candidate_ids disagrees with the rows")
             if bool(fe_structures.get("viable_found")) != bool(viable):
                 problems.append("fe_structures.viable_found disagrees with the rows")
+            for candidate in candidates:
+                label = f"fe_structures/{candidate.get('id')}"
+                if "default_embed_return" not in candidate:
+                    problems.append(f"{label}: default_embed_return is not recorded")
+                    continue
+                if "random_coords_embed_return" not in candidate:
+                    problems.append(f"{label}: random_coords_embed_return is not recorded")
+                    continue
+                default = candidate.get("default_embed_return")
+                retry = candidate.get("random_coords_embed_return")
+                final = candidate.get("embed_return")
+                if default is None:
+                    if retry is not None or final is not None:
+                        problems.append(f"{label}: unsanitised candidate carries embed returns")
+                    continue
+                if not isinstance(default, int):
+                    problems.append(f"{label}: default_embed_return is not an int")
+                    continue
+                if default >= 0:
+                    if retry is not None or final != default:
+                        problems.append(
+                            f"{label}: a first-try embed must not be recorded as retried"
+                        )
+                elif retry is None or final != retry:
+                    problems.append(
+                        f"{label}: a failed default embed must be paired with its retry"
+                    )
+                if not isinstance(candidate.get("formal_charge"), int):
+                    problems.append(f"{label}: formal_charge is not recorded")
+                types = candidate.get("fe_c_bond_types")
+                lengths = candidate.get("fe_c_bond_lengths_angstrom")
+                if not isinstance(types, list) or not isinstance(lengths, list):
+                    problems.append(f"{label}: Fe-C bond types or lengths are not lists")
+                elif bool(candidate.get("has_fe_c_bond")) != bool(types):
+                    problems.append(f"{label}: has_fe_c_bond disagrees with fe_c_bond_types")
+                elif lengths and len(types) != len(lengths):
+                    problems.append(f"{label}: Fe-C bond types and lengths disagree")
     sensitivity = payload.get("protocol_sensitivity")
     if isinstance(sensitivity, dict):
         controls = sensitivity.get("controls")
