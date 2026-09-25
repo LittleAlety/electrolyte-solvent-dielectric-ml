@@ -52,3 +52,35 @@
 - `verify_paper_figures.py`：PASS（6 图，含逐图产物映射与脚本强制）
 - `verify_export_manifests.py`：**9/9 PASS**
 - 数据面：本轮**未改任何数值**（新增的 `--plot-only` 只渲染，不重跑基准）
+
+## 五、第二轮复核（基线 `2c6854f`）
+
+reviewer 复核第一轮修复提交后给出：**0 Critical / 1 Important / 4 Minor**。其中 Important 是本轮修复**自己引入的回归**，说明一轮修复之后必须再走一轮复核。
+
+### Important（已修）——论文里的 `--plot-only` 命令实际会 exit 1
+
+论文为了兑现「六张图都能复现」，在 Fig2/Fig5 的 `Script:` 行写了仓库相对路径形式，例如：
+
+    python probes/dielectric_representation_ablation.py --plot-only --plot probes/artifacts/v032_ablation.png
+
+但两个探针的打印语句是 `args.plot.relative_to(REPOSITORY_ROOT)`，对**相对路径**会抛 `ValueError`（`relative_to` 要求两个路径同为绝对或同为相对）。结果是：重渲染本身成功了，命令却以非零码退出——读者照抄论文命令会以为失败。
+
+**修复**：两个探针各新增 `_display_path()`，先 `resolve()` 再尝试相对化，失败则回退为绝对 POSIX 路径。相对路径与仓库外路径都不再抛异常。手工按论文原文命令实跑，现为 exit 0。
+
+### Minor A–D（全部已修）
+
+| # | 问题 | 处置 |
+| --- | --- | --- |
+| A | 新写的引言把 Fig3/Fig6 也说成「从 summary 重渲染」，与实现不符（Fig3/6 是重算，Fig2/5 才是重渲染） | **已修**：引言改为分别描述——Fig2/5 有 `--plot-only` 重渲染模式，Fig3/6 由产它们的探针从冻结输入重算 |
+| B | `validate_figures` 只要求「至少一个产物」，多塞一个合法 PNG 仍 PASS | **已修**：改为要求**恰好一个**，配反例单测 `test_a_figure_with_two_artifacts_is_rejected` |
+| C | Fig6 探针会重写 tracked 的 `nbs514_alpha_harmonization_summary.json`（时间戳变化），论文未说明 | **已修**：Fig6 的 `Script:` 行注明会重算 summary 并刷新时间戳 |
+| D | `write_sha256s` 改委派 canonical writer、week9 `main()` 退出码两项修复**没有回归测试** | **已修**：新增 `test_write_sha256s_matches_the_canonical_manifest`、`test_week9_main_returns_non_zero_when_verification_fails` |
+
+第一轮的 Minor 6/7 仍**刻意保留**（理由见第三节），本轮无新增保留项。
+
+## 六、最终校验（第二轮修复后）
+
+- `ruff check .`：全绿
+- `pytest -q -p no:cacheprovider`：**837 passed**（233.28 s）；定向复跑 `tests/test_paper_figures.py` + `tests/test_export_week9_results.py` 为 14 passed
+- 其余闸门（`compileall` / 论文一致性 / 全稿 --check / 六图守卫 / 9 个导出清单）同第四节
+- 数据面：两轮修复合计**未改动任何数值**，`data/dielectric_v03.csv` digest 不变

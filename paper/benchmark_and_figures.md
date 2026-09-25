@@ -92,8 +92,10 @@ The v1.0 manuscript carries six figures. Each one names the artifact that holds
 the rendered file and a committed command that re-renders it, so a reader can
 reproduce every panel without the authors. Two of the six (Figures 1 and 4) are
 produced by a purpose-built figure probe that fails when the numbers it draws
-stop matching the committed summaries; the other four are re-rendered from the
-committed benchmark summaries by the probes that computed them. Panels that earlier drafts listed as
+stop matching the committed summaries. Figures 2 and 5 expose a --plot-only mode
+that re-renders them from their committed benchmark summaries without refitting a
+model; Figures 3 and 6 are recomputed from the frozen inputs by the probes that
+produced them. Panels that earlier drafts listed as
 separate figures (chemical-space projection, applicability-domain error split,
 cross-source scatter) are reported as tables or prose instead: they either
 duplicated a panel above or rested on fewer than ten compounds, and a six-figure
@@ -175,7 +177,9 @@ range that excludes it, and only those 18 would need the harmonization to be
 treated as an extrapolation. No value in the frozen dataset is modified by this
 probe.
 Artifact: `probes/artifacts/nbs514_alpha_harmonization.png` (`probes/nbs514_alpha_harmonization_summary.json`).
-Script: `python probes/nbs514_alpha_harmonization_probe.py`.
+Script: `python probes/nbs514_alpha_harmonization_probe.py` (recomputes the
+summary from the frozen transcript, so it rewrites that summary with a fresh
+timestamp, and re-renders the plot).
 
 ## Applicability domain (reported as prose, not a figure)
 

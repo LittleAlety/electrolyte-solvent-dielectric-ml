@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
-from electrolyte_ml.exporting import verify_export_manifest
+from electrolyte_ml.exporting import build_export_manifest, verify_export_manifest
+from probes import export_week9_results as week9_module
+from probes.export_results_common import write_sha256s
 from probes.export_week9_results import README_TEXT as WEEK9_README_TEXT
 from probes.export_week9_results import export_results as export_week9_results
 
@@ -73,3 +76,48 @@ def test_week9_paper_snapshot_matches_the_repository(tmp_path: Path) -> None:
         shipped = (tmp_path / "week9" / relative).read_bytes()
         current = (REPOSITORY_ROOT / relative).read_bytes()
         assert shipped == current, f"{relative} in the package is stale"
+
+
+def test_write_sha256s_matches_the_canonical_manifest(tmp_path: Path) -> None:
+    """An export must hash like the repository's own manifest writer."""
+
+    (tmp_path / "nested").mkdir()
+    (tmp_path / "README.md").write_text("readme\n", encoding="utf-8", newline="\n")
+    (tmp_path / "nested" / "artifact.txt").write_text("x\n", encoding="utf-8", newline="\n")
+
+    write_sha256s(tmp_path)
+
+    written = (tmp_path / "SHA256SUMS").read_text(encoding="utf-8")
+    assert written == build_export_manifest(tmp_path)
+    assert verify_export_manifest(tmp_path) == []
+
+
+def test_week9_main_returns_non_zero_when_verification_fails(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A delivery package must not report success through its exit code alone."""
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "export_week9_results.py",
+            "--output-root",
+            str(tmp_path),
+            "--overwrite",
+        ],
+    )
+
+    monkeypatch.setattr(
+        week9_module,
+        "export_results",
+        lambda **_: {"week": "week9", "output": str(tmp_path), "verification_passed": False},
+    )
+    assert week9_module.main() == 1
+
+    monkeypatch.setattr(
+        week9_module,
+        "export_results",
+        lambda **_: {"week": "week9", "output": str(tmp_path), "verification_passed": True},
+    )
+    assert week9_module.main() == 0

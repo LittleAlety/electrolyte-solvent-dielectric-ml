@@ -673,6 +673,21 @@ def run(
     return payload
 
 
+def _display_path(path: Path) -> str:
+    """Return a POSIX path for reporting, relative when it is inside the repo.
+
+    ``Path.relative_to`` raises when the argument is a relative path or when the
+    target lives outside the repository, which used to turn a successful
+    ``--plot-only`` re-render into a non-zero exit.
+    """
+
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPOSITORY_ROOT.resolve()).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -791,7 +806,7 @@ def main() -> int:
     if args.plot_only:
         payload = json.loads(args.summary_output.read_text(encoding="utf-8"))
         _write_plot(payload["summary"], args.plot)
-        print(json.dumps({"plot": args.plot.relative_to(REPOSITORY_ROOT).as_posix()}))
+        print(json.dumps({"plot": _display_path(args.plot)}))
         return 0
     result = run(
         input_path=args.input,

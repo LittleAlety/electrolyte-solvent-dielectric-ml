@@ -95,3 +95,15 @@ def test_missing_evidence_level_is_detected() -> None:
     assert sum(counts.values()) == len(rows)
     assert _missing_evidence_rows(counts) == 1
     assert _missing_evidence_rows({"primary": 2}) == 0
+
+
+def test_a_figure_with_two_artifacts_is_rejected() -> None:
+    """A registered artifact plus a spare valid PNG must not slip through."""
+
+    figures = _figures()
+    figures[2]["artifacts"] = [
+        "probes/artifacts/domain_gap_parity.png",
+        "probes/artifacts/v032_ablation.png",
+    ]
+    errors = validate_figures(figures)
+    assert any("exactly one Artifact path" in error for error in errors), errors

@@ -103,6 +103,11 @@ def validate_figures(figures: list[dict], root: Path = REPOSITORY_ROOT) -> list[
 
         if not figure["artifacts"]:
             errors.append(f"{label}: no Artifact path is cited")
+        elif len(figure["artifacts"]) != 1:
+            errors.append(
+                f"{label}: exactly one Artifact path is expected, "
+                f"found {len(figure['artifacts'])}"
+            )
         for relative in figure["artifacts"]:
             if not relative.startswith(ARTIFACT_ROOT) or not relative.endswith(".png"):
                 errors.append(
