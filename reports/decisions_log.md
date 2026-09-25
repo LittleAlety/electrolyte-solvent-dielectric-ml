@@ -1972,3 +1972,117 @@ JSON 只重算了 `fe_structures` 段（`--fe-structures --write`），xTB 派�
 **计数复核（复审员独立执行）：** `reports/*.md` 54、`probes/*.json` 67、week1–8 递归 Markdown 72 / JSON 73、
 week7 61 文件 / 60 manifest 行、week8 75 文件 / 74 manifest 行、
 `data/dielectric_v03.csv` digest `a446c216…c01085`，均与文档一致。
+
+---
+
+## 2026-09-25 · v0.3.14 整表协议迁移代价轮：从 3 个对照扩到全表分布（第 3 轮）
+
+**本轮仍只做只读诊断 + 本地 xTB 复算，不改任何冻结产物**（数据集、特征表、digest、排除单、交付包、论文草稿一律未动；4 行仍不进拟合集）。
+
+### 问题
+
+上一轮只用 3 个对照分子证明 `--etemp 5000` 不是协议中立的，无法回答“整表迁移会动多少行、动多少”。
+本轮对全部 237 条冻结成功且缓存可严格配对的行，从**各自冻结管线实际用过的同一个 input.xyz** 重跑候选协议：
+`--opt --gfn 2 --chrg <q> --uhf 0 --etemp 5000`。
+
+### 证据保护
+
+- 直接复用冻结运行器自己的 `_valid_cache`：`input.xyz` / `xtbopt.xyz` / `xtb.out` 文本摘要、
+  cache_key / canonical SMILES / 电荷 / seed、以及可执行文件 path/size/mtime_ns 指纹必须逐项完全相等，才允许配对。
+  237/237 行全部通过，0 行放宽；`--check` 另确认当前二进制指纹与 237 行 manifest **完全相等、无 mtime 漂移**。该检查由回归测试锁定。
+- 每次重跑前调用冻结运行器的 `_clear_run_artifacts()` 清空候选目录，避免任何旧产物把失败伪装成成功；
+  并把“候选工作目录或运行目录等于、或位于冻结缓存目录之内”显式判为错误（比较解析后的路径，因此包含尚不存在的子目录）。
+- **复现 bug 修复（本轮新发现）：** 冻结特征表只保留 8 位有效数字（总能量 12 位），
+  而旧代码用比表本身更严的固定 1e-8 相对容差判断“缓存输出是否等于该冻结行”，
+  导致约 11% 的行仅因八位有效数字舍入被误判为无法配对。现改为按表实际存储精度判定。
+- 接受判定复用冻结运行器的真实判据；几何收敛单独记录。
+- 结果只落 git-ignored 的 `data/interim/xtb_protocol_migration/` 与证据 JSON。
+- 证据 JSON 另记录 xTB 可执行文件 SHA-256、版本行、线程数与起始几何来源；迁移没有使用新的几何 seed。
+- 运行口径为 `--threads 1`（`OMP_NUM_THREADS`/`MKL_NUM_THREADS=1`，与冻结 runner 默认一致）；
+  证据 JSON 另带 `cache_validation` 块说明校验模式与逐特征存储精度。
+
+### 全表结果
+
+| 指标 | 结果 |
+| --- | ---: |
+| 冻结成功且严格配对 | **237/237** |
+| 被冻结运行器拒绝 | **0/237** |
+| 运行器接受但几何未收敛 | **1/237**（`ALYCOCULEAWWJO-UHFFFAOYSA-N`） |
+| 任一特征相对位移 >1% | **74/237（31.22%）** |
+| 无特征超过 1% | **163/237（68.78%）** |
+| 偶极 >1% | 69/237 |
+| HL-Gap >1% | 34/237 |
+| 极化率 >1% | 9/237 |
+| 总能量 >1% | 0/237 |
+
+逐特征最大 mover：
+
+- 偶极：1-butyl-2,3-dimethylimidazolium tetrafluoroborate，1.374 → 5.561 D（+304.73%）。
+- HL-Gap：3-butyl-1,2,4,5-tetramethyl-1H-imidazol-3-ium tetrafluoroborate，0.0453 → 0.3900 eV（+760.93%）。
+- 极化率：1-ethyl-3-methylimidazolium butylsulfonate，168.1764 → 182.0997 a.u.（+8.28%）。
+- 总能量：ethanolammonium nitrate，−9.85899570109 → −9.895725718573 hartree（0.37%）。
+
+高相对百分比对接近零的 HL-Gap 会被放大，但最大 mover 的绝对变化 0.3447 eV 同样可观，不能降格成浮点噪声。
+
+### 判定
+
+**不把 v0.3.14 当作“补 4 行”。** 整表迁移会改变 74/237 条既有可用行的至少一个特征，必须整表重跑并重钉全部基准。
+本轮建议当前冻结版保持 236 行不动；若项目确实要覆盖 4 条失败行或统一带电体系口径，另立 v0.4 一次性重跑全部 241 条可用目标并重新验证。
+4 条失败行仍需各自的几何/SCF/结构表示路线，本轮的 237 行不包含它们。
+
+### 产物
+
+| 文件 | 作用 |
+| --- | --- |
+| `probes/xtb_protocol_migration_probe.py` | 全表迁移探针；`--check` 校验证据不变量 |
+| `probes/g1plus_xtb_protocol_migration_probe.json` | 结构化证据（逐行起始几何 SHA、缓存目录、四个特征、位移与接受状态） |
+| `reports/g1plus_xtb_protocol_migration_feasibility.md` | 决策卷宗 |
+| `tests/test_xtb_protocol_migration_probe.py` | 26 项回归（含全表 237 行严格配对、重复缓存歧义、错误 seed、清单损坏、缺失产物、CSV 存储精度、零基线语义、畸形 payload 不抛异常、日志哈希重算、**报告数字 vs 证据 JSON 一致性**、**截断证据必须被 deep check 拒绝**、**改名 `unmeasured` 逃避分母必须被拒绝**、**自报接受状态被翻转必须被拒绝**、**缺失 `cache_dir` 必须被拒绝**与**借用另一行的合法缓存必须被拒绝**） |
+
+### 验证快照
+
+探针 `--run --write --threads 1`（237/237 行）与 `--check` 均通过（`evidence invariants hold`）；专项测试 `26 passed`；
+全量 `pytest -q -p no:cacheprovider` **798 passed**（本轮新增 4 条迁移回归后由 794 增至 798；耗时随机器负载浮动，本机多次全量实测 129–190 s）；`ruff check .` All checks passed；
+7 个数据集/基准 verifier、`check_paper_artifact_consistency.py`、`verify_export_manifests.py`（week7/week8 双 PASS）、
+`probes/xtb_recovery_probe.py --check` 与 `probes/manual_appendix_reconciliation.py` 全部通过；规范数据集 digest 保持 `a446c216…c01085` 不变。
+
+### 只读对抗复审（第三轮 delta）
+
+第三轮 Reviewer（`adversarial-review-optimize` 只读席位）返回 **Not Ready（2 Critical / 3 Important / 3 Minor）**；
+其行号（guard 在 318-332、`_roster_completeness_problems` 在 731-771）与当前文件不符，
+说明复审读取的是**较早的工作区副本**。用其原攻击向量在当前修订上逐条复现：
+
+| 复审条目 | 严重度 | 当前修订实测 |
+| --- | --- | --- |
+| 237 条成功行整体改名 `unmeasured` + 伪造 reason | Critical | **拒绝**（逐行 `resolve_row_cache` 必须返回 `None`） |
+| 全部自报 `frozen_runner_accepts=false` | Critical | **拒绝**（不再按自报字段跳过 deep 复算） |
+| `cache_manifest_sha256` / `start_geometry_sha256` 未绑定 | Important | **拒绝**（逐行比对清单哈希、缓存 `input.xyz` 与 manifest） |
+| `run_environment.xtb_executable_sha256` 未绑定 | Important | **拒绝**（与当前二进制实测 SHA-256 比对） |
+| 候选工作目录落入冻结缓存（含尚不存在的子目录） | Important | **拒绝**（解析后比较，报错且无残留写入） |
+
+残留 Minor 2 项已记录、按「无 Critical/Important 即收口」停止：
+①`check_payload()` 外层 `try/except` 把多条内部错误压成单条诊断（fail-closed，不放行）；
+②CRLF / 起始几何两个回归经测试内辅助函数驱动（同文件另有 6 个测试直接驱动 `resolve_row_cache()`）。
+第三轮 Minor 中指出的极化率四舍五入值已在本轮更正为 `182.0997`。
+### 只读对抗复审（第四轮 delta）
+
+同一只读 Reviewer 在钉住哈希后重跑：上表 5 个攻击向量**全部 BLOCKED**，`§13` 三方自洽，两条残留 Minor 记录得当。
+但发现 **1 个新的 Important（已修）**：`_deep_row_problems()` 的缓存 provenance 校验原先写作
+`if live_fingerprint is not None and row.get("cache_dir")`，因此**只要删掉 `cache_dir`，整段 manifest 指纹、
+manifest SHA 与缓存 `input.xyz` 校验都会被静默跳过**；其最小反例（237 行全部 `pop("cache_dir")`）实测返回 `[]`。
+另有一个更弱的变体：把某一行的 `cache_dir` 换成另一分子的合法缓存并同步其 `cache_manifest_sha256`，同样返回 `[]`。
+
+最小修复：
+
+1. `cache_dir` 改为**必填**——缺失即记问题，不再作为整段校验的开关；
+2. 校验 `cache_dir` 的目录名必须属于该行 InChIKey（缓存目录名等于 InChIKey），堵住「借另一行的合法缓存」；
+3. 缓存 `input.xyz` 的文本摘要必须**同时**等于 manifest 的 `input_sha256` 与该行候选起始几何 `start_geometry_sha256`，
+   即把「冻结缓存来源」与「候选起始几何」直接绑定，而不是各自单独可过。
+
+新增 2 条回归（专项 26 项）：`test_deep_check_requires_a_cache_dir_on_every_measured_row`、
+`test_deep_check_binds_each_recorded_cache_dir_to_its_own_row`；真实证据仍 `evidence invariants hold`。
+
+第五轮 delta 复审（同一位 Reviewer，只验本项修复）：**Ready（Critical 0 / Important 0 / Minor 1）**。①删除 `cache_dir` → 237 条逐行 `cache_dir is missing`；②借用另一分子合法缓存 → 目录归属 + 起始几何绑定同时拦截；③`..\` 路径穿越、同 InChIKey 多目录、同步篡改 `start_geometry_sha256` 三个变体均 **BLOCKED**；④真实证据 `--check` 仍 `evidence invariants hold`；⑤两条新回归直接调用生产 `check_payload()`，非测试内重实现。
+
+**残留 Minor（本轮新增 1 项，记录不做）**：`_deep_row_problems()` 仅用 `Path(cache_dir).name.startswith(key)` 校验目录归属，未额外断言解析后的 `manifest_path` 位于 `FROZEN_CACHE` 之下。当前三类拦截（目录归属 / manifest SHA / 起始几何绑定）已挡住全部实际攻击，未复现出通过路径，因此不改代码，仅记为后续加固项。
+

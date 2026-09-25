@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import collections
 import csv
+import hashlib
 import json
 import re
 import sys
@@ -666,6 +667,7 @@ def _probe_manual(manual_path: Path | None) -> dict[str, object]:
     if manual_path is None or not manual_path.exists():
         return {"available": False, "path": str(manual_path) if manual_path else None}
     text = manual_path.read_text(encoding="utf-8")
+    manual_bytes = manual_path.read_bytes()
     lines = text.splitlines()
     hits = []
     for record in STALE_MANUAL_PHRASES:
@@ -712,6 +714,8 @@ def _probe_manual(manual_path: Path | None) -> dict[str, object]:
         "path": str(manual_path),
         "line_count": len(lines),
         "char_count": len(text),
+        "byte_count": len(manual_bytes),
+        "file_sha256": hashlib.sha256(manual_bytes).hexdigest(),
         "current_canonical_sha256": current_digest,
         "current_digest_pinned": current_digest in text,
         "stale_phrase_hits": hits,
