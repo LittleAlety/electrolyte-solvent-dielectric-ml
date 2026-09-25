@@ -71,10 +71,11 @@ absent from every earlier revision:
 battery-solvent supporting information (Wang & Shi, Adv. Funct. Mater. 2023,
 https://doi.org/10.1002/adfm.202212342). No traceable primary measurement was
 found for it, so it is flagged secondary_compilation_unverified with
-model_ready=false. v0.3.3 also applies 30 reproducible provenance patches
-(data/processed/dielectric_v03_provenance_patches.csv) that restore the
-source-priority decisions and conflict records that earlier hand-edits had
-lost.
+model_ready=false. v0.3.3 introduced the reproducible provenance-patch
+layer (data/processed/dielectric_v03_provenance_patches.csv) with 30 patches
+that restore the source-priority decisions and conflict records that earlier
+hand-edits had lost; the current v0.3.14 layer applies 38 (the D2 scope relabel
+added 8 rows).
 
 Every v0.3 addition records its source DOI, table or section identifier,
 temperature-source status, and any license or redistribution metadata the
@@ -171,6 +172,10 @@ by Murcko scaffold and acyclic compounds by ECFP4 Butina clustering, repeated
 over five balanced partitions. The log-target Physical representation has the
 best mean R2 (0.267 +/- 0.014) under this holdout.
 
+A pre-registered leave-EC-out sensitivity probe is reported in
+`reports/d1_leave_ec_out_sensitivity.md`; it is report-only and cannot change
+the v1.0 model.
+
 ## Applicability domain
 
 A prediction is flagged outside_associated_liquid when the compound carries at
@@ -250,7 +255,6 @@ The v0.2 predecessor built from ThermoML and NBS Circular 514.
 
 | File | Description |
 |------|-------------|
-| probes/dielectric_v03_summary.json | v0.3 build manifest and SHA256 |
 | probes/dielectric_v031_summary.json | v0.3.1 revision manifest |
 | probes/dielectric_representation_ablation_summary.json | Full 10x5 CV metrics for all representations |
 | probes/dielectric_mlp_probe_summary.json | MLP probe results |
@@ -262,9 +266,12 @@ The v0.2 predecessor built from ThermoML and NBS Circular 514.
 | probes/v032_target_scaffold_summary.json | v0.3.2 target-transform and scaffold benchmark (236 rows) |
 | probes/v032_ablation_summary.json | v0.3.2 main ablation benchmark (236 rows) |
 | probes/v032_controlled_comparison_summary.json | Paired PC/EC train-only control |
+| probes/dielectric_leave_ec_out_sensitivity.py | Pre-registered leave-EC-out sensitivity probe |
+| probes/dielectric_leave_ec_out_summary.json | Report-only sensitivity metrics for the EC single-row removal |
+| probes/artifacts/dielectric_leave_ec_out_predictions.csv | 14,160-row leave-EC-out prediction table |
+| scripts/verify_d1_leave_ec_out.py | Independent 8/8 verifier for the leave-EC-out artefact |
 | probes/dielectric_v03_summary.json | v0.3.3 build manifest, patches and SHA256 |
-| 
-eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
+| reports/g1_data_gate_review.md | G1 conflict list and provenance changes |
 
 ## Known gaps (for v1.1)
 

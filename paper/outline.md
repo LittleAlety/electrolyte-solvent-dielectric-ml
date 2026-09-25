@@ -53,6 +53,7 @@ holdout performance, and poor transfer to associated liquids.
 - Raw and `log(epsilon - 1)` targets.
 - Scaffold/cluster holdout for extrapolation.
 - Small-data MLP and Chemprop D-MPNN baseline rows.
+- Pre-registered leave-EC-out sensitivity probe (report-only; cannot change the v1.0 model).
 
 ## Data Records
 
@@ -61,7 +62,7 @@ holdout performance, and poor transfer to associated liquids.
 - `data/dielectric_v03.csv` (v0.3.3, 246 compounds, current)
 - `data/dielectric_v031.csv` (243) and `data/dielectric_v032.csv` (245), historical
 - `data/processed/dielectric_v03_exclusions.csv` (5-row curated exclusion list)
-- `data/processed/dielectric_v03_provenance_patches.csv` (30 reproducible patches)
+- `data/processed/dielectric_v03_provenance_patches.csv` (38 reproducible patches: 30 at v0.3.3, +8 at v0.3.14)
 - `data/processed/modern_solvent_public_review_observations.csv`
 - `data/processed/dielectric_physical_features_density.csv`
 - `data/processed/dielectric_physical_features_v03.csv`

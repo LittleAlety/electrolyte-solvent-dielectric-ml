@@ -2263,7 +2263,32 @@ ruff `EXE001` 读**文件系统执行位**；Windows 上该位不可表达，ruf
   `paper/methods_data_records.md`、`paper/outline.md`、`docs/week3/manual_dielectric_entry_schema.md`。
   此前该窗口只存在于 `scripts/build_dielectric_v03.py:177-178` 的常量与
   `verify_dielectric_v03.py:70-77` 的重算里，schema 与 Methods 只有个例叙述。
-- **仍待落地（本轮未做，明确标记为欠缺）。** 预注册的
-  **leave-EC-out 敏感性分析**（固定折叠、只把 EC 移出训练折、报告 235 行配对指标与 EC 自身误差）
-  尚未实现。该分析定位为 **报告型稳健性探针，不参与 v1.0 模型选择**；
-  即使排序翻转也只作为 limitation 记录，不触发后验模型切换。
+- **补充落地（2026-09-25 同日闭环）。** 预注册的 leave-EC-out 敏感性分析已实现并验证：
+  固定 `RepeatedKFold(5x10, seed = 42 + split index)`，只把 EC 移出训练折，
+  其余 235 行折叠号完全不变；全部 7,080 个冻结预测值以 12 位有效数字精确复现。
+  Hybrid R2 0.3494 -> 0.3381（配对 delta -0.0112，95% CI [-0.0243, +0.0018]，p=0.083），
+  MAE 6.5065 -> 6.4874（p=0.606），Spearman 0.8263 -> 0.8295（p=0.148）；
+  三种表示的组内指标排序均未改变。EC 自身留一预测：Hybrid/Physical/Morgan = 41.6/54.2/29.0，
+  真值 90.5，排名百分位 98.7/98.7/94.9——模型认得出它是极端值，但把幅度压缩约 2.2 倍。
+  产物：`probes/dielectric_leave_ec_out_summary.json`、
+  `probes/artifacts/dielectric_leave_ec_out_predictions.csv`、
+  `probes/artifacts/dielectric_leave_ec_out.png`；独立验证器
+  `scripts/verify_d1_leave_ec_out.py` 8/8；人类可读报告
+  `reports/d1_leave_ec_out_sensitivity.md`。
+  该分析仍为 **报告型稳健性探针，不参与 v1.0 模型选择**；未改动任何数据单元或 digest。
+
+
+## 2026-09-25 · D1 闭环：leave-EC-out 敏感性落地并接入 CI
+
+- **完成。** 新增 `probes/dielectric_leave_ec_out_sensitivity.py`、`probes/dielectric_leave_ec_out_summary.json`、
+  `probes/artifacts/dielectric_leave_ec_out_predictions.csv`（14,160 行）与 `probes/artifacts/dielectric_leave_ec_out.png`，
+  以及回归测试 `tests/test_dielectric_leave_ec_out.py`（20 passed）和独立验证器
+  `scripts/verify_d1_leave_ec_out.py`（8/8 PASS）。人类可读报告为 `reports/d1_leave_ec_out_sensitivity.md`。
+- **不变量。** 全部 7,080 个冻结预测值以 12 位有效数字精确复现；其余 235 行折叠号不变；
+  EC 在 10 个 repeat 中恰好各被留出一次，训练中出现 0 次；所有输入摘要运行前后不变。
+- **报告结论。** Hybrid R2 0.3494 -> 0.3381（95% CI [-0.0243, +0.0018]，p=0.083），
+  MAE 6.5065 -> 6.4874（p=0.606）；Morgan / Physical / Morgan+Physical 的组内指标排序均未改变。
+  EC 留一预测严重压缩（Hybrid 41.6 vs 90.5），但排名百分位 98.7，说明模型识别出它是极端值而非普通点。
+- **冻结边界。** 本探针只产生新的报告型产物，不修改 `data/dielectric_v03.csv`、
+  236 行冻结拟合集或 `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4` digest；
+  不触发任何后验模型切换、特征变更或数据修订。CI 新增步骤 `Verify D1 leave-EC-out sensitivity`。

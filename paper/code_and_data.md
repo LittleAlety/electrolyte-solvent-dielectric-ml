@@ -18,12 +18,13 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── dielectric_v032.csv          # v0.3.2: PC+EC freeze (245, historical)
 │   ├── processed/
 │   │   ├── dielectric_v03_exclusions.csv           # 5-row curated exclusion list
-│   │   ├── dielectric_v03_provenance_patches.csv   # 30 reproducible patches
+│   │   ├── dielectric_v03_provenance_patches.csv   # 38 patches (30 at v0.3.3, +8 at v0.3.14)
 │   └── restricted/                  # Non-redistributable cross-check evidence
 ├── scripts/
 │   ├── build_dielectric_v03.py      # v0.3/v0.3.3 deterministic builder
 │   ├── verify_dielectric_v03.py     # v0.3.3 verifier (7/7 checks, 246 rows)
 │   ├── verify_dielectric_v032.py    # v0.3.2 verifier (7/7 checks, 245 rows)
+│   ├── verify_d1_leave_ec_out.py    # D1 sensitivity verifier (8/8 checks)
 │   ├── build_paper_full_draft.py    # Assembles paper/full_draft.md from the sections
 │   ├── check_paper_artifact_consistency.py  # Paper claims vs. frozen artifacts
 │   ├── run_xtb_physical_features.py
@@ -37,6 +38,8 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── v032_ablation_summary.json               # v0.3.2 236-row benchmark
 │   ├── v032_target_scaffold_summary.json        # v0.3.2 scaffold holdout
 │   ├── v032_controlled_comparison_summary.json  # Paired PC/EC control
+│   ├── dielectric_leave_ec_out_sensitivity.py  # Pre-registered leave-EC-out probe
+│   ├── dielectric_leave_ec_out_summary.json     # D1 report-only sensitivity metrics
 │   └── artifacts/                               # Figures and plots
 ├── reports/
 │   ├── decisions_log.md                         # Full decision record
@@ -88,6 +91,7 @@ pytest tests/ -v
 python scripts/verify_dielectric_v032.py # 7/7 checks, 245 rows
 python scripts/verify_dielectric_v03.py  # 7/7 checks, 246 rows
 python scripts/verify_export_manifests.py
+python scripts/verify_d1_leave_ec_out.py # 8/8 checks
 
 # Paper claims vs. frozen artifacts
 python scripts/check_paper_artifact_consistency.py

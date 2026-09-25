@@ -3,6 +3,7 @@
 **Date:** 2026-09-24
 **Historical notice:** This report documents the superseded v0.3.2 line.
 The current candidate is v0.3.3; see `reports/v033_provenance_upgrade.md`.
+D1 leave-EC-out sensitivity: `reports/d1_leave_ec_out_sensitivity.md`.
 **Baseline commit:** 867fae5 (Week 7 G1-G5 deliverables)
 **Output:** `data/dielectric_v032.csv` (245 compounds)
 **Status:** release candidate. The `v1.0` tag stays deleted until the

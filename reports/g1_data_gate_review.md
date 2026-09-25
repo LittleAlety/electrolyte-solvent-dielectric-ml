@@ -4,6 +4,8 @@
 > Updated 2026-09-24 (v0.3.3): G1+ tiers 0-3 executed; MOPN gap row added;
 > provenance made reproducible. Details: `reports/v033_provenance_upgrade.md`.
 > All findings from Week 7-8 G1+ source-priority pass.
+> Updated 2026-09-25 (D1 closure): EC extreme-value sensitivity reported in
+> `reports/d1_leave_ec_out_sensitivity.md`; it is report-only and changes no digest.
 
 ## 1. New Additions (v0.3.2)
 
@@ -60,5 +62,6 @@ These compounds were listed as "known gaps" in G1 report v1 but their IUPAC/syst
 | G1e: VC conflict | **Confirmed** | model_ready=false |
 | G1f: Applicability domain | **FIXED** | Structural HBD≥1 (`[O,S,N;!H0]`); Onsager variant measured and rejected (0/150 coverage of ε>60) |
 | G1g: v1.0 premature tag | **DELETED** | Local + remote deleted |
-| G1h: reproducible provenance | **RESOLVED (v0.3.3)** | v0.3.3 absorbed 4 hand-edited rows into what was then a 19-patch checked-in layer; the current v0.3.12 layer holds 30 patches and the verifier still applies it |
+| G1h: reproducible provenance | **RESOLVED (v0.3.3)** | v0.3.3 absorbed 4 hand-edited rows into a 19-patch layer and then held 30 patches; the current v0.3.14 layer holds 38 (D2 added 8) and the verifier applies it |
+| G1j: EC extreme-value sensitivity | **REPORTED (D1)** | Leave-EC-out Hybrid R2 delta -0.0112 (p=0.083), all metric rankings unchanged; see `reports/d1_leave_ec_out_sensitivity.md` |
 | G1i: `model_ready` is advisory only | **FIXED (v0.3.4)** | `read_modelling_rows` now withholds every row whose dataset record is not `model_ready=true` and returns those rows explicitly; the accounting invariant counts them. Vinylene carbonate is withheld, the fitted set fell 237 -> 236, and the controlled PC/EC gain fell from +0.0265 to +0.0059 (p = 0.11). See `reports/v034_model_ready_gate.md`. |

@@ -581,7 +581,7 @@ G2 外部测试（PC/EC 预测 21.6/33.7 vs 真值 64.9/90.5）定量了**第三
 
 **L-1.1 D1：EC 温度带例外（半天）**
 - 数据动作：`data/dielectric_v03.csv` 中 EC 行的 `temperature_band` 已应为 `extended_temperature`——核查确认；论文 Methods 加一句口径定义（模板）：*"The main window is 293.15–303.15 K; ethylene carbonate (m.p. 36.4 °C) is admitted as a single explicit exception at 313.15 K, flagged `extended_temperature`, because no room-temperature liquid measurement exists."*
-- 敏感性探针（pre-registered，防审稿人问）：`probes/dielectric_leave_ec_out_probe.py`——冻结折号不变，从拟合集剔除 EC 单行重跑 hybrid raw/log 两臂，输出 `probes/leave_ec_out_summary.json`（R²/MAE/Spearman delta）。无门槛，如实报告。验收：结果行进入论文 Supplementary，主文一句话。
+- 敏感性探针（pre-registered，已于 2026-09-25 落地）：`probes/dielectric_leave_ec_out_sensitivity.py`——冻结折号不变，只把 EC 移出训练折，重跑 Morgan/Physical/Hybrid 三种表示；机读摘要 `probes/dielectric_leave_ec_out_summary.json`，逐 repeat 预测 `probes/artifacts/dielectric_leave_ec_out_predictions.csv`，人类可读报告 `reports/d1_leave_ec_out_sensitivity.md`。结果：Hybrid R² 0.3494→0.3381（95% CI [−0.0243,+0.0018]，p=0.083），三种表示的组内指标排序均不变。无门槛、不参与 v1.0 模型选择；已接入 CI，`verify_d1_leave_ec_out.py` 8/8 PASS。
 - 验证：`verify_dielectric_v03.py` 7/7 不动（本探针不改数据）。
 
 **L-1.2 D2：4 条 blocked 行的文档措辞（1 小时）**

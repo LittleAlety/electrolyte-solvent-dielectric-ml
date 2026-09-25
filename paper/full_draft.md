@@ -158,10 +158,11 @@ absent from every earlier revision:
 battery-solvent supporting information (Wang & Shi, Adv. Funct. Mater. 2023,
 https://doi.org/10.1002/adfm.202212342). No traceable primary measurement was
 found for it, so it is flagged secondary_compilation_unverified with
-model_ready=false. v0.3.3 also applies 30 reproducible provenance patches
-(data/processed/dielectric_v03_provenance_patches.csv) that restore the
-source-priority decisions and conflict records that earlier hand-edits had
-lost.
+model_ready=false. v0.3.3 introduced the reproducible provenance-patch
+layer (data/processed/dielectric_v03_provenance_patches.csv) with 30 patches
+that restore the source-priority decisions and conflict records that earlier
+hand-edits had lost; the current v0.3.14 layer applies 38 (the D2 scope relabel
+added 8 rows).
 
 Every v0.3 addition records its source DOI, table or section identifier,
 temperature-source status, and any license or redistribution metadata the
@@ -258,6 +259,10 @@ by Murcko scaffold and acyclic compounds by ECFP4 Butina clustering, repeated
 over five balanced partitions. The log-target Physical representation has the
 best mean R2 (0.267 +/- 0.014) under this holdout.
 
+A pre-registered leave-EC-out sensitivity probe is reported in
+`reports/d1_leave_ec_out_sensitivity.md`; it is report-only and cannot change
+the v1.0 model.
+
 ## Applicability domain
 
 A prediction is flagged outside_associated_liquid when the compound carries at
@@ -337,7 +342,6 @@ The v0.2 predecessor built from ThermoML and NBS Circular 514.
 
 | File | Description |
 |------|-------------|
-| probes/dielectric_v03_summary.json | v0.3 build manifest and SHA256 |
 | probes/dielectric_v031_summary.json | v0.3.1 revision manifest |
 | probes/dielectric_representation_ablation_summary.json | Full 10x5 CV metrics for all representations |
 | probes/dielectric_mlp_probe_summary.json | MLP probe results |
@@ -349,9 +353,12 @@ The v0.2 predecessor built from ThermoML and NBS Circular 514.
 | probes/v032_target_scaffold_summary.json | v0.3.2 target-transform and scaffold benchmark (236 rows) |
 | probes/v032_ablation_summary.json | v0.3.2 main ablation benchmark (236 rows) |
 | probes/v032_controlled_comparison_summary.json | Paired PC/EC train-only control |
+| probes/dielectric_leave_ec_out_sensitivity.py | Pre-registered leave-EC-out sensitivity probe |
+| probes/dielectric_leave_ec_out_summary.json | Report-only sensitivity metrics for the EC single-row removal |
+| probes/artifacts/dielectric_leave_ec_out_predictions.csv | 14,160-row leave-EC-out prediction table |
+| scripts/verify_d1_leave_ec_out.py | Independent 8/8 verifier for the leave-EC-out artefact |
 | probes/dielectric_v03_summary.json | v0.3.3 build manifest, patches and SHA256 |
-| 
-eports/g1_data_gate_review.md | G1 conflict list and provenance changes |
+| reports/g1_data_gate_review.md | G1 conflict list and provenance changes |
 
 ## Known gaps (for v1.1)
 
@@ -535,6 +542,24 @@ EC (true 90.5). Adding these two solvents improves interpolation among the
 existing 234 compounds; it does not give the model extrapolation ability for
 unseen high-permittivity carbonates. This limitation is consistent with the
 applicability-domain rule recorded in the dataset.
+
+**Leave-EC-out sensitivity.** A pre-registered report-only probe removed
+ethylene carbonate (313.15 K, epsilon 90.5, extended_temperature) from the
+training folds while keeping the other 235 compounds' frozen fold identifiers
+unchanged. The baseline arm reproduced all 7,080 frozen prediction rows. The
+hybrid R2 changed from 0.3494 to 0.3381 (paired delta -0.0112, 95% CI
+[-0.0243, +0.0018], p = 0.083); MAE changed from 6.5065 to 6.4874 (p = 0.606)
+and Spearman from 0.8263 to 0.8295 (p = 0.148). The within-representation
+metric ranking was unchanged for Morgan, Physical and Morgan+Physical, and the
+explicit family ranking across the three representations was likewise identical
+in both arms for every metric. When EC was scored from the 235-row
+leave-EC-out fits, the hybrid mean prediction was 41.6 against the stored 90.5
+(rank percentile 98.7 among the 235 compounds);
+the model recognises EC as an extreme target but compresses its magnitude.
+This probe is disclosure only and cannot trigger a model switch, feature change
+or dataset revision. It is distinct from the external holdout above: the
+holdout trains on 234 v0.3 compounds, whereas this probe removes one row from
+the 236-row modelling set.
 
 **Domain-gap external test.** The frozen v0.2 model (trained on 205 classic
 organic compounds) was applied to 29 new v0.3 battery-relevant solvents as an
@@ -815,12 +840,13 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── dielectric_v032.csv          # v0.3.2: PC+EC freeze (245, historical)
 │   ├── processed/
 │   │   ├── dielectric_v03_exclusions.csv           # 5-row curated exclusion list
-│   │   ├── dielectric_v03_provenance_patches.csv   # 30 reproducible patches
+│   │   ├── dielectric_v03_provenance_patches.csv   # 38 patches (30 at v0.3.3, +8 at v0.3.14)
 │   └── restricted/                  # Non-redistributable cross-check evidence
 ├── scripts/
 │   ├── build_dielectric_v03.py      # v0.3/v0.3.3 deterministic builder
 │   ├── verify_dielectric_v03.py     # v0.3.3 verifier (7/7 checks, 246 rows)
 │   ├── verify_dielectric_v032.py    # v0.3.2 verifier (7/7 checks, 245 rows)
+│   ├── verify_d1_leave_ec_out.py    # D1 sensitivity verifier (8/8 checks)
 │   ├── build_paper_full_draft.py    # Assembles paper/full_draft.md from the sections
 │   ├── check_paper_artifact_consistency.py  # Paper claims vs. frozen artifacts
 │   ├── run_xtb_physical_features.py
@@ -834,6 +860,8 @@ benchmark outputs are deposited in a public GitHub repository:
 │   ├── v032_ablation_summary.json               # v0.3.2 236-row benchmark
 │   ├── v032_target_scaffold_summary.json        # v0.3.2 scaffold holdout
 │   ├── v032_controlled_comparison_summary.json  # Paired PC/EC control
+│   ├── dielectric_leave_ec_out_sensitivity.py  # Pre-registered leave-EC-out probe
+│   ├── dielectric_leave_ec_out_summary.json     # D1 report-only sensitivity metrics
 │   └── artifacts/                               # Figures and plots
 ├── reports/
 │   ├── decisions_log.md                         # Full decision record
@@ -885,6 +913,7 @@ pytest tests/ -v
 python scripts/verify_dielectric_v032.py # 7/7 checks, 245 rows
 python scripts/verify_dielectric_v03.py  # 7/7 checks, 246 rows
 python scripts/verify_export_manifests.py
+python scripts/verify_d1_leave_ec_out.py # 8/8 checks
 
 # Paper claims vs. frozen artifacts
 python scripts/check_paper_artifact_consistency.py

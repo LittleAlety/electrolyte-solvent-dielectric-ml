@@ -140,3 +140,6 @@ per-row provenance layer.
 > and the 236-row frozen benchmark are byte-identical. Every earlier hash quoted
 > above remains the historical pin of its own revision and is deliberately not
 > rewritten.
+>
+> The D1 leave-EC-out probe wrote no data cell and did not change this digest;
+> see `reports/d1_leave_ec_out_sensitivity.md`.

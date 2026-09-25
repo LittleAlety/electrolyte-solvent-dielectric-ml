@@ -160,6 +160,24 @@ existing 234 compounds; it does not give the model extrapolation ability for
 unseen high-permittivity carbonates. This limitation is consistent with the
 applicability-domain rule recorded in the dataset.
 
+**Leave-EC-out sensitivity.** A pre-registered report-only probe removed
+ethylene carbonate (313.15 K, epsilon 90.5, extended_temperature) from the
+training folds while keeping the other 235 compounds' frozen fold identifiers
+unchanged. The baseline arm reproduced all 7,080 frozen prediction rows. The
+hybrid R2 changed from 0.3494 to 0.3381 (paired delta -0.0112, 95% CI
+[-0.0243, +0.0018], p = 0.083); MAE changed from 6.5065 to 6.4874 (p = 0.606)
+and Spearman from 0.8263 to 0.8295 (p = 0.148). The within-representation
+metric ranking was unchanged for Morgan, Physical and Morgan+Physical, and the
+explicit family ranking across the three representations was likewise identical
+in both arms for every metric. When EC was scored from the 235-row
+leave-EC-out fits, the hybrid mean prediction was 41.6 against the stored 90.5
+(rank percentile 98.7 among the 235 compounds);
+the model recognises EC as an extreme target but compresses its magnitude.
+This probe is disclosure only and cannot trigger a model switch, feature change
+or dataset revision. It is distinct from the external holdout above: the
+holdout trains on 234 v0.3 compounds, whereas this probe removes one row from
+the 236-row modelling set.
+
 **Domain-gap external test.** The frozen v0.2 model (trained on 205 classic
 organic compounds) was applied to 29 new v0.3 battery-relevant solvents as an
 external validation set. The Hybrid model achieves R2=0.286 and Spearman=0.590,
