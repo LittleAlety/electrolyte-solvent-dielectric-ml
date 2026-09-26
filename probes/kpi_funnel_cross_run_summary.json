@@ -1,0 +1,1015 @@
+{
+  "schema_version": 1,
+  "task": "kpi_funnel_cross_run",
+  "generated_at_utc": "2026-09-26T09:43:47Z",
+  "prereg": {
+    "path": "probes/kpi_funnel_cross_run_prereg.json",
+    "locked_at_utc": "2026-09-26T09:11:42Z",
+    "sha256": "42e3fa658d903623fefefc9da6733619008ff1d1b1af109342626330886a12ee",
+    "note": "判据与阶段定义在跑之前冻结；本轮未回填、未放宽。"
+  },
+  "source": {
+    "shortlist_csv": {
+      "path": "data/reference/kpi_15_14_shortlists.csv",
+      "available": true,
+      "bytes": 6041,
+      "sha256": "95aa21240e752ab27274ef30220c72a1657e042762fdffc4b3deb9599e36a0a4"
+    },
+    "shortlist_rows": 29,
+    "shortlist_by_shortlist": {
+      "15": 15,
+      "14": 14
+    },
+    "identity_csv": {
+      "path": "data/reference/kpi_shortlist_identity.csv",
+      "available": true,
+      "bytes": 9587,
+      "sha256": "29d7ebab031826b09b8a28c5fa2cf1576d5e4ba6c3f97ecce9afe5989e3dc976",
+      "note": "写盘前由本轮重解结果算出，故与首次运行时文件是否存在无关。"
+    },
+    "roster_csv": {
+      "path": "data/reference/identity_map.csv",
+      "available": true,
+      "bytes": 127199,
+      "sha256": "2db76cd728090f4cfa2acc633b0582fae235cae0203acdedf4d36e7a9d68f91f"
+    },
+    "epsilon_v03_csv": {
+      "path": "data/dielectric_v03.csv",
+      "available": true,
+      "bytes": 130844,
+      "sha256": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4"
+    },
+    "epsilon_v11plus_csv": {
+      "path": "data/processed/dielectric_observations_v11plus.csv",
+      "available": true,
+      "bytes": 921601,
+      "sha256": "159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9"
+    },
+    "liquid_window_csv": {
+      "path": "data/external/g1plus/pubchem/liquid_window/liquid_window_selected.csv",
+      "available": true,
+      "bytes": 381815,
+      "sha256": "430f3b576b4a841940684aa46f17702fe4c424f4a181271872ede0d13e904a29"
+    }
+  },
+  "pools": {
+    "ours": {
+      "id": "batt_p30k",
+      "path": "data/raw/batt/Batt-P30K.h5",
+      "n_declared": 29519,
+      "n_measured_this_round": 29519,
+      "available": true,
+      "unparsable_smiles": 0
+    },
+    "kpi": {
+      "id": "qm9_screened",
+      "kind": "QM9",
+      "n_declared": 133885,
+      "available_locally": false,
+      "why_unavailable": "QM9 从未进入本仓，网络侧也未获取（研究范围外）"
+    },
+    "comparability": "pool_different: 只允许比比例与规则，不允许比绝对计数，也不允许把比例差异单方面归因于漏斗"
+  },
+  "identity_resolution": {
+    "rows": 29,
+    "resolved": 29,
+    "unresolved": [],
+    "by_route": {
+      "smiles_rdkit": 14,
+      "cas_pubchem": 15
+    },
+    "declared": {
+      "shortlist_rows": 29,
+      "smiles_rows": 14,
+      "cas_rows": 15,
+      "smiles_route": "RDKit Chem.MolFromSmiles -> Chem.MolToInchiKey",
+      "cas_route": "PubChem PUG-REST https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{cas}/property/SMILES,ConnectivitySMILES,InChIKey,MolecularFormula,MolecularWeight/JSON",
+      "throttle_seconds": 0.25,
+      "cache_dir": "data/external/g1plus/pubchem/kpi_shortlist_identity/",
+      "committed_table": "data/reference/kpi_shortlist_identity.csv",
+      "failure_rule": "CAS 解析不到就照实记 unresolved，判据 B 判为未达成；不得用猜的结构补位、不得跳过该行后再声称 29/29",
+      "smarts_note": "短清单的 14 条 SMILES 逐字来自 SI 图 S21；不重写、不做规范化后再转录"
+    }
+  },
+  "stages": [
+    {
+      "id": "S0",
+      "name": "pool",
+      "rule": "池内全部分子",
+      "runnable": true,
+      "provenance": "Batt-P30K.h5"
+    },
+    {
+      "id": "S1",
+      "name": "kpi_structural_filter",
+      "rule": "剔除含活泼氢官能团（-OH / -COOH）的分子；Molwt < 600；#Heavy < 30",
+      "runnable": true,
+      "provenance": "KPI SI §11，手册 AA-3 第 3 条逐字转述",
+      "smarts": {
+        "hydroxyl": "[OX2H]",
+        "carboxyl": "[CX3](=O)[OX2H1]"
+      },
+      "note": "carboxyl 的 OH 被 hydroxyl 的 [OX2H] 覆盖，两者分开记录但排除用并集"
+    },
+    {
+      "id": "S2",
+      "name": "our_hazard_gate",
+      "rule": "命中本仓危险官能团表任一 SMARTS 即剔除（单一真源 = probes/al_round1.py HAZARD_SMARTS）",
+      "runnable": true,
+      "provenance": "本仓既有漏斗入口 probes/al_round1.py",
+      "kind": "our_differentiator"
+    },
+    {
+      "id": "S3",
+      "name": "element_whitelist_derived",
+      "rule": "元素白名单 = KPI 29 行短清单解析出的元素并集；不在白名单内的分子剔除",
+      "runnable": true,
+      "provenance": "由短清单导出，不是 KPI 原文值",
+      "caveat": "KPI 只说 11 种元素、未给清单；此白名单是导出值，必须标 derived_not_declared",
+      "kind": "derived_not_declared"
+    },
+    {
+      "id": "S4",
+      "name": "property_thresholds",
+      "rule": "MP < 230 K，BP > 430 K，FP > 360 K",
+      "runnable": false,
+      "provenance": "KPI SI §11",
+      "why_not_runnable": "本仓没有 MP/BP/FP 模型（手册附录 Q-2 出口 2 的 models/homo_lumo_baselines.json 只覆盖 HOMO/LUMO/IP/EA）；Batt-P30K 也不带这三性质。该阶段本轮**登记为缺口**，不猜、不插值、不用别人的表补。",
+      "registered_as": "gap"
+    }
+  ],
+  "funnel_ours": [
+    {
+      "id": "S0",
+      "name": "pool",
+      "survivors": 29519,
+      "excluded_here": 0,
+      "survival_rate": 1.0
+    },
+    {
+      "id": "S1",
+      "name": "kpi_structural_filter",
+      "survivors": 29519,
+      "excluded_here": 0,
+      "survival_rate": 1.0,
+      "exclusion_reasons": {}
+    },
+    {
+      "id": "S2",
+      "name": "our_hazard_gate",
+      "survivors": 22249,
+      "excluded_here": 7270,
+      "survival_rate": 0.7537179443748094,
+      "exclusion_reasons": {
+        "sulfonyl_halide": 325,
+        "s_x_bond": 531,
+        "acyl_halide": 714,
+        "nitro": 559,
+        "aldehyde": 1885,
+        "alpha_halo_ether": 463,
+        "thiocarbonyl": 713,
+        "n_x_bond": 372,
+        "p_x_bond": 382,
+        "isocyanate": 222,
+        "epoxide": 729,
+        "halogen_oxygen": 323,
+        "s_s_bond": 219,
+        "peroxide": 547,
+        "azide": 4
+      }
+    },
+    {
+      "id": "S3",
+      "name": "element_whitelist_derived",
+      "survivors": 11709,
+      "excluded_here": 10540,
+      "survival_rate": 0.3966597784477794,
+      "exclusion_reasons": {
+        "outside_whitelist:F": 3206,
+        "outside_whitelist:F+S": 593,
+        "outside_whitelist:P": 1100,
+        "outside_whitelist:F+P": 117,
+        "outside_whitelist:S": 2836,
+        "outside_whitelist:Cl": 1770,
+        "outside_whitelist:Cl+S": 319,
+        "outside_whitelist:Cl+F": 309,
+        "outside_whitelist:Cl+P": 65,
+        "outside_whitelist:P+S": 185,
+        "outside_whitelist:Cl+F+S": 24,
+        "outside_whitelist:Cl+P+S": 6,
+        "outside_whitelist:F+P+S": 8,
+        "outside_whitelist:Cl+F+P": 2
+      }
+    },
+    {
+      "id": "S4",
+      "name": "property_thresholds",
+      "survivors": null,
+      "excluded_here": null,
+      "survival_rate": null,
+      "registered_as": "gap",
+      "why": "本仓没有 MP/BP/FP 模型，Batt-P30K 也不带这三性质；不跑、不猜。"
+    }
+  ],
+  "funnel_kpi_declared": {
+    "note": "KPI 自己声明的级联，转述不复算；本仓没有 QM9 池，不声称复现。",
+    "recomputed_by_this_project": false
+  },
+  "criterion_a_self_consistency": {
+    "rows_checked": 29,
+    "rows_with_violations": 0,
+    "violating_rows": [],
+    "allowed_violations": 0,
+    "passed": true,
+    "detail": [
+      {
+        "row_key": "14-1",
+        "cas": "",
+        "smiles": "O=COCC1COCO1",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 132.115,
+        "mp_k": "229.2",
+        "bp_k": "458.3",
+        "fp_k": "360.6"
+      },
+      {
+        "row_key": "14-2",
+        "cas": "",
+        "smiles": "N#CCCCC1CCC1",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 123.199,
+        "mp_k": "225.4",
+        "bp_k": "489.3",
+        "fp_k": "362.0"
+      },
+      {
+        "row_key": "14-3",
+        "cas": "",
+        "smiles": "N#CCCC1=CCCC1",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 121.183,
+        "mp_k": "223.9",
+        "bp_k": "492.6",
+        "fp_k": "363.2"
+      },
+      {
+        "row_key": "14-4",
+        "cas": "",
+        "smiles": "N#CCCC1(CC1)C#N",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 120.155,
+        "mp_k": "228.0",
+        "bp_k": "525.0",
+        "fp_k": "387.0"
+      },
+      {
+        "row_key": "14-5",
+        "cas": "",
+        "smiles": "CCC(CC#N)CC#N",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 122.171,
+        "mp_k": "222.3",
+        "bp_k": "513.8",
+        "fp_k": "381.3"
+      },
+      {
+        "row_key": "14-6",
+        "cas": "",
+        "smiles": "CC(CCC#N)CC#N",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 122.171,
+        "mp_k": "219.3",
+        "bp_k": "519.2",
+        "fp_k": "382.0"
+      },
+      {
+        "row_key": "14-7",
+        "cas": "",
+        "smiles": "CCC(CCC#N)C#N",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 122.171,
+        "mp_k": "223.3",
+        "bp_k": "514.2",
+        "fp_k": "381.8"
+      },
+      {
+        "row_key": "14-8",
+        "cas": "",
+        "smiles": "C#CCCOCCCC#N",
+        "violations": [],
+        "heavy_atom_count": 10,
+        "molwt_rdkit": 137.182,
+        "mp_k": "224.7",
+        "bp_k": "477.2",
+        "fp_k": "361.9"
+      },
+      {
+        "row_key": "14-9",
+        "cas": "",
+        "smiles": "CC(COCC#N)C#N",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 124.143,
+        "mp_k": "226.4",
+        "bp_k": "497.7",
+        "fp_k": "378.4"
+      },
+      {
+        "row_key": "14-10",
+        "cas": "",
+        "smiles": "CC(CCOC=O)C#N",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 127.143,
+        "mp_k": "227.7",
+        "bp_k": "474.8",
+        "fp_k": "361.7"
+      },
+      {
+        "row_key": "14-11",
+        "cas": "",
+        "smiles": "CC(COC=O)CC#N",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 127.143,
+        "mp_k": "221.4",
+        "bp_k": "476.7",
+        "fp_k": "363.8"
+      },
+      {
+        "row_key": "14-12",
+        "cas": "",
+        "smiles": "CC(CCC#N)C1CO1",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 125.171,
+        "mp_k": "226.1",
+        "bp_k": "499.2",
+        "fp_k": "360.7"
+      },
+      {
+        "row_key": "14-13",
+        "cas": "",
+        "smiles": "N#CCCOC1CCC1",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 125.171,
+        "mp_k": "226.4",
+        "bp_k": "476.5",
+        "fp_k": "365.8"
+      },
+      {
+        "row_key": "14-14",
+        "cas": "",
+        "smiles": "CC1COCC1CC#N",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 125.171,
+        "mp_k": "228.7",
+        "bp_k": "492.9",
+        "fp_k": "361.0"
+      },
+      {
+        "row_key": "15-1",
+        "cas": "96-48-0",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 6,
+        "molwt_rdkit": 86.09,
+        "mp_k": "228.2",
+        "bp_k": "477.2",
+        "fp_k": "371.5"
+      },
+      {
+        "row_key": "15-2",
+        "cas": "108-32-7",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 7,
+        "molwt_rdkit": 102.089,
+        "mp_k": "224.4",
+        "bp_k": "514.8",
+        "fp_k": "389.2"
+      },
+      {
+        "row_key": "15-3",
+        "cas": "4437-69-8",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 8,
+        "molwt_rdkit": 116.116,
+        "mp_k": "222.6",
+        "bp_k": "504.3",
+        "fp_k": "369.8"
+      },
+      {
+        "row_key": "15-4",
+        "cas": "4437-70-1",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 8,
+        "molwt_rdkit": 116.116,
+        "mp_k": "217.3",
+        "bp_k": "513.9",
+        "fp_k": "367.4"
+      },
+      {
+        "row_key": "15-5",
+        "cas": "4437-85-8",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 8,
+        "molwt_rdkit": 116.116,
+        "mp_k": "216.9",
+        "bp_k": "514.2",
+        "fp_k": "514.2"
+      },
+      {
+        "row_key": "15-6",
+        "cas": "6975-71-9",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 121.183,
+        "mp_k": "227.8",
+        "bp_k": "491.8",
+        "fp_k": "365.0"
+      },
+      {
+        "row_key": "15-7",
+        "cas": "623-35-8",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 7,
+        "molwt_rdkit": 94.117,
+        "mp_k": "220.9",
+        "bp_k": "493.2",
+        "fp_k": "384.9"
+      },
+      {
+        "row_key": "15-8",
+        "cas": "17611-82-4",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 8,
+        "molwt_rdkit": 108.144,
+        "mp_k": "220.8",
+        "bp_k": "499.5",
+        "fp_k": "381.0"
+      },
+      {
+        "row_key": "15-9",
+        "cas": "4172-97-8",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 122.171,
+        "mp_k": "228.9",
+        "bp_k": "503.3",
+        "fp_k": "372.8"
+      },
+      {
+        "row_key": "15-10",
+        "cas": "32091-48-8",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 8,
+        "molwt_rdkit": 108.144,
+        "mp_k": "211.0",
+        "bp_k": "508.8",
+        "fp_k": "383.3"
+      },
+      {
+        "row_key": "15-11",
+        "cas": "15074-49-4",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 122.171,
+        "mp_k": "221.2",
+        "bp_k": "509.7",
+        "fp_k": "374.7"
+      },
+      {
+        "row_key": "15-12",
+        "cas": "4553-62-2",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 8,
+        "molwt_rdkit": 108.144,
+        "mp_k": "220.8",
+        "bp_k": "508.6",
+        "fp_k": "380.6"
+      },
+      {
+        "row_key": "15-13",
+        "cas": "16525-39-6",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 122.171,
+        "mp_k": "228.7",
+        "bp_k": "519.4",
+        "fp_k": "383.2"
+      },
+      {
+        "row_key": "15-14",
+        "cas": "6959-71-3",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 127.187,
+        "mp_k": "202.6",
+        "bp_k": "467.2",
+        "fp_k": "361.4"
+      },
+      {
+        "row_key": "15-15",
+        "cas": "35633-50-2",
+        "smiles": "",
+        "violations": [],
+        "heavy_atom_count": 9,
+        "molwt_rdkit": 129.159,
+        "mp_k": "221.6",
+        "bp_k": "490.1",
+        "fp_k": "368.1"
+      }
+    ]
+  },
+  "criterion_b_identity": {
+    "statement": "29/29 行必须解析出 InChIKey（14 行走 SMILES，15 行走 PubChem CAS）。",
+    "resolved": 29,
+    "required": 29,
+    "passed": true,
+    "unresolved_rows": []
+  },
+  "criterion_c_intersection": {
+    "distinct_inchikeys": 29,
+    "distinct_inchikeys_note": "29 行若出现重复结构则去重后按 InChIKey 计数",
+    "vs_batt_p30k": {
+      "n": 13,
+      "members": [
+        {
+          "row_key": "14-3",
+          "shortlist": "14",
+          "rank": 3,
+          "cas": "",
+          "smiles": "N#CCCC1=CCCC1",
+          "inchikey": "ADQZRFNEMNNSEH-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol15835",
+            "homo": -9.0201,
+            "lumo": 1.6832,
+            "gap": 10.7033,
+            "ip": 6.430565,
+            "ea": -0.054431,
+            "ener": -9966.226562,
+            "dipole_norm": 2.142689
+          }
+        },
+        {
+          "row_key": "15-14",
+          "shortlist": "15",
+          "rank": 14,
+          "cas": "6959-71-3",
+          "smiles": "",
+          "inchikey": "AWVNJBFNHGQUQU-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol3300",
+            "homo": -9.8677,
+            "lumo": 1.6983,
+            "gap": 11.566,
+            "ip": 7.407689,
+            "ea": -0.047029,
+            "ener": -11009.266602,
+            "dipole_norm": 1.933866
+          }
+        },
+        {
+          "row_key": "15-12",
+          "shortlist": "15",
+          "rank": 12,
+          "cas": "4553-62-2",
+          "smiles": "",
+          "inchikey": "FPPLREPCQJZDAQ-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol230",
+            "homo": -11.6671,
+            "lumo": 1.6842,
+            "gap": 13.3513,
+            "ip": 9.407884,
+            "ea": -0.045273,
+            "ener": -9333.155273,
+            "dipole_norm": 2.24985
+          }
+        },
+        {
+          "row_key": "15-8",
+          "shortlist": "15",
+          "rank": 8,
+          "cas": "17611-82-4",
+          "smiles": "",
+          "inchikey": "GDCJAPJJFZWILF-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol11248",
+            "homo": -11.7311,
+            "lumo": 1.6686,
+            "gap": 13.3997,
+            "ip": 9.483394,
+            "ea": 0.029592,
+            "ener": -9333.03418,
+            "dipole_norm": 0.539051
+          }
+        },
+        {
+          "row_key": "14-11",
+          "shortlist": "14",
+          "rank": 11,
+          "cas": "",
+          "smiles": "CC(COC=O)CC#N",
+          "inchikey": "IDLWDEPIHMNMIO-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol18691",
+            "homo": -10.8646,
+            "lumo": 1.5922,
+            "gap": 12.4568,
+            "ip": 8.519195,
+            "ea": 0.141045,
+            "ener": -11954.407227,
+            "dipole_norm": 2.525019
+          }
+        },
+        {
+          "row_key": "15-4",
+          "shortlist": "15",
+          "rank": 4,
+          "cas": "4437-70-1",
+          "smiles": "",
+          "inchikey": "LWLOKSXSAUHTJO-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol271",
+            "homo": -11.0709,
+            "lumo": 1.5609,
+            "gap": 12.6318,
+            "ip": 8.725527,
+            "ea": 0.162447,
+            "ener": -11459.09082,
+            "dipole_norm": 2.908878
+          }
+        },
+        {
+          "row_key": "15-6",
+          "shortlist": "15",
+          "rank": 6,
+          "cas": "6975-71-9",
+          "smiles": "",
+          "inchikey": "OYEXEQFKIPJKJK-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol1554",
+            "homo": -9.3284,
+            "lumo": 1.7078,
+            "gap": 11.0362,
+            "ip": 6.708547,
+            "ea": -0.043617,
+            "ener": -9966.388672,
+            "dipole_norm": 2.139061
+          }
+        },
+        {
+          "row_key": "15-3",
+          "shortlist": "15",
+          "rank": 3,
+          "cas": "4437-69-8",
+          "smiles": "",
+          "inchikey": "PUEFXLJYTSRTGI-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol3199",
+            "homo": -11.0837,
+            "lumo": 1.4702,
+            "gap": 12.5539,
+            "ip": 8.758021,
+            "ea": 0.217153,
+            "ener": -11459.067383,
+            "dipole_norm": 2.854806
+          }
+        },
+        {
+          "row_key": "15-2",
+          "shortlist": "15",
+          "rank": 2,
+          "cas": "108-32-7",
+          "smiles": "",
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol170",
+            "homo": -11.1265,
+            "lumo": 1.5229,
+            "gap": 12.6494,
+            "ip": 8.792751,
+            "ea": 0.23632,
+            "ener": -10388.97168,
+            "dipole_norm": 2.806128
+          }
+        },
+        {
+          "row_key": "15-10",
+          "shortlist": "15",
+          "rank": 10,
+          "cas": "32091-48-8",
+          "smiles": "",
+          "inchikey": "WTQMTUQXPWPJIT-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol1954",
+            "homo": -11.6915,
+            "lumo": 1.6793,
+            "gap": 13.3708,
+            "ip": 9.504369,
+            "ea": -0.105588,
+            "ener": -9333.19043,
+            "dipole_norm": 2.451001
+          }
+        },
+        {
+          "row_key": "15-1",
+          "shortlist": "15",
+          "rank": 1,
+          "cas": "96-48-0",
+          "smiles": "",
+          "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol180",
+            "homo": -10.3659,
+            "lumo": 1.6102,
+            "gap": 11.9761,
+            "ip": 8.033307,
+            "ea": 0.127871,
+            "ener": -8341.578125,
+            "dipole_norm": 2.335157
+          }
+        },
+        {
+          "row_key": "15-15",
+          "shortlist": "15",
+          "rank": 15,
+          "cas": "35633-50-2",
+          "smiles": "",
+          "inchikey": "ZAGOKQGYDCMNPT-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol2649",
+            "homo": -9.7858,
+            "lumo": 1.6567,
+            "gap": 11.4425,
+            "ip": 7.336328,
+            "ea": 0.106237,
+            "ener": -11985.978516,
+            "dipole_norm": 1.997262
+          }
+        },
+        {
+          "row_key": "15-5",
+          "shortlist": "15",
+          "rank": 5,
+          "cas": "4437-85-8",
+          "smiles": "",
+          "inchikey": "ZZXUZKXVROWEIF-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol171",
+            "homo": -11.0632,
+            "lumo": 1.5272,
+            "gap": 12.5904,
+            "ip": 8.749941,
+            "ea": 0.237104,
+            "ener": -11458.887695,
+            "dipole_norm": 2.826354
+          }
+        }
+      ],
+      "comparable": true,
+      "why_not_comparable": null
+    },
+    "vs_roster_314": {
+      "n": 2,
+      "members": [
+        {
+          "row_key": "15-2",
+          "shortlist": "15",
+          "rank": 2,
+          "cas": "108-32-7",
+          "smiles": "",
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol170",
+            "homo": -11.1265,
+            "lumo": 1.5229,
+            "gap": 12.6494,
+            "ip": 8.792751,
+            "ea": 0.23632,
+            "ener": -10388.97168,
+            "dipole_norm": 2.806128
+          }
+        },
+        {
+          "row_key": "15-1",
+          "shortlist": "15",
+          "rank": 1,
+          "cas": "96-48-0",
+          "smiles": "",
+          "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol180",
+            "homo": -10.3659,
+            "lumo": 1.6102,
+            "gap": 11.9761,
+            "ip": 8.033307,
+            "ea": 0.127871,
+            "ener": -8341.578125,
+            "dipole_norm": 2.335157
+          }
+        }
+      ]
+    },
+    "vs_epsilon_v03": {
+      "n": 2,
+      "members": [
+        {
+          "row_key": "15-2",
+          "shortlist": "15",
+          "rank": 2,
+          "cas": "108-32-7",
+          "smiles": "",
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol170",
+            "homo": -11.1265,
+            "lumo": 1.5229,
+            "gap": 12.6494,
+            "ip": 8.792751,
+            "ea": 0.23632,
+            "ener": -10388.97168,
+            "dipole_norm": 2.806128
+          }
+        },
+        {
+          "row_key": "15-1",
+          "shortlist": "15",
+          "rank": 1,
+          "cas": "96-48-0",
+          "smiles": "",
+          "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol180",
+            "homo": -10.3659,
+            "lumo": 1.6102,
+            "gap": 11.9761,
+            "ip": 8.033307,
+            "ea": 0.127871,
+            "ener": -8341.578125,
+            "dipole_norm": 2.335157
+          }
+        }
+      ]
+    },
+    "vs_epsilon_v11plus": {
+      "n": 1,
+      "members": [
+        {
+          "row_key": "15-1",
+          "shortlist": "15",
+          "rank": 1,
+          "cas": "96-48-0",
+          "smiles": "",
+          "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+          "batt_p30k_labels": {
+            "group": "CompMol180",
+            "homo": -10.3659,
+            "lumo": 1.6102,
+            "gap": 11.9761,
+            "ip": 8.033307,
+            "ea": 0.127871,
+            "ener": -8341.578125,
+            "dipole_norm": 2.335157
+          }
+        }
+      ]
+    }
+  },
+  "element_whitelist": {
+    "elements": [
+      "C",
+      "N",
+      "O"
+    ],
+    "n_elements": 3,
+    "derived_from_rows": 29,
+    "status": "derived_not_declared",
+    "caveat": "KPI 只说 11 种元素、未给清单；此白名单是导出值，必须标 derived_not_declared"
+  },
+  "property_crosscheck": {
+    "available": true,
+    "source": {
+      "path": "data/external/g1plus/pubchem/liquid_window/liquid_window_selected.csv",
+      "available": true,
+      "bytes": 381815,
+      "sha256": "430f3b576b4a841940684aa46f17702fe4c424f4a181271872ede0d13e904a29"
+    },
+    "n_compared": 6,
+    "max_abs_delta_k": 1.42,
+    "median_abs_delta_k": 0.05,
+    "comparisons": [
+      {
+        "row_key": "15-1",
+        "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+        "property": "melting_point",
+        "printed_k": 228.2,
+        "deposited_k": 229.62,
+        "deposited_raw": "-43.53 °C",
+        "delta_k": -1.42,
+        "depositor": "Hazardous Substances Data Bank (HSDB)",
+        "reference": "Lide, D.R., G.W.A. Milne (eds.). Handbook of Data on Organic Compounds. Volume I. 3rd ed. CRC Press, Inc. Boca Raton ,FL. 1994., p. 2858"
+      },
+      {
+        "row_key": "15-1",
+        "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+        "property": "boiling_point",
+        "printed_k": 477.2,
+        "deposited_k": 477.15,
+        "deposited_raw": "204 °C at 760 mm Hg",
+        "delta_k": 0.05,
+        "depositor": "Hazardous Substances Data Bank (HSDB)",
+        "reference": "Lewis, R.J. Sr.; Hawley's Condensed Chemical Dictionary 14th Edition. John Wiley & Sons, Inc. New York, NY 2001., p. 184"
+      },
+      {
+        "row_key": "15-1",
+        "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+        "property": "flash_point",
+        "printed_k": 371.5,
+        "deposited_k": 371.15,
+        "deposited_raw": "209 °F (98 °C) (open cup)",
+        "delta_k": 0.35,
+        "depositor": "Hazardous Substances Data Bank (HSDB)",
+        "reference": "Fire Protection Guide to Hazardous Materials. 13 ed. Quincy, MA: National Fire Protection Association, 2002., p. 325-28"
+      },
+      {
+        "row_key": "15-2",
+        "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+        "property": "melting_point",
+        "printed_k": 224.4,
+        "deposited_k": 224.35,
+        "deposited_raw": "-48.8 °C",
+        "delta_k": 0.05,
+        "depositor": "Hazardous Substances Data Bank (HSDB)",
+        "reference": "Haynes, W.M. (ed.). CRC Handbook of Chemistry and Physics. 95th Edition. CRC Press LLC, Boca Raton: FL 2014-2015, p. 3-468"
+      },
+      {
+        "row_key": "15-2",
+        "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+        "property": "boiling_point",
+        "printed_k": 514.8,
+        "deposited_k": 514.75,
+        "deposited_raw": "241.6 °C",
+        "delta_k": 0.05,
+        "depositor": "Hazardous Substances Data Bank (HSDB)",
+        "reference": "Haynes, W.M. (ed.). CRC Handbook of Chemistry and Physics. 95th Edition. CRC Press LLC, Boca Raton: FL 2014-2015, p. 3-468"
+      },
+      {
+        "row_key": "15-2",
+        "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+        "property": "flash_point",
+        "printed_k": 389.2,
+        "deposited_k": 389.15,
+        "deposited_raw": "116 °C (241 °F) - closed cup",
+        "delta_k": 0.05,
+        "depositor": "Hazardous Substances Data Bank (HSDB)",
+        "reference": "Sigma-Aldrich; Safety Data Sheet for Propylene carbonate. Product Number: 310328, Version 3.7 (Revision Date 11/25/2014). Available from, as of September 1, 2015: https://www.sigmaaldrich.com/safety-center.html"
+      }
+    ],
+    "scope_note": "只比对本仓名册已覆盖到的行；未覆盖的行没有独立值，照实不填。"
+  },
+  "model_fitting": {
+    "fitted_any_model": false,
+    "r2_reported": false,
+    "note": "本轮不产任何判决性 R2；这不是模型评测。"
+  },
+  "forbidden_compliance": {
+    "batt_counts_presented_as_kpi_cascade": false,
+    "guessed_structures_filled_in": false,
+    "name_matching_used_as_identity": false,
+    "s4_claimed_as_run": false,
+    "kpi_printed_values_presented_as_our_measurements": false,
+    "shortlist_redistributed": false,
+    "random_row_leakage_used": false
+  },
+  "usage_boundary": "短清单仍为 cross_check_only / redistributable=false，永进不了 data/ 冻结表，也进不了任何交付包或模型特征。PubChem 侧结构为公有领域。",
+  "run_telemetry": {
+    "run_mode": "offline",
+    "network_calls": 0,
+    "cache_hits": 0
+  }
+}

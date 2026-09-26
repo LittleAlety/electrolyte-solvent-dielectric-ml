@@ -1,0 +1,850 @@
+{
+  "schema_version": 1,
+  "task": "v2_0_unimol_finetune_probe_spec",
+  "title": "Uni-Mol 微调探针规格定稿（v2.0 缓冲项：手册附录 AA-5 缓冲 / 附录 Y 的 D7 / 附录 X 杠杆 6 修订 / 附录 O-4）",
+  "locked_at_utc": "2026-09-26T09:14:46Z",
+  "status": "locked_before_run",
+  "lock_rule": "预注册文本先锁后跑：本规格在 locked_at_utc 锁定；探针实际跑批之前不得修改判据、枪毙线、输入口径与评估协议。任何事后修改必须以并列的 amendment 追加，旧文本逐字保留。",
+  "corrections_before_first_commit": {
+    "applied_at_utc": "2026-09-26T09:44:44Z",
+    "reason": "一份独立对抗审读发现两处缺陷，均在本文件首次提交、任何跑批之前修正；locked_at_utc 保持首次冻结时刻不变，判据与枪毙线未改动。",
+    "items": [
+      {
+        "id": "C1-a",
+        "defect": "random_row 的证据条把快照 1693 行原文与 1762 行括注拼成了一条，拼出的串在快照里并不存在。",
+        "was": "ac7_line + ad7_parenthetical 的拼接串",
+        "now": "拆成两条真逐字引用：1693 行原样、1762 行原样。",
+        "no_run_depended_on_it": true
+      },
+      {
+        "id": "C1-b",
+        "defect": "上述拼接把 0.93689 / 0.74813 读成了 MAE；磁盘实测它们是 R²。",
+        "was": "0.93689 / 0.74813 标为 MAE",
+        "now": "见 evaluation_protocol.random_row.measured_on_disk：random_row MAE 0.06357315348750457 / R² 0.9368903191471887，group_key MAE 0.17477197208762 / R² 0.7481271437772365。",
+        "no_run_depended_on_it": true
+      },
+      {
+        "id": "C1-c",
+        "defect": "source_of_record 里的快照与台账行数是规格写作时的旧值（快照 1770、台账 3929）。",
+        "was": "旧行数被当成当前事实读",
+        "now": "两者均标注为写作时行数；附录 AE 在本轮追加后快照变长，验证只校验被引用行号落在文件内，不钉总行数。",
+        "no_run_depended_on_it": true
+      }
+    ],
+    "ledger_entry": "reports/decisions_log.md §26.5 与手册附录 AE"
+  },
+  "scope_of_this_round": {
+    "this_round_runs_no_model": true,
+    "this_round_writes_only_the_spec": true,
+    "r2_claimed_this_round": false,
+    "statement": "本轮只把规格定稿；不训练、不微调、不推理、不产出任何 R² 读数。本文件里出现的每一个数字只有两类来源：① 仓库内实测事实（带路径与行数）；② 手册转述的 KPI 论文数值（带出处标注）。没有任何一个数字是本轮跑出来的模型读数。",
+    "shots_this_round": 0
+  },
+  "source_of_record": {
+    "manual_snapshot": {
+      "path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "note": "仓库内唯一可查证的执行手册附录快照（含附录 J 补记三 至 附录 AD）。本规格引用的手册行号全部指向该文件。",
+      "lines_at_spec_writing": 1770
+    },
+    "machine_ledger": {
+      "path": "reports/decisions_log.md",
+      "note": "机读台账；只读引用，本轮未修改。",
+      "lines_at_spec_writing": 3929
+    },
+    "kpi_paper": {
+      "citation": "Yu-Chen Gao et al., A Knowledge-Data Dual-Driven Framework for Predicting the Molecular Properties of Rechargeable Battery Electrolytes, Angew. Chem. Int. Ed. 2025, 64, e202416506, DOI 10.1002/anie.202416506",
+      "local_cross_mapping": "reports/kpi_framework_mapping.md"
+    }
+  },
+  "inputs": {
+    "conformer_requirement_source": [
+      {
+        "text": "Uni-Mol 微调：github.com/dptech-corp/Uni-Mol 官方预训练权重 + 现有 xTB 构象输入。",
+        "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+        "source_line": 797,
+        "label": "手册附录 O-4"
+      },
+      {
+        "text": "Uni-Mol 类 3D 基础模型（数百万构象预训练）冻结主干 + 236 行微调；输入直接用现有 xTB 构象。",
+        "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+        "source_line": 753,
+        "label": "手册附录 N-3"
+      }
+    ],
+    "verified_conformer_artifacts": [
+      {
+        "id": "frozen_single_conformer_scratch",
+        "path": "data/interim/xtb_features",
+        "kind": "cold xTB scratch cache (RDKit/MMFF start geometry + GFN2-xTB optimised result), one conformer per compound",
+        "recipe": "RDKit ETKDGv3 EmbedMolecule(seed = 42 + row index, useRandomCoords=True), MMFF94 (UFF fallback), then GFN2 xTB --opt --gfn 2 --chrg <q> --uhf 0 (see src/electrolyte_ml/xtb_features.py:176 generate_3d_xyz)",
+        "compound_directories_measured": 246,
+        "input_xyz_files_measured": 250,
+        "input_xyz_histogram_measured": {
+          "1": 245,
+          "5": 1
+        },
+        "git_tracked": false,
+        "git_ignore_reason": ".gitignore 的 'data/interim/*' 一行（只有少数 data/interim 文件在允许清单里，本目录不在）",
+        "generator": "scripts/run_xtb_physical_features.py (default --work-dir at line 549)",
+        "measured_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "id": "v11plus_new_conformer_scratch",
+        "path": "data/interim/xtb_features_v11plus",
+        "kind": "与 frozen_single_conformer_scratch 同配方，对应 v1.x 覆盖扩展新增的 42 个化合物",
+        "compound_directories_measured": 42,
+        "input_xyz_files_measured": 42,
+        "git_tracked": false,
+        "measured_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "id": "multi_conformer_scratch_v04",
+        "path": "data/interim/xtb_conformer_migration",
+        "kind": "磁盘上唯一的多构象集合（v0.4 构象平均偶极迁移轮的产物）",
+        "recipe": "RDKit ETKDGv3 EmbedMultipleConfs(numConfs = MAX_CONFORMERS), MMFF94 (UFF fallback), 每个构象一次 GFN2 xTB 单点（不带 --opt）；布局 <InChIKey>/conf<N>/input.xyz",
+        "max_conformers_constant": 8,
+        "conformer_seed_base": 42,
+        "compound_directories_measured": 276,
+        "input_xyz_files_measured": 2198,
+        "conformers_per_compound_histogram_measured": {
+          "1": 1,
+          "5": 1,
+          "8": 274
+        },
+        "git_tracked": false,
+        "producer": "probes/dielectric_xtb_full_table_migration.py (MAX_CONFORMERS = 8 at line 108, WORK_DIR at line 92, conformer seed CONFORMER_SEED_BASE + roster order at line 962)",
+        "measured_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "id": "conformer_accounting_artifact",
+        "path": "probes/artifacts/dielectric_xtb_full_table_migration_conformers.csv",
+        "kind": "随仓库分发的逐化合物构象记账表（n_conformers / force_field / 偶极统计），对象是 v0.4 名册",
+        "rows_measured": 276,
+        "key_columns": [
+          "order",
+          "inchikey",
+          "name",
+          "smiles",
+          "heavy_atom_count",
+          "n_conformers",
+          "force_field",
+          "dipole_D_frozen",
+          "dipole_D_conformer_mean",
+          "mu_sq_over_Vm_conformer_mean"
+        ],
+        "git_tracked": true,
+        "measured_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "id": "frozen_physical_feature_tables",
+        "kind": "耐久、随仓库分发的 xTB 派生特征表（今天真正能当输入键的东西）",
+        "members": [
+          {
+            "path": "data/processed/dielectric_physical_features_v03.csv",
+            "rows_measured": 241,
+            "sha256": "b36d3439560e4381b7779565b9950eed379832e832b72ea6a3a010662ed24fa3"
+          },
+          {
+            "path": "data/processed/dielectric_physical_features_v11plus_new.csv",
+            "rows_measured": 42,
+            "sha256": "661df4f8b48e0b61d2d7e917d453e6f5cf6682ea71b9acf4e50949230cd562a1"
+          }
+        ],
+        "sha256_source": "probes/dielectric_xtb_full_table_migration_summary.json inputs.frozen_features_sha256 / inputs.new_features_sha256",
+        "git_tracked": true
+      },
+      {
+        "id": "generators",
+        "kind": "定义「现有 xTB 构象」是什么的代码",
+        "members": [
+          "src/electrolyte_ml/xtb_features.py (generate_3d_xyz at line 176; parse_xtb_output; molecular_volume_A3)",
+          "src/electrolyte_ml/xtb_runner.py (single deterministic subprocess launcher, DETERMINISTIC_THREADS = 1)",
+          "scripts/run_xtb_physical_features.py",
+          "probes/dielectric_xtb_full_table_migration.py",
+          "probes/xtb_protocol_migration_probe.py",
+          "probes/xtb_recovery_probe.py"
+        ]
+      }
+    ],
+    "to_be_built": [
+      {
+        "id": "unimol_conformer_ensemble_10",
+        "what": "RDKit 10 构象系综（KPI 配方：RDKit 10 conformers + LMDB）",
+        "status": "待建",
+        "why_not_present": "仓库里最大的现成系综是 v0.4 的 8 构象（data/interim/xtb_conformer_migration，MAX_CONFORMERS = 8），冻结管线只有 1 构象/化合物；没有任何 10 构象产物。10 这个数来自 KPI SI 转述，不是本仓口径。",
+        "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+        "source_line": 1517,
+        "label": "手册附录 AA-3 第 2 条"
+      },
+      {
+        "id": "conformer_lmdb_store",
+        "what": "LMDB 构象存储（Uni-Mol 数据加载器的输入格式）",
+        "status": "待建",
+        "why_not_present": "全仓扫描无 .lmdb/.sdf/.pkl 类构象库；磁盘上只有 .xyz 4435 个 / .mol 3298 个 / .npz 3 个，且每一个 .xyz 与 .mol 都落在被 git 忽略的 data/interim/ 之下，属可再生暂存而非耐久产物。Python 环境里 lmdb 包也未安装。",
+        "measurement_command": "recursive suffix census over the repository excluding .venv/.git",
+        "measurement_result": {
+          "xyz": 4435,
+          "mol": 3298,
+          "npz": 3,
+          "sdf": 0,
+          "lmdb": 0,
+          "pkl": 0
+        }
+      },
+      {
+        "id": "unimol_runtime_and_weights",
+        "what": "Uni-Mol 官方预训练权重 + 可运行运行时（torch / unimol）",
+        "status": "待建",
+        "why_not_present": "解释器 .venv/Scripts/python.exe (Python 3.12.14) 中 torch 未安装、unimol 未安装（importlib.util.find_spec 均为 None）。pyproject.toml 依赖表里也没有这两项。",
+        "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+        "source_line": 797,
+        "label": "手册附录 O-4"
+      },
+      {
+        "id": "durable_ensemble_artifact_keyed_by_inchikey",
+        "what": "以 InChIKey 为键、随仓库分发的耐久构象系综产物",
+        "status": "待建",
+        "why_not_present": "现有构象全部是 data/interim/ 下的可再生暂存；唯一随仓库分发的构象级产物是汇总 CSV（probes/artifacts/dielectric_xtb_full_table_migration_conformers.csv，276 行），它记的是统计量，不是几何。"
+      }
+    ],
+    "not_found": [
+      {
+        "id": "per_molecule_xyz_shipped_with_the_repo",
+        "what": "任何随仓库分发的单分子 .xyz 构象文件",
+        "status": "未查到",
+        "basis": "suffix census: 4435 个 .xyz 全部位于 data/interim/ 之下（git 忽略），仓库根 .gitignore 未把 .xyz 纳入跟踪。"
+      }
+    ]
+  },
+  "hyperparameters_copied_from_kpi": {
+    "provenance_rule": "以下每一项的出处都是 KPI 论文 SI 经手册转述（附录 AA-3 第 2 条），不是本仓实测。逐项标记 provenance_kind = 'KPI_SI_via_manual'，our_measurement = false。禁止把它们写成「本项目的标定」。",
+    "source": {
+      "path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1517,
+      "label": "手册附录 AA-3 第 2 条",
+      "verbatim": "Uni-Mol 超参：RDKit 10 构象 + LMDB；Adam + smooth MAE；batch 32；≤500 epoch；early stop patience 20；lr 1e-4 多项式衰减 → 我方 Uni-Mol 探针规格照抄"
+    },
+    "items": [
+      {
+        "name": "conformer_count",
+        "value": 10,
+        "unit": "RDKit conformers per molecule",
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      },
+      {
+        "name": "conformer_store",
+        "value": "LMDB",
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      },
+      {
+        "name": "optimizer",
+        "value": "Adam",
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      },
+      {
+        "name": "loss",
+        "value": "smooth MAE (smooth L1)",
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      },
+      {
+        "name": "batch_size",
+        "value": 32,
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      },
+      {
+        "name": "max_epochs",
+        "value": 500,
+        "unit": "upper bound (<=)",
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      },
+      {
+        "name": "early_stop_patience",
+        "value": 20,
+        "unit": "epochs",
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      },
+      {
+        "name": "learning_rate",
+        "value": 0.0001,
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      },
+      {
+        "name": "lr_schedule",
+        "value": "polynomial decay",
+        "provenance_kind": "KPI_SI_via_manual",
+        "our_measurement": false
+      }
+    ],
+    "not_copied_from_kpi": [
+      "评估协议：KPI 用随机 8:1:1 + 4 折 CV（手册附录 Y-2 第 2 条，快照行 1408），本项目不得移植（见 evaluation_protocol）。",
+      "冻结主干与否：手册附录 N-3（快照行 753）写「冻结主干 + 236 行微调」；KPI 原文的微调深度未在手册转述中写明，本条按手册口径执行。"
+    ],
+    "target_domain_warning": "KPI 的目标是 MP/BP/FP（相变温度，原子数/键型主导，R² 0.974/0.990/0.986）；本项目目标是 ε（集体极化）。超参可抄，「照抄超参就能拿到 0.99」不可推。手册附录 Y-2（快照行 1405-1409）已就此写下冷静剂。"
+  },
+  "conformer_count_claims": [
+    {
+      "id": "claim_y1_11_conformers",
+      "claim_text": "+ 11 构象输入",
+      "conformer_count": 11,
+      "unit": "conformer inputs per molecule",
+      "source_label": "手册附录 Y-1（KPI 论文要点速查）",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1400,
+      "source_verbatim_fragment": "知识控制器（纯度控制器 = 拼入表征的知识向量维数 top-K；流量控制器 = 可学习嵌入比例）+ 11 构象输入"
+    },
+    {
+      "id": "claim_d7_11_conformers",
+      "claim_text": "知识控制器机制（SHAP top-K 纯度 + 可学习流量 + 11 构象）写入预注册",
+      "conformer_count": 11,
+      "unit": "conformer inputs per molecule",
+      "source_label": "手册附录 Y-3 D7（Uni-Mol 探针规格升级）",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1418,
+      "source_verbatim_fragment": "知识控制器机制（SHAP top-K 纯度 + 可学习流量 + 11 构象）写入预注册"
+    },
+    {
+      "id": "claim_aa3_rdkit_10_conformers",
+      "claim_text": "RDKit 10 构象 + LMDB",
+      "conformer_count": 10,
+      "unit": "RDKit conformers per molecule",
+      "source_label": "手册附录 AA-3 第 2 条（KPI SI 超参）",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1517,
+      "source_verbatim_fragment": "Uni-Mol 超参：RDKit 10 构象 + LMDB；Adam + smooth MAE；batch 32；≤500 epoch；early stop patience 20；lr 1e-4 多项式衰减"
+    }
+  ],
+  "conformer_count_conflict": {
+    "registered": true,
+    "status": "unresolved",
+    "rule": "不许择一静默消解：两种说法并列登记，任何一方都不得被当成已定口径去写代码或写论文。",
+    "conflicting_claims": [
+      "claim_y1_11_conformers",
+      "claim_d7_11_conformers",
+      "claim_aa3_rdkit_10_conformers"
+    ],
+    "what_conflicts": "同一份手册里，附录 Y-1（行 1400）与附录 Y-3/D7（行 1418）写「11 构象输入」，附录 AA-3 第 2 条（行 1517）写「RDKit 10 构象」。两个数出自同一份 KPI SI 转述，却相差 1。",
+    "candidate_explanations": [
+      {
+        "id": "expl_10_rdkit_plus_1_xtb",
+        "text": "10 个 RDKit 构象 + 1 个 xTB 构象 = 11（即附录 AA-3 记的是 RDKit 那一半，附录 Y 记的是拼进模型的全部输入）",
+        "verified": false,
+        "label": "未证实",
+        "why_unverified": "手册与仓库内均无 KPI SI 的构象拼装清单；我方也没有 KPI 的十构象产物可比对（仓库最大系综是 8 构象）。这条只是最省事的算术解释，不得当结论引用。"
+      },
+      {
+        "id": "expl_two_different_si_sections",
+        "text": "两个数出自 KPI SI 的不同小节（一处写采样数、一处写喂进模型的输入数），手册转述时未对齐",
+        "verified": false,
+        "label": "未证实",
+        "why_unverified": "本地只有手册转述（reports/kpi_framework_mapping.md 与快照），没有 SI 原文可逐节核对。"
+      },
+      {
+        "id": "expl_typo",
+        "text": "其中之一是转述笔误",
+        "verified": false,
+        "label": "未证实",
+        "why_unverified": "无法在仓库内证伪或证实；登记为不确定性即可，不得据此改写任何一处原文。"
+      }
+    ],
+    "action_required_before_the_probe_runs": "跑批前必须把构象数定成一个可执行值，并把「它是从哪一条 claim 来的」写进跑批预注册；在此之前数据加载器必须把构象数当参数（不得硬编码 10 或 11）。",
+    "no_silent_resolution": true
+  },
+  "knowledge_controller": {
+    "mechanism_source": [
+      {
+        "source_label": "手册附录 Y-1",
+        "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+        "source_line": 1400,
+        "verbatim": "知识控制器（纯度控制器 = 拼入表征的知识向量维数 top-K；流量控制器 = 可学习嵌入比例）"
+      },
+      {
+        "source_label": "手册附录 Y-3 D7",
+        "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+        "source_line": 1418,
+        "verbatim": "知识控制器机制（SHAP top-K 纯度 + 可学习流量 + 11 构象）写入预注册"
+      },
+      {
+        "source_label": "reports/kpi_framework_mapping.md §1.1/§1.3",
+        "source_path": "reports/kpi_framework_mapping.md",
+        "source_line": 31
+      }
+    ],
+    "purity_controller": {
+      "definition": "拼入 Uni-Mol 表征的知识向量维数 top-K；K 由 SHAP top-K 决定",
+      "k_source": "SHAP top-K",
+      "leak_rule": "SHAP 排序必须在每一折的训练侧内部做（per-fold train-side ranking）；在全量数据上排序再拿去训练等于用测试集挑特征，本项目 X-4 / §22.6 明令禁止。KPI 原文的排序是全量做的，这一点我们不抄，我们要更严。",
+      "leak_rule_source": {
+        "source_label": "reports/kpi_framework_mapping.md §1.1",
+        "source_path": "reports/kpi_framework_mapping.md",
+        "source_line": 25
+      },
+      "k_grid_reference": "本仓已有的知识纯度扫描（杠杆 9）冻结网格 K = (2, 4, 6, 10)，见 probes/dielectric_knowledge_purity_sweep.py:145 与 probes/dielectric_knowledge_purity_sweep_erratum_prereg.json correction_rule.k_grid。这是参考，不是本探针的锁定值。"
+    },
+    "flow_controller": {
+      "definition": "可学习嵌入比例（知识向量拼进表征时的权重/比例作为可学习参数）",
+      "source_label": "手册附录 Y-1",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1400
+    },
+    "our_domain_knowledge_pool": {
+      "path": "probes/dielectric_knowledge_purity_sweep.py",
+      "definition_line": 132,
+      "members": [
+        "donor_count",
+        "acceptor_count",
+        "has_1_donor",
+        "has_2_donors",
+        "has_3plus_donors",
+        "donor_acceptor_pair_density",
+        "ring_count",
+        "double_bond_count",
+        "rotatable_bond_count",
+        "heteroatom_over_carbon"
+      ],
+      "size": 10,
+      "caveat": "这是杠杆 9 冻结的知识池，是本仓已有的、可复用的知识向量候选；它的顺序不是不变量（见 column_binding_rule）。"
+    }
+  },
+  "column_binding_rule": {
+    "requirement": "知识向量的列序必须是显式绑定的：每一个列位置 ↔ 每一个知识/物理特征的映射必须由一张显式表定义，并在运行时断言。不得让标签在列表里的位置（position-based enumerate）决定语义。",
+    "statement_zh": "知识向量的列序必须是显式绑定的，不得让标签位置决定语义。",
+    "defect_this_rule_is_written_against": {
+      "id": "lever9_permutation_importance_washed_the_wrong_columns",
+      "severity": "P0",
+      "site": "probes/dielectric_knowledge_purity_sweep.py:560 构造 full = hstack([frozen_physical, knowledge])（物理块在前），:565 传 columns=KNOWLEDGE_POOL，而 permutation_importance 在 :307 用 enumerate(columns) 从 position 0 起洗列",
+      "mechanism": "被洗的是 full[:, 0..K-1]（物理块前 K 列）；十个知识池名字只是贴在这些物理列上的标签。凡是「按标签位置推断列语义」的代码都复现同一个缺陷。",
+      "second_effect": "k=10 的选择集不受影响（十名全取），但其列序由破损排序决定；因为 XGB_PARAMS 含 colsample_bytree=0.8，拟合依赖列序，故 k=10 的列序与读数都不是不变量。",
+      "evidence": [
+        {
+          "source_label": "手册附录 AC-6(b)",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1683
+        },
+        {
+          "source_label": "手册附录 AD-3（k=10 标签写错）",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1726
+        },
+        {
+          "source_label": "decisions_log §24.6(b)",
+          "source_path": "reports/decisions_log.md",
+          "source_line": 3791
+        },
+        {
+          "source_label": "decisions_log §25.2/§25.3",
+          "source_path": "reports/decisions_log.md",
+          "source_line": 3834
+        }
+      ],
+      "measured_spread": {
+        "three_orders": [
+          0.014709978,
+          0.008666009,
+          0.015746812
+        ],
+        "spread": 0.007080802985126922,
+        "source_label": "decisions_log §25.3 三序并列",
+        "source_path": "reports/decisions_log.md",
+        "source_line": 3857,
+        "note": "k=10 从来不是一个不变量，它随追加列序移动。"
+      },
+      "verdict_unchanged_but_defect_still_reported": "杠杆 9 判决在两（三）种已测列序下均为 sub_threshold；判决未变不等于缺陷无害，勘误照样上报（decisions_log §25.2 末条）。"
+    },
+    "mandatory_assertions_before_any_fit": [
+      "存在显式 (column_index -> feature_name) 映射对象，且其长度 == 知识向量维数",
+      "K 维纯度选择只按该映射取列，禁止用 position/enumerate 从零起推断",
+      "对选定列做一次「绑定自检」：把标签列表做一次无操作重排后，拟合结果逐位不变（杠杆 9 勘误轮的 binding_check 做法，50/50 折 worst_max_abs_difference = 0.0）"
+    ],
+    "forbidden": [
+      "把知识池名字直接当作 permutation/importance 的列索引",
+      "用列表位置决定某维知识语义",
+      "在测试折上做 SHAP 排序或列选择"
+    ]
+  },
+  "kill_line": {
+    "verbatim_zh": "236 样本打不过 hybrid XGBoost 即停，记负结果",
+    "source": {
+      "source_label": "手册附录 Y-3 D7",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1418,
+      "verbatim_context": "枪毙线不变（236 样本打不过 hybrid XGBoost 即停，记负结果）"
+    },
+    "corroborating_source": {
+      "source_label": "手册附录 X-3 杠杆 6",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1365,
+      "verbatim": "| 6 | Uni-Mol 3D 微调 | 0~0.10 | 2-3 天 | 236 样本微调高风险，失败记负结果 |"
+    },
+    "promotion_criterion_related_source": {
+      "source_label": "手册附录 N-3",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 753,
+      "verbatim": "判据沿用 Go/Kill：超 hybrid 的 CV 置信区间才晋升。"
+    },
+    "action_on_fail": "即停（stop），并作为负结果如实登记；不得事后放宽、不得只报有利折、不得改评分池。",
+    "the_236_table_verified": {
+      "question": "236 这个数指的是哪张表",
+      "answer": "v1.0 冻结的 236 行/236 化合物拟合池（headline R² 0.364 的同一张表）。它在磁盘上有两种物化形式，二者是同一个化合物集合（已用集合相等核过，对称差 = 0）。",
+      "materializations": [
+        {
+          "id": "pilot_pool_csv",
+          "path": "probes/l3_stage1_pilot_pool.csv",
+          "rows_measured": 236,
+          "line_count_measured": 237,
+          "header": "list,inchikey,name,smiles,T_K,target_dielectric,model_ready,is_champion,champion_short,pilot_label",
+          "sha256_canonical_text": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+          "git_tracked": true,
+          "frozen_red_line": true
+        },
+        {
+          "id": "derived_from_dielectric_v03",
+          "dataset_path": "data/dielectric_v03.csv",
+          "dataset_rows_measured": 246,
+          "model_ready_true_rows_measured": 240,
+          "minus_feature_failures": 4,
+          "equals": 236,
+          "sha256_canonical_text": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+          "evidence": [
+            {
+              "source_label": "probes/v032_ablation_summary.json",
+              "fields": {
+                "compound_count": 236,
+                "source_count": 245,
+                "excluded_count": 4,
+                "failed_physical_feature_count": 4,
+                "withheld_not_model_ready_count": 1,
+                "dataset_path": "data/dielectric_v03.csv",
+                "source_path": "data/dielectric_v032.csv"
+              }
+            },
+            {
+              "source_label": "tests/test_xtb_fragment_geometry_defect.py:68-77",
+              "path": "tests/test_xtb_fragment_geometry_defect.py",
+              "line": 75,
+              "verbatim": "assert len(model_ready) == 240 / assert len(model_ready) - summary[\"failed_physical_feature_count\"] == 236"
+            },
+            {
+              "source_label": "paper/technical_validation.md",
+              "path": "paper/technical_validation.md",
+              "line": 225,
+              "verbatim": "0.364 / 6.686 / 0.828, on 236 fitted rows."
+            }
+          ]
+        }
+      ],
+      "identity_check": {
+        "method": "set equality between the 236 InChIKeys of probes/l3_stage1_pilot_pool.csv and (InChIKeys of data/dielectric_v03.csv with model_ready=true) minus the 4 multi-fragment xTB feature-failure keys in probes/xtb_fragment_geometry_defect.py::TARGETS",
+        "result": "equal",
+        "symmetric_difference_count": 0,
+        "measured_at_utc": "2026-09-26T09:14:46Z"
+      },
+      "four_failed_feature_keys": [
+        "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+        "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+        "JWFPQAXAGSAKRF-UHFFFAOYSA-N",
+        "FYOFOKCECDGJBF-UHFFFAOYSA-N"
+      ],
+      "not_verified": [
+        "手册原文没有点名 236 是哪一张表；本规格的判定来自上述两处物化形式的集合相等，不是手册的直接声明。",
+        "D7 的枪毙线没有给比较算子（是点估计大小、还是置信区间不相交）；N-3 的「超 hybrid 的 CV 置信区间才晋升」是相关但不同的句子。跑前必须把该口径定死并写入跑批预注册。"
+      ]
+    },
+    "comparator_hybrid_xgboost": {
+      "what": "冻结 v1.0 超参的 hybrid（Morgan+Physical 等权集成）XGBRegressor",
+      "XGB_params": {
+        "n_estimators": 200,
+        "max_depth": 2,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1,
+        "tree_method": "hist",
+        "max_bin": 64,
+        "n_jobs": 1
+      },
+      "params_source": {
+        "source_label": "decisions_log §22.3",
+        "source_path": "reports/decisions_log.md",
+        "source_line": 3585
+      },
+      "headline_on_the_236_pool": {
+        "r2": 0.3636,
+        "published_rounded": 0.364,
+        "spearman": 0.828,
+        "mae": 6.686,
+        "exact_reproduction": 0.36357268752900124,
+        "exact_source": {
+          "source_label": "reports/dielectric_room_window_paired.md:115",
+          "path": "reports/dielectric_room_window_paired.md",
+          "line": 115
+        }
+      },
+      "must_not_be_confused_with": "0.4091179943351143（457 行 / 97 化合物固定评分池的主记分牌基线）。两者池不同，见 scoreboard_isolation。"
+    }
+  },
+  "evaluation_protocol": {
+    "project_standard": true,
+    "observation_level": {
+      "required": true,
+      "source": [
+        {
+          "source_label": "手册附录 O-3 第 2 条",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 792
+        },
+        {
+          "source_label": "手册附录 AC-7 训练方向",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1693
+        },
+        {
+          "source_label": "手册附录 AD-7",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1762
+        }
+      ]
+    },
+    "splitter": {
+      "kind": "GroupKFold",
+      "group_key": "InChIKey",
+      "required": true
+    },
+    "per_fold_train_side_ranking": {
+      "required": true,
+      "definition": "任何排序/选择（含 SHAP top-K、纯度选列）只在当折训练侧做；测试行对排序不可见，须断言 test_rows_visible_to_ranking == 0。"
+    },
+    "group_overlap_assertion": {
+      "required": true,
+      "expression": "group_overlap == 0",
+      "meaning": "同一 InChIKey 的不同观测不得跨折（同化合物不同温度点禁止一折训练一折测试）。"
+    },
+    "kpi_random_split_must_not_be_ported": {
+      "required": true,
+      "kpi_scheme": "random 8:1:1 + 4-fold CV",
+      "source": {
+        "source_label": "手册附录 Y-2 第 2 条",
+        "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+        "source_line": 1408
+      },
+      "rule": "不得移植 KPI 的随机 8:1:1；KPI 方法若引入，协议一律按本项目标准重做（手册附录 Y-4，快照行 1426）。"
+    },
+    "random_row": {
+      "role": "leak_reference_only",
+      "verdict_eligible": false,
+      "evidence": [
+        {
+          "source_label": "手册附录 AC-7 黏度线学费",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1693,
+          "verbatim": "random_row 0.93689 vs group_key 0.74813"
+        },
+        {
+          "source_label": "手册附录 AD-7 黏度线学费（MAE 与 R² 的口径）",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1762,
+          "verbatim": "黏度线的学费：log10_cP 的 MAE 0.064 vs 0.175；R² 口径为 0.93689 vs 0.74813 —— 这对数字是 MAE 不是 R²，本手册此前已登记过该笔误"
+        },
+        {
+          "source_label": "手册附录 X-1 泄漏警示价目",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1344,
+          "verbatim": "random_row 切分 = R² 0.934。任何逼近 0.9 的读数，第一动作是泄漏审计，不是报喜。"
+        }
+      ],
+      "measured_on_disk": {
+        "source_path": "probes/viscosity_baseline_summary.json",
+        "metric": "log10_cP",
+        "random_row": {"mae": 0.06357315348750457, "r2": 0.9368903191471887, "group_overlap": 277},
+        "group_key": {"mae": 0.17477197208762, "r2": 0.7481271437772365, "group_overlap": 0},
+        "reading_rule": "0.93689 / 0.74813 是 R²；MAE 是 0.064 / 0.175。手册 AD-7 的括注指的是 MAE 那一对，不是 R² 那一对。"
+      }
+    },
+    "repeated_outer_scheme": {
+      "reference_only": "主记分牌为 5 折 × 10 重复 = 50 折、seed 42（decisions_log §22.3，行 3584）。本探针的具体折方案必须在跑批预注册里定死。",
+      "locked_in_this_spec": false
+    }
+  },
+  "scoreboard_isolation": {
+    "rule": "口径隔离：不同池的读数不得混用、不得互相比较大小。",
+    "main_scoreboard": {
+      "baseline_r2": 0.4091179943351143,
+      "rows": 457,
+      "compounds": 97,
+      "folds": 50,
+      "splitter": "GroupKFold by InChIKey",
+      "seed": 42,
+      "params_source": {
+        "source_label": "decisions_log §22.3",
+        "source_path": "reports/decisions_log.md",
+        "source_line": 3582
+      },
+      "verbatim_baseline_reproductions": [
+        {
+          "source_label": "decisions_log §25.2",
+          "source_path": "reports/decisions_log.md",
+          "source_line": 3838,
+          "values": {
+            "morgan": 0.06487386371009436,
+            "morgan_plus_physical": 0.4091179943351143,
+            "physical": 0.2531659995294713,
+            "abs_difference": 0
+          }
+        },
+        {
+          "source_label": "probes/dielectric_xtb_full_table_migration_summary.json readings.baseline_r2",
+          "value": 0.4091179943351143
+        }
+      ]
+    },
+    "secondary_scoreboard_v1_0_headline": {
+      "r2_rounded": 0.364,
+      "pool": "v1.0 冻结 236 行/236 化合物池",
+      "rows": 236,
+      "relationship_to_kill_line": "D7 的枪毙线住在这个池上（见 kill_line）。",
+      "source": {
+        "source_label": "手册附录 X-1 辅记分牌",
+        "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+        "source_line": 1343
+      }
+    },
+    "forbidden_mixings": [
+      "0.4091179943351143（457 行 / 97 化合物固定评分池）与 v1.0 headline 0.364（236 池）互相比较大小",
+      "把 457 池的读数说成 236 池的读数（或反之）",
+      "把本探针未来读数与 0.364 直接比大小而不带池定义",
+      "引用 0.5332 / 0.5454 时不带池定义"
+    ],
+    "pool_definition_required_for": [
+      {
+        "value": 0.5332,
+        "pool_definition": "147 化合物训练池在 97 化合物固定评分池上的分组 CV",
+        "source": {
+          "source_label": "手册附录 X-2",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1350
+        }
+      },
+      {
+        "value": 0.5454,
+        "pool_definition": "同上 + 新化合物 xTB 特征块",
+        "source": {
+          "source_label": "手册附录 X-2",
+          "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+          "source_line": 1351
+        }
+      }
+    ],
+    "wording_rule_source": {
+      "source_label": "手册附录 X-6",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1390,
+      "verbatim": "0.533/0.545 两数可用性的措辞边界：只许带池定义引用（「147 化合物训练池 / 97 化合物固定评分池」），不许与 v1.0 headline 0.364 直接比大小（池不同）"
+    },
+    "what_this_probe_must_do": "本探针若将来跑批：(a) 枪毙线只在 236 池上读；(b) 任何 457 池读数另行标注池定义；(c) 两组数字永不并列成一句比较。"
+  },
+  "discipline": {
+    "prereg_first": "预注册文本先锁后跑（lock_rule）。",
+    "no_model_run_this_round": "本探针本轮不跑任何模型（只定稿规格）。",
+    "no_r2_may_be_claimed": "不得声称任何 R²（本轮无读数；将来跑批的读数另开预注册与账面）。",
+    "shots_counting": "对主记分牌的每一次尝试（含失败与中止）逐次登记；打 20 枪中 1 枪不是发现（decisions_log §22.5）。",
+    "placebo_required": "每个杠杆带 Dummy/安慰剂对照（附录 X-4 第 5 条 / §22.6 第 5 条）。",
+    "untouchables": [
+      "v1.0 已发布工件（Zenodo 10.5281/zenodo.22957696 对应的仓库内工件）不得触碰",
+      "六件冻结件不得触碰（见 frozen_red_lines）",
+      "reports/decisions_log.md 不改（本轮只读引用）",
+      "手册不改",
+      "paper/* 不写",
+      "其它 *_prereg.json 不动（本件是新建）",
+      "data/ 下不写任何文件",
+      "不引用或复用 Reaxys 受限数值"
+    ],
+    "reaxys_compliance": {
+      "source_label": "手册附录 AA-1",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1502,
+      "rule": "Reaxys = 法官（手动、逐条、只裁决不进表）；restricted_crosscheck_only；永不进可分发数据集。"
+    }
+  },
+  "frozen_red_lines": {
+    "count": 6,
+    "source": {
+      "source_label": "手册附录 AD-8 六件 digest",
+      "source_path": "tests/fixtures/manual_appendix_j_snapshot.md",
+      "source_line": 1769
+    },
+    "items": [
+      {
+        "path": "data/dielectric_v03.csv",
+        "sha256_canonical_text": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+        "verified_intact_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "path": "probes/l3_stage1_pilot_pool.csv",
+        "sha256_canonical_text": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+        "verified_intact_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "path": "probes/l3_backvalidation_prereg.json",
+        "sha256_canonical_text": "77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+        "verified_intact_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "path": "data/processed/dielectric_observations_v11plus.csv",
+        "sha256_canonical_text": "159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9",
+        "verified_intact_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "path": "probes/dielectric_r2_levers_prereg.json",
+        "sha256_canonical_text": "ab3503c037f05ac398b3c0c59d0e4845943d49fa5a5349fa46b8944f2bc1bdaa",
+        "verified_intact_at_utc": "2026-09-26T09:14:46Z"
+      },
+      {
+        "path": "data/viscosity_v01.csv",
+        "sha256_canonical_text": "12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26",
+        "verified_intact_at_utc": "2026-09-26T09:14:46Z"
+      }
+    ]
+  },
+  "forbidden": [
+    "移植 KPI 的随机 8:1:1 切分进入任何判决",
+    "让 random_row 进判决（只作泄漏参照）",
+    "在测试折上做 SHAP 排序 / 纯度选列 / 特征选择",
+    "用列表位置决定知识向量某一维的语义",
+    "择一静默消解 10 构象 / 11 构象的来源冲突",
+    "把 KPI 转述的超参写成「本项目实测/标定」",
+    "把 236 池读数与 457 池读数直接比大小",
+    "不带池定义引用 0.5332 / 0.5454",
+    "引用 v1.0 headline 0.364 去和 457 池读数比大小",
+    "本轮跑任何模型或声称任何 R²",
+    "修改 v1.0 已发布工件或六件冻结件",
+    "写 reports/decisions_log.md、手册、paper/*、data/* 或其它 *_prereg.json"
+  ],
+  "self_check": {
+    "entry": "probes/verify_unimol_probe_spec.py --check",
+    "tests": "tests/test_unimol_probe_spec.py",
+    "what_it_recomputes": [
+      "六件冻结红线 digest 逐位复现",
+      "236 表的两处物化形式（行数 + 集合相等 + 4 个特征失败键）",
+      "构象产物目录的实测计数（246/250、42/42、276/2198 与构象直方图）",
+      "conformer_count_claims 的两种说法并存且未被静默消解",
+      "KPI 超参九项逐项带 provenance_kind = KPI_SI_via_manual 且 our_measurement = false",
+      "评估协议五项要求在场、KPI 随机切分被禁",
+      "口径隔离：0.4091179943351143 / 0.364 / 0.5332 / 0.5454 各自带池定义"
+    ]
+  },
+  "registered_uncertainties": [
+    "构象数冲突（10 vs 11）：未证实哪种解释成立，跑前必须在跑批预注册里定死取值并注明来源。",
+    "D7 枪毙线没有比较算子（点估计 vs 置信区间）；N-3 的「超 hybrid 的 CV 置信区间才晋升」是相关但不同的一句。跑前必须选定并写死。",
+    "KPI SI 原文不在仓库内；本地只有手册转述（kpi_framework_mapping.md + 快照）。凡 KPI 侧数值均为二手中转述。",
+    "本探针的目标（ε，集体极化）与 KPI 的目标（MP/BP/FP，相变温度）不同量级；超参照抄不等于精度可迁移。",
+    "「236」的手册原文未点名表名；本规格的判定基于集合相等核验，属我方核到的版本，需在跑批预注册里再次声明。",
+    "现有 xTB 构象产物全部是被 git 忽略的暂存（data/interim/），不是耐久发布件；将来若引用「现有 xTB 构象」作输入，必须先决定是否把它们固化成随仓库分发的产物。"
+  ]
+}

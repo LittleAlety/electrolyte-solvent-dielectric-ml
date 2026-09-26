@@ -1768,3 +1768,92 @@ R² 对评分池敏感（同模型：97 池 0.409 / 236 冻结池 0.364 / 1594 �
 
 - 六件 digest 逐位未变：`data/dielectric_v03.csv` `ff2142936e…35ccce4`、`probes/l3_stage1_pilot_pool.csv` `b838febb…`、`probes/l3_backvalidation_prereg.json` `77f61a83…`、`data/processed/dielectric_observations_v11plus.csv` `159b928f80…68a49af9`、`probes/dielectric_r2_levers_prereg.json` `ab3503c0…`、`data/viscosity_v01.csv` `12dfa03f…1c5b26`。
 - **本轮** Reaxys 产物未进 `data/`、也未进任何交付包；**但既有例外要照实登记（I-1）**：week12 / week13 交付包里**已经**装运过 Reaxys 受限镜像（`成果输出/week12/reaxys_dielectric_queue_first_cut.csv`、`成果输出/week13/reaxys_v1x_stocking_scan_summary.json`），按原口径**禁止再分发**。Schrödinger 受限 **858** 条未被绕取（`withheld_points = 858`、`supp_3_rows_merged_into_experimental_table = 0`）。
+
+## 附录 AE：Week 16 收官 —— KPI 29 行 × 本仓漏斗交叉试跑、Uni-Mol 规格就位（2026-09-26）
+
+> 命名说明：紧随附录 AD 之后取 **AE**。本附录**不动笔（不写论文）**、不拟合模型、不产任何 R2、不碰冻结件。范围 = 附录 AD-7 登记的 **Week 16 余项 ① 与 ②** 的清偿。机读台账见 `reports/decisions_log.md` **§26**。**AD 原文不回改**，清偿只在本附录声明。
+
+### AE-1 两条臂与验收（本附录落盘时实测）
+
+| 臂 | 任务 | 交付（新增） | 验收 |
+|---|---|---|---|
+| D8 | KPI 15+14 短清单 × **本仓漏斗**跨池交叉试跑 | `probes/kpi_funnel_cross_run.py` ＋ 预注册 `_prereg.json` ＋ 身份表 `data/reference/kpi_shortlist_identity.csv` ＋ `_summary.json` ＋ 报告 ＋ 测试（6 件） | `--check` 绿（离线逐字节复现）；**26 passed**；ruff 绿 |
+| U | **Uni-Mol 探针规格**定稿（只定规格） | `probes/unimol_probe_spec_prereg.json` ＋ `reports/unimol_probe_spec.md` ＋ 测试 ＋ `probes/verify_unimol_probe_spec.py`（4 件） | verifier `checks=34 passed=34 failed=0`；**22 passed**；ruff 绿；变异测试可红可还原（含摘要钉等式断言） |
+
+**披露（既有产物改动）**：本轮的**指定既有写集**为 `reports/decisions_log.md`（§26）与 `tests/fixtures/manual_appendix_j_snapshot.md`（由 `probes/manual_appendix_reconciliation.py --write-manual-fixture` 从本手册重生；本手册本身在仓库外）；除此之外，新增身份表之后，**AL Round 4 的 `local_trace_files` 是磁盘状态的函数**（`probes/al_round4_new_compound_backfill.py:651` 递归扫 `data/`）。新增 `data/reference/kpi_shortlist_identity.csv` 后必须**按生成器原样重跑**，否则 `tests/test_al_round4_new_compound_backfill.py::test_list_csv_equals_the_generator` 变红。重跑后实测：仅碳酸丙烯酯（`RUOJZAUFBMNUDX-UHFFFAOYSA-N`）那行新增两个 trace token，**无删除、无其它行变动**；summary 除 `generated_at` 外逐字未变；该测试文件 **80 passed**。
+
+> **这是本项目的一条常设操作纪律**：任何往 `data/` 树下新增 `.csv/.json/` 等被扫后缀的文件之后，都要重跑 AL Round 4 生成器并把它写进当轮台账，否则测试会红，或者更糟——清单静默过期。
+
+### AE-2 D8 交叉试跑：怎么做、判据、结果
+
+**怎么跑**（本仓 PowerShell，注意脚本已自举 `sys.path`，无需设 `PYTHONPATH`；联网时须清代理）：
+
+    .\.venv\Scripts\python.exe probes\kpi_funnel_cross_run.py --resolve-online   # 首跑：解析 15 条 CAS
+    .\.venv\Scripts\python.exe probes\kpi_funnel_cross_run.py                    # 增量：缓存里有的不再联网
+    .\.venv\Scripts\python.exe probes\kpi_funnel_cross_run.py --check            # 离线重跑并与磁盘产物比对
+
+**先冻结再跑**：预注册 `2026-09-26T09:11:42Z` 锁定（`status = locked_before_run`，sha256 `42e3fa658d90…6a12ee`）。三条判据与 7 条 `forbidden` 跑后**未回填、未放宽**；S4 在跑前就写死为 `registered_as = gap`。
+
+| 判据 | 内容 | 结果 |
+|---|---|---|
+| A 自洽 | 29 行全部满足 S1 结构过滤与三阈值（MP<230K / BP>430K / FP>360K），允许违反数 = 0 | **通过**，0/29 |
+| B 身份 | 29/29 解析出 InChIKey（14 行 SMILES→RDKit，15 行 CAS→PubChem） | **达成**，29/29，未解析为空 |
+| C 交集 | 与 Batt-P30K / 314 键名册 / 冻结 ε v0.3 / v1.x 观测表 | **13 / 2 / 2 / 1** |
+
+**本仓漏斗 S0–S3 实测**（池 = Batt-P30K，声明 29,519、实测读入 29,519、SMILES 不可解析 0）：
+
+| 阶段 | 规则 | 存活 | 本级剔除 | 对池存活率 |
+|---|---|---|---|---|
+| S0 | 池内全部 | 29,519 | 0 | 1.000000 |
+| S1 | KPI 结构过滤（`[OX2H]` / `[CX3](=O)[OX2H1]`、Molwt<600、重原子<30） | 29,519 | **0** | 1.000000 |
+| S2 | 本仓危险官能团（16 条 `HAZARD_SMARTS`，单一真源 `probes/al_round1.py:57`） | 22,249 | 7,270 | 0.753718 |
+| S3 | 元素白名单（**导出值**，标 `derived_not_declared`） | 11,709 | 10,540 | 0.396660 |
+| S4 | MP/BP/FP 三阈值 | **不跑** | 不跑 | 不跑 |
+
+- **S2 逐因**：`aldehyde 1885` / `epoxide 729` / `acyl_halide 714` / `thiocarbonyl 713` / `nitro 559` / `peroxide 547` / `s_x_bond 531` / `alpha_halo_ether 463` / `p_x_bond 382` / `n_x_bond 372` / `sulfonyl_halide 325` / `halogen_oxygen 323` / `isocyanate 222` / `s_s_bond 219` / `azide 4`。各因之和 7,988 **大于**本级剔除 7,270 —— 因为一个分子可同时命中多条 SMARTS，排除取**并集**。
+- **S3 逐因**：`F 3206` / `S 2836` / `Cl 1770` / `P 1100` 及组合（`Cl+S 319` / `Cl+F 309` / `P+S 185` / `F+P 117` / `Cl+P 65` / `Cl+F+S 24` / `F+P+S 8` / `Cl+P+S 6` / `Cl+F+P 2`）。逐因之和**恰好** 10,540。
+
+**身份层可离线复现的机制**：CAS 行的值一旦落进已提交的 `kpi_shortlist_identity.csv`，离线模式就**直接采用该表的取值**（零网络），因此干净克隆上 `--check` 复现身份层与全部判据；但**属性交叉核对**要读 `data/external/g1plus/` 下的 PubChem 缓存，该目录被忽略，干净克隆上那一节会照实记 `available = false`。**硬守卫**：重解与已提交表在 InChIKey 上不一致时，脚本**拒绝写盘并退出码 2**（除非显式 `--refresh-identity`）。 **闭环说明（审读 I-3）**：离线复现对 15 条 CAS 行是**闭环自证**（离线直接从被校验的那张表读数）；这 15 行的正确性由首跑活库取数 ＋ 审读轮独立活库重查（15/15 MATCH）共同担保，`--check` 本身不重证它们。
+
+### AE-3 本轮三条反直觉发现（照实读数，不是结论）
+
+1. **S1 在电池分子池上零剔除**：29,519 个分子一个都没被 KPI 的结构过滤剔掉。电池分子池本来就没有游离 -OH/-COOH，重原子 < 30、Molwt < 600 也天然成立 → **S1 是一条对「为电池而生的池」完全不咬合的闸门**。教训：**不要指望结构过滤在这种池上体现筛选力**，要比较就比 S2/S3 这种真在咬合的级。
+2. **导出的白名单比 KPI 声明的更严**：29 行解析出的元素并集只有 **C / N / O（3 种）**，而 KPI 正文声明 **11 种元素**且不给清单。所以 S3 用的是**导出值**、且**比声明值更严** → **S3 存活数 11,709 只能当下界读，不是我方规则的复现**。summary 与报告都已标 `derived_not_declared`。
+3. **KPI 印刷 MP/BP/FP ≈ 本仓独立取的 PubChem 汇编值**：只在名册覆盖到的行上比，共 **6 组**（GBL `96-48-0` 与 PC `108-32-7` 各 M/B/F），|Δ| 中位数 **0.05 K**、最大 **1.42 K**（GBL 熔点 228.2 vs HSDB 229.62）。**口径**：KPI 侧是**论文模型的预测值**，本仓侧是**实验汇编值** —— 「别人的预测 vs 我们的实验汇编」的旁证，**不是两个实验源之间的比对**；0.05 K 那一档基本就是 °C→K 的四舍五入残差。
+
+另：**13 个命中分子逐个带 Batt-P30K 自带 DFT 标签**（`dipole_norm` / `homo` / `lumo` / `gap` / `ip` / `ea`），本轮**只照抄、未用于训练或评分**。PC（`RUOJZAUFBMNUDX-UHFFFAOYSA-N`）与 GBL（`YEJRWHAVMIAJKC-UHFFFAOYSA-N`）同时落在 314 键名册与冻结 ε v0.3 表里。
+
+### AE-4 Uni-Mol 规格就位（只到「备料」为止）
+
+- 验收（审读修复后复跑）：`probes/verify_unimol_probe_spec.py --check` → `checks=34 passed=34 failed=0`；`tests/test_unimol_probe_spec.py` **22 passed**；ruff 绿。**变异测试**（临时把 KPI 超参 `batch_size` 的 32 改成 33）：**首跑记录有误**，原记「测试 3 failed、verifier failed=1」，**实为 2 failed / 18 passed**，verifier `failed=1 (kpi_hyperparameter_provenance)`；当时 `test_spec_digest_is_pinned_in_the_report` **是 PASSED** —— 报告正文自己印了变异 sha，弱断言被自身满足，该钉对「被文档化的那次变异」等于永久失效。**根因已修**（改等式断言：报告头部声明的 sha == 盘上规格 sha）。**本轮复跑**：`pytest` **3 failed / 19 passed**、verifier `checks=34 passed=32 failed=2`（`kpi_hyperparameter_provenance` ＋ `report_declares_spec_digest`）、变异态 sha256 `5234f7972c86…3d5589`；还原后 `byte_identical = true`、sha256 回到 `40ba1d6f2c89…132857`，两处重新全绿。即规格是**被钉住的**，不是一纸散文。
+- **规格查证到的仓库事实**：xTB 构象产物**不在耐久产物里** —— 冻结单构象 `data/interim/xtb_features`（246 目录 / 250 个 `input.xyz`）、新增 42 化合物 `data/interim/xtb_features_v11plus`、**唯一多构象集合** `data/interim/xtb_conformer_migration`（276 目录 / 2198 个 `input.xyz`，`MAX_CONFORMERS = 8`）；三者都在 `.gitignore` 之下（**不可分发**）；全仓**无 .sdf/.lmdb/.pkl**（排除口径 = `.git` ＋**全部虚拟环境目录**；本轮实测非虚拟环境内三者均为 0，虚拟环境内合计 `.pkl` 23（`.venv` 11 + `.venv-chemprop` 12）、`.sdf` 9（`.venv` 4 + `.venv-chemprop` 5），属 vendor 命中）。
+- **「236 样本」= 哪张表，已核实**：`probes/l3_stage1_pilot_pool.csv`（236 行）与 `data/dielectric_v03.csv` 的 `model_ready = true` 240 行减 4 个多片段 xTB 特征失败行 = 236；**集合相等、对称差 = 0**。
+- **照实登记、不静默调和**：① **「11 构象」vs「RDKit 10 构象」**（Y-1 / D7 与 AA-3 互相矛盾）→ 并列登记、`status = unresolved`、`no_silent_resolution = true`，「10 RDKit + 1 xTB = 11」只作**未证实**的算术解释；② **D7 枪毙线没给比较算子**。
+- **能力缺口照实写「待建」**：`torch`、`unimol`、`lmdb` **均未安装**，Uni-Mol 预训练权重与运行时**未获取**。**不许把规格当作已有环境**。
+
+### AE-5 训练方向与等待期纪律（不许忘记）
+
+- **D8 不是评测**：本轮**不拟合任何模型、不产任何判决性 R2**（`fitted_any_model = false`、`r2_reported = false`，7 条 `forbidden` 逐条 `false`）。
+- **若要真用这 13 个做迁移**（v2.0 候选）：必须走**观测级 + `GroupKFold by InChIKey`**、断言 `group_overlap == 0`；`random_row` **只作泄漏参照、从不进判决**。温度维度已就绪（`T_K` 特征已在管线里，**无需新增**）。
+- **主记分牌口径隔离照旧**：`0.4091179943351143`（457 行 / 97 化合物）与 v1.0 headline `0.364` **不得混用**；`0.5332` / `0.5454` 只许带池定义引用。黏度线的学费照旧引用为 **MAE**（`log10_cP` 0.064 vs 0.175；R² 口径 0.93689 vs 0.74813）。
+- **短期不新开主线**：v1.x 温度表与 ILThermo 线仍是「已登记未启动」；Uni-Mol 与 MD 只到「规格就位」，**环境与权重留到 v2.0 正式启动时再建**。**不开新主线**这条在投稿等待期内继续生效。
+
+### AE-6 冻结红线复核（本附录落盘时实测）
+
+- 六件 digest 逐位未变：`data/dielectric_v03.csv` `ff2142936e…35ccce4`、`probes/l3_stage1_pilot_pool.csv` `b838febbca4d…408b18`、`probes/l3_backvalidation_prereg.json` `77f61a83b82d…f0db98`、`data/processed/dielectric_observations_v11plus.csv` `159b928f800a…a49af9`、`probes/dielectric_r2_levers_prereg.json` `ab3503c037f0…c1bdaa`、`data/viscosity_v01.csv` `12dfa03f3428…1c5b26`。`probes/l3_stage1_pilot_summary.json`、七个锁定常量、`data/external/*` **除本轮新增的 `pubchem/kpi_shortlist_identity/` 缓存目录（30 个文件，被 `.gitignore:150` 忽略、不进版本库）外**零改动。
+- **短清单边界不变**：`data/reference/kpi_15_14_shortlists.csv` 的 29 行仍是 `cross_check_only` / `redistributable = false`（汇编级证据），随仓库分发但**只作交叉核对**。新增的 `data/reference/kpi_shortlist_identity.csv` **只装结构身份**（PubChem 侧公有领域），**不含论文印刷的 MP/BP/FP**、不含任何 Reaxys 值，也不参与特征构造、训练或评分。
+- **Reaxys 与 Schrödinger 红线未触碰**：本轮**零 Reaxys 访问**；week12 / week13 交付包内已装运的 Reaxys 受限镜像（**禁止再分发**）**未新增、未扩散**；Schrödinger 受限 **858** 条未被绕取（`withheld_points = 858`）。
+- 本轮新增产物全部落在 `probes/`、`reports/`、`tests/`、`data/reference/` 四处，**未进任何交付包**。
+
+### AE-7 独立对抗审读与修复（同一轮；审读者 = 另一智能体，独立复算）
+
+- **审读方式（不许读结论）**：审读者从磁盘独立重算 digest、独立重跑 `--check`（含「把 `socket`/`urlopen` 全 monkeypatch 成抛异常后仍退出 0 且逐字节复现三件产物」）、独立重跑变异测试并还原、独立复算黏度线 MAE/R²、独立比对 `probes/l3_stage1_pilot_pool.csv` 与 `data/dielectric_v03.csv` 的 `model_ready` 集合（对称差 0）、独立清点 xTB 三处目录计数、独立扫描 `成果输出/` 是否混入本轮产物（零命中）。
+- **D8 主线：0 Critical** —— P1–P8、AL Round 4 联动、变异测试、六件冻结件 digest 全部独立复算站得住。
+- **已修 6 条**：**C-1**（U 臂把 R² 写成 MAE、预注册「逐字引用」实为拼接）→ 改为带盘上出处的 `MAE 0.064 vs 0.175、R² 0.93689 vs 0.74813`，预注册引文拆成两条真逐字并登记 `corrections_before_first_commit`；**I-1**（摘要钉弱断言 → 等式断言，见 AE-4）；**M-1**（「唯一被改动的既有产物」措辞过宽 → 改为「指定既有写集」，见 AE-1）；**M-2**（身份表 `notes` 自述与同表列冲突 → 改成「`source_url` / `retrieved_at` 即本行取数凭据」）；**M-3**（「无 .sdf/.lmdb/.pkl」补排除口径，见 AE-4）；**I-2**（`data/external/*` 并非零改动 → 按实况改写，见 AE-6）。
+- **登记说明 1 条**：**I-3**（CAS 行离线复现是闭环自证）→ 已在 AE-2 补写担保来源。
+- **登记不修 1 条**：**M-4**（15 条 CAS 行落的是无立体层 InChIKey，交集是**立体盲的**；本轮无实害，留作 v1.x 复权时的已知限制）。
+- **审读者无法独立复核的 2 项（负命题，照实写「不可复核」）**：① 「本轮零 Reaxys 访问」无网络审计日志，只能间接支持（新增/改动文件里 `reaxys` 零命中、`成果输出/` 无新增 Reaxys 物）；② 首跑 15 次 PubChem 取数不可回放，但**取值**已被逐行活库重查证实（15/15 MATCH）。
+
+- **第二轮复核（只核修复，独立实测）**：请求的 7 项**全部通过、0 Critical**。新增 1 条 Minor（**M-a**：AE-4 把 `.pkl/.sdf` 的**目录归属**写错，聚合数 23/9 对但归属错 → 已按实测改写为 「`.pkl` 23 = `.venv` 11 + `.venv-chemprop` 12、`.sdf` 9 = `.venv` 4 + `.venv-chemprop` 5」）与 1 条 Important（**I-a**：审读窗口内台账被本轮写入，文件是**移动靶** → 流程登记：提交前以**冻结副本**复算全部 pin；审读者自己的全量跑为 **2435 passed / 817.64 s**，与本节 783.65 s 的差异只是机器负载）。
+
+> **纪律价值**：这轮审读打红的全是**「口径/措辞/自证强度」**，没有一条是数值造假 —— 但其中 I-1 是**真缺陷**（弱断言使摘要钉永久失效），若不复核就会带着「钉住了」的错觉进 v2.0。教训：**凡「我钉住了 X」的断言，都必须让 X 变化时该断言真的变红**（本例即变异测试要打到钉本身）。

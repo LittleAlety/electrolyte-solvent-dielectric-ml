@@ -3927,3 +3927,79 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 - **本轮 Reaxys 产物未进 `data/`、也未进任何交付包**：`probes/reaxys_render_gap_closure.*` 与 `reports/reaxys_render_gap_closure.md` 都不在 `data/` 树内，`verify_reaxys_render_gap_closure.py` 的「产物不在 `data/` 下」机器检查通过。**I-1 更正（照实登记既有例外）**：更早的 Reaxys 镜像**已经**随交付包分发过 —— `成果输出/week12/reaxys_dielectric_queue_first_cut.csv`（含 FEC 78.4 / GVL 36.9 / DME 7–9.1 / sulfolane 44.5 等受限值）与 `成果输出/week13/reaxys_v1x_stocking_scan_summary.json`（其 `compliance` 自述「该镜像只存于本仓库与 week13 交付包内，禁止再次分发」）。这两包按原口径**禁止再分发**；「仓库内路径检查通过」**不构成对外分发的许可**。
 - **Schrödinger 受限 858 条未被绕取**：T2 仍报 `withheld_points = 858`，且 `supp_3_rows_merged_into_experimental_table = 0`。
 - v1 五件套（prereg / script / summary / report / importance CSV）digest 逐位未变，v1 读数**未被改写、未被就地重算**。
+
+## §26 Week 16 收官两条臂：KPI 29 行 × 本仓漏斗交叉试跑（D8）、Uni-Mol 探针规格定稿（2026-09-26）
+
+本节接在 §25 之后，清偿附录 AD-7 登记的 Week 16 余项 ① 与 ②。① = 把 §25 落盘的 KPI 15+14 短清单（`data/reference/kpi_15_14_shortlists.csv`）与**本仓自己的筛选漏斗**做一次跨池交叉试跑；② = Uni-Mol 探针规格定稿（只定规格，不跑模型，作 v2.0 的备料）。本轮**不动笔（不写论文）**、不拟合任何模型、不产任何 R2、不碰冻结件。
+
+### 26.1 两条臂与写集
+
+- **臂 D8（交叉试跑）**：`probes/kpi_funnel_cross_run.py`（48856 B，`c65982fcb927…c800815`，已自举 `sys.path`）＋ 预注册 `probes/kpi_funnel_cross_run_prereg.json`（6568 B，`42e3fa658d90…6a12ee`）＋ 身份表 `data/reference/kpi_shortlist_identity.csv`（9587 B，`29d7ebab0318…e3dc976`）＋ summary `probes/kpi_funnel_cross_run_summary.json`（29436 B）＋ 报告 `reports/kpi_funnel_cross_run.md`（9295 B，`7bd91a144234…5b56bf`）＋ 测试 `tests/test_kpi_funnel_cross_run.py`（11104 B，`775ae9e17700…4f219b`）。
+- **臂 U（Uni-Mol 规格）**：`probes/unimol_probe_spec_prereg.json`（41443 B，`40ba1d6f2c89…132857`，`locked_at_utc = 2026-09-26T09:14:46Z`）＋ `reports/unimol_probe_spec.md`（19471 B）＋ `tests/test_unimol_probe_spec.py`（15913 B）＋ `probes/verify_unimol_probe_spec.py`（26242 B，`--check` 入口）。**本轮不训练、不下载权重、不建环境**。审读后按 C-1 / I-1 修了三处（R²/MAE 口径、预注册「逐字引用」、摘要钉改等式断言），见 26.5 与 26.9。
+- **披露（既有产物改动）**：本轮**指定的既有写集**是 `reports/decisions_log.md`（本节）与 `tests/fixtures/manual_appendix_j_snapshot.md`（由 `probes/manual_appendix_reconciliation.py --write-manual-fixture` 从仓库外手册重生）；除此之外，新增 `data/reference/kpi_shortlist_identity.csv` 后，AL Round 4 的 `local_trace_files` 是**磁盘状态的函数**（`probes/al_round4_new_compound_backfill.py:651` 递归扫 `data/`），故按生成器**原样重跑**，`probes/al_round4_backfill_list_v0.csv` 与 `probes/al_round4_new_compound_backfill_summary.json` 各改 1 行：碳酸丙烯酯（`RUOJZAUFBMNUDX-UHFFFAOYSA-N`）那行新增两个 trace token（`data/reference/kpi_shortlist_identity.csv:key`、`data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json:key`），**无删除项、无其它行变动**；summary 除 `generated_at` 外逐字未变。
+
+### 26.2 预注册先冻结，判据事后不放宽
+
+- 预注册 `2026-09-26T09:11:42Z` 锁定、`status = locked_before_run`；三条判据（A 自洽 / B 身份 / C 交集）与 7 条 `forbidden` 在**跑之前**写死，跑后**未回填、未放宽**。
+- 阶段定义同样先冻结：**S1** = KPI 结构过滤（`[OX2H]` / `[CX3](=O)[OX2H1]`、Molwt < 600、重原子数 < 30）；**S2** = 本仓危险官能团闸门（单一真源 `probes/al_round1.py:57` 的 `HAZARD_SMARTS`，16 条）；**S3** = 元素白名单（**由短清单导出**，标 `derived_not_declared`）；**S4** = MP/BP/FP 三阈值，本仓**没有这三个模型**、Batt-P30K 也不带这三性质 → **登记为缺口**，不跑、不猜、不插值、不用别人的表补。
+- **口径隔离**：预注册写明两池不同（`pool_different`）。只允许比规则与比例，**不允许比绝对计数**，也不允许把比例差异单方面归因于漏斗；任何把 Batt-P30K 各级存活数当成 KPI 级联复现的说法都是错的。
+
+### 26.3 判据结果
+
+- **判据 A（29 行自洽，允许违反数 = 0）**：**通过**，违反行数 0/29。即：29 行全部满足 KPI 结构过滤与三阈值。**S1 不是靠「论文自己挑的分子当然合规」蒙过去的**，而是逐行用 RDKit 从解析出的结构机械复核（14 行用短清单自带 SMILES，15 行用 PubChem 解析出的结构）。
+- **判据 B（29/29 解析出 InChIKey）**：**达成**，29/29、未解析清单为空、`drift_vs_committed_table = []`。路线分布：SMILES→RDKit **14 行**，CAS→PubChem PUG-REST **15 行**。
+- **判据 C（交集照实报）**：与 Batt-P30K **13** 个；与 314 键名册 **2** 个；与冻结 ε v0.3 表 **2** 个；与 v1.x 观测表 v11plus **1** 个。
+- **身份层可离线复现**：CAS 行的值一旦落进已提交的 `kpi_shortlist_identity.csv`，离线模式就直接采用该表取值（不打网络）。首跑 15 次 PubChem PUG-REST 取数（0.25 s 限流、4 次指数退避重试），其后全部命中 `data/external/g1plus/pubchem/kpi_shortlist_identity/` 本地缓存；**离线 `--check` 逐字节复现身份表、summary（去掉 `generated_at_utc` 与 `run_telemetry`）与报告**。 **闭环说明（审读 I-3）**：离线复现对 15 条 CAS 行是**闭环自证**（离线直接从被校验的那张表读数）；这 15 行的正确性由首跑活库取数 ＋ 审读轮独立活库重查（15/15 MATCH）共同担保，`--check` 本身不重证它们。
+- **硬守卫**：若本轮重解与已提交身份表在 InChIKey 上不一致，脚本**拒绝写盘并退出码 2**（除非显式 `--refresh-identity`），不允许静默改写身份。
+
+### 26.4 本轮三条反直觉发现（都不是结论，是照实读数）
+
+1. **KPI 的结构过滤在电池分子池上零剔除**：Batt-P30K **29,519** 个分子在 S1 下**一个都没被剔**（`excluded_here = 0`，`unparsable_smiles = 0`，`n_measured_this_round = n_declared = 29519`）。电池分子池本来就无游离 -OH/-COOH、且体量小（重原子 < 30、Molwt < 600 天然成立）→ **S1 是一条对一个为电池而生的池完全不咬合的闸门**。这不是 KPI 的错，是两池用途不同；但它说明「拿结构过滤当筛选力」在本仓池上无从体现。
+2. **导出的元素白名单比 KPI 声明的更严**：29 行解析出的元素并集只有 **C、N、O（3 种）**，而 KPI 正文说白名单有 **11 种元素**（不给清单）。因此 S3 用的是一个**导出值**、且**比声明值更严**：S3 存活数 **11,709** 只能当**下界**读，**不是我方规则的复现**。报告与 summary 都显式标了 `derived_not_declared` 并写明这一条。
+3. **KPI 印刷 MP/BP/FP 与本仓独立取的 PubChem 汇编值几乎重合**：只在名册覆盖到的行上比（**6 组**：GBL `96-48-0` 与 PC `108-32-7` 各 M/B/F），|Δ| 中位数 **0.05 K**、最大 **1.42 K**（GBL 熔点；KPI 228.2 vs HSDB 229.62）。**口径必须说清**：KPI 侧是**论文模型的预测值**，本仓侧是**实验汇编值** —— 这不是两个实验源之间的比对，而是一次「别人的预测 vs 我们的实验汇编」的旁证。0.05 K 那一档基本就是 °C→K 换算的四舍五入残差。
+- **S2/S3 的逐因剔除**（供后续复用）：S2 剔除 **7,270** 个（`aldehyde 1885` / `epoxide 729` / `acyl_halide 714` / `thiocarbonyl 713` / `nitro 559` / `peroxide 547` / `s_x_bond 531` 等；各因之和 7,988 **大于** 7,270，因一个分子可同时命中多条 SMARTS，排除取并集）；S3 剔除 **10,540** 个（`F 3206` / `S 2836` / `Cl 1770` / `P 1100` 及各类组合，逐因之和因而**恰好** 10,540）。漏斗：**S0 29519 → S1 29519 → S2 22249 → S3 11709 → S4（缺口，不跑）**。
+- **交集里两条命中的旁证**：PC（`108-32-7` / `RUOJZAUFBMNUDX-UHFFFAOYSA-N`）与 GBL（`96-48-0` / `YEJRWHAVMIAJKC-UHFFFAOYSA-N`）同时出现在 KPI 短清单、314 键名册与冻结 ε v0.3 表里；13 个命中分子**逐个带 Batt-P30K 自带 DFT 标签**（`dipole_norm` / `homo` / `lumo` / `gap` / `ip` / `ea`）。这些标签只是**照抄池内既有值**，本轮**未用它们训练或评分**。
+
+### 26.5 Uni-Mol 探针规格定稿（只定规格，不跑模型）
+
+- 交付四件（见 26.1 臂 U），验收（审读修复后复跑）：ruff 绿、`tests/test_unimol_probe_spec.py` **22 passed**、`probes/verify_unimol_probe_spec.py --check` **checks=34 passed=34 failed=0**（出口码 0）。
+- **变异测试**（临时把规格里 KPI 超参 `batch_size` 的 32 改成 33 → 变红 → 立即还原 → 逐字节相同）：**首跑记录有误**，原记「测试 3 failed、verifier failed=1」，**实为 2 failed / 18 passed**（`test_kpi_hyperparameters_are_attributed_not_measured`、`test_independent_verifier_passes`），verifier `checks=30 passed=29 failed=1 (kpi_hyperparameter_provenance)`。当时 `test_spec_digest_is_pinned_in_the_report` **是 PASSED** —— 因为报告正文自己印了变异 sha，弱断言「sha 前 16 位出现于报告任意位置」被自身满足，该钉对「被文档化的那次变异」等于永久失效。**根因已修**（断言改为「报告头部声明的 sha == 盘上规格 sha」的等式断言）。**本轮复跑**（规格 41443 B / verifier 34 项 / 测试 22 条）：`pytest` **3 failed / 19 passed**（三条含 `test_spec_digest_is_pinned_in_the_report`）、verifier `checks=34 passed=32 failed=2`（`kpi_hyperparameter_provenance` ＋ `report_declares_spec_digest`）、变异态 spec sha256 `5234f7972c86…3d5589`；还原后 `byte_identical = true`、sha256 回到 `40ba1d6f2c89…132857`、两处重新全绿（verifier 34/34、`pytest` 22 passed）。
+- **规格查证到的仓库事实**（写入 prereg 与报告）：xTB 构象产物**不在任何耐久产物里** —— 冻结单构象暂存 `data/interim/xtb_features`（246 目录 / 250 个 `input.xyz`，245×1 + 1×5）、新增 42 化合物 `data/interim/xtb_features_v11plus`（42/42）、**唯一多构象集合** `data/interim/xtb_conformer_migration`（276 目录 / 2198 个 `input.xyz`，直方图 `{8:274, 5:1, 1:1}`，`MAX_CONFORMERS = 8`），三者都在 `.gitignore` 的 `data/interim/*` 之下（**不可分发**）；全仓**无 .sdf/.lmdb/.pkl**（排除口径 = `.git` ＋**全部虚拟环境目录**；本轮实测：非虚拟环境内三者均为 0，虚拟环境内总计 **23 个 `.pkl`（`.venv` 11 + `.venv-chemprop` 12）与 9 个 `.sdf`（`.venv` 4 + `.venv-chemprop` 5）** 属 vendor 命中 —— 只排 `.venv/` 会漏排 `.venv-chemprop`）。
+- **「236 样本」指哪张表已核实**：v1.0 冻结 236 池有两个物化 —— `probes/l3_stage1_pilot_pool.csv`（236 行）与 `data/dielectric_v03.csv` 的 `model_ready = true` 240 行减去 4 个多片段 xTB 特征失败行 = 236；**集合相等、对称差 = 0**。
+- **照实登记的两处冲突（不静默调和）**：① **「11 构象」vs「RDKit 10 构象」** —— 手册附录 J 快照里 Y-1 / D7 与 AA-3 的表述互相矛盾，规格**并列登记、`status = unresolved`、`no_silent_resolution = true`**，「10 RDKit + 1 xTB = 11」只作为**未证实**的最省事算术解释；② **D7 枪毙线没给比较算子**（N-3 的「超 hybrid 的 CV 置信区间才晋升」是相关但**不同**的一句）。
+- **照实登记的能力缺口**：`torch`、`unimol`、`lmdb` **均未安装**，Uni-Mol 权重与运行时**未获取** → 规格里一律写「待建」并给依据，**不假装已有环境**。
+
+### 26.6 测试与验证（本轮实跑）
+
+- `tests/test_kpi_funnel_cross_run.py`：**26 passed**（29.71 s）。测试固化：预注册 sha256 与 `locked_at_utc`、身份表 29 行 / 29 个互异 InChIKey / 表头 schema、14+15 路线分布、逐行「恰一个标识符」、**离线重解 29/29 且 `drift = []`**、S4 记为 `gap` 且存活数为 `null`、漏斗四数、交集四数、13 个命中的**身份**（不是名字）与自带 DFT 标签、白名单 `derived_not_declared`、属性交叉核对三数、**报告逐字等于 `render_report(summary)`**、以及**离线重跑零网络**。
+- `probes/kpi_funnel_cross_run.py --check`：**绿**（离线，逐字节复现身份表 / summary / 报告）。
+- `tests/test_al_round4_new_compound_backfill.py`：重跑生成器后 **80 passed**（此前因新增表而红的那条 `test_list_csv_equals_the_generator` 已转绿）。
+- `ruff check`（脚本 + 测试）：**All checks passed!**（CI 只跑 `ruff check`，仓库不强制 `ruff format`，故未跑 format。）
+- `tests/test_unimol_probe_spec.py`：审读修复后复跑 **22 passed** ＋ verifier **34/34**；变异测试复跑见 26.5（3 failed / 19 passed，还原后 `byte_identical = true`）。
+- **全量回归**：`pytest -q -p no:cacheprovider` → **2435 passed**（783.65 s）；`ruff check` 全量（scripts src probes tests notebooks）**All checks passed!**。
+
+### 26.7 训练方向（不许忘记）
+
+- **交叉试跑不是评测**：本轮**不拟合任何模型、不产任何判决性 R2**，summary 的 `model_fitting.fitted_any_model = false`、`r2_reported = false`，7 条 `forbidden` 逐条 `false`。13 个命中分子的 Batt-P30K 标签**只是照抄**。
+- **若要真的用这 13 个做迁移**（v2.0 候选方向）：必须走**观测级 + `GroupKFold by InChIKey`**、断言 `group_overlap == 0`，`random_row` 只作泄漏参照、从不进判决 —— 与黏度线、ηε-joint 同一条纪律。
+- **主记分牌口径隔离照旧**：`0.4091179943351143`（457 行 / 97 化合物）与 v1.0 headline `0.364` **不得混用**；`0.5332` / `0.5454` 只许带池定义引用。
+- **等待期纪律**：审稿意见回来前只跑已登记内容，**不开新主线**；Uni-Mol 与 MD 只到「规格就位」，环境与权重留到 v2.0 正式启动时再建。
+
+### 26.8 红线复核
+
+- 六件冻结件 digest 逐位未变：`data/dielectric_v03.csv` `ff2142936e…35ccce4`、`probes/l3_stage1_pilot_pool.csv` `b838febbca4d…408b18`、`probes/l3_backvalidation_prereg.json` `77f61a83b82d…f0db98`、`data/processed/dielectric_observations_v11plus.csv` `159b928f800a…a49af9`、`probes/dielectric_r2_levers_prereg.json` `ab3503c037f0…c1bdaa`、`data/viscosity_v01.csv` `12dfa03f3428…1c5b26`。
+- **短清单仍是 `cross_check_only` / `redistributable = false`**：29 行逐字转录已发表 SI 的图 S20/S21（汇编级证据），随仓库分发但**只作交叉核对**，不得当数据集再用。**身份表 `data/reference/kpi_shortlist_identity.csv` 只装结构身份**（PubChem 侧为公有领域），**不含任何论文的 MP/BP/FP 印刷值**，也未混入任何 Reaxys 值。
+- **本轮新增产物全部落在 `data/reference/` 与 `probes/`、`reports/`、`tests/`，未进任何交付包**；`data/` 树内**被 git 跟踪的新增**只有身份表一张，且它不参与特征构造、训练或评分；另有 15 条 CAS 行的 PubChem 响应缓存 `data/external/g1plus/pubchem/kpi_shortlist_identity/`（30 个文件 = 15 `.json` + 15 `.url`，**被 `.gitignore:150` 忽略、不进版本库**），只是取数痕迹，不含受限数据。
+- **Reaxys 红线未触碰**：本轮**零 Reaxys 访问**；§25/AD-8 登记的既有例外（week12 / week13 交付包内已装运的 Reaxys 受限镜像，**禁止再分发**）**未新增、未扩散**；Schrödinger 受限 **858** 条未被绕取。
+- **§25 对账更正继续有效**：J-STAGE 开放的说法已被四方证伪，Hagiyama 只剩馆际互借；本节的 KPI 侧事实**只来自本仓已落盘的转录表与报告**，未新增对论文原文的断言。
+
+### 26.9 独立对抗审读与修复（同一轮；审读者 = 另一智能体，独立复算）
+
+- **审读方式（不许读结论）**：审读者从磁盘独立重算 digest、独立重跑 `--check`（含「把 `socket`/`urlopen` 全 monkeypatch 成抛异常后仍退出 0、且逐字节复现三件产物」）、独立重跑变异测试并还原、独立复算黏度线 MAE/R²（`probes/viscosity_baseline_summary.json`）、独立比对 `probes/l3_stage1_pilot_pool.csv` 与 `data/dielectric_v03.csv` 的 `model_ready` 集合（对称差 0）、独立清点 xTB 三处目录计数、独立扫描 `成果输出/` 是否混入本轮产物（零命中）。
+- **D8 主线：0 Critical**。P1–P8、AL Round 4 联动、变异测试、六件冻结件 digest 全部独立复算站得住。
+- **已修 6 条**：**C-1**（U 臂把 R² 写成 MAE、且预注册的「逐字引用」实为拼接）→ 报告与摘要改为带盘上出处的 `MAE 0.064 vs 0.175、R² 0.93689 vs 0.74813`，预注册引文拆成两条真逐字并登记 `corrections_before_first_commit`（3 条，`no_run_depended_on_it = true`）；**I-1**（摘要钉弱断言 → 等式断言，见 26.5）；**M-1**（「唯一被改动的既有产物」措辞过宽 → 改为「指定既有写集」，见 26.1）；**M-2**（身份表 `notes` 自述与同表列冲突 → 改成「`source_url` / `retrieved_at` 即本行取数凭据」）；**M-3**（「无 .sdf/.lmdb/.pkl」补排除口径，见 26.5）；**I-2**（`data/external/*` 并非零改动 → 按实况写为「除本轮新增的 `pubchem/kpi_shortlist_identity/` 缓存目录外零改动」，见 26.8）。
+- **登记说明 1 条**：**I-3**（CAS 行离线复现是闭环自证）→ 已在 26.3 补写担保来源。
+- **第二轮复核新增 2 条（已处置）**：**M-a**（26.5 把 `.pkl/.sdf` 的目录归属写错——聚合数 23/9 对，但归属写成「`.venv` 23 个 `.pkl`、`.venv-chemprop` 9 个 `.sdf`」，实测应为 `.pkl` 23 = `.venv` 11 + `.venv-chemprop` 12、`.sdf` 9 = `.venv` 4 + `.venv-chemprop` 5）→ 已按实测改写；**I-a**（审读窗口内台账被本轮写入——即 26.6 全量回归占位符回填，文件是**移动靶**）→ **流程登记**：提交前以**冻结副本**复算全部 pin，且本条如实写明「审读的 passed 数与秒数按审读者自己的全量跑（2435 passed / 817.64 s，秒数随负载浮动）」。
+- **登记不修 1 条**：**M-4**（15 条 CAS 行落的是无立体层 InChIKey，故与其它表的交集是**立体盲的**，例 `4437-70-1` 解析为平面母体、其 synonym 另挂 CAS `65941-76-6`）。本轮无实害，留作 v1.x 复权时的**已知限制**。
+- **审读者无法独立复核的 2 项（负命题，照实登记为「不可复核」，不写成已证实）**：① 「本轮零 Reaxys 访问」没有网络审计日志，只能间接支持（新增/改动文件中 `reaxys` 零命中、`成果输出/` 无新增 Reaxys 物）；② 首跑 15 次 PubChem 取数过程不可回放，但**取值**已被逐行活库重查证实（15/15 MATCH）。
+

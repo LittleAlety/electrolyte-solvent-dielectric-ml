@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "task": "kpi_funnel_cross_run",
+  "title": "KPI 15+14 短清单与本仓漏斗的交叉试跑（执行手册 D8 / AA-5 五）",
+  "locked_at_utc": "2026-09-26T09:11:42Z",
+  "status": "locked_before_run",
+  "lock_rule": "判据、阶段定义与解释规则在跑之前冻结。跑完不回填、不放宽；任何事后改动都要新开一轮而不是改这一份。",
+  "purpose": "把本仓自己的筛选漏斗独立跑一遍 Batt-P30K，并与 KPI 论文 SI 抠出的 15+14 短清单做交叉互证。交集 = 互证；无交集 = 必须给出分歧来源分析。",
+  "what_this_is": [
+    "一次跨池的迁移试验：我方池 = Batt-P30K（29,519），KPI 池 = QM9（133,885），两池不同。",
+    "一次对我方转录的机械证伪：29 行必须同时满足 KPI 的结构过滤与三个阈值，否则说明我方 Transcription 或规则读法有问题。",
+    "一次身份层作业：把 29 行从 CAS/SMILES 解析成 InChIKey，使交集按身份算而不是按名字算。"
+  ],
+  "what_this_is_not": [
+    "不是 KPI 级联的复现：QM9 本地不存在，任何把 Batt-P30K 各级存活数当作 KPI 数字复现的说法都是错的。",
+    "不是模型评测：本轮不拟合任何模型、不买任何 R2、不产生任何判决性 R2 数字。",
+    "不是第三方数据的再分发：短清单仍为 cross_check_only（redistributable=false）；PubChem 侧结构为公有领域。"
+  ],
+  "pools": {
+    "ours": {
+      "id": "batt_p30k",
+      "path": "data/raw/batt/Batt-P30K.h5",
+      "kind": "Batt-SLM 电池分子池，omegaB97X-V 级别 HOMO/LUMO/IP/EA/dipole",
+      "n_declared": 29519,
+      "n_measured_this_round": null
+    },
+    "kpi": {
+      "id": "qm9_screened",
+      "kind": "QM9",
+      "n_declared": 133885,
+      "available_locally": false,
+      "why_unavailable": "QM9 从未进入本仓，网络侧也未获取（研究范围外）"
+    },
+    "comparability": "pool_different: 只允许比比例与规则，不允许比绝对计数，也不允许把比例差异单方面归因于漏斗"
+  },
+  "stages": [
+    {
+      "id": "S0",
+      "name": "pool",
+      "rule": "池内全部分子",
+      "runnable": true,
+      "provenance": "Batt-P30K.h5"
+    },
+    {
+      "id": "S1",
+      "name": "kpi_structural_filter",
+      "rule": "剔除含活泼氢官能团（-OH / -COOH）的分子；Molwt < 600；#Heavy < 30",
+      "runnable": true,
+      "provenance": "KPI SI §11，手册 AA-3 第 3 条逐字转述",
+      "smarts": {
+        "hydroxyl": "[OX2H]",
+        "carboxyl": "[CX3](=O)[OX2H1]"
+      },
+      "note": "carboxyl 的 OH 被 hydroxyl 的 [OX2H] 覆盖，两者分开记录但排除用并集"
+    },
+    {
+      "id": "S2",
+      "name": "our_hazard_gate",
+      "rule": "命中本仓危险官能团表任一 SMARTS 即剔除（单一真源 = probes/al_round1.py HAZARD_SMARTS）",
+      "runnable": true,
+      "provenance": "本仓既有漏斗入口 probes/al_round1.py",
+      "kind": "our_differentiator"
+    },
+    {
+      "id": "S3",
+      "name": "element_whitelist_derived",
+      "rule": "元素白名单 = KPI 29 行短清单解析出的元素并集；不在白名单内的分子剔除",
+      "runnable": true,
+      "provenance": "由短清单导出，不是 KPI 原文值",
+      "caveat": "KPI 只说 11 种元素、未给清单；此白名单是导出值，必须标 derived_not_declared",
+      "kind": "derived_not_declared"
+    },
+    {
+      "id": "S4",
+      "name": "property_thresholds",
+      "rule": "MP < 230 K，BP > 430 K，FP > 360 K",
+      "runnable": false,
+      "provenance": "KPI SI §11",
+      "why_not_runnable": "本仓没有 MP/BP/FP 模型（手册附录 Q-2 出口 2 的 models/homo_lumo_baselines.json 只覆盖 HOMO/LUMO/IP/EA）；Batt-P30K 也不带这三性质。该阶段本轮**登记为缺口**，不猜、不插值、不用别人的表补。",
+      "registered_as": "gap"
+    }
+  ],
+  "identity_resolution": {
+    "shortlist_rows": 29,
+    "smiles_rows": 14,
+    "cas_rows": 15,
+    "smiles_route": "RDKit Chem.MolFromSmiles -> Chem.MolToInchiKey",
+    "cas_route": "PubChem PUG-REST https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{cas}/property/SMILES,ConnectivitySMILES,InChIKey,MolecularFormula,MolecularWeight/JSON",
+    "throttle_seconds": 0.25,
+    "cache_dir": "data/external/g1plus/pubchem/kpi_shortlist_identity/",
+    "committed_table": "data/reference/kpi_shortlist_identity.csv",
+    "failure_rule": "CAS 解析不到就照实记 unresolved，判据 B 判为未达成；不得用猜的结构补位、不得跳过该行后再声称 29/29",
+    "smarts_note": "短清单的 14 条 SMILES 逐字来自 SI 图 S21；不重写、不做规范化后再转录"
+  },
+  "pre_registered_criteria": {
+    "A_self_consistency": {
+      "statement": "29 行必须全部满足 S1（无 -OH/-COOH、Molwt<600、#Heavy<30）且满足三个阈值（MP<230K、BP>430K、FP>360K）；允许违反数 = 0。",
+      "on_failure": "任何一条违反即判 A 未达成：先修我方转录或规则读法，再谈交叉；不得把违反解释成 KPI 的错。"
+    },
+    "B_identity": {
+      "statement": "29/29 行必须解析出 InChIKey（14 行走 SMILES，15 行走 PubChem CAS）。",
+      "on_failure": "判 B 未达成，照实登记 unresolved 行；交集按下界报（已解析子集）。"
+    },
+    "C_intersection": {
+      "statement": "KPI 29 行与 Batt-P30K 的交集照实报；0 不算失败，但必须逐条给出分歧来源分析（身份未解析 / 池不同 / 规则不同 / 转录错）。",
+      "on_failure": "无 fail 条件；缺分析才是缺陷。"
+    }
+  },
+  "reported_metrics": [
+    "Batt-P30K 各级存活数与存活率",
+    "KPI 声明的级联数字与比例（转述，不复算）",
+    "两者的比例对照（标记 pool_different）",
+    "29 行的 S1/阈值自洽性逐行结果",
+    "交集：与 Batt-P30K、与 314 键名册、与 epsilon 冻结表",
+    "属性交叉核对：KPI 印刷 MP/BP/FP vs 本仓独立取得的 PubChem 汇编值（仅限名册覆盖到的行）",
+    "命中分子的 Batt-P30K 自带 DFT 标签（含偶极矩）"
+  ],
+  "forbidden": [
+    "把 Batt-P30K 数字当作 QM9 数字或 KPI 级联的复现",
+    "用猜的结构补齐未解析的 CAS 行",
+    "把名字匹配当身份匹配",
+    "在没有 MP/BP/FP 模型的情况下声称跑过 S4",
+    "把 KPI 的印刷值当作本仓实测值",
+    "再分发短清单（redistributable=false）",
+    "让 random_row 或任何泄漏口径进入结论"
+  ]
+}
