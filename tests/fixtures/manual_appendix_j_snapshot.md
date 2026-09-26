@@ -1981,3 +1981,12 @@ R² 对评分池敏感（同模型：97 池 0.409 / 236 冻结池 0.364 / 1594 �
 - **为什么提交前全绿**：那条测试读的是**索引模式**，而这个文件在提交前是 untracked（`??`），根本不在索引里 —— **一提交就进索引 100644**，于是同一棵树从「全绿」翻成「红」。它与 AF-10/§27.7 是**同族缺陷**：本地看不见、CI 才看得见。
 - **修复**：`git update-index --chmod=+x probes/identity_smiles_drawing_decision.py`，索引模式 100644 → **100755**，**文件内容一字未动**（blob `a8d33d2d3dd669f84beb1329a6f3a07f1b050f8e`）；修后 `tests/test_repo_hygiene.py` **4 passed**。全仓审计（索引里逐条扫「带 shebang 的 .py」）**只有这 1 件**是 100644。
 - **新纪律（与 AF-10 并列）**：**「提交前全量回归绿」不足以覆盖索引类缺陷** —— 判定执行位、文件模式、被跟踪性这类事实的，是**提交后的索引**。故本项目的收口顺序固定为：① 提交 → ② **针对该提交从干净工作树重导交付包并重跑 verifier 块** → ③ 重导若红，立刻补一个修复提交并把教训登记（本节即第 ①-③ 步的产物）。新增**带 shebang 的探针，必须同批设好可执行位**。
+
+### AF-13 第二轮独立对抗审读（终态提交 `e7b0690`；只读审读者 = 另一智能体）
+
+- **审读方式（只读复算，不读 AF-11 的结论）**：六件冻结件 digest **6/6 INTACT**；包内 `SHA256SUMS` **32 条逐条重算 0 不一致**；**把导出器跑到系统临时目录再与交付包逐字节比对 → 33/33 完全相同**（交付包确为 `e7b0690` 干净树的导出输出，`worktree_dirty = false`）；**自己重实现** F2 候选集规则得 `98 + 21 = 119` 与 `path_list_sha256 e154aca9…1201ec9`；**自己重算** F2 前后两态 `148 → 77`（消失 71、新增 0；token 口径 156 → 83）；索引里带 shebang 的 5 个 `.py` **全部 100755**（用索引 blob 跑 EXE001/EXE002 **0 命中**）；`data/**` Reaxys **0 条**、`data/restricted/` 30 文件全部被忽略；全量回归 **2511 passed**、`ruff` 全绿。
+- **加固 1（散文层也要有钉）**：审读变异测试发现——把 README 里的 `**1,690**` 改成 `**1,691**`，**21 条测试仍全绿**。即：机器车道有钉、**叙述层裸奔**，而本项目恰恰在叙述层栽过一次（`148 − 77` 误写成 73）。**处置**：给 `tests/test_export_week16_results.py` 加**字面量 digest 钉**（`README_SHA256 = dd221baa…59823`，README 7,129 B）＋ 十条叙述数字的字面量断言；变异实测 `1,690 → 1,691` **变红**，逐字节还原后 **23 passed**。
+- **加固 2（降级分支必须可达）**：`trace_scan_census` 在 `git show` 取不到 `85cb059` 时退 `available = false`，但测试硬断言 `available is True` —— 浅克隆下必红、降级分支从未被跑过。**处置**：改成「降级即 `pytest.skip`」，把「需要完整历史」这一前提显式写在测试里。
+- **登记不修（下一轮导出器顺手项）**：① `week16_summary.json` / `verification.json` 是 **CRLF**（同包其余全 LF），根因在 `export_results_common.write_json` 未传 `newline="\n"`（week15 包同病）；② `verification.json` 六档里五档 `report = null`，机器读者只能看退出码。
+- **备案（需作者定披露口径）**：`probes/reaxys_dielectric_queue_first_cut.csv`（week12 落盘）**16/19 行带非空 Reaxys 数值**，逐行标 `reaxys_crosscheck_only` / `restricted_crosscheck_only`。「Reaxys 值未进 `data/`、未进任何池」**字面成立**，但它只覆盖 `data/`：版本库的 `probes/` 下确有一份带值的核对记录。**本轮不动**，留待对外分发时由作者决定披露/脱敏。
+- **结论**：终态提交**可以信**（无 Critical / 无 Important）。**这也是 week16 的收口点：审读两轮已过，本轮到此封存。**

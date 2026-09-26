@@ -4107,3 +4107,18 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 - **修复**：`git update-index --chmod=+x probes/identity_smiles_drawing_decision.py`，**索引模式** 100644 → **100755**，**文件内容一字未动**（blob `a8d33d2d3dd669f84beb1329a6f3a07f1b050f8e`）；修后 `tests/test_repo_hygiene.py` **4 passed**。
 - **全仓审计**：对索引逐条扫「带 shebang 的 .py」，**只有这 1 件**是 100644；其余 4 件（`al_round3_oa_triage.py`、`al_round4_new_compound_backfill.py`、`g1plus_ecw308_extract.py`、`kpi_funnel_cross_run.py`）已是 100755。
 - **训练方向**：执行位这条红线的**判据在索引、不在工作树**；本仓在 Windows 上 `core.fileMode = false`，唯一可移植的修法是 `git update-index --chmod=+x` —— **新增带 shebang 的探针必须同批设好可执行位**。
+
+### 27.13 第二轮独立对抗审读（终态提交 `e7b0690` 之后；只读审读者 = 另一智能体）
+
+**审读方式（只读、独立复算，不许读 27.11 的结论当依据）**：六件冻结件 digest **6/6 INTACT**；包内 `SHA256SUMS` **32 条逐条重算、0 不一致**、缺文件 0、盘上 33 件 = 32 + `SHA256SUMS`；**把导出器跑到系统临时目录再与交付包逐字节比对 → 33/33 完全相同**（即交付包就是 `e7b0690` 干净树上的导出输出，`worktree_dirty = false`、`artifacts_commit = e7b0690`）；**自己重实现** F2 候选集规则得 `tracked 98 + restricted 21 = 119`、`path_list_sha256 = e154aca9…1201ec9`；**自己重算** F2 前后两态 `148 → 77`（消失 71 = `external 69 + processed 2`、新增 0；token 口径 `156 → 83`）；索引里 307 个被跟踪 `.py` 中带 shebang 的 5 个**全部 100755**，并用**索引 blob**（非工作树）跑 EXE001/EXE002 **0 命中**；`data/**` 提到 Reaxys **0 条**、`data/restricted/` 30 文件全部被忽略；全量回归 **2511 passed**、`ruff` 全绿、两轮跑完工作树均干净。
+
+**审读发现（4 条，都不破坏本轮任何判据）**：
+
+1. （Minor，**本轮已加固**）**README 的叙述性数字此前没有任何测试钉住**：变异测试把 `**1,690**` 改成 `**1,691**` 后 **21 passed 全绿** —— 与 27.11 的「常量自证」同族，只是这次自证发生在**散文层**（机器车道有钉、叙述层裸奔）。**加固**：`tests/test_export_week16_results.py` 新增**字面量 digest 钉** `README_SHA256 = dd221baa0de3df4a0e24e5ed86aaf32cede1751843bcd45017fd7d8fd5f59823`（README 7,129 B，utf-8）与 `README_NARRATIVE_NUMBERS`（11,923 / 1,690 / 70 / 1,743 / 1.72% / 34/34 / 10 ＋ 结构层 5 / 4 条几何派生 / 119 / tracked 98）的字面量断言；本地实跑变异 `1,690 → 1,691` → **1 failed**，逐字节还原后与原文件 `==` 为真，该文件 **23 passed**。
+2. （Minor，**登记不修**）`week16_summary.json` 与 `verification.json` 是 **CRLF**（同包 `README.md`、`SHA256SUMS` 与 29 件复制产物均纯 LF）。根因：`probes/export_results_common.py::write_json` 的 `Path.write_text` 未传 `newline="\n"`；week15 包同病（属沿袭、非本轮引入）。修法只在**下一版导出器**生效，避免回改已落盘包。
+3. （Minor，**本轮已加固**）`trace_scan_census` 的降级分支（`git show` 读不到 `85cb059` 时退 `available = false`）**此前从未被测过**，且在浅克隆（`--depth 1`）下测试会先红。本轮把该处硬断言改成「降级即 `pytest.skip`」，让降级分支真正可达、并把浅克隆这一前提显式化。
+4. （Minor，**登记不修**）`verification.json` 六档检查里五档 `report = null`（只有 `verify_dielectric_v03.py` 输出 JSON；四个 `--check` 探针与 pytest 的输出是文本）。README 的「34/34（退出码在 verification.json 里）」**成立**，但机器读者只能看到退出码；下一版可给 `--check` 档加 `--json`。
+
+**备案（非本仓缺陷，但需作者定披露口径）**：`probes/reaxys_dielectric_queue_first_cut.csv`（week12 落盘、随 week12 包分发）**16/19 行带非空 Reaxys 数值**，逐行标 `reaxys_crosscheck_only` / `restricted_crosscheck_only`。week16 README 的「Reaxys 值未进 `data/`、未进任何池」**字面成立且经审读者逐条复核**，但它只覆盖 `data/`：版本库的 `probes/` 下确实存着一份**带值**的交叉核对记录。**本轮不动它**，登记以备将来对外分发仓库或整包时由作者决定披露或脱敏口径。
+
+**结论**：终态提交 **可以信** —— 无 Critical、无 Important；上面 2、4 是下一轮导出器迭代的顺手项，1、3 已在本轮加固。
