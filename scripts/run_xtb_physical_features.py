@@ -1,4 +1,10 @@
-"""Run GFN2-xTB physical-feature calculations for v0.2 dielectric compounds."""
+"""Run GFN2-xTB physical-feature calculations for v0.2 dielectric compounds.
+
+Every xTB subprocess goes through ``electrolyte_ml.xtb_runner``, which pins the
+child to a single OpenMP thread.  Without that pin the optimised geometry, and
+therefore every volume-derived column, is not reproducible; see
+``reports/xtb_thread_determinism.md``.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +15,6 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import sys
 import time
 from collections.abc import Mapping, Sequence
@@ -30,6 +35,10 @@ from electrolyte_ml.xtb_features import (
     molecular_volume_A3,
     onsager_proxy,
     parse_xtb_output,
+)
+from electrolyte_ml.xtb_runner import (
+    run_xtb_subprocess,
+    xtb_optimisation_arguments,
 )
 
 AVOGADRO = 6.02214076e23
@@ -79,7 +88,7 @@ def write_csv_rows(
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -293,7 +302,6 @@ def run_xtb(
     work_dir: Path,
     seed: int,
     timeout_seconds: int,
-    threads: int,
 ) -> dict[str, object]:
     molecule = Chem.MolFromSmiles(smiles)
     if molecule is None:
@@ -344,28 +352,12 @@ def run_xtb(
     _clear_run_artifacts(run_dir)
     input_path = run_dir / "input.xyz"
     input_path.write_text(expected_input_xyz, encoding="utf-8")
-    command = [
-        str(xtb_executable),
-        input_path.name,
-        "--opt",
-        "--gfn",
-        "2",
-        "--chrg",
-        str(formal_charge),
-        "--uhf",
-        "0",
-    ]
-    environment = os.environ.copy()
-    environment["OMP_NUM_THREADS"] = str(threads)
-    environment["MKL_NUM_THREADS"] = str(threads)
     start = time.perf_counter()
-    completed = subprocess.run(
-        command,
+    completed = run_xtb_subprocess(
+        xtb_executable,
+        xtb_optimisation_arguments(input_path.name, formal_charge=formal_charge),
         cwd=run_dir,
-        env=environment,
-        capture_output=True,
-        timeout=timeout_seconds,
-        check=False,
+        timeout_seconds=timeout_seconds,
     )
     elapsed = time.perf_counter() - start
     output_path.write_bytes(completed.stdout)
@@ -461,7 +453,6 @@ def run_benchmark(
     xtb_executable: Path,
     work_dir: Path,
     timeout_seconds: int,
-    threads: int,
 ) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for index, (name, smiles) in enumerate(BENCHMARK_MOLECULES.items()):
@@ -473,7 +464,6 @@ def run_benchmark(
             work_dir=work_dir,
             seed=42 + index,
             timeout_seconds=timeout_seconds,
-            threads=threads,
         )
         rows.append(
             {
@@ -501,7 +491,6 @@ def run_features(
     work_dir: Path,
     output_path: Path,
     timeout_seconds: int,
-    threads: int,
 ) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for index, source_row in enumerate(input_rows):
@@ -515,7 +504,6 @@ def run_features(
                 work_dir=work_dir,
                 seed=42 + index,
                 timeout_seconds=timeout_seconds,
-                threads=threads,
             )
             output_row = _feature_row(source_row, result)
         except Exception as error:  # noqa: BLE001
@@ -569,7 +557,6 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--timeout", type=int, default=600)
-    parser.add_argument("--threads", type=int, default=1)
     return parser.parse_args()
 
 
@@ -581,7 +568,6 @@ def main() -> int:
             xtb_executable=xtb_executable,
             work_dir=args.work_dir / "benchmark",
             timeout_seconds=args.timeout,
-            threads=args.threads,
         )
         fields = (
             "name",
@@ -610,7 +596,6 @@ def main() -> int:
         work_dir=args.work_dir,
         output_path=args.output,
         timeout_seconds=args.timeout,
-        threads=args.threads,
     )
     failures = [row for row in rows if row["status"] == "error"]
     result = {

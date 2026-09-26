@@ -1,0 +1,1116 @@
+{
+  "schema_version": 1,
+  "task": "dielectric_channel_v2",
+  "title": "介电通道 v2：预声明、全配置上报的模型族比较（留出 EC/PC 的高 eps 外推）",
+  "disclaimer": "v1 冻结口径的读数已如实记录为未过；v2 是新配置，其出现顺序与选型规则均先声明后执行，全部配置无一遗漏上报",
+  "disclaimer_en": "The frozen v1 readout is recorded as NOT passed. v2 is a new set of configurations whose order and selection rule were declared before execution, and every configuration is reported without omission.",
+  "not_a_verdict": true,
+  "verdict_eligible": false,
+  "verdict_note": "this probe compares model families on the dielectric channel only; C2_additive, C3 and the three other channels are not run, so nothing here may be written as 'L3 passed'",
+  "generated_at_utc": "2026-09-25T22:20:02Z",
+  "prereg": {
+    "path": "probes/l3_backvalidation_prereg.json",
+    "status": "LOCKED",
+    "locked_at_utc": "2026-09-25T19:38:49Z",
+    "sha256": "77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+    "locked_constants_read_verbatim": {
+      "C1_K": 20,
+      "C1_champions_required_in_top_k_total": 4,
+      "C2_solvent_max_abs_delta_log10_epsilon": 0.1,
+      "pass_expression": "C1 and C2_solvent and C2_additive and C3",
+      "pool_sha256": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+      "pool_path": "probes/l3_stage1_pilot_pool.csv",
+      "min_scored_per_list": 100
+    }
+  },
+  "pool": {
+    "path": "probes/l3_stage1_pilot_pool.csv",
+    "sha256": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "sha256_expected": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "rows": 236,
+    "size_by_list": {
+      "solvent": 236
+    },
+    "line_ending": "LF"
+  },
+  "fold_and_seed": {
+    "fold_scheme": "RepeatedKFold(n_splits=5, n_repeats=10, random_state=42)",
+    "seed_scheme": "42 + global RepeatedKFold split index",
+    "n_splits": 5,
+    "n_repeats": 10,
+    "random_state": 42,
+    "split_count": 50,
+    "fold_aggregation": "mean_over_the_10_out_of_fold_repeat_predictions",
+    "fold_policy": "EC and PC leave the training side of every fold and are still scored out-of-fold at their original fold (leave-EC-out precedent)"
+  },
+  "selection_rule": {
+    "rule_id": "dielectric_channel_v2_selection_rule_1",
+    "declared_before_execution": true,
+    "baseline_family": "frozen_v1_log_eps_xgb",
+    "eligibility": [
+      "family.oof_raw_mae <= baseline.oof_raw_mae",
+      "family.c1_hits > baseline.c1_hits"
+    ],
+    "pick": "minimum family.c2_max_abs_delta_log10 among eligible families",
+    "tie_break": [
+      "fewer declared_feature_count",
+      "family id ascending"
+    ],
+    "oof_raw_mae_definition": "mean_over_the_10_out_of_fold_repeat_predictions",
+    "no_eligible_family_action": "winner_id = null and outcome = not_passed",
+    "text": "在同时满足 (a) 相对冻结 v1 口径的 OOF 原始 eps MAE 不劣化、(b) C1 命中数严格更大的家族中，取 C2 的 max|dlog10 eps| 最小者；并列取特征更少者，再并列按家族 id 字典序升序。无满足者即报未过。"
+  },
+  "families": [
+    {
+      "id": "frozen_v1_log_eps_xgb",
+      "group": "a",
+      "label": "冻结 v1 口径（Morgan+Physical 两臂各自回变换后等权平均，log(eps-1) 目标）",
+      "kind": "frozen_xgb",
+      "declared_feature_count": 2061,
+      "is_baseline": true
+    },
+    {
+      "id": "linear_raw_mu",
+      "group": "b",
+      "label": "eps ~ mu_sq_over_Vm 一元线性（OLS）",
+      "kind": "ols_raw_mu",
+      "declared_feature_count": 1,
+      "is_baseline": false
+    },
+    {
+      "id": "onsager_mu",
+      "group": "c",
+      "label": "(eps-1)/(eps+2) ~ mu_sq_over_Vm 一元线性（Onsager 形式）",
+      "kind": "ols_onsager_mu",
+      "declared_feature_count": 1,
+      "is_baseline": false
+    },
+    {
+      "id": "ridge_raw_multivar",
+      "group": "d",
+      "label": "eps ~ 六维物理特征 RidgeCV（LOO-GCV 选 alpha）",
+      "kind": "ridge_raw_multi",
+      "declared_feature_count": 6,
+      "is_baseline": false
+    },
+    {
+      "id": "ridge_onsager_multivar",
+      "group": "d",
+      "label": "(eps-1)/(eps+2) ~ 六维物理特征 RidgeCV（LOO-GCV 选 alpha）",
+      "kind": "ridge_onsager_multi",
+      "declared_feature_count": 6,
+      "is_baseline": false
+    },
+    {
+      "id": "delta_onsager_xgb",
+      "group": "e",
+      "label": "Delta-learning：Onsager 一元线性基线上用 XGBoost 学残差",
+      "kind": "delta_onsager_xgb",
+      "declared_feature_count": 2062,
+      "is_baseline": false
+    },
+    {
+      "id": "delta_ridge_onsager_xgb",
+      "group": "e",
+      "label": "Delta-learning：Onsager 六维 RidgeCV 基线上用 XGBoost 学残差",
+      "kind": "delta_ridge_onsager_xgb",
+      "declared_feature_count": 2067,
+      "is_baseline": false
+    },
+    {
+      "id": "dummy_mean",
+      "group": "control",
+      "label": "DummyRegressor(strategy=mean) 对照",
+      "kind": "dummy_mean",
+      "declared_feature_count": 0,
+      "is_baseline": false
+    }
+  ],
+  "family_table": [
+    {
+      "family": "frozen_v1_log_eps_xgb",
+      "family_group": "a",
+      "label": "冻结 v1 口径（Morgan+Physical 两臂各自回变换后等权平均，log(eps-1) 目标）",
+      "declared_feature_count": 2061,
+      "is_baseline": true,
+      "oof_raw_mae": 6.254829042132859,
+      "oof_raw_rmse": 16.07950751682181,
+      "oof_raw_r2": 0.28617624257545116,
+      "per_repeat_raw_mae_mean": 6.322271496654148,
+      "per_repeat_raw_mae_min": 5.9793476904244995,
+      "per_repeat_raw_mae_max": 6.537706293547868,
+      "c1_hits": 0,
+      "c1_passed": false,
+      "ec_rank": 24,
+      "pc_rank": 58,
+      "ec_aggregated_prediction": 23.05650945343228,
+      "pc_aggregated_prediction": 17.043769200900982,
+      "ec_delta_log10": -0.5938550195186852,
+      "pc_delta_log10": -0.5806790522537534,
+      "ec_abs_delta_log10": 0.5938550195186852,
+      "pc_abs_delta_log10": 0.5806790522537534,
+      "c2_max_abs_delta_log10": 0.5938550195186852,
+      "c2_passed": false,
+      "c2_gate_shortfall": 0.49385501951868527,
+      "max_prediction": 58.98086542490948,
+      "n_predictions_gt_1e3": 0,
+      "onsager_clip_events": 0,
+      "ridge_alpha_mean": null,
+      "champions": {
+        "EC": {
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "aggregated_prediction": 23.05650945343228,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.5938550195186852,
+          "abs_delta_log10": 0.5938550195186852,
+          "rank": 24,
+          "in_top_k": false,
+          "within_c2_tolerance": false
+        },
+        "PC": {
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "aggregated_prediction": 17.043769200900982,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.5806790522537534,
+          "abs_delta_log10": 0.5806790522537534,
+          "rank": 58,
+          "in_top_k": false,
+          "within_c2_tolerance": false
+        }
+      }
+    },
+    {
+      "family": "linear_raw_mu",
+      "family_group": "b",
+      "label": "eps ~ mu_sq_over_Vm 一元线性（OLS）",
+      "declared_feature_count": 1,
+      "is_baseline": false,
+      "oof_raw_mae": 10.577798215238143,
+      "oof_raw_rmse": 18.37656358727397,
+      "oof_raw_r2": 0.06766043317189319,
+      "per_repeat_raw_mae_mean": 10.600715969471446,
+      "per_repeat_raw_mae_min": 10.509578007117264,
+      "per_repeat_raw_mae_max": 10.915305321468804,
+      "c1_hits": 2,
+      "c1_passed": true,
+      "ec_rank": 7,
+      "pc_rank": 8,
+      "ec_aggregated_prediction": 28.480318795969634,
+      "pc_aggregated_prediction": 26.414538931569904,
+      "ec_delta_log10": -0.502103732914697,
+      "pc_delta_log10": -0.39040166236505297,
+      "ec_abs_delta_log10": 0.502103732914697,
+      "pc_abs_delta_log10": 0.39040166236505297,
+      "c2_max_abs_delta_log10": 0.502103732914697,
+      "c2_passed": false,
+      "c2_gate_shortfall": 0.40210373291469703,
+      "max_prediction": 78.63370581946715,
+      "n_predictions_gt_1e3": 0,
+      "onsager_clip_events": 0,
+      "ridge_alpha_mean": null,
+      "champions": {
+        "EC": {
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "aggregated_prediction": 28.480318795969634,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.502103732914697,
+          "abs_delta_log10": 0.502103732914697,
+          "rank": 7,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        },
+        "PC": {
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "aggregated_prediction": 26.414538931569904,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.39040166236505297,
+          "abs_delta_log10": 0.39040166236505297,
+          "rank": 8,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        }
+      }
+    },
+    {
+      "family": "onsager_mu",
+      "family_group": "c",
+      "label": "(eps-1)/(eps+2) ~ mu_sq_over_Vm 一元线性（Onsager 形式）",
+      "declared_feature_count": 1,
+      "is_baseline": false,
+      "oof_raw_mae": 71186452.0744923,
+      "oof_raw_rmse": 444457402.58260715,
+      "oof_raw_r2": -545388278390105.56,
+      "per_repeat_raw_mae_mean": 71186452.37112212,
+      "per_repeat_raw_mae_min": 63559333.39822501,
+      "per_repeat_raw_mae_max": 88983061.92605229,
+      "c1_hits": 2,
+      "c1_passed": true,
+      "ec_rank": 7,
+      "pc_rank": 9,
+      "ec_aggregated_prediction": 300000075.2987746,
+      "pc_aggregated_prediction": 35.52732017661976,
+      "ec_delta_log10": 6.520472784520586,
+      "pc_delta_log10": -0.2616822468792742,
+      "ec_abs_delta_log10": 6.520472784520586,
+      "pc_abs_delta_log10": 0.2616822468792742,
+      "c2_max_abs_delta_log10": 6.520472784520586,
+      "c2_passed": false,
+      "c2_gate_shortfall": 6.4204727845205865,
+      "max_prediction": 3000000082.8457966,
+      "n_predictions_gt_1e3": 56,
+      "onsager_clip_events": 56,
+      "ridge_alpha_mean": null,
+      "champions": {
+        "EC": {
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "aggregated_prediction": 300000075.2987746,
+          "truth_dielectric": 90.5,
+          "delta_log10": 6.520472784520586,
+          "abs_delta_log10": 6.520472784520586,
+          "rank": 7,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        },
+        "PC": {
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "aggregated_prediction": 35.52732017661976,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.2616822468792742,
+          "abs_delta_log10": 0.2616822468792742,
+          "rank": 9,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        }
+      }
+    },
+    {
+      "family": "ridge_raw_multivar",
+      "family_group": "d",
+      "label": "eps ~ 六维物理特征 RidgeCV（LOO-GCV 选 alpha）",
+      "declared_feature_count": 6,
+      "is_baseline": false,
+      "oof_raw_mae": 10.18749846422455,
+      "oof_raw_rmse": 17.520143074646054,
+      "oof_raw_r2": 0.15253687772841673,
+      "per_repeat_raw_mae_mean": 10.321756398963872,
+      "per_repeat_raw_mae_min": 10.076049333322295,
+      "per_repeat_raw_mae_max": 10.452658291907865,
+      "c1_hits": 2,
+      "c1_passed": true,
+      "ec_rank": 2,
+      "pc_rank": 9,
+      "ec_aggregated_prediction": 48.3403253901359,
+      "pc_aggregated_prediction": 28.818243361013618,
+      "ec_delta_log10": -0.2723390097851051,
+      "pc_delta_log10": -0.3525771922817866,
+      "ec_abs_delta_log10": 0.2723390097851051,
+      "pc_abs_delta_log10": 0.3525771922817866,
+      "c2_max_abs_delta_log10": 0.3525771922817866,
+      "c2_passed": false,
+      "c2_gate_shortfall": 0.25257719228178654,
+      "max_prediction": 61.30437186070359,
+      "n_predictions_gt_1e3": 0,
+      "onsager_clip_events": 0,
+      "ridge_alpha_mean": 23.879470018919445,
+      "champions": {
+        "EC": {
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "aggregated_prediction": 48.3403253901359,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.2723390097851051,
+          "abs_delta_log10": 0.2723390097851051,
+          "rank": 2,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        },
+        "PC": {
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "aggregated_prediction": 28.818243361013618,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.3525771922817866,
+          "abs_delta_log10": 0.3525771922817866,
+          "rank": 9,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        }
+      }
+    },
+    {
+      "family": "ridge_onsager_multivar",
+      "family_group": "d",
+      "label": "(eps-1)/(eps+2) ~ 六维物理特征 RidgeCV（LOO-GCV 选 alpha）",
+      "declared_feature_count": 6,
+      "is_baseline": false,
+      "oof_raw_mae": 76271200.26696974,
+      "oof_raw_rmse": 434916726.2386244,
+      "oof_raw_r2": -522225088919541.3,
+      "per_repeat_raw_mae_mean": 76271200.33118513,
+      "per_repeat_raw_mae_min": 50847471.6572737,
+      "per_repeat_raw_mae_max": 101694926.88392083,
+      "c1_hits": 1,
+      "c1_passed": false,
+      "ec_rank": 16,
+      "pc_rank": 53,
+      "ec_aggregated_prediction": 20.578664948657682,
+      "pc_aggregated_prediction": 11.492948886624927,
+      "ec_delta_log10": -0.6432313829400237,
+      "pc_delta_log10": -0.7518132215607899,
+      "ec_abs_delta_log10": 0.6432313829400237,
+      "pc_abs_delta_log10": 0.7518132215607899,
+      "c2_max_abs_delta_log10": 0.7518132215607899,
+      "c2_passed": false,
+      "c2_gate_shortfall": 0.6518132215607899,
+      "max_prediction": 3000000082.8457966,
+      "n_predictions_gt_1e3": 63,
+      "onsager_clip_events": 60,
+      "ridge_alpha_mean": 0.6391415728242947,
+      "champions": {
+        "EC": {
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "aggregated_prediction": 20.578664948657682,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.6432313829400237,
+          "abs_delta_log10": 0.6432313829400237,
+          "rank": 16,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        },
+        "PC": {
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "aggregated_prediction": 11.492948886624927,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.7518132215607899,
+          "abs_delta_log10": 0.7518132215607899,
+          "rank": 53,
+          "in_top_k": false,
+          "within_c2_tolerance": false
+        }
+      }
+    },
+    {
+      "family": "delta_onsager_xgb",
+      "family_group": "e",
+      "label": "Delta-learning：Onsager 一元线性基线上用 XGBoost 学残差",
+      "declared_feature_count": 2062,
+      "is_baseline": false,
+      "oof_raw_mae": 48305096.961454116,
+      "oof_raw_rmse": 333700374.56891745,
+      "oof_raw_r2": -307438958490593.25,
+      "per_repeat_raw_mae_mean": 48305097.26403726,
+      "per_repeat_raw_mae_min": 25423737.04693035,
+      "per_repeat_raw_mae_max": 76271197.12569383,
+      "c1_hits": 2,
+      "c1_passed": true,
+      "ec_rank": 3,
+      "pc_rank": 9,
+      "ec_aggregated_prediction": 2400000115.2624297,
+      "pc_aggregated_prediction": 304.48079647406155,
+      "ec_delta_log10": 7.423562683363834,
+      "pc_delta_log10": 0.671315210190387,
+      "ec_abs_delta_log10": 7.423562683363834,
+      "pc_abs_delta_log10": 0.671315210190387,
+      "c2_max_abs_delta_log10": 7.423562683363834,
+      "c2_passed": false,
+      "c2_gate_shortfall": 7.323562683363835,
+      "max_prediction": 3000000082.8457966,
+      "n_predictions_gt_1e3": 41,
+      "onsager_clip_events": 38,
+      "ridge_alpha_mean": null,
+      "champions": {
+        "EC": {
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "aggregated_prediction": 2400000115.2624297,
+          "truth_dielectric": 90.5,
+          "delta_log10": 7.423562683363834,
+          "abs_delta_log10": 7.423562683363834,
+          "rank": 3,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        },
+        "PC": {
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "aggregated_prediction": 304.48079647406155,
+          "truth_dielectric": 64.9,
+          "delta_log10": 0.671315210190387,
+          "abs_delta_log10": 0.671315210190387,
+          "rank": 9,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        }
+      }
+    },
+    {
+      "family": "delta_ridge_onsager_xgb",
+      "family_group": "e",
+      "label": "Delta-learning：Onsager 六维 RidgeCV 基线上用 XGBoost 学残差",
+      "declared_feature_count": 2067,
+      "is_baseline": false,
+      "oof_raw_mae": 63559336.03183581,
+      "oof_raw_rmse": 376648939.2757885,
+      "oof_raw_r2": -391668828798776.9,
+      "per_repeat_raw_mae_mean": 63559336.42840395,
+      "per_repeat_raw_mae_min": 50847471.17579719,
+      "per_repeat_raw_mae_max": 88983065.19150843,
+      "c1_hits": 1,
+      "c1_passed": false,
+      "ec_rank": 17,
+      "pc_rank": 64,
+      "ec_aggregated_prediction": 45.20946767513939,
+      "pc_aggregated_prediction": 15.908507879867624,
+      "ec_delta_log10": -0.30141918579865956,
+      "pc_delta_log10": -0.6106152493931969,
+      "ec_abs_delta_log10": 0.30141918579865956,
+      "pc_abs_delta_log10": 0.6106152493931969,
+      "c2_max_abs_delta_log10": 0.6106152493931969,
+      "c2_passed": false,
+      "c2_gate_shortfall": 0.5106152493931969,
+      "max_prediction": 3000000082.8457966,
+      "n_predictions_gt_1e3": 53,
+      "onsager_clip_events": 50,
+      "ridge_alpha_mean": null,
+      "champions": {
+        "EC": {
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "aggregated_prediction": 45.20946767513939,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.30141918579865956,
+          "abs_delta_log10": 0.30141918579865956,
+          "rank": 17,
+          "in_top_k": true,
+          "within_c2_tolerance": false
+        },
+        "PC": {
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "aggregated_prediction": 15.908507879867624,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.6106152493931969,
+          "abs_delta_log10": 0.6106152493931969,
+          "rank": 64,
+          "in_top_k": false,
+          "within_c2_tolerance": false
+        }
+      }
+    },
+    {
+      "family": "dummy_mean",
+      "family_group": "control",
+      "label": "DummyRegressor(strategy=mean) 对照",
+      "declared_feature_count": 0,
+      "is_baseline": false,
+      "oof_raw_mae": 11.553664152163096,
+      "oof_raw_rmse": 19.13217735306785,
+      "oof_raw_r2": -0.010588398100282781,
+      "per_repeat_raw_mae_mean": 11.564753119353696,
+      "per_repeat_raw_mae_min": 11.495729934018524,
+      "per_repeat_raw_mae_max": 11.690634373200048,
+      "c1_hits": 0,
+      "c1_passed": false,
+      "ec_rank": 159,
+      "pc_rank": 27,
+      "ec_aggregated_prediction": 14.782758121923388,
+      "pc_aggregated_prediction": 15.136886566570107,
+      "ec_delta_log10": -0.786893108246505,
+      "pc_delta_log10": -0.6322081403950436,
+      "ec_abs_delta_log10": 0.786893108246505,
+      "pc_abs_delta_log10": 0.6322081403950436,
+      "c2_max_abs_delta_log10": 0.786893108246505,
+      "c2_passed": false,
+      "c2_gate_shortfall": 0.6868931082465051,
+      "max_prediction": 15.996681016042778,
+      "n_predictions_gt_1e3": 0,
+      "onsager_clip_events": 0,
+      "ridge_alpha_mean": null,
+      "champions": {
+        "EC": {
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "aggregated_prediction": 14.782758121923388,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.786893108246505,
+          "abs_delta_log10": 0.786893108246505,
+          "rank": 159,
+          "in_top_k": false,
+          "within_c2_tolerance": false
+        },
+        "PC": {
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "aggregated_prediction": 15.136886566570107,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.6322081403950436,
+          "abs_delta_log10": 0.6322081403950436,
+          "rank": 27,
+          "in_top_k": false,
+          "within_c2_tolerance": false
+        }
+      }
+    }
+  ],
+  "strata_table": [
+    {
+      "family": "frozen_v1_log_eps_xgb",
+      "stratum": "le_20",
+      "n": 182,
+      "mae": "2.46259018475",
+      "rmse": "3.36720872336",
+      "mean_target": "8.04409258242"
+    },
+    {
+      "family": "frozen_v1_log_eps_xgb",
+      "stratum": "20_60",
+      "n": 47,
+      "mae": "10.913571633",
+      "rmse": "12.9999217001",
+      "mean_target": "32.0015531915"
+    },
+    {
+      "family": "frozen_v1_log_eps_xgb",
+      "stratum": "gt60",
+      "n": 7,
+      "mae": "73.5729105096",
+      "rmse": "85.3660145621",
+      "mean_target": "95.0542857143"
+    },
+    {
+      "family": "linear_raw_mu",
+      "stratum": "le_20",
+      "n": 182,
+      "mae": "6.85796819136",
+      "rmse": "8.30188461614",
+      "mean_target": "8.04409258242"
+    },
+    {
+      "family": "linear_raw_mu",
+      "stratum": "20_60",
+      "n": 47,
+      "mae": "15.1083613748",
+      "rmse": "17.4459492043",
+      "mean_target": "32.0015531915"
+    },
+    {
+      "family": "linear_raw_mu",
+      "stratum": "gt60",
+      "n": 7,
+      "mae": "76.8738833365",
+      "rmse": "86.8891747898",
+      "mean_target": "95.0542857143"
+    },
+    {
+      "family": "onsager_mu",
+      "stratum": "le_20",
+      "n": 182,
+      "mae": "67582423.0327",
+      "rmse": "445305190.048",
+      "mean_target": "8.04409258242"
+    },
+    {
+      "family": "onsager_mu",
+      "stratum": "20_60",
+      "n": 47,
+      "mae": "89361727.9442",
+      "rmse": "471304226.929",
+      "mean_target": "32.0015531915"
+    },
+    {
+      "family": "onsager_mu",
+      "stratum": "gt60",
+      "n": 7,
+      "mae": "42857212.0349",
+      "rmse": "113389336.157",
+      "mean_target": "95.0542857143"
+    },
+    {
+      "family": "ridge_raw_multivar",
+      "stratum": "le_20",
+      "n": 182,
+      "mae": "7.27168455536",
+      "rmse": "9.06182573019",
+      "mean_target": "8.04409258242"
+    },
+    {
+      "family": "ridge_raw_multivar",
+      "stratum": "20_60",
+      "n": 47,
+      "mae": "12.5055367894",
+      "rmse": "15.6661489625",
+      "mean_target": "32.0015531915"
+    },
+    {
+      "family": "ridge_raw_multivar",
+      "stratum": "gt60",
+      "n": 7,
+      "mae": "70.4346884828",
+      "rmse": "81.0300775581",
+      "mean_target": "95.0542857143"
+    },
+    {
+      "family": "ridge_onsager_multivar",
+      "stratum": "le_20",
+      "n": 182,
+      "mae": "85714292.4136",
+      "rmse": "482097082.014",
+      "mean_target": "8.04409258242"
+    },
+    {
+      "family": "ridge_onsager_multivar",
+      "stratum": "20_60",
+      "n": 47,
+      "mae": "51063860.6195",
+      "rmse": "223130593.729",
+      "mean_target": "32.0015531915"
+    },
+    {
+      "family": "ridge_onsager_multivar",
+      "stratum": "gt60",
+      "n": 7,
+      "mae": "84.9436681186",
+      "rmse": "93.0962043617",
+      "mean_target": "95.0542857143"
+    },
+    {
+      "family": "delta_onsager_xgb",
+      "stratum": "le_20",
+      "n": 182,
+      "mae": "19780226.3845",
+      "rmse": "224587544.394",
+      "mean_target": "8.04409258242"
+    },
+    {
+      "family": "delta_onsager_xgb",
+      "stratum": "20_60",
+      "n": 47,
+      "mae": "114893638.995",
+      "rmse": "491199159.473",
+      "mean_target": "32.0015531915"
+    },
+    {
+      "family": "delta_onsager_xgb",
+      "stratum": "gt60",
+      "n": 7,
+      "mae": "342857235.454",
+      "rmse": "907114744.581",
+      "mean_target": "95.0542857143"
+    },
+    {
+      "family": "delta_ridge_onsager_xgb",
+      "stratum": "le_20",
+      "n": 182,
+      "mae": "37912094.2122",
+      "rmse": "292488393.555",
+      "mean_target": "8.04409258242"
+    },
+    {
+      "family": "delta_ridge_onsager_xgb",
+      "stratum": "20_60",
+      "n": 47,
+      "mae": "127659608.577",
+      "rmse": "535942238.823",
+      "mean_target": "32.0015531915"
+    },
+    {
+      "family": "delta_ridge_onsager_xgb",
+      "stratum": "gt60",
+      "n": 7,
+      "mae": "300000079.108",
+      "rmse": "793725414.2",
+      "mean_target": "95.0542857143"
+    },
+    {
+      "family": "dummy_mean",
+      "stratum": "le_20",
+      "n": 182,
+      "mae": "7.43267422904",
+      "rmse": "8.63408079816",
+      "mean_target": "8.04409258242"
+    },
+    {
+      "family": "dummy_mean",
+      "stratum": "20_60",
+      "n": 47,
+      "mae": "17.2509943407",
+      "rmse": "19.4842033233",
+      "mean_target": "32.0015531915"
+    },
+    {
+      "family": "dummy_mean",
+      "stratum": "gt60",
+      "n": 7,
+      "mae": "80.445899459",
+      "rmse": "88.6204307951",
+      "mean_target": "95.0542857143"
+    }
+  ],
+  "exclusion": {
+    "excluded_champions": [
+      "EC",
+      "PC"
+    ],
+    "champion_train_side_removals": {
+      "EC": 40,
+      "PC": 40
+    },
+    "champion_held_out_folds": {
+      "EC": 10,
+      "PC": 10
+    },
+    "champions_intersect_train_ids_empty": true,
+    "champions_required_in_top_k_total_prereg": 4,
+    "levels": [
+      "L1: EC/PC are dropped from the training side of all 50 folds",
+      "L2: features are Morgan count + the frozen physical columns only",
+      "L3: no hyper-parameter or subset choice ever sees a champion",
+      "L4: champions are scored through the identical prediction path"
+    ],
+    "min_train_rows_after_exclusion": 186,
+    "max_train_rows_after_exclusion": 189
+  },
+  "extrapolation_diagnostic": {
+    "family": "frozen_v1_log_eps_xgb",
+    "claim": "a depth-2 boosted-tree ensemble is a step function of the training labels, so every held-out prediction stays at or below the largest training dielectric in that fold; it cannot reach a champion above the training ceiling",
+    "fold_rows": 20,
+    "all_predictions_at_or_below_train_max": true,
+    "min_prediction_minus_train_max": -163.923058589,
+    "max_prediction_minus_train_max": -63.8026507228,
+    "per_champion": {
+      "EC": {
+        "fold_rows": 10,
+        "max_ensemble_prediction": 25.4981392665,
+        "max_train_max_epsilon": 178.47,
+        "champion_truth_dielectric": 90.5
+      },
+      "PC": {
+        "fold_rows": 10,
+        "max_ensemble_prediction": 19.9196767594,
+        "max_train_max_epsilon": 178.47,
+        "champion_truth_dielectric": 64.9
+      }
+    },
+    "fold_train_max_epsilon": {
+      "min": 78.87,
+      "max": 178.47,
+      "rows": 50
+    },
+    "detail_artifact": "probes/artifacts/dielectric_channel_v2_extrapolation.csv"
+  },
+  "extrapolation_failure_evidence": {
+    "onsager_inverse_clip_bounds": [
+      -0.999999,
+      0.999999999
+    ],
+    "onsager_clip_events_by_family": {
+      "frozen_v1_log_eps_xgb": 0,
+      "linear_raw_mu": 0,
+      "onsager_mu": 56,
+      "ridge_raw_multivar": 0,
+      "ridge_onsager_multivar": 60,
+      "delta_onsager_xgb": 38,
+      "delta_ridge_onsager_xgb": 50,
+      "dummy_mean": 0
+    },
+    "families_with_predictions_above_1e3": [
+      "onsager_mu",
+      "ridge_onsager_multivar",
+      "delta_onsager_xgb",
+      "delta_ridge_onsager_xgb"
+    ]
+  },
+  "secondary_diagnostic_median_aggregation": {
+    "name": "median_over_repeats_robustness_check",
+    "gating": false,
+    "disclosed_as_post_declaration": true,
+    "why": "the declared gating readout aggregates the 10 repeat predictions by their mean; a linear fit on the Onsager scale can cross the pole in a single fold and dominate that mean. This secondary readout is reported so the conclusion does not rest on the aggregation choice. It does NOT feed SELECTION_RULE or the winner.",
+    "rows": [
+      {
+        "family": "frozen_v1_log_eps_xgb",
+        "aggregation": "median_over_the_10_out_of_fold_repeat_predictions",
+        "gating": false,
+        "EC": {
+          "median_prediction": 22.655437858240127,
+          "abs_delta_log10": 0.6014761190647531
+        },
+        "PC": {
+          "median_prediction": 16.893413202384465,
+          "abs_delta_log10": 0.5845272920367544
+        },
+        "c2_max_abs_delta_log10": 0.6014761190647531,
+        "c2_passed": false
+      },
+      {
+        "family": "linear_raw_mu",
+        "aggregation": "median_over_the_10_out_of_fold_repeat_predictions",
+        "gating": false,
+        "EC": {
+          "median_prediction": 28.183313704395363,
+          "abs_delta_log10": 0.506656524465703
+        },
+        "PC": {
+          "median_prediction": 26.116721785512787,
+          "abs_delta_log10": 0.3953260341441863
+        },
+        "c2_max_abs_delta_log10": 0.506656524465703,
+        "c2_passed": false
+      },
+      {
+        "family": "onsager_mu",
+        "aggregation": "median_over_the_10_out_of_fold_repeat_predictions",
+        "gating": false,
+        "EC": {
+          "median_prediction": 58.292357931085675,
+          "abs_delta_log10": 0.19103695627986106
+        },
+        "PC": {
+          "median_prediction": 29.521111667970132,
+          "abs_delta_log10": 0.3421119892396479
+        },
+        "c2_max_abs_delta_log10": 0.3421119892396479,
+        "c2_passed": false
+      },
+      {
+        "family": "ridge_raw_multivar",
+        "aggregation": "median_over_the_10_out_of_fold_repeat_predictions",
+        "gating": false,
+        "EC": {
+          "median_prediction": 48.62030705836254,
+          "abs_delta_log10": 0.26983088193088967
+        },
+        "PC": {
+          "median_prediction": 27.56352005891289,
+          "abs_delta_log10": 0.3719100175073781
+        },
+        "c2_max_abs_delta_log10": 0.3719100175073781,
+        "c2_passed": false
+      },
+      {
+        "family": "ridge_onsager_multivar",
+        "aggregation": "median_over_the_10_out_of_fold_repeat_predictions",
+        "gating": false,
+        "EC": {
+          "median_prediction": 17.996615486800845,
+          "abs_delta_log10": 0.7014577415248355
+        },
+        "PC": {
+          "median_prediction": 11.249243153236563,
+          "abs_delta_log10": 0.7611213926134328
+        },
+        "c2_max_abs_delta_log10": 0.7611213926134328,
+        "c2_passed": false
+      },
+      {
+        "family": "delta_onsager_xgb",
+        "aggregation": "median_over_the_10_out_of_fold_repeat_predictions",
+        "gating": false,
+        "EC": {
+          "median_prediction": 3000000082.8457966,
+          "abs_delta_log10": 7.520472687507616
+        },
+        "PC": {
+          "median_prediction": 205.95840071511464,
+          "abs_delta_log10": 0.5015348140335161
+        },
+        "c2_max_abs_delta_log10": 7.520472687507616,
+        "c2_passed": false
+      },
+      {
+        "family": "delta_ridge_onsager_xgb",
+        "aggregation": "median_over_the_10_out_of_fold_repeat_predictions",
+        "gating": false,
+        "EC": {
+          "median_prediction": 31.68549320745862,
+          "abs_delta_log10": 0.45578810758580585
+        },
+        "PC": {
+          "median_prediction": 15.459542725736558,
+          "abs_delta_log10": 0.6230480529248128
+        },
+        "c2_max_abs_delta_log10": 0.6230480529248128,
+        "c2_passed": false
+      },
+      {
+        "family": "dummy_mean",
+        "aggregation": "median_over_the_10_out_of_fold_repeat_predictions",
+        "gating": false,
+        "EC": {
+          "median_prediction": 14.602950682483396,
+          "abs_delta_log10": 0.7922079607053694
+        },
+        "PC": {
+          "median_prediction": 15.270556515957448,
+          "abs_delta_log10": 0.6283898321470075
+        },
+        "c2_max_abs_delta_log10": 0.7922079607053694,
+        "c2_passed": false
+      }
+    ],
+    "families_passing_c2_under_median_aggregation": [],
+    "best_by_c2_family": "onsager_mu"
+  },
+  "bottleneck_evidence": {
+    "pool_row_count": 236,
+    "target_stratum_counts": {
+      "le_20": 182,
+      "20_60": 47,
+      "gt60": 7
+    },
+    "mu_sq_over_Vm_rank_of_champions": {
+      "EC": 7,
+      "PC": 8
+    },
+    "mu_sq_over_Vm_top_rows": [
+      {
+        "inchikey": "JYPJLAPMBJKRDG-UHFFFAOYSA-M",
+        "name": "1-ethyl-3-methylimidazolium butylsulfonate",
+        "mu_sq_over_Vm": 1542904.1,
+        "target_dielectric": 30.0
+      },
+      {
+        "inchikey": "LSBXQLQATZTAPE-UHFFFAOYSA-N",
+        "name": "1-butyl-3-methylimidazolium tetrafluoroborate",
+        "mu_sq_over_Vm": 1442436.2,
+        "target_dielectric": 13.9
+      },
+      {
+        "inchikey": "LBHLGZNUPKUZJC-UHFFFAOYSA-N",
+        "name": "1-butyl-1-methylpyrrolidinium dicyanamide",
+        "mu_sq_over_Vm": 1170460.8,
+        "target_dielectric": 18.0
+      },
+      {
+        "inchikey": "HQWOEDCLDNFWEV-UHFFFAOYSA-M",
+        "name": "1-ethyl-3-methylimidazolium diethyl phosphate",
+        "mu_sq_over_Vm": 970930.38,
+        "target_dielectric": 16.9
+      },
+      {
+        "inchikey": "QRCRANRUHQKZME-UHFFFAOYSA-N",
+        "name": "3-butyl-1,2,4,5-tetramethyl-1H-imidazol-3-ium tetrafluoroborate",
+        "mu_sq_over_Vm": 912438.74,
+        "target_dielectric": 12.0
+      },
+      {
+        "inchikey": "KLTUZFZUYLXTFF-UHFFFAOYSA-N",
+        "name": "1-(2-hydroxyethyl)-3-methylimidazolium tetrafluoroborate",
+        "mu_sq_over_Vm": 832802.11,
+        "target_dielectric": 23.3
+      }
+    ],
+    "champion_abs_delta_log10_per_repeat": {
+      "frozen_v1_log_eps_xgb": {
+        "EC": {
+          "min_abs_delta_log10": "0.55014009037",
+          "max_abs_delta_log10": "0.645036296644",
+          "mean_abs_delta_log10": "0.594805286588"
+        },
+        "PC": {
+          "min_abs_delta_log10": "0.51296241004",
+          "max_abs_delta_log10": "0.64947300712",
+          "mean_abs_delta_log10": "0.582676556143"
+        }
+      },
+      "ridge_raw_multivar": {
+        "EC": {
+          "min_abs_delta_log10": "0.169157132301",
+          "max_abs_delta_log10": "0.377128901259",
+          "mean_abs_delta_log10": "0.277045107327"
+        },
+        "PC": {
+          "min_abs_delta_log10": "0.260537029658",
+          "max_abs_delta_log10": "0.398999036291",
+          "mean_abs_delta_log10": "0.354509584299"
+        }
+      }
+    },
+    "note": "EC and PC are NOT the largest mu_sq_over_Vm rows of this pool: six ionic-liquid salts out-rank them (rank 7 and 8). So the Onsager-style linear extrapolation is anchored by a feature whose maximum belongs to other molecules, and the two champions sit on the rising flank rather than at the top edge."
+  },
+  "outcome": {
+    "winner_id": null,
+    "eligible_families_under_selection_rule": [],
+    "families_passing_c1": [
+      "linear_raw_mu",
+      "onsager_mu",
+      "ridge_raw_multivar",
+      "delta_onsager_xgb"
+    ],
+    "families_passing_c2_solvent": [],
+    "families_passing_c1_and_c2": [],
+    "families_improving_both_vs_v1_baseline": [
+      "linear_raw_mu",
+      "ridge_raw_multivar"
+    ],
+    "families_passing_c2_under_median_aggregation": [],
+    "best_by_c2_family_under_median_aggregation": "onsager_mu",
+    "c1_gate_K": 20,
+    "c2_gate_abs_delta_log10": 0.1,
+    "baseline_c1_hits": 0,
+    "baseline_c2_max_abs_delta_log10": 0.5938550195186852,
+    "best_by_c2_family": {
+      "family": "ridge_raw_multivar",
+      "c2_max_abs_delta_log10": 0.3525771922817866,
+      "ec_abs_delta_log10": 0.2723390097851051,
+      "pc_abs_delta_log10": 0.3525771922817866,
+      "ec_rank": 2,
+      "pc_rank": 9,
+      "c1_hits": 2,
+      "gate_shortfall": 0.25257719228178654,
+      "oof_raw_mae": 10.18749846422455,
+      "baseline_oof_raw_mae": 6.254829042132859
+    },
+    "l3_verdict_status": "not_run_dielectric_channel_only_not_a_verdict"
+  },
+  "regression_anchor_vs_stage1_pilot": {
+    "pilot_summary": "probes/l3_stage1_pilot_summary.json",
+    "pilot_ec_rank": 24,
+    "pilot_pc_rank": 58,
+    "recomputed_ec_rank": 24,
+    "recomputed_pc_rank": 58,
+    "ranks_match": true,
+    "pilot_ec_delta_log10": -0.5938550195186852,
+    "pilot_pc_delta_log10": -0.5806790522537534,
+    "recomputed_ec_delta_log10": -0.5938550195186852,
+    "recomputed_pc_delta_log10": -0.5806790522537534,
+    "max_abs_delta_diff": 0.0,
+    "tolerance": 1e-09
+  },
+  "outputs": {
+    "folds_csv": {
+      "path": "probes/artifacts/dielectric_channel_v2_folds.csv",
+      "sha256": "7f92a1eb32f8bebb6cc82783ae7532f92c044af5a44be2d177ee7a170054bfe4",
+      "rows": 50
+    },
+    "predictions_csv": {
+      "path": "probes/artifacts/dielectric_channel_v2_predictions.csv",
+      "sha256": "1f4e1b9ff65232255a217ec83865f31445caaab87f71182d59226c22f89de007",
+      "rows": 18880
+    },
+    "strata_csv": {
+      "path": "probes/artifacts/dielectric_channel_v2_strata.csv",
+      "sha256": "464ef9e0a7fd046ca2c3731b0c46cc3ac530c459c8e3508014fe75cf42fe586b",
+      "rows": 24
+    },
+    "extrapolation_csv": {
+      "path": "probes/artifacts/dielectric_channel_v2_extrapolation.csv",
+      "sha256": "dfd4a49cd8df7b50f7f6f7780a5a76f2ebc68ba3cd4b527a4874259c834e8b9e",
+      "rows": 20
+    },
+    "report": {
+      "path": "reports/dielectric_channel_v2.md",
+      "sha256": "d2c8236a7900a6d37502e2b0393534e263b5a93b571c6999a92cf6e1cb77185f"
+    },
+    "summary_json": {
+      "path": "probes/dielectric_channel_v2_summary.json"
+    }
+  }
+}

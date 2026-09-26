@@ -1,0 +1,830 @@
+{
+  "schema_version": 1,
+  "task": "l3_stage1_pilot",
+  "title": "L3 back-validation stage-1 pilot (dielectric channel, in-roster pool, EC/PC)",
+  "label": "stage_1_pilot_not_a_verdict",
+  "not_a_verdict": true,
+  "verdict_eligible": false,
+  "generated_at_utc": "2026-09-25T20:41:19Z",
+  "prereg": {
+    "path": "probes/l3_backvalidation_prereg.json",
+    "status": "LOCKED",
+    "locked_at_utc": "2026-09-25T19:38:49Z",
+    "sha256": "45e04e88d78210ad6b890ef5f112cced58808c178b2bbab14e50ac5e12e0b6c4",
+    "locked_constants_read_verbatim": {
+      "C1_K": 20,
+      "C1_champions_required_in_top_k_total": 4,
+      "C2_solvent_max_abs_delta_log10_epsilon": 0.1,
+      "C2_additive_max_abs_delta_ev": 0.15,
+      "C3_permutation_seed": 20260928,
+      "C3_max_champion_hits": 1,
+      "min_scored_per_list": 100,
+      "pass_expression": "C1 and C2_solvent and C2_additive and C3"
+    }
+  },
+  "pilot_scope": {
+    "channels_run": [
+      "dielectric"
+    ],
+    "channels_not_run": [
+      "redox",
+      "homo_lumo",
+      "viscosity"
+    ],
+    "lists_run": [
+      "solvent"
+    ],
+    "champions_reported": [
+      "EC",
+      "PC"
+    ],
+    "pool_limited_to_roster": true,
+    "roster_limitation_declaration": "the repository has no SMILES->epsilon entry point, so per the pre-registration's blocking item 3 the pool is limited to the frozen roster and the limitation is declared rather than hidden; no xTB or new prediction entry point was built"
+  },
+  "pool": {
+    "path": "probes/l3_stage1_pilot_pool.csv",
+    "sha256": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "sha256_raw_bytes": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "sha256_canonical_text": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "rows": 236,
+    "size_by_list": {
+      "solvent": 236
+    },
+    "line_ending": "LF",
+    "frozen_before_scoring": true,
+    "frozen_in_this_invocation": false,
+    "pre_existing_on_disk": true,
+    "mtime_utc": "2026-09-25T20:27:02Z",
+    "columns": [
+      "list",
+      "inchikey",
+      "name",
+      "smiles",
+      "T_K",
+      "target_dielectric",
+      "model_ready",
+      "is_champion",
+      "champion_short",
+      "pilot_label"
+    ],
+    "rule": "rule 5 of pool_rule.requirements: the pool is frozen to a file and its sha256 recorded before the first scoring call"
+  },
+  "pool_rule_runtime_fill": {
+    "pool_path": "probes/l3_stage1_pilot_pool.csv",
+    "pool_sha256": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "pool_size_by_list": {
+      "solvent": 236
+    },
+    "pool_frozen_before_scoring": true,
+    "additive_list_scored": 0,
+    "additive_list_note": "the additive list belongs to the redox channel, which this pilot does not execute; it is deliberately absent from pool_size_by_list so the frozen >= min_scored_per_list floor is never asserted over an unscored list",
+    "amendment": {
+      "kind": "runtime_field_fill_only",
+      "locked_values_unchanged": true,
+      "locked_values_touched": []
+    }
+  },
+  "fold_and_seed": {
+    "fold_source": "data/processed/v032_ablation_predictions.csv",
+    "fold_scheme": "RepeatedKFold(n_splits=5, n_repeats=10, random_state=42)",
+    "seed_scheme": "42 + global RepeatedKFold split index",
+    "fold_policy_precedent": "probes/dielectric_leave_ec_out_sensitivity.py",
+    "n_splits": 5,
+    "n_repeats": 10,
+    "random_state": 42,
+    "split_count": 50
+  },
+  "readout_recipe": {
+    "ranking_readout": "representation=Morgan+Physical, target_mode=log_epsilon_minus_one",
+    "ensemble": "0.5 * (morgan_raw + physical_raw); each component is inverse-transformed back to raw epsilon first",
+    "prediction_clip": "clipped to dielectric >= 1",
+    "direction": "higher predicted epsilon ranks first",
+    "tie_break": "InChIKey ascending",
+    "fold_aggregation": "mean_over_the_10_out_of_fold_repeat_predictions",
+    "features": "Morgan count fingerprint (radius 2, 2048) plus the 13 frozen physical columns",
+    "model": "XGBRegressor with the frozen XGB_PARAMS",
+    "applicability_gate": "src/electrolyte_ml/applicability.py: pred < 1 -> outside_nonphysical; donor_count >= 1 -> outside_associated_liquid; else inside_domain"
+  },
+  "regression_anchor": {
+    "status": "aligned",
+    "tolerance_abs": 1e-09,
+    "crosscheck_tolerance_abs": 1e-06,
+    "max_abs_metric_diff": 0.0,
+    "max_abs_crosscheck_diff_vs_ablation": 5.275657066761141e-08,
+    "ablation_row_level_max_abs_diff": 1.907397852107806e-06,
+    "frozen_anchor_mutual_spread": 5.275657066761141e-08,
+    "row_values_compared": 14160,
+    "row_value_mismatches": [],
+    "no_champion_excluded_here": true,
+    "metric_aggregation": "per-repeat metrics are rounded to 12 significant digits before averaging, which is the frozen summariser's own convention (_run_random_cv writes f\"{value:.12g}\" rows and _summarize averages those)",
+    "row_level_alignment": "every stored OOF prediction string in data/processed/v032_target_scaffold_predictions.csv (6 arms x 236 rows x 10 repeats) is reproduced character for character",
+    "anchor_disagreement_note": "probes/v032_target_scaffold_summary.json and probes/v032_ablation_summary.json disagree with each other on raw Morgan+Physical by up to the mutual spread recorded here; this probe reproduces the former exactly and the latter only to that spread, so the two are never merged into one tolerance",
+    "references": {
+      "probes/v032_target_scaffold_summary.json": "44828c0b3ce892c152ba142b48964a77f050ffd71ec0e2a368a990f132043d74",
+      "probes/v032_ablation_summary.json": "14dbad613b6e6f04371fd8f014dff74dfea83e45c04b0f4fdb361fa5af6d9c17",
+      "data/processed/v032_target_scaffold_predictions.csv": "915bfec2c5c8312327e0f266d0c1c84fcd3caab94a3dbd0ce7a9672da8433ec3",
+      "data/processed/v032_ablation_predictions.csv": "1d2e42b14c5c706d39da382d78d71cb33aa7a14821a192b8ad210e8c2d2512e6"
+    },
+    "arms": {
+      "raw::Morgan": {
+        "target_mode": "raw",
+        "representation": "Morgan",
+        "primary_reference": "probes/v032_target_scaffold_summary.json",
+        "mine": {
+          "mae": 7.612385933453001,
+          "rmse": 16.58392305721,
+          "r2": 0.24019751230970005,
+          "spearman": 0.7222588248505,
+          "auc_gt15": 0.880817610063,
+          "auc_gt30": 0.8366727941176,
+          "mae_lt20": 4.383284598552,
+          "mae_20_60": 10.671336207140001,
+          "mae_gt60": 71.03035451753
+        },
+        "frozen": {
+          "mae": 7.612385933453001,
+          "rmse": 16.58392305721,
+          "r2": 0.24019751230970005,
+          "spearman": 0.7222588248505,
+          "auc_gt15": 0.880817610063,
+          "auc_gt30": 0.8366727941176,
+          "mae_lt20": 4.383284598552,
+          "mae_20_60": 10.671336207140001,
+          "mae_gt60": 71.03035451753
+        },
+        "abs_diff_vs_target_scaffold": {
+          "mae": 0.0,
+          "rmse": 0.0,
+          "r2": 0.0,
+          "spearman": 0.0,
+          "auc_gt15": 0.0,
+          "auc_gt30": 0.0,
+          "mae_lt20": 0.0,
+          "mae_20_60": 0.0,
+          "mae_gt60": 0.0
+        },
+        "max_abs_diff": 0.0,
+        "aligned": true,
+        "ablation_crosscheck": {
+          "reference": "probes/v032_ablation_summary.json",
+          "abs_diff": {
+            "mae": 1.965538842796377e-12,
+            "rmse": 9.876544027065393e-13,
+            "r2": 9.478529072737274e-14,
+            "spearman": 6.8833827526759706e-15,
+            "auc_gt15": 1.0691447727140257e-13,
+            "auc_gt30": 4.707345624410664e-14,
+            "mae_lt20": 7.878142582740111e-13,
+            "mae_20_60": 1.0397016581009666e-11,
+            "mae_gt60": 2.0321522242738865e-12
+          },
+          "max_abs_diff": 1.0397016581009666e-11,
+          "within_tolerance": true
+        }
+      },
+      "raw::Physical": {
+        "target_mode": "raw",
+        "representation": "Physical",
+        "primary_reference": "probes/v032_target_scaffold_summary.json",
+        "mine": {
+          "mae": 7.097619747675,
+          "rmse": 15.42184013212,
+          "r2": 0.3422338065741,
+          "spearman": 0.8021059824731,
+          "auc_gt15": 0.8975414522583,
+          "auc_gt30": 0.9372702205882,
+          "mae_lt20": 4.329913655774,
+          "mae_20_60": 10.447434907368,
+          "mae_gt60": 56.56636206492
+        },
+        "frozen": {
+          "mae": 7.097619747675,
+          "rmse": 15.42184013212,
+          "r2": 0.3422338065741,
+          "spearman": 0.8021059824731,
+          "auc_gt15": 0.8975414522583,
+          "auc_gt30": 0.9372702205882,
+          "mae_lt20": 4.329913655774,
+          "mae_20_60": 10.447434907368,
+          "mae_gt60": 56.56636206492
+        },
+        "abs_diff_vs_target_scaffold": {
+          "mae": 0.0,
+          "rmse": 0.0,
+          "r2": 0.0,
+          "spearman": 0.0,
+          "auc_gt15": 0.0,
+          "auc_gt30": 0.0,
+          "mae_lt20": 0.0,
+          "mae_20_60": 0.0,
+          "mae_gt60": 0.0
+        },
+        "max_abs_diff": 0.0,
+        "aligned": true,
+        "ablation_crosscheck": {
+          "reference": "probes/v032_ablation_summary.json",
+          "abs_diff": {
+            "mae": 1.142197447734361e-12,
+            "rmse": 4.057199021190172e-12,
+            "r2": 2.403632848313464e-14,
+            "spearman": 7.593925488436071e-14,
+            "auc_gt15": 1.3344880755994382e-13,
+            "auc_gt30": 3.552713678800501e-14,
+            "mae_lt20": 8.997247391562269e-13,
+            "mae_20_60": 6.7057470687359455e-12,
+            "mae_gt60": 1.34718902700115e-11
+          },
+          "max_abs_diff": 1.34718902700115e-11,
+          "within_tolerance": true
+        }
+      },
+      "raw::Morgan+Physical": {
+        "target_mode": "raw",
+        "representation": "Morgan+Physical",
+        "primary_reference": "probes/v032_target_scaffold_summary.json",
+        "mine": {
+          "mae": 6.686172983921,
+          "rmse": 15.176208287829999,
+          "r2": 0.3635726886453,
+          "spearman": 0.8281885523531001,
+          "auc_gt15": 0.9139018214489999,
+          "auc_gt30": 0.9333026960783,
+          "mae_lt20": 3.9470480987100003,
+          "mae_20_60": 8.786926855355,
+          "mae_gt60": 63.798358291199996
+        },
+        "frozen": {
+          "mae": 6.686172983921,
+          "rmse": 15.176208287829999,
+          "r2": 0.3635726886453,
+          "spearman": 0.8281885523531001,
+          "auc_gt15": 0.9139018214489999,
+          "auc_gt30": 0.9333026960783,
+          "mae_lt20": 3.9470480987100003,
+          "mae_20_60": 8.786926855355,
+          "mae_gt60": 63.798358291199996
+        },
+        "abs_diff_vs_target_scaffold": {
+          "mae": 0.0,
+          "rmse": 0.0,
+          "r2": 0.0,
+          "spearman": 0.0,
+          "auc_gt15": 0.0,
+          "auc_gt30": 0.0,
+          "mae_lt20": 0.0,
+          "mae_20_60": 0.0,
+          "mae_gt60": 0.0
+        },
+        "max_abs_diff": 0.0,
+        "aligned": true,
+        "ablation_crosscheck": {
+          "reference": "probes/v032_ablation_summary.json",
+          "abs_diff": {
+            "mae": 1.0847013065529154e-08,
+            "rmse": 1.2710547281358231e-08,
+            "r2": 1.116298775638569e-09,
+            "spearman": 3.963496197911809e-14,
+            "auc_gt15": 8.548717289613705e-15,
+            "auc_gt30": 1.3145040611561853e-13,
+            "mae_lt20": 4.759703742251986e-10,
+            "mae_20_60": 5.275657066761141e-08,
+            "mae_gt60": 2.3859129782977107e-08
+          },
+          "max_abs_diff": 5.275657066761141e-08,
+          "within_tolerance": true
+        }
+      },
+      "log_epsilon_minus_one::Morgan": {
+        "target_mode": "log_epsilon_minus_one",
+        "representation": "Morgan",
+        "primary_reference": "probes/v032_target_scaffold_summary.json",
+        "mine": {
+          "mae": 7.3206590235130005,
+          "rmse": 17.16172908185,
+          "r2": 0.18672113456779998,
+          "spearman": 0.7658968778726001,
+          "auc_gt15": 0.8844931797761,
+          "auc_gt30": 0.8447533700979999,
+          "mae_lt20": 3.2045403079300003,
+          "mae_20_60": 12.971160068829999,
+          "mae_gt60": 76.40066718153
+        },
+        "frozen": {
+          "mae": 7.3206590235130005,
+          "rmse": 17.16172908185,
+          "r2": 0.18672113456779998,
+          "spearman": 0.7658968778726001,
+          "auc_gt15": 0.8844931797761,
+          "auc_gt30": 0.8447533700979999,
+          "mae_lt20": 3.2045403079300003,
+          "mae_20_60": 12.971160068829999,
+          "mae_gt60": 76.40066718153
+        },
+        "abs_diff_vs_target_scaffold": {
+          "mae": 0.0,
+          "rmse": 0.0,
+          "r2": 0.0,
+          "spearman": 0.0,
+          "auc_gt15": 0.0,
+          "auc_gt30": 0.0,
+          "mae_lt20": 0.0,
+          "mae_20_60": 0.0,
+          "mae_gt60": 0.0
+        },
+        "max_abs_diff": 0.0,
+        "aligned": true,
+        "ablation_crosscheck": null
+      },
+      "log_epsilon_minus_one::Physical": {
+        "target_mode": "log_epsilon_minus_one",
+        "representation": "Physical",
+        "primary_reference": "probes/v032_target_scaffold_summary.json",
+        "mine": {
+          "mae": 6.372718303480001,
+          "rmse": 16.03166973356,
+          "r2": 0.28975778722539997,
+          "spearman": 0.8795486054634999,
+          "auc_gt15": 0.9312954341257,
+          "auc_gt30": 0.9256740196078,
+          "mae_lt20": 2.695501980851,
+          "mae_20_60": 11.301621786618,
+          "mae_gt60": 68.88627644798001
+        },
+        "frozen": {
+          "mae": 6.372718303480001,
+          "rmse": 16.03166973356,
+          "r2": 0.28975778722539997,
+          "spearman": 0.8795486054634999,
+          "auc_gt15": 0.9312954341257,
+          "auc_gt30": 0.9256740196078,
+          "mae_lt20": 2.695501980851,
+          "mae_20_60": 11.301621786618,
+          "mae_gt60": 68.88627644798001
+        },
+        "abs_diff_vs_target_scaffold": {
+          "mae": 0.0,
+          "rmse": 0.0,
+          "r2": 0.0,
+          "spearman": 0.0,
+          "auc_gt15": 0.0,
+          "auc_gt30": 0.0,
+          "mae_lt20": 0.0,
+          "mae_20_60": 0.0,
+          "mae_gt60": 0.0
+        },
+        "max_abs_diff": 0.0,
+        "aligned": true,
+        "ablation_crosscheck": null
+      },
+      "log_epsilon_minus_one::Morgan+Physical": {
+        "target_mode": "log_epsilon_minus_one",
+        "representation": "Morgan+Physical",
+        "primary_reference": "probes/v032_target_scaffold_summary.json",
+        "mine": {
+          "mae": 6.27273294434,
+          "rmse": 16.002903305289998,
+          "r2": 0.29276031147160003,
+          "spearman": 0.8783504416496001,
+          "auc_gt15": 0.9315363881401998,
+          "auc_gt30": 0.9270833333333999,
+          "mae_lt20": 2.55325537502,
+          "mae_20_60": 10.790812636318,
+          "mae_gt60": 72.64347181474999
+        },
+        "frozen": {
+          "mae": 6.27273294434,
+          "rmse": 16.002903305289998,
+          "r2": 0.29276031147160003,
+          "spearman": 0.8783504416496001,
+          "auc_gt15": 0.9315363881401998,
+          "auc_gt30": 0.9270833333333999,
+          "mae_lt20": 2.55325537502,
+          "mae_20_60": 10.790812636318,
+          "mae_gt60": 72.64347181474999
+        },
+        "abs_diff_vs_target_scaffold": {
+          "mae": 0.0,
+          "rmse": 0.0,
+          "r2": 0.0,
+          "spearman": 0.0,
+          "auc_gt15": 0.0,
+          "auc_gt30": 0.0,
+          "mae_lt20": 0.0,
+          "mae_20_60": 0.0,
+          "mae_gt60": 0.0
+        },
+        "max_abs_diff": 0.0,
+        "aligned": true,
+        "ablation_crosscheck": null
+      }
+    }
+  },
+  "exclusion": {
+    "levels": [
+      {
+        "level": "L1",
+        "prereg": "L1 训练集：任何通道的任何一次拟合，其训练行都不得包含四个冠军中的任何一个（含交叉验证的每一个折内训练集）。",
+        "implementation": "EC and PC are removed from the training side of every one of the 50 folds; they are still scored out-of-fold at their original fold"
+      },
+      {
+        "level": "L2",
+        "prereg": "L2 特征构造：不得使用任何由冠军标签派生的特征（无 target encoding、无冠军均值特征、无冠军近邻特征）。",
+        "implementation": "features are the Morgan count fingerprint and the frozen physical descriptors only; no target encoding and no champion-derived feature"
+      },
+      {
+        "level": "L3",
+        "prereg": "L3 选择环节：超参数、特征子集、早停与模型选择都不得看到冠军（冠军只出现在最终评分步骤）。",
+        "implementation": "XGB_PARAMS, feature set, seeds and the no-early-stopping 200-round schedule are all frozen before the champions are ever scored"
+      },
+      {
+        "level": "L4",
+        "prereg": "L4 评分路径：冠军必须走与其他池成员**完全相同**的代码路径与口径，不得为冠军做任何特判或人工赋分。",
+        "implementation": "champions go through the same fit_predict call and the same fold aggregation as every other pool member; the is_champion column never reaches the scoring path"
+      }
+    ],
+    "audit": {
+      "per_champion": {
+        "EC": {
+          "train_side_removals": 40,
+          "held_out_folds": 10
+        },
+        "PC": {
+          "train_side_removals": 40,
+          "held_out_folds": 10
+        }
+      },
+      "min_train_rows_after_exclusion": 186,
+      "max_train_rows_after_exclusion": 189,
+      "split_count": 50
+    },
+    "additive_champions": {
+      "FEC": {
+        "inchikey": "SBLRHMKNNHXPHG-UHFFFAOYSA-N",
+        "model_ready": false,
+        "already_withheld_from_dielectric_fit": true,
+        "present_in_pool": false,
+        "extra_exclusion_needed": false,
+        "note": "already outside the frozen dielectric fit via model_ready=false, so no leave-one-out was performed for it"
+      },
+      "VC": {
+        "inchikey": "VAYTZRYEBVHVLE-UHFFFAOYSA-N",
+        "model_ready": false,
+        "already_withheld_from_dielectric_fit": true,
+        "present_in_pool": false,
+        "extra_exclusion_needed": false,
+        "note": "already outside the frozen dielectric fit via model_ready=false, so no leave-one-out was performed for it"
+      }
+    },
+    "withheld_from_frozen_fit_inchikeys": [
+      "VAYTZRYEBVHVLE-UHFFFAOYSA-N"
+    ],
+    "failed_feature_inchikeys": [
+      "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "JWFPQAXAGSAKRF-UHFFFAOYSA-N"
+    ],
+    "asymmetry_statement": "only EC and PC needed an extra exclusion. FEC and VC are already outside the frozen dielectric fit (model_ready=false), so no leave-one-out was run for them. This is NOT four leave-one-outs."
+  },
+  "readings": {
+    "C1_recall_at_K": {
+      "K": 20,
+      "champions_required_here_dielectric_solvent_list": 2,
+      "champions_required_total_prereg_four_channels": 4,
+      "champion_ranks_in_dielectric_solvent_list": {
+        "EC": 24,
+        "PC": 58
+      },
+      "hits_in_dielectric_solvent_list": 0,
+      "passed_in_this_channel": false,
+      "top_k_inchikeys": [
+        "RJQQOKKINHMXIM-UHFFFAOYSA-N",
+        "HZAXFHJVJLSVMW-UHFFFAOYSA-N",
+        "DNIAPMSPPWPWGF-UHFFFAOYSA-N",
+        "UPCXAARSWVHVLY-UHFFFAOYSA-N",
+        "LZJIBRSVPKKOSI-UHFFFAOYSA-O",
+        "LYCAIKOWRPUZTN-UHFFFAOYSA-N",
+        "NEQXUPRFDXNNTA-UHFFFAOYSA-N",
+        "KVNRLNFWIYMESJ-UHFFFAOYSA-N",
+        "ZMXDDKWLCZADIW-UHFFFAOYSA-N",
+        "VVLAIYIMMFWRFW-UHFFFAOYSA-N",
+        "PEDCQBHIVMGVHV-UHFFFAOYSA-N",
+        "WEVYAHXRMPXWCK-UHFFFAOYSA-N",
+        "BTGRAWJCKBQKAO-UHFFFAOYSA-N",
+        "LVTYICIALWPMFW-UHFFFAOYSA-N",
+        "NKKMVIVFRUYPLQ-NSCUHMNNSA-N",
+        "KLTUZFZUYLXTFF-UHFFFAOYSA-N",
+        "SIXHYMZEOJSYQH-UHFFFAOYSA-M",
+        "CBTVGIZVANVGBH-UHFFFAOYSA-N",
+        "HEBKCHPVOIAQTA-NGQZWQHPSA-N",
+        "ZTOMUSMDRMJOTH-UHFFFAOYSA-N"
+      ],
+      "top_k_names": [
+        "triethanolamine lactate",
+        "2-aminoethan-1-ol",
+        "1,2-propanediol",
+        "triethanolammonium acetate",
+        "ethanolammonium nitrate",
+        "1,2-ethanediol",
+        "2-hydroxyethylammonium lactate",
+        "butanenitrile",
+        "dimethylformamide",
+        "2-hydroxyethylammonium acetate",
+        "glycerol",
+        "Acetonitrile",
+        "hexanedinitrile",
+        "N-(2-hydroxypropyl)-2-hydroxy-1-propanamine",
+        "Crotononitrile (bp 108 C)",
+        "1-(2-hydroxyethyl)-3-methylimidazolium tetrafluoroborate",
+        "1-butyl-3-methylimidazolium thiocyanate",
+        "2-amino-2-methylpropan-1-ol",
+        "Xylitol",
+        "pentanedinitrile"
+      ],
+      "not_a_verdict": true
+    },
+    "C2_magnitude_solvent": {
+      "max_abs_delta_log10_epsilon": 0.1,
+      "champions": {
+        "EC": {
+          "predicted_dielectric": 23.05650945343228,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.5938550195186852,
+          "abs_delta_log10": 0.5938550195186852,
+          "within_tolerance": false,
+          "domain_flag": "inside_domain"
+        },
+        "PC": {
+          "predicted_dielectric": 17.043769200900982,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.5806790522537534,
+          "abs_delta_log10": 0.5806790522537534,
+          "within_tolerance": false,
+          "domain_flag": "inside_domain"
+        }
+      },
+      "passed_in_this_channel": false,
+      "not_a_verdict": true
+    },
+    "C2_additive": {
+      "status": "not_run_stage_1_pilot_redox_channel_not_executed",
+      "reason": "FEC / VC are additive-list champions on the redox channel; this pilot executes the dielectric channel only",
+      "max_abs_delta_ev": 0.15
+    },
+    "C3_negative_control": {
+      "status": "c3_not_run_stage_1_pilot",
+      "reason": "the label-permutation control belongs to the full four-channel run",
+      "permutation_seed_locked": 20260928,
+      "max_champion_hits_locked": 1
+    }
+  },
+  "readouts": {
+    "log_epsilon_minus_one": {
+      "target_mode": "log_epsilon_minus_one",
+      "representation": "Morgan+Physical",
+      "role": "locked_readout",
+      "fold_aggregation": "mean_over_the_10_out_of_fold_repeat_predictions",
+      "pool_size": 236,
+      "top_k": 20,
+      "champions": {
+        "EC": {
+          "short": "EC",
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "rank": 24,
+          "in_top_k": false,
+          "predicted_dielectric": 23.05650945343228,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.5938550195186852,
+          "abs_delta_log10": 0.5938550195186852,
+          "within_c2_tolerance": false,
+          "domain_flag": "inside_domain",
+          "donor_count": 0
+        },
+        "PC": {
+          "short": "PC",
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "rank": 58,
+          "in_top_k": false,
+          "predicted_dielectric": 17.043769200900982,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.5806790522537534,
+          "abs_delta_log10": 0.5806790522537534,
+          "within_c2_tolerance": false,
+          "domain_flag": "inside_domain",
+          "donor_count": 0
+        }
+      },
+      "champion_hits_in_top_k": 0,
+      "champions_required_here": 2,
+      "top_k_inchikeys": [
+        "RJQQOKKINHMXIM-UHFFFAOYSA-N",
+        "HZAXFHJVJLSVMW-UHFFFAOYSA-N",
+        "DNIAPMSPPWPWGF-UHFFFAOYSA-N",
+        "UPCXAARSWVHVLY-UHFFFAOYSA-N",
+        "LZJIBRSVPKKOSI-UHFFFAOYSA-O",
+        "LYCAIKOWRPUZTN-UHFFFAOYSA-N",
+        "NEQXUPRFDXNNTA-UHFFFAOYSA-N",
+        "KVNRLNFWIYMESJ-UHFFFAOYSA-N",
+        "ZMXDDKWLCZADIW-UHFFFAOYSA-N",
+        "VVLAIYIMMFWRFW-UHFFFAOYSA-N",
+        "PEDCQBHIVMGVHV-UHFFFAOYSA-N",
+        "WEVYAHXRMPXWCK-UHFFFAOYSA-N",
+        "BTGRAWJCKBQKAO-UHFFFAOYSA-N",
+        "LVTYICIALWPMFW-UHFFFAOYSA-N",
+        "NKKMVIVFRUYPLQ-NSCUHMNNSA-N",
+        "KLTUZFZUYLXTFF-UHFFFAOYSA-N",
+        "SIXHYMZEOJSYQH-UHFFFAOYSA-M",
+        "CBTVGIZVANVGBH-UHFFFAOYSA-N",
+        "HEBKCHPVOIAQTA-NGQZWQHPSA-N",
+        "ZTOMUSMDRMJOTH-UHFFFAOYSA-N"
+      ],
+      "top_k_names": [
+        "triethanolamine lactate",
+        "2-aminoethan-1-ol",
+        "1,2-propanediol",
+        "triethanolammonium acetate",
+        "ethanolammonium nitrate",
+        "1,2-ethanediol",
+        "2-hydroxyethylammonium lactate",
+        "butanenitrile",
+        "dimethylformamide",
+        "2-hydroxyethylammonium acetate",
+        "glycerol",
+        "Acetonitrile",
+        "hexanedinitrile",
+        "N-(2-hydroxypropyl)-2-hydroxy-1-propanamine",
+        "Crotononitrile (bp 108 C)",
+        "1-(2-hydroxyethyl)-3-methylimidazolium tetrafluoroborate",
+        "1-butyl-3-methylimidazolium thiocyanate",
+        "2-amino-2-methylpropan-1-ol",
+        "Xylitol",
+        "pentanedinitrile"
+      ],
+      "training_side_removals": {
+        "234": 40,
+        "235": 40
+      },
+      "c1_pass_in_this_channel": false,
+      "c2_solvent_pass_in_this_channel": false
+    },
+    "raw": {
+      "target_mode": "raw",
+      "representation": "Morgan+Physical",
+      "role": "diagnostic_only_not_the_locked_readout",
+      "fold_aggregation": "mean_over_the_10_out_of_fold_repeat_predictions",
+      "pool_size": 236,
+      "top_k": 20,
+      "champions": {
+        "EC": {
+          "short": "EC",
+          "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+          "pool_row_index": 235,
+          "rank": 12,
+          "in_top_k": true,
+          "predicted_dielectric": 32.99951086044312,
+          "truth_dielectric": 90.5,
+          "delta_log10": -0.4381410766662497,
+          "abs_delta_log10": 0.4381410766662497,
+          "within_c2_tolerance": false,
+          "domain_flag": "inside_domain",
+          "donor_count": 0
+        },
+        "PC": {
+          "short": "PC",
+          "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+          "pool_row_index": 234,
+          "rank": 41,
+          "in_top_k": false,
+          "predicted_dielectric": 22.41172800064087,
+          "truth_dielectric": 64.9,
+          "delta_log10": -0.46176935377663825,
+          "abs_delta_log10": 0.46176935377663825,
+          "within_c2_tolerance": false,
+          "domain_flag": "inside_domain",
+          "donor_count": 0
+        }
+      },
+      "champion_hits_in_top_k": 1,
+      "champions_required_here": 2,
+      "top_k_inchikeys": [
+        "RJQQOKKINHMXIM-UHFFFAOYSA-N",
+        "UPCXAARSWVHVLY-UHFFFAOYSA-N",
+        "HZAXFHJVJLSVMW-UHFFFAOYSA-N",
+        "NEQXUPRFDXNNTA-UHFFFAOYSA-N",
+        "LZJIBRSVPKKOSI-UHFFFAOYSA-O",
+        "SIXHYMZEOJSYQH-UHFFFAOYSA-M",
+        "LYCAIKOWRPUZTN-UHFFFAOYSA-N",
+        "ZMXDDKWLCZADIW-UHFFFAOYSA-N",
+        "NKKMVIVFRUYPLQ-NSCUHMNNSA-N",
+        "VVLAIYIMMFWRFW-UHFFFAOYSA-N",
+        "CBTVGIZVANVGBH-UHFFFAOYSA-N",
+        "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+        "DNIAPMSPPWPWGF-UHFFFAOYSA-N",
+        "HEBKCHPVOIAQTA-NGQZWQHPSA-N",
+        "WEVYAHXRMPXWCK-UHFFFAOYSA-N",
+        "PEDCQBHIVMGVHV-UHFFFAOYSA-N",
+        "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
+        "BTGRAWJCKBQKAO-UHFFFAOYSA-N",
+        "QTBSBXVTEAMEQO-UHFFFAOYSA-N",
+        "GSEJCLTVZPLZKY-UHFFFAOYSA-N"
+      ],
+      "top_k_names": [
+        "triethanolamine lactate",
+        "triethanolammonium acetate",
+        "2-aminoethan-1-ol",
+        "2-hydroxyethylammonium lactate",
+        "ethanolammonium nitrate",
+        "1-butyl-3-methylimidazolium thiocyanate",
+        "1,2-ethanediol",
+        "dimethylformamide",
+        "Crotononitrile (bp 108 C)",
+        "2-hydroxyethylammonium acetate",
+        "2-amino-2-methylpropan-1-ol",
+        "ethylene carbonate",
+        "1,2-propanediol",
+        "Xylitol",
+        "Acetonitrile",
+        "glycerol",
+        "water",
+        "hexanedinitrile",
+        "acetic acid",
+        "triethanolamine"
+      ],
+      "training_side_removals": {
+        "234": 40,
+        "235": 40
+      },
+      "c1_pass_in_this_channel": false,
+      "c2_solvent_pass_in_this_channel": false
+    }
+  },
+  "temperature_check": {
+    "EC": {
+      "frozen_table_T_K": 313.15,
+      "prereg_truth_T_K": 313.15,
+      "consistent": true
+    },
+    "PC": {
+      "frozen_table_T_K": 298.15,
+      "prereg_truth_T_K": 298.15,
+      "consistent": true
+    }
+  },
+  "reporting_rules_compliance": [
+    {
+      "rule": "report per channel and per list; never merge the two lists",
+      "how": "only the dielectric solvent list is reported; the additive list is declared not run"
+    },
+    {
+      "rule": "give champion rank, K, pool size, applicability flag, prediction, truth, error, control hits",
+      "how": "readings.C1_recall_at_K / C2_magnitude_solvent plus readouts[<mode>] and the detail CSV"
+    },
+    {
+      "rule": "a hit is a hit and a miss is a miss",
+      "how": "ranks are reported as integers and C1 is computed from rank <= K, with no near-miss language"
+    },
+    {
+      "rule": "pool size < 100 means the conclusion is only 'underpowered'",
+      "how": "pool size 236 >= 100, so that clause does not trigger"
+    }
+  ],
+  "outputs": {
+    "script": "probes/l3_stage1_pilot.py",
+    "pool_csv": "probes/l3_stage1_pilot_pool.csv",
+    "detail_csv": "probes/l3_stage1_pilot_detail.csv",
+    "summary_json": "probes/l3_stage1_pilot_summary.json",
+    "report": "reports/l3_stage1_pilot.md",
+    "decisions_log_section": "reports/decisions_log.md section 17"
+  },
+  "summary_written_after_pool": true,
+  "label_locations": [
+    "probes/l3_stage1_pilot_pool.csv",
+    "probes/l3_stage1_pilot_detail.csv",
+    "probes/l3_stage1_pilot_summary.json"
+  ],
+  "conflicts_with_frozen_points": [
+    {
+      "id": "pool_runtime_fields_are_pinned_null_by_an_existing_guard",
+      "frozen_point": "tests/test_l3_backvalidation_prereg.py::test_pool_rule_carries_the_machine_readable_freeze_fields asserted the four runtime fields were still null / false",
+      "pilot_requires": "pool_rule.pool_path / pool_sha256 / pool_size_by_list filled and pool_frozen_before_scoring = true, so the freeze is machine-readable and the pre-registration's own requirement 5 is satisfied",
+      "resolution": "three null-value assertions were replaced by stricter frozen-state assertions and one polarity was flipped from False to True; net strength increased, no check was lost",
+      "more_conservative_side_taken": "no locked threshold moved and the guard became stricter; the pool freeze is recorded in both the pre-registration and this summary"
+    },
+    {
+      "id": "readout_target_vs_fold_geometry_precedent",
+      "frozen_point": "the leave-EC-out fold-geometry precedent only ever fitted the raw target",
+      "pilot_requires": "the dielectric channel's locked ranking readout is the log(epsilon-1) target, per pool_rule.solvent_list_readout and the C2_solvent rationale",
+      "resolution": "fold geometry (which rows land in which fold, and 42 + split index) is target-independent, so the precedent is reused verbatim and only the frozen target transform differs; the log(epsilon-1) out-of-fold metrics for the same 236-row order already exist in probes/v032_target_scaffold_summary.json, and the regression anchor reproduces them",
+      "more_conservative_side_taken": "C1/C2 are read off the pre-registered log(epsilon-1) readout; the raw-target ranking is reported only as a clearly labelled diagnostic and never as C1"
+    },
+    {
+      "id": "the_two_named_frozen_anchors_disagree_with_each_other",
+      "frozen_point": "the task names probes/v032_target_scaffold_summary.json and probes/v032_ablation_summary.json as anchors; the two disagree with each other on raw Morgan+Physical by up to 5.28e-8 (their own per-row raw Morgan+Physical predictions differ by up to 1.9e-6, a float32 ensemble rounding step in the older ablation runner), while their Morgan and Physical arms agree to ~1e-11",
+      "pilot_requires": "an alignment that is tight enough to be meaningful -- a tolerance widened to cover 5e-8 would no longer detect a real regression",
+      "resolution": "alignment is required exactly (<= 1e-9) against v032_target_scaffold_summary.json, the artifact the frozen recipe actually calls and the one the C2 rationale cites; v032_ablation_summary.json is carried as a cross-reference with its own recorded spread and a 1e-6 bound, plus the measured per-row distance between my predictions and that pipeline",
+      "more_conservative_side_taken": "neither frozen number was touched and the tolerance was not silently widened; the disagreement is printed in the summary rather than absorbed"
+    }
+  ]
+}

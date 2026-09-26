@@ -44,6 +44,7 @@ for _extra in (REPOSITORY_ROOT, REPOSITORY_ROOT / "src"):
         sys.path.insert(0, str(_extra))
 
 from electrolyte_ml.xtb_features import XtbFeatureError, parse_xtb_output
+from electrolyte_ml.xtb_runner import run_xtb_subprocess
 from probes.xtb_fragment_geometry_defect import (
     TARGETS as DEFECT_TARGETS,
 )
@@ -222,18 +223,13 @@ def resolve_xtb() -> Path:
 
 
 def _run(command: list[str], run_dir: Path, timeout: int) -> tuple[int | None, str, str, float]:
-    environment = os.environ.copy()
-    environment["OMP_NUM_THREADS"] = "1"
-    environment["MKL_NUM_THREADS"] = "1"
     start = time.perf_counter()
     try:
-        completed = subprocess.run(
-            command,
+        completed = run_xtb_subprocess(
+            command[0],
+            command[1:],
             cwd=run_dir,
-            env=environment,
-            capture_output=True,
-            timeout=timeout,
-            check=False,
+            timeout_seconds=timeout,
         )
         code: int | None = completed.returncode
         stdout = completed.stdout.decode("utf-8", "replace")

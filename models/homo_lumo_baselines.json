@@ -1,0 +1,827 @@
+{
+  "schema_version": 1,
+  "task": "homo_lumo_baselines",
+  "title": "L3 exit 2: Morgan + 2D-descriptor XGBoost baselines for HOMO/LUMO/IP/EA (manual appendix Q-2)",
+  "generated_at_utc": "2026-09-25T21:36:40Z",
+  "unit": {
+    "unit": "eV",
+    "source": "probes/p4_redox_summary.json",
+    "source_sha256": "b91e4438890ec7d918e9dde5142061af41a6c5b2213cbcb1845f04096f1fdbf6",
+    "source_note": "the Batt-P30K HDF5 file carries no unit metadata (attrs is empty); the repository declares eV for HOMO/LUMO/IP/EA in the p4 redox units block, which this run reuses unchanged",
+    "dataset_method": "wB97X-V/def2-TZVPPD/SMD(epsilon=18.5)",
+    "source_doi": "10.1021/acsnano.6c06255",
+    "hdf5_metadata_declares_unit": false
+  },
+  "source_dataset": {
+    "path": "data/raw/batt/Batt-P30K.h5",
+    "sha256": "587f1490613a008b91f45ee9de607a2e057c88c301fa9e5c9d7785b1968d118d",
+    "group_count": 29519,
+    "method": "wB97X-V/def2-TZVPPD/SMD(epsilon=18.5)",
+    "source_doi": "10.1021/acsnano.6c06255"
+  },
+  "feature_config": {
+    "fingerprint": {
+      "kind": "morgan_count",
+      "radius": 2,
+      "fp_size": 2048,
+      "generator": "rdkit.Chem.rdFingerprintGenerator.GetMorganGenerator",
+      "materializer": "GetCountFingerprintAsNumPy"
+    },
+    "descriptors": {
+      "library": "rdkit.Chem.Descriptors",
+      "names": [
+        "MolWt",
+        "MolLogP",
+        "TPSA",
+        "LabuteASA",
+        "NumHDonors",
+        "NumHAcceptors",
+        "NumHeteroatoms",
+        "NOCount",
+        "NumRotatableBonds",
+        "NumValenceElectrons",
+        "NumAliphaticRings",
+        "NumAromaticRings",
+        "NumSaturatedRings",
+        "RingCount",
+        "FractionCSP3",
+        "HeavyAtomCount",
+        "BalabanJ",
+        "BertzCT",
+        "Chi0v",
+        "Chi1v",
+        "HallKierAlpha",
+        "Ipc",
+        "Kappa1",
+        "Kappa2",
+        "Kappa3",
+        "MaxPartialCharge",
+        "MinPartialCharge",
+        "MaxAbsPartialCharge",
+        "MinAbsPartialCharge",
+        "PEOE_VSA1"
+      ],
+      "non_finite_policy": "non-finite descriptor values are replaced by 0.0 by the same code path at fit time and at scoring time"
+    },
+    "feature_order": "morgan_count(2048) then descriptors in the declared order",
+    "variants": {
+      "morgan_only": {
+        "descriptor_names": [],
+        "n_features": 2048
+      },
+      "morgan_plus_2d": {
+        "descriptor_names": [
+          "MolWt",
+          "MolLogP",
+          "TPSA",
+          "LabuteASA",
+          "NumHDonors",
+          "NumHAcceptors",
+          "NumHeteroatoms",
+          "NOCount",
+          "NumRotatableBonds",
+          "NumValenceElectrons",
+          "NumAliphaticRings",
+          "NumAromaticRings",
+          "NumSaturatedRings",
+          "RingCount",
+          "FractionCSP3",
+          "HeavyAtomCount",
+          "BalabanJ",
+          "BertzCT",
+          "Chi0v",
+          "Chi1v",
+          "HallKierAlpha",
+          "Ipc",
+          "Kappa1",
+          "Kappa2",
+          "Kappa3",
+          "MaxPartialCharge",
+          "MinPartialCharge",
+          "MaxAbsPartialCharge",
+          "MinAbsPartialCharge",
+          "PEOE_VSA1"
+        ],
+        "n_features": 2078
+      }
+    },
+    "only_source": "SMILES (2D structure)",
+    "h5_datasets_read_for_features": [
+      "smiles"
+    ],
+    "forbidden_inputs": [
+      "gap",
+      "homo",
+      "lumo",
+      "ip",
+      "ea",
+      "dipole",
+      "quadrupole",
+      "ener",
+      "ener_anion",
+      "ener_cation",
+      "coord"
+    ]
+  },
+  "scoring": {
+    "cli": "python probes/homo_lumo_baselines.py --score-smiles <file.smi> [--score-output <out.csv>]",
+    "output_columns": [
+      "smiles",
+      "canonical_smiles",
+      "HOMO_eV",
+      "LUMO_eV",
+      "IP_eV",
+      "EA_eV",
+      "gap_eV"
+    ],
+    "gap_eV": "derived as LUMO_prediction - HOMO_prediction, in eV",
+    "feature_order": "morgan_count(2048) then descriptors in the declared order; identical code path for fit and scoring"
+  },
+  "exclusion": {
+    "level": "L1",
+    "prereg_path": "probes/l3_backvalidation_prereg.json",
+    "prereg_sha256": "39cc5e67d12efed91eb7ac087dd123bfc3de30bd1944813a0a2ba0f7d8f435e9",
+    "rule": "L1 训练集：任何通道的任何一次拟合，其训练行都不得包含四个冠军中的任何一个（含交叉验证的每一个折内训练集）。",
+    "champions": [
+      {
+        "short": "EC",
+        "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N"
+      },
+      {
+        "short": "PC",
+        "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N"
+      },
+      {
+        "short": "FEC",
+        "inchikey": "SBLRHMKNNHXPHG-UHFFFAOYSA-N"
+      },
+      {
+        "short": "VC",
+        "inchikey": "VAYTZRYEBVHVLE-UHFFFAOYSA-N"
+      }
+    ],
+    "pool_rows_after_exclusion": 29515,
+    "pool_sha256": "299ce3190dbbe5f37d514d4ca06e5db170360283e7943125bda990e0fc231524",
+    "per_fold_assertion": "champions & train_ids == {} asserted for every fold of both the screening and the formal protocol, for the main model and the Dummy control"
+  },
+  "cv_protocol": {
+    "splitter": "RepeatedKFold",
+    "n_splits": 5,
+    "n_repeats": 10,
+    "random_state": 42,
+    "seed_rule": "42 + global fold index (repeat * n_splits + fold)",
+    "n_folds": 50,
+    "xgb_n_jobs": 8,
+    "fold_jobs": 4,
+    "target_run_order": [
+      "LUMO",
+      "HOMO",
+      "IP",
+      "EA"
+    ],
+    "deviation": {
+      "project_standard": {
+        "n_splits": 5,
+        "n_repeats": 10,
+        "random_state": 42
+      },
+      "used_in_this_run": {
+        "n_splits": 5,
+        "n_repeats": 10,
+        "random_state": 42
+      },
+      "deviates_from_project_standard": false,
+      "declaration": "this run used the project standard 5x10 (RepeatedKFold, random_state=42)"
+    }
+  },
+  "targets": {
+    "LUMO": {
+      "label_source": "Batt-P30K/lumo",
+      "selection": {
+        "target": "LUMO",
+        "config_id": "morgan_plus_2d+deeper_slower",
+        "feature_variant": "morgan_plus_2d",
+        "model_variant": "deeper_slower",
+        "n_features": 2078,
+        "screening_fold_mae_mean": 0.13801568162004949,
+        "screening_dummy_fold_mae_mean": 0.514505459615458,
+        "beat_dummy": true,
+        "tied_configs": [
+          "morgan_plus_2d+deeper_slower"
+        ],
+        "candidates_beating_dummy": [
+          "morgan_only+p2_xgboost",
+          "morgan_plus_2d+p2_xgboost",
+          "morgan_plus_2d+deeper_slower"
+        ],
+        "rule": "Declared before any fit: for each target independently, rank the pre-declared screening configurations by mean held-out MAE over the screening folds (RepeatedKFold n_splits=5, n_repeats=1, random_state=42; every configuration and the DummyRegressor control share identical folds). The winner must be strictly better than the DummyRegressor(strategy='mean') mean MAE on the same folds; if no configuration beats Dummy the lowest-MAE configuration is still reported with beat_dummy=false. Candidates within 1e-3 eV of the best MAE are treated as tied and the tie is broken by (1) fewer features, then (2) the declared model-variant order. Configurations are screened in the declared order regardless of outcome.",
+        "tie_tolerance_ev": 0.001
+      },
+      "feature_variant": "morgan_plus_2d",
+      "feature_variant_detail": {
+        "descriptor_names": [
+          "MolWt",
+          "MolLogP",
+          "TPSA",
+          "LabuteASA",
+          "NumHDonors",
+          "NumHAcceptors",
+          "NumHeteroatoms",
+          "NOCount",
+          "NumRotatableBonds",
+          "NumValenceElectrons",
+          "NumAliphaticRings",
+          "NumAromaticRings",
+          "NumSaturatedRings",
+          "RingCount",
+          "FractionCSP3",
+          "HeavyAtomCount",
+          "BalabanJ",
+          "BertzCT",
+          "Chi0v",
+          "Chi1v",
+          "HallKierAlpha",
+          "Ipc",
+          "Kappa1",
+          "Kappa2",
+          "Kappa3",
+          "MaxPartialCharge",
+          "MinPartialCharge",
+          "MaxAbsPartialCharge",
+          "MinAbsPartialCharge",
+          "PEOE_VSA1"
+        ],
+        "n_features": 2078
+      },
+      "model": {
+        "framework": "xgboost",
+        "version": "3.4.1",
+        "variant": "deeper_slower",
+        "params": {
+          "objective": "reg:squarederror",
+          "n_estimators": 1000,
+          "max_depth": 12,
+          "learning_rate": 0.04,
+          "subsample": 0.9,
+          "colsample_bytree": 0.5,
+          "reg_lambda": 1.0,
+          "tree_method": "hist"
+        },
+        "seed": 42,
+        "seed_rule": "42 + global fold index for CV folds; 42 for the shipped model",
+        "n_jobs": 8,
+        "artifact": {
+          "path": "models/homo_lumo_lumo.ubj",
+          "sha256": "9f6c2d6e6f86476c214190d21d297513462c8bf0b053ca50ca8c371b1a4d5f38",
+          "format": "xgboost ubj"
+        }
+      },
+      "training_pool_rows": 29515,
+      "training_pool_sha256": "299ce3190dbbe5f37d514d4ca06e5db170360283e7943125bda990e0fc231524",
+      "cv": {
+        "n_folds": 50,
+        "fold_mae_mean": 0.13855083976437643,
+        "fold_mae_std": 0.002859466310012226,
+        "fold_rmse_mean": 0.28455438454692195,
+        "fold_r2_mean": 0.828669203218973,
+        "pooled_oof_mae": 0.13352196004895428,
+        "pooled_oof_rmse": 0.2777738636913213,
+        "pooled_oof_r2": 0.8369507842482118,
+        "oof_rows_covered": 29515,
+        "oof_repeats_per_row": 10
+      },
+      "dummy_control": {
+        "model": "DummyRegressor(strategy='mean')",
+        "folds": "identical to the main model (same RepeatedKFold instance)",
+        "n_folds": 50,
+        "fold_mae_mean": 0.5145056615141477,
+        "fold_mae_std": 0.004314047072968773,
+        "fold_rmse_mean": 0.6878373676898536,
+        "fold_r2_mean": -0.0001718928161408684,
+        "pooled_oof_mae": 0.5145044070292398,
+        "pooled_oof_rmse": 0.6879297255958587,
+        "pooled_oof_r2": -5.5508873999077224e-05,
+        "oof_rows_covered": 29515,
+        "oof_repeats_per_row": 10
+      }
+    },
+    "HOMO": {
+      "label_source": "Batt-P30K/homo",
+      "selection": {
+        "target": "HOMO",
+        "config_id": "morgan_plus_2d+deeper_slower",
+        "feature_variant": "morgan_plus_2d",
+        "model_variant": "deeper_slower",
+        "n_features": 2078,
+        "screening_fold_mae_mean": 0.19026999921086238,
+        "screening_dummy_fold_mae_mean": 0.6522850500713001,
+        "beat_dummy": true,
+        "tied_configs": [
+          "morgan_plus_2d+deeper_slower"
+        ],
+        "candidates_beating_dummy": [
+          "morgan_only+p2_xgboost",
+          "morgan_plus_2d+p2_xgboost",
+          "morgan_plus_2d+deeper_slower"
+        ],
+        "rule": "Declared before any fit: for each target independently, rank the pre-declared screening configurations by mean held-out MAE over the screening folds (RepeatedKFold n_splits=5, n_repeats=1, random_state=42; every configuration and the DummyRegressor control share identical folds). The winner must be strictly better than the DummyRegressor(strategy='mean') mean MAE on the same folds; if no configuration beats Dummy the lowest-MAE configuration is still reported with beat_dummy=false. Candidates within 1e-3 eV of the best MAE are treated as tied and the tie is broken by (1) fewer features, then (2) the declared model-variant order. Configurations are screened in the declared order regardless of outcome.",
+        "tie_tolerance_ev": 0.001
+      },
+      "feature_variant": "morgan_plus_2d",
+      "feature_variant_detail": {
+        "descriptor_names": [
+          "MolWt",
+          "MolLogP",
+          "TPSA",
+          "LabuteASA",
+          "NumHDonors",
+          "NumHAcceptors",
+          "NumHeteroatoms",
+          "NOCount",
+          "NumRotatableBonds",
+          "NumValenceElectrons",
+          "NumAliphaticRings",
+          "NumAromaticRings",
+          "NumSaturatedRings",
+          "RingCount",
+          "FractionCSP3",
+          "HeavyAtomCount",
+          "BalabanJ",
+          "BertzCT",
+          "Chi0v",
+          "Chi1v",
+          "HallKierAlpha",
+          "Ipc",
+          "Kappa1",
+          "Kappa2",
+          "Kappa3",
+          "MaxPartialCharge",
+          "MinPartialCharge",
+          "MaxAbsPartialCharge",
+          "MinAbsPartialCharge",
+          "PEOE_VSA1"
+        ],
+        "n_features": 2078
+      },
+      "model": {
+        "framework": "xgboost",
+        "version": "3.4.1",
+        "variant": "deeper_slower",
+        "params": {
+          "objective": "reg:squarederror",
+          "n_estimators": 1000,
+          "max_depth": 12,
+          "learning_rate": 0.04,
+          "subsample": 0.9,
+          "colsample_bytree": 0.5,
+          "reg_lambda": 1.0,
+          "tree_method": "hist"
+        },
+        "seed": 42,
+        "seed_rule": "42 + global fold index for CV folds; 42 for the shipped model",
+        "n_jobs": 8,
+        "artifact": {
+          "path": "models/homo_lumo_homo.ubj",
+          "sha256": "7e945fc5647fb81105797f62306166dfd50b5041c0a4e6771457c917acb626b4",
+          "format": "xgboost ubj"
+        }
+      },
+      "training_pool_rows": 29515,
+      "training_pool_sha256": "299ce3190dbbe5f37d514d4ca06e5db170360283e7943125bda990e0fc231524",
+      "cv": {
+        "n_folds": 50,
+        "fold_mae_mean": 0.19050925839013938,
+        "fold_mae_std": 0.0028659004487389247,
+        "fold_rmse_mean": 0.2894734692789777,
+        "fold_r2_mean": 0.8845342808740686,
+        "pooled_oof_mae": 0.18454998743851145,
+        "pooled_oof_rmse": 0.28160453463582363,
+        "pooled_oof_r2": 0.8908083089032153,
+        "oof_rows_covered": 29515,
+        "oof_repeats_per_row": 10
+      },
+      "dummy_control": {
+        "model": "DummyRegressor(strategy='mean')",
+        "folds": "identical to the main model (same RepeatedKFold instance)",
+        "n_folds": 50,
+        "fold_mae_mean": 0.6522599011387631,
+        "fold_mae_std": 0.0055032443627883966,
+        "fold_rmse_mean": 0.852191516960453,
+        "fold_r2_mean": -0.00014395263975555572,
+        "pooled_oof_mae": 0.6522571345820074,
+        "pooled_oof_rmse": 0.8522262804753181,
+        "pooled_oof_r2": -4.6397083121485494e-05,
+        "oof_rows_covered": 29515,
+        "oof_repeats_per_row": 10
+      }
+    },
+    "IP": {
+      "label_source": "Batt-P30K/ip",
+      "selection": {
+        "target": "IP",
+        "config_id": "morgan_plus_2d+deeper_slower",
+        "feature_variant": "morgan_plus_2d",
+        "model_variant": "deeper_slower",
+        "n_features": 2078,
+        "screening_fold_mae_mean": 0.20041389547524444,
+        "screening_dummy_fold_mae_mean": 0.7055922145394222,
+        "beat_dummy": true,
+        "tied_configs": [
+          "morgan_plus_2d+deeper_slower"
+        ],
+        "candidates_beating_dummy": [
+          "morgan_only+p2_xgboost",
+          "morgan_plus_2d+p2_xgboost",
+          "morgan_plus_2d+deeper_slower"
+        ],
+        "rule": "Declared before any fit: for each target independently, rank the pre-declared screening configurations by mean held-out MAE over the screening folds (RepeatedKFold n_splits=5, n_repeats=1, random_state=42; every configuration and the DummyRegressor control share identical folds). The winner must be strictly better than the DummyRegressor(strategy='mean') mean MAE on the same folds; if no configuration beats Dummy the lowest-MAE configuration is still reported with beat_dummy=false. Candidates within 1e-3 eV of the best MAE are treated as tied and the tie is broken by (1) fewer features, then (2) the declared model-variant order. Configurations are screened in the declared order regardless of outcome.",
+        "tie_tolerance_ev": 0.001
+      },
+      "feature_variant": "morgan_plus_2d",
+      "feature_variant_detail": {
+        "descriptor_names": [
+          "MolWt",
+          "MolLogP",
+          "TPSA",
+          "LabuteASA",
+          "NumHDonors",
+          "NumHAcceptors",
+          "NumHeteroatoms",
+          "NOCount",
+          "NumRotatableBonds",
+          "NumValenceElectrons",
+          "NumAliphaticRings",
+          "NumAromaticRings",
+          "NumSaturatedRings",
+          "RingCount",
+          "FractionCSP3",
+          "HeavyAtomCount",
+          "BalabanJ",
+          "BertzCT",
+          "Chi0v",
+          "Chi1v",
+          "HallKierAlpha",
+          "Ipc",
+          "Kappa1",
+          "Kappa2",
+          "Kappa3",
+          "MaxPartialCharge",
+          "MinPartialCharge",
+          "MaxAbsPartialCharge",
+          "MinAbsPartialCharge",
+          "PEOE_VSA1"
+        ],
+        "n_features": 2078
+      },
+      "model": {
+        "framework": "xgboost",
+        "version": "3.4.1",
+        "variant": "deeper_slower",
+        "params": {
+          "objective": "reg:squarederror",
+          "n_estimators": 1000,
+          "max_depth": 12,
+          "learning_rate": 0.04,
+          "subsample": 0.9,
+          "colsample_bytree": 0.5,
+          "reg_lambda": 1.0,
+          "tree_method": "hist"
+        },
+        "seed": 42,
+        "seed_rule": "42 + global fold index for CV folds; 42 for the shipped model",
+        "n_jobs": 8,
+        "artifact": {
+          "path": "models/homo_lumo_ip.ubj",
+          "sha256": "1f16857fe9a30dde6c5832ddfd41a3caf27afa390c0cfa1b8fcc3c7277e8b83c",
+          "format": "xgboost ubj"
+        }
+      },
+      "training_pool_rows": 29515,
+      "training_pool_sha256": "299ce3190dbbe5f37d514d4ca06e5db170360283e7943125bda990e0fc231524",
+      "cv": {
+        "n_folds": 50,
+        "fold_mae_mean": 0.2010970559642009,
+        "fold_mae_std": 0.0032127457983757044,
+        "fold_rmse_mean": 0.31186712206584866,
+        "fold_r2_mean": 0.8865029652251318,
+        "pooled_oof_mae": 0.1946645124653689,
+        "pooled_oof_rmse": 0.3035811785702025,
+        "pooled_oof_r2": 0.8925579561624006,
+        "oof_rows_covered": 29515,
+        "oof_repeats_per_row": 10
+      },
+      "dummy_control": {
+        "model": "DummyRegressor(strategy='mean')",
+        "folds": "identical to the main model (same RepeatedKFold instance)",
+        "n_folds": 50,
+        "fold_mae_mean": 0.7055673451958409,
+        "fold_mae_std": 0.006076328265138324,
+        "fold_rmse_mean": 0.9261486462957806,
+        "fold_r2_mean": -0.00013167195761055962,
+        "pooled_oof_mae": 0.7055647038885583,
+        "pooled_oof_rmse": 0.9261833092163586,
+        "pooled_oof_r2": -4.254450043017499e-05,
+        "oof_rows_covered": 29515,
+        "oof_repeats_per_row": 10
+      }
+    },
+    "EA": {
+      "label_source": "Batt-P30K/ea",
+      "selection": {
+        "target": "EA",
+        "config_id": "morgan_plus_2d+deeper_slower",
+        "feature_variant": "morgan_plus_2d",
+        "model_variant": "deeper_slower",
+        "n_features": 2078,
+        "screening_fold_mae_mean": 0.2339253541034374,
+        "screening_dummy_fold_mae_mean": 0.7007701246049236,
+        "beat_dummy": true,
+        "tied_configs": [
+          "morgan_plus_2d+deeper_slower"
+        ],
+        "candidates_beating_dummy": [
+          "morgan_only+p2_xgboost",
+          "morgan_plus_2d+p2_xgboost",
+          "morgan_plus_2d+deeper_slower"
+        ],
+        "rule": "Declared before any fit: for each target independently, rank the pre-declared screening configurations by mean held-out MAE over the screening folds (RepeatedKFold n_splits=5, n_repeats=1, random_state=42; every configuration and the DummyRegressor control share identical folds). The winner must be strictly better than the DummyRegressor(strategy='mean') mean MAE on the same folds; if no configuration beats Dummy the lowest-MAE configuration is still reported with beat_dummy=false. Candidates within 1e-3 eV of the best MAE are treated as tied and the tie is broken by (1) fewer features, then (2) the declared model-variant order. Configurations are screened in the declared order regardless of outcome.",
+        "tie_tolerance_ev": 0.001
+      },
+      "feature_variant": "morgan_plus_2d",
+      "feature_variant_detail": {
+        "descriptor_names": [
+          "MolWt",
+          "MolLogP",
+          "TPSA",
+          "LabuteASA",
+          "NumHDonors",
+          "NumHAcceptors",
+          "NumHeteroatoms",
+          "NOCount",
+          "NumRotatableBonds",
+          "NumValenceElectrons",
+          "NumAliphaticRings",
+          "NumAromaticRings",
+          "NumSaturatedRings",
+          "RingCount",
+          "FractionCSP3",
+          "HeavyAtomCount",
+          "BalabanJ",
+          "BertzCT",
+          "Chi0v",
+          "Chi1v",
+          "HallKierAlpha",
+          "Ipc",
+          "Kappa1",
+          "Kappa2",
+          "Kappa3",
+          "MaxPartialCharge",
+          "MinPartialCharge",
+          "MaxAbsPartialCharge",
+          "MinAbsPartialCharge",
+          "PEOE_VSA1"
+        ],
+        "n_features": 2078
+      },
+      "model": {
+        "framework": "xgboost",
+        "version": "3.4.1",
+        "variant": "deeper_slower",
+        "params": {
+          "objective": "reg:squarederror",
+          "n_estimators": 1000,
+          "max_depth": 12,
+          "learning_rate": 0.04,
+          "subsample": 0.9,
+          "colsample_bytree": 0.5,
+          "reg_lambda": 1.0,
+          "tree_method": "hist"
+        },
+        "seed": 42,
+        "seed_rule": "42 + global fold index for CV folds; 42 for the shipped model",
+        "n_jobs": 8,
+        "artifact": {
+          "path": "models/homo_lumo_ea.ubj",
+          "sha256": "143258c78cae73c4d67e838afa5c67fc8c252d43dbafd58e41367acaac55d141",
+          "format": "xgboost ubj"
+        }
+      },
+      "training_pool_rows": 29515,
+      "training_pool_sha256": "299ce3190dbbe5f37d514d4ca06e5db170360283e7943125bda990e0fc231524",
+      "cv": {
+        "n_folds": 50,
+        "fold_mae_mean": 0.23415453202842548,
+        "fold_mae_std": 0.0037875958151296547,
+        "fold_rmse_mean": 0.38633025788973074,
+        "fold_r2_mean": 0.8086315373918961,
+        "pooled_oof_mae": 0.22776725386438232,
+        "pooled_oof_rmse": 0.37825526911857843,
+        "pooled_oof_r2": 0.8167245645354146,
+        "oof_rows_covered": 29515,
+        "oof_repeats_per_row": 10
+      },
+      "dummy_control": {
+        "model": "DummyRegressor(strategy='mean')",
+        "folds": "identical to the main model (same RepeatedKFold instance)",
+        "n_folds": 50,
+        "fold_mae_mean": 0.7007545539134794,
+        "fold_mae_std": 0.005631232294273484,
+        "fold_rmse_mean": 0.8834660411049258,
+        "fold_r2_mean": -0.00015379718695743616,
+        "pooled_oof_mae": 0.7007525869268973,
+        "pooled_oof_rmse": 0.8835753734640281,
+        "pooled_oof_r2": -4.949066386150669e-05,
+        "oof_rows_covered": 29515,
+        "oof_repeats_per_row": 10
+      }
+    }
+  },
+  "gate": {
+    "threshold_mae": 0.2,
+    "unit": "eV",
+    "criterion": "per-target selected main model mean fold MAE strictly below 0.2 eV on the formal RepeatedKFold(5, 10, random_state=42) protocol; the 'all four pass' criterion additionally requires every one of HOMO/LUMO/IP/EA to pass",
+    "best_model_mae": {
+      "HOMO": 0.19050925839013938,
+      "LUMO": 0.13855083976437643,
+      "IP": 0.2010970559642009,
+      "EA": 0.23415453202842548
+    },
+    "passed": false,
+    "per_target": {
+      "HOMO": {
+        "threshold_mae": 0.2,
+        "unit": "eV",
+        "criterion": "mean fold MAE of the selected main model over the formal RepeatedKFold(5, 10, random_state=42) folds below the threshold",
+        "best_model_mae": 0.19050925839013938,
+        "passed": true
+      },
+      "LUMO": {
+        "threshold_mae": 0.2,
+        "unit": "eV",
+        "criterion": "mean fold MAE of the selected main model over the formal RepeatedKFold(5, 10, random_state=42) folds below the threshold",
+        "best_model_mae": 0.13855083976437643,
+        "passed": true
+      },
+      "IP": {
+        "threshold_mae": 0.2,
+        "unit": "eV",
+        "criterion": "mean fold MAE of the selected main model over the formal RepeatedKFold(5, 10, random_state=42) folds below the threshold",
+        "best_model_mae": 0.2010970559642009,
+        "passed": false
+      },
+      "EA": {
+        "threshold_mae": 0.2,
+        "unit": "eV",
+        "criterion": "mean fold MAE of the selected main model over the formal RepeatedKFold(5, 10, random_state=42) folds below the threshold",
+        "best_model_mae": 0.23415453202842548,
+        "passed": false
+      }
+    },
+    "targets_passed": 2,
+    "targets_total": 4,
+    "criterion_scopes": {
+      "per_target": "MAE < 0.2 eV for that individual target (passed: 2/4)",
+      "all_four": "MAE < 0.2 eV simultaneously for HOMO/LUMO/IP/EA (passed: False)"
+    }
+  },
+  "analysis": {
+    "label_space_diagnostics": {
+      "note": "diagnostic only: label-vs-label statistics, never used as features, never fed to a model, never part of the gate",
+      "used_as_feature": false,
+      "pairs": {
+        "IP_vs_HOMO": {
+          "pearson_r": -0.987612746481113,
+          "mean_offset_ev": -2.4028489093446903,
+          "std_offset_ev": 0.15818894063979563
+        },
+        "EA_vs_LUMO": {
+          "pearson_r": -0.9513440994727178,
+          "mean_offset_ev": -0.30954002845694756,
+          "std_offset_ev": 1.552531117549666
+        }
+      },
+      "target_distribution": {
+        "HOMO": {
+          "count": 29515,
+          "min": -13.375499725341797,
+          "max": -3.3887999057769775,
+          "mean": -9.642399645853342,
+          "std": 0.8522065107564717
+        },
+        "LUMO": {
+          "count": 29515,
+          "min": -7.697500228881836,
+          "max": 2.071000099182129,
+          "mean": 1.167886440647971,
+          "std": 0.6879106332884702
+        },
+        "IP": {
+          "count": 29515,
+          "min": 0.505804717540741,
+          "max": 11.272635459899902,
+          "mean": 7.239550736508652,
+          "std": 0.9261636078418966
+        },
+        "EA": {
+          "count": 29515,
+          "min": -0.668195366859436,
+          "max": 17.185504913330078,
+          "mean": 0.8583464121910234,
+          "std": 0.883553509909654
+        }
+      }
+    },
+    "worst_target": "EA",
+    "learning_curve": {
+      "target": "EA",
+      "fold": "repeat=0 fold=0",
+      "model_variant": "deeper_slower",
+      "feature_variant": "morgan_plus_2d",
+      "curve": [
+        {
+          "train_size": 1000,
+          "mae": 0.3992926823480645,
+          "rmse": 0.5768086442797697,
+          "r2": 0.5626369206074395
+        },
+        {
+          "train_size": 5000,
+          "mae": 0.3041327954307227,
+          "rmse": 0.45649743784360675,
+          "r2": 0.7260601038256844
+        },
+        {
+          "train_size": 12000,
+          "mae": 0.25921395555303606,
+          "rmse": 0.4066729787733112,
+          "r2": 0.7825951482699152
+        },
+        {
+          "train_size": 23612,
+          "mae": 0.2317786212752552,
+          "rmse": 0.36227922926605866,
+          "r2": 0.827469663879037
+        }
+      ]
+    }
+  },
+  "versions": {
+    "python": "3.12.14",
+    "numpy": "2.5.3",
+    "rdkit": "2026.03.6",
+    "scikit_learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "h5py": "3.16.0"
+  },
+  "champion_scores": [
+    {
+      "short": "FEC",
+      "inchikey": "SBLRHMKNNHXPHG-UHFFFAOYSA-N",
+      "molecule_id": "CompMol12",
+      "smiles": "O=C1OCC(F)O1",
+      "HOMO_eV": -11.493806838989258,
+      "LUMO_eV": 1.4460598230361938,
+      "IP_eV": 9.265048027038574,
+      "EA_eV": 0.3668806850910187,
+      "gap_eV": 12.939866662025452,
+      "path": "scored through the same --score-smiles code path"
+    },
+    {
+      "short": "EC",
+      "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+      "molecule_id": "CompMol169",
+      "smiles": "O=C1OCCO1",
+      "HOMO_eV": -11.015644073486328,
+      "LUMO_eV": 1.5326833724975586,
+      "IP_eV": 8.716032028198242,
+      "EA_eV": 0.2638877034187317,
+      "gap_eV": 12.548327445983887,
+      "path": "scored through the same --score-smiles code path"
+    },
+    {
+      "short": "PC",
+      "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+      "molecule_id": "CompMol170",
+      "smiles": "CC1COC(=O)O1",
+      "HOMO_eV": -10.951679229736328,
+      "LUMO_eV": 1.539099931716919,
+      "IP_eV": 8.696202278137207,
+      "EA_eV": 0.3548906743526459,
+      "gap_eV": 12.490779161453247,
+      "path": "scored through the same --score-smiles code path"
+    },
+    {
+      "short": "VC",
+      "inchikey": "VAYTZRYEBVHVLE-UHFFFAOYSA-N",
+      "molecule_id": "CompMol173",
+      "smiles": "O=c1occo1",
+      "HOMO_eV": -10.109265327453613,
+      "LUMO_eV": 1.1728006601333618,
+      "IP_eV": 7.866297245025635,
+      "EA_eV": 0.5197584629058838,
+      "gap_eV": 11.282065987586975,
+      "path": "scored through the same --score-smiles code path"
+    }
+  ],
+  "asymmetry_note": "all four champions were removed from the modelling pool for this channel; the prereg records that FEC/VC were already withheld from the dielectric fit while EC/PC were not, which is an asymmetry that must not be blurred away"
+}

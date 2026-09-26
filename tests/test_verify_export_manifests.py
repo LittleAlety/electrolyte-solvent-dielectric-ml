@@ -7,6 +7,7 @@ import pytest
 
 from electrolyte_ml.exporting import write_export_manifest
 from scripts.verify_export_manifests import (
+    LATEST_WEEK,
     default_output_dirs,
     main,
     select_output_dirs,
@@ -19,21 +20,16 @@ def test_default_export_dirs_cover_all_week_outputs_portably() -> None:
     output_dirs = default_output_dirs(output_root)
 
     assert [path.name for path in output_dirs] == [
-        "week1",
-        "week2",
-        "week3",
-        "week4",
-        "week5",
-        "week6",
-        "week7",
-        "week8",
-        "week9",
-        "week10",
+        f"week{week}" for week in range(1, LATEST_WEEK + 1)
     ]
     assert all(path.parent == output_root for path in output_dirs)
+    # Regression: the list used to stop at week10, so the default run silently
+    # skipped later bundles while still exiting 0.
+    assert LATEST_WEEK >= 13
+    assert "week13" in [path.name for path in output_dirs]
 
 
-def test_default_selection_returns_all_ten_paths_even_when_missing(tmp_path) -> None:
+def test_default_selection_returns_every_week_path_even_when_missing(tmp_path) -> None:
     output_root = tmp_path / "exports"
 
     selected = select_output_dirs(output_root=output_root)
@@ -128,7 +124,7 @@ def test_missing_output_root_fails_with_explicit_errors(tmp_path, capsys) -> Non
     result = json.loads(capsys.readouterr().out)
     assert exit_code != 0
     assert result["passed"] is False
-    assert len(result["results"]) == 10
+    assert len(result["results"]) == LATEST_WEEK
     assert all(
         any("missing manifest" in error for error in errors)
         for errors in result["results"].values()

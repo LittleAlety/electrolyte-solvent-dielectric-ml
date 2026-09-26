@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from scripts.run_xtb_physical_features import run_xtb
+from scripts.run_xtb_physical_features import run_xtb, write_csv_rows
 
 SAMPLE_XTB_OUTPUT = """
          ::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -42,7 +42,7 @@ def test_run_xtb_saves_stdout_and_reuses_valid_cache(
         )
 
     monkeypatch.setattr(
-        "scripts.run_xtb_physical_features.subprocess.run",
+        "electrolyte_ml.xtb_runner.subprocess.run",
         fake_run,
     )
     (tmp_path / "xtb.exe").write_bytes(b"fake executable")
@@ -53,7 +53,6 @@ def test_run_xtb_saves_stdout_and_reuses_valid_cache(
         "work_dir": tmp_path,
         "seed": 42,
         "timeout_seconds": 60,
-        "threads": 1,
     }
 
     first = run_xtb(**kwargs)
@@ -72,3 +71,20 @@ def test_run_xtb_saves_stdout_and_reuses_valid_cache(
     assert calls == 2
     run_dirs = [path for path in tmp_path.iterdir() if path.is_dir()]
     assert len(run_dirs) == 2
+
+
+def test_write_csv_rows_emits_lf_line_endings(tmp_path: Path) -> None:
+    """Regression: the default csv lineterminator is ``\\r\\n``, which violates
+    ``.gitattributes`` (``*.csv text eol=lf``) and made one exported feature table
+    differ between the working tree and a clean checkout."""
+
+    target = tmp_path / "features.csv"
+    write_csv_rows(
+        target,
+        ("inchikey", "dipole_D"),
+        [{"inchikey": "AAAA-BBBB", "dipole_D": "1.25"}],
+    )
+
+    data = target.read_bytes()
+    assert b"\r" not in data
+    assert data == b"inchikey,dipole_D\nAAAA-BBBB,1.25\n"

@@ -102,6 +102,34 @@ def test_ci_runs_week3_verifiers() -> None:
     assert any("scripts/verify_viscosity_baseline.py" in command for command in commands)
 
 
+def test_ci_runs_the_v1x_observation_verifier() -> None:
+    workflow = _workflow()
+    commands = [
+        str(step.get("run", ""))
+        for job in workflow["jobs"].values()
+        for step in job.get("steps", [])
+    ]
+
+    assert any(
+        "scripts/verify_dielectric_observations.py" in command
+        for command in commands
+    )
+
+
+def test_ci_runs_the_merged_v1x_observation_verifier() -> None:
+    workflow = _workflow()
+    commands = [
+        str(step.get("run", ""))
+        for job in workflow["jobs"].values()
+        for step in job.get("steps", [])
+    ]
+
+    assert any(
+        "scripts/verify_dielectric_observations_v11plus.py" in command
+        for command in commands
+    )
+
+
 def test_ci_runs_v03_and_week6_export_manifest_verifiers() -> None:
     workflow = _workflow()
     commands = [

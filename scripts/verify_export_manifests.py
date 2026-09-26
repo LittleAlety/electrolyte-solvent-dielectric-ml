@@ -13,11 +13,17 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 from electrolyte_ml.exporting import verify_export_manifest
 
 DEFAULT_OUTPUT_ROOT = REPOSITORY_ROOT.parent / "成果输出"
-WEEK_DIRECTORIES = tuple(f"week{week}" for week in range(1, 11))
+
+# The newest week the project has exported.  This used to be a hardcoded
+# ``range(1, 11)`` under a docstring that promised "all week output
+# directories", so weeks 11-13 were silently skipped by the default run while
+# still reporting success.  Bump this when a new week is exported.
+LATEST_WEEK = 13
+WEEK_DIRECTORIES = tuple(f"week{week}" for week in range(1, LATEST_WEEK + 1))
 
 
 def default_output_dirs(output_root: Path) -> tuple[Path, ...]:
-    """Return the conventional week output directories without requiring them."""
+    """Return every conventional week output directory without requiring them."""
 
     return tuple(output_root / week for week in WEEK_DIRECTORIES)
 
@@ -28,7 +34,7 @@ def select_output_dirs(
     explicit_output_dirs: tuple[Path, ...] = (),
     allow_missing: bool = False,
 ) -> tuple[Path, ...]:
-    """Select explicit directories or all ten conventional week directories."""
+    """Select explicit directories or every conventional week directory."""
 
     if explicit_output_dirs:
         selected = explicit_output_dirs
@@ -54,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
         "--output-root",
         type=Path,
         default=DEFAULT_OUTPUT_ROOT,
-        help="Root containing conventional week1-week10 output directories.",
+        help="Root containing conventional week1-week{LATEST_WEEK} output directories.",
     )
     parser.add_argument(
         "--allow-missing",

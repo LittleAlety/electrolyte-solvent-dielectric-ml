@@ -22,7 +22,6 @@ import argparse
 import csv
 import hashlib
 import json
-import os
 import statistics
 import subprocess
 import sys
@@ -44,6 +43,11 @@ from run_xtb_physical_features import (
 from xtb_recovery_probe import OPT_MARKER_FILE, frozen_verdict, resolve_xtb
 
 from electrolyte_ml.xtb_features import XtbFeatureError, parse_xtb_output
+from electrolyte_ml.xtb_runner import (
+    DETERMINISTIC_THREADS,
+    run_xtb_subprocess,
+    xtb_optimisation_arguments,
+)
 
 FROZEN_FEATURES = (
     REPOSITORY_ROOT / "data" / "processed" / "dielectric_physical_features_v03.csv"
@@ -118,14 +122,11 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def describe_run_environment(xtb: Path, threads: int) -> dict[str, object]:
+def describe_run_environment(xtb: Path) -> dict[str, object]:
     """Record enough environment metadata to audit the xTB invocation."""
 
-    completed = subprocess.run(
-        [str(xtb), "--version"],
-        capture_output=True,
-        timeout=60,
-        check=False,
+    completed = run_xtb_subprocess(
+        xtb, ["--version"], cwd=REPOSITORY_ROOT, timeout_seconds=60
     )
     version_text = (completed.stdout + b"\n" + completed.stderr).decode(
         "utf-8", "replace"
@@ -142,7 +143,7 @@ def describe_run_environment(xtb: Path, threads: int) -> dict[str, object]:
         "xtb_executable": str(xtb),
         "xtb_executable_sha256": _sha256_file(xtb),
         "xtb_version_line": version_line,
-        "threads": threads,
+        "threads": DETERMINISTIC_THREADS,
         "geometry_source": "cache_manifest_matching_input_xyz",
         "geometry_seed_used_during_migration": None,
     }
@@ -256,7 +257,6 @@ def run_candidate(
     xtb: Path,
     work_root: Path,
     timeout: int,
-    threads: int,
 ) -> dict[str, object]:
     """Re-run one frozen starting geometry under the candidate protocol."""
 
@@ -287,30 +287,20 @@ def run_candidate(
     start_geometry_sha256 = hashlib.sha256(
         input_path.read_text(encoding="utf-8").encode("utf-8")
     ).hexdigest()
-    command = [
-        str(xtb),
-        input_path.name,
-        "--opt",
-        "--gfn",
-        "2",
-        "--chrg",
-        str(row["formal_charge"]),
-        "--uhf",
-        "0",
+    arguments = [
+        *xtb_optimisation_arguments(
+            input_path.name, formal_charge=int(row["formal_charge"])
+        ),
         *CANDIDATE_FLAGS,
     ]
-    environment = os.environ.copy()
-    environment["OMP_NUM_THREADS"] = str(threads)
-    environment["MKL_NUM_THREADS"] = str(threads)
+    command = [str(xtb), *arguments]
     start = time.perf_counter()
     try:
-        completed = subprocess.run(
-            command,
+        completed = run_xtb_subprocess(
+            xtb,
+            arguments,
             cwd=run_dir,
-            env=environment,
-            capture_output=True,
-            timeout=timeout,
-            check=False,
+            timeout_seconds=timeout,
         )
         exit_code: int | None = completed.returncode
         stdout_bytes = completed.stdout
@@ -928,7 +918,6 @@ def main(argv: list[str] | None = None) -> int:
         help="add environment metadata to an existing evidence JSON without re-running xTB",
     )
     parser.add_argument("--limit", type=int, default=0)
-    parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=600)
     parser.add_argument("--xtb", type=Path, default=None)
     parser.add_argument("--work-dir", type=Path, default=WORK_ROOT)
@@ -957,7 +946,7 @@ def main(argv: list[str] | None = None) -> int:
             print("EVIDENCE MISSING", file=sys.stderr)
             return 1
         xtb = args.xtb or resolve_xtb()
-        committed["run_environment"] = describe_run_environment(xtb, args.threads)
+        committed["run_environment"] = describe_run_environment(xtb)
         EVIDENCE_PATH.write_text(
             json.dumps(committed, ensure_ascii=False, indent=2, sort_keys=True)
             + chr(10),
@@ -1008,7 +997,6 @@ def main(argv: list[str] | None = None) -> int:
                 xtb=xtb,
                 work_root=args.work_dir,
                 timeout=args.timeout,
-                threads=args.threads,
             )
             compared = compare_row(row, result)
             measured.append(compared)
@@ -1031,7 +1019,7 @@ def main(argv: list[str] | None = None) -> int:
                 measured=measured,
                 unmeasured=unmeasured,  # type: ignore[arg-type]
                 frozen_rows=frozen_count,
-                run_environment=describe_run_environment(xtb, args.threads),
+                run_environment=describe_run_environment(xtb),
             )
             EVIDENCE_PATH.write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + chr(10),

@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "task": "l3_backvalidation_prereg",
+  "title": "L3 回溯验证预注册 —— 排除冠军分子的漏斗必须把它们排回前列",
+  "locked_at_utc": "2026-09-25T19:38:49Z",
+  "status": "LOCKED",
+  "lock_rule": "本节一经写入即锁定：阈值、池定义规则、排除规则、折号与种子一律不得改动。任何改动必须新开编号小节并保留原文；跑批之后再看结果放宽任一阈值，等于本次预注册作废。",
+  "purpose": "L3 终局的完成判据之一（手册附录 S-2 判据 2）：一个只用公开数据与冻结模型搭起来的四通道漏斗，在**从未训练过任何冠军分子**的前提下，仍然必须把已知冠军排回各自清单的前列。这是 0 成本、也最难自欺的验证：它把「漏斗是不是真的会选分子」从叙事变成可判定的实验。",
+  "why_zero_cost": "不新增任何数据源、不新增任何 API：冠军的真值来自已冻结的 data/dielectric_v03.csv，排回验证只需在既有冻结折号上做一次 leave-champions-out 重训 + 一次池内排序。",
+  "champion_set": {
+    "solvent_list": [
+      {
+        "short": "EC",
+        "name": "ethylene carbonate",
+        "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+        "truth_dielectric": 90.5,
+        "truth_T_K": 313.15,
+        "temperature_band": "extended_temperature",
+        "evidence_level": "primary",
+        "model_ready": true,
+        "already_withheld_from_dielectric_fit": false
+      },
+      {
+        "short": "PC",
+        "name": "propylene carbonate",
+        "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+        "truth_dielectric": 64.9,
+        "truth_T_K": 298.15,
+        "temperature_band": "room_temperature",
+        "evidence_level": "primary",
+        "model_ready": true,
+        "already_withheld_from_dielectric_fit": false
+      }
+    ],
+    "additive_list": [
+      {
+        "short": "FEC",
+        "name": "fluoroethylene carbonate",
+        "inchikey": "SBLRHMKNNHXPHG-UHFFFAOYSA-N",
+        "truth_dielectric": 78.4,
+        "truth_T_K": 296.15,
+        "temperature_band": "room_temperature",
+        "evidence_level": "primary",
+        "model_ready": false,
+        "already_withheld_from_dielectric_fit": true
+      },
+      {
+        "short": "VC",
+        "name": "vinylene carbonate",
+        "inchikey": "VAYTZRYEBVHVLE-UHFFFAOYSA-N",
+        "truth_dielectric": 126.0,
+        "truth_T_K": 298.0,
+        "temperature_band": "room_temperature",
+        "evidence_level": "primary",
+        "model_ready": false,
+        "already_withheld_from_dielectric_fit": true
+      }
+    ],
+    "note": "FEC 与 VC 的 model_ready 本来就是 false，因此它们**已经**不在冻结介电拟合集里 —— 介电通道对它们无需额外剔除即可做留出验证；真正需要额外剔除的只有 EC 与 PC。这条不对称必须写进结果，不能含糊地说成「四个都做了留一」。"
+  },
+  "frozen_table": {
+    "path": "data/dielectric_v03.csv",
+    "sha256": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "role": "冠军真值唯一来源；digest 不得因本验证改动"
+  },
+  "exclusion_levels": [
+    "L1 训练集：任何通道的任何一次拟合，其训练行都不得包含四个冠军中的任何一个（含交叉验证的每一个折内训练集）。",
+    "L2 特征构造：不得使用任何由冠军标签派生的特征（无 target encoding、无冠军均值特征、无冠军近邻特征）。",
+    "L3 选择环节：超参数、特征子集、早停与模型选择都不得看到冠军（冠军只出现在最终评分步骤）。",
+    "L4 评分路径：冠军必须走与其他池成员**完全相同**的代码路径与口径，不得为冠军做任何特判或人工赋分。"
+  ],
+  "pool_rule": {
+    "status": "待固定（本预注册只锁规则，不锁内容）",
+    "requirements": [
+      "只用公开/本地已有数据构造，禁止任何受限值进入池或特征（沿用 restricted_crosscheck_only 纪律）。",
+      "每个清单（溶剂 / 添加剂）**至少 100 个可评分分子**；不足 100 即判「效力不足」，本次不得声称通过。",
+      "四个冠军必须作为**普通成员**出现在各自清单里（不特殊标注、不额外加权）。",
+      "池的纳入口径不得以冠军的排名结果为条件；任何「为了让冠军进前列而调整池成员」的行为使本次验证作废。",
+      "池必须先落盘为文件并记录 sha256（写入本节），随后才允许评分；评分开始后池不得再变。"
+    ],
+    "solvent_list_readout": "介电通道：冻结口径的排序读数为 log(epsilon-1) 物理表征输出；方向=预测 ε 越高越好；同时记录适用域闸门标志（inside_domain / outside_associated_liquid / outside_nonphysical）。",
+    "additive_list_readout": "氧化还原通道：可还原性优先，方向=预测还原自由能越低越好（更易还原=成膜添加剂），并附 LUMO 作为旁证；衰减口径见 criteria.C2_additive。",
+    "min_scored_per_list": 100,
+    "pool_path": "probes/l3_stage1_pilot_pool.csv",
+    "pool_sha256": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "pool_size_by_list": {
+      "solvent": 236
+    },
+    "pool_frozen_before_scoring": true,
+    "amendment_1": {
+      "amended_at_utc": "2026-09-25T19:54:26Z",
+      "kind": "additive_metadata_only",
+      "what_changed": [
+        "在 pool_rule 内新增四个预留的运行时字段：pool_path / pool_sha256 / pool_size_by_list / pool_frozen_before_scoring，初值分别为 null / null / null / false；跑批时必须由跑批产物先填好，才允许评分。",
+        "在 stage_1_pilot 内新增机读字段 verdict_eligible = false，使「阶段一试点不是判决」不再只靠散文标签。",
+        "新增本节 amendment_1 元数据，并记录 criteria.C2_magnitude_solvent.rationale 的勘误（rationale_erratum）。"
+      ],
+      "locked_values_unchanged": true,
+      "locked_values_touched": [],
+      "lock_rule_exemption": "按 lock_rule「任何改动必须新开编号小节并保留原文」办理：本 amendment 的对象只有新增的预留字段与元数据；被改写的 rationale 原句已逐字保存在 rationale_erratum.original_text 里，正文记录见 reports/decisions_log.md §15 与手册附录 U-6。因此「仅填充上述四个预留字段、新增 verdict_eligible 与本节 amendment 元数据，不视为对锁定节内容的改动」，七个锁定常量一个字未动。",
+      "rationale_erratum": {
+        "field": "criteria.C2_magnitude_solvent.rationale",
+        "original_text": "0.10 约等于 ±26%。冻结基准的 log(ε−1) 口径在 ε≈65 上的点估计 MAE 为 6.27（≈0.040 log10），故 0.10 约为其 2.5 倍 —— 对**留出外推**的冠军而言是刻意收紧、而非放水的带。该带在本节写入时确定，早于任何冠军预测的生成，事后不得加宽。",
+        "why": "原句把 probes/v032_target_scaffold_summary.json 的 summary.random_repeated_kfold.log_epsilon_minus_one['Morgan+Physical'].mae.mean = 6.27273294434 读成「log(ε−1) 尺度在 ε≈65 上的点估计 MAE」，再据此推出 ≈0.040 log10。同一块的分层值（mae_20_60 = 10.79、mae_gt60 = 72.64）量级证明该块是回变换到 raw ε 尺度后算的，「6.27 ÷ 65」这一步在任何工件里都推不出来。",
+        "replacement_summary": "改为可由工件复现的口径：6.27 是 log(ε−1) 模型回变换到 raw ε 尺度的全表 MAE（同块 raw 基线 6.6862），高 ε 区分层 MAE 更大（mae_20_60 = 10.79、mae_gt60 = 72.64）。",
+        "locked_threshold_unchanged": 0.1
+      },
+      "guard": "tests/test_l3_backvalidation_prereg.py：test_pool_rule_carries_the_machine_readable_freeze_fields / test_stage_1_pilot_cannot_be_read_as_a_verdict / test_pool_rule_amendment_preserves_every_locked_value / test_pool_must_be_frozen_on_disk_before_any_scoring_artifact_exists。"
+    },
+    "amendment_2": {
+      "amended_at_utc": "2026-09-25T20:52:00Z",
+      "kind": "runtime_field_fill_only",
+      "what_changed": [
+        "填入 pool_rule 的四个预留运行时字段：pool_path = \"probes/l3_stage1_pilot_pool.csv\"、pool_sha256 = \"b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18\"、pool_size_by_list = {\"solvent\": 236}、pool_frozen_before_scoring = true。",
+        "新增本节 amendment_2 元数据。"
+      ],
+      "locked_values_unchanged": true,
+      "locked_values_touched": [],
+      "pool_size_by_list_note": "只登记本轮真正评分的 solvent 清单（236 行，>= min_scored_per_list = 100）；additive 清单属氧化还原通道，本试点不跑，故不入 pool_size_by_list。",
+      "pool_content_rule": "池内容 = data/processed/dielectric_physical_features_v03.csv 中 model_ready=true 且 xTB 物理特征成功的 236 行（名册内），顺序即冻结 236 行顺序；纳入口径与冠军排名无关，四个冠军中 EC/PC 作普通成员在池内，FEC/VC 因 model_ready=false 本就在冻结拟合集外。",
+      "scope": "本池服务 probes/l3_stage1_pilot_summary.json 所述「阶段一试点」，标签 stage_1_pilot_not_a_verdict；不是四通道完整跑批的池。",
+      "guard": "tests/test_l3_stage1_pilot.py：test_pool_digest_and_size_are_pinned_everywhere / test_pool_was_frozen_before_the_scoring_summary_was_written / test_pool_rule_amendment_2_adds_metadata_only / test_the_seven_locked_constants_are_untouched。",
+      "known_conflict": "tests/test_l3_backvalidation_prereg.py::test_pool_rule_carries_the_machine_readable_freeze_fields 原先断言这四个预留字段仍为 null/false；填池后该守卫改为断言「已冻结且自洽」（路径存在、digest 与该文件一致、每个清单 >= min_scored_per_list），并把 amendment_1/amendment_2 的 locked_values_unchanged 一并复述。断言变强、未删未弱化，七个锁定常量仍逐条断言。冲突与处置见 reports/decisions_log.md §17.7。"
+    }
+  },
+  "fold_and_seed": {
+    "fold_source": "data/processed/v032_ablation_predictions.csv",
+    "fold_source_by_channel": {
+      "dielectric_roster": "data/processed/v032_ablation_predictions.csv",
+      "batt_p30k_homo_lumo": "generated_by RepeatedKFold(5,10,42) on the 29,515-row pool"
+    },
+    "fold_scheme": "RepeatedKFold(n_splits=5, n_repeats=10, random_state=42)",
+    "seed_scheme": "42 + global RepeatedKFold split index",
+    "fold_policy": "沿用既有 leave-EC-out 先例（probes/dielectric_leave_ec_out_sensitivity.py）：其余行的折号逐位不变，只把冠军行从其所在折的训练侧剔除；冠军本身仍按原折号做样本外评分。",
+    "negative_control_permutation_seed": 20260928,
+    "tie_break": "同分按 InChIKey 字典序升序（确定性，无随机）",
+    "amendment_3": {
+      "amended_at_utc": "2026-09-25T22:05:00Z",
+      "amended_at_utc_note": "amended_at_utc 是本修订的真实写入时刻（UTC），早于消费该修订的产物生成时刻：probes/dielectric_channel_v2_summary.json 自报 generated_at_utc = 2026-09-25T22:20:02Z，晚于本时刻。旧值写成 2026-09-26 属笔误（未来时间戳），现按真实 UTC 更正为 2026-09-25T22:05:00Z；amendment_1 → amendment_2 → amendment_3 的时刻严格单调递增，且都早于该产物生成时刻。",
+      "kind": "per_channel_fold_source_correction",
+      "is_threshold_relaxation": false,
+      "problem": "fold_and_seed.fold_source 指向 data/processed/v032_ablation_predictions.csv，而该表是介电通道的产物，**不含 Batt-P30K 分子**（Batt-P30K 的 HOMO/LUMO/IP/EA 来自另一条数据线）。因此出口 2（HOMO/LUMO/IP/EA）通道的折号**不可能**按该 fold_source 生成 —— 原文对 HOMO/LUMO 通道的 fold_source 指向不成立。该补正只针对 HOMO/LUMO 通道；介电通道名册的 fold_source 仍成立。",
+      "resolution": "采纳更严的一档读法（协调者已裁定）：(i) 冠军**整体移出建模池**（29,519 → 29,515），既不在任何折的训练侧、也不在任何折的测试侧；(ii) 折号由 RepeatedKFold(5,10,42) 在 29,515 行池上**重新生成**，不是沿用 v032_ablation_predictions.csv；(iii) 冠军由**全池生产模型**打分，走与其他池成员**完全相同**的评分路径。这一读法**不弱于**预注册字面要求：字面要求只是「把冠军从其所在折的训练侧剔除、其余折号逐位不变」，本读法额外把冠军从每一折的测试侧也移出，L1（任何一次拟合的训练行都不得含冠军）被严格满足。fold_scheme 与 seed_scheme 逐字未动。（原仅存于本散文的三条读法已同时以机读字段落于 amendment_3.champion_scoring_clause，散文保留不改。）",
+      "champion_scoring_clause": {
+        "note": "resolution 散文里 (i)(ii)(iii) 三条的机读权威副本；散文原句保留不改。",
+        "i": "冠军整体移出建模池（29,519 → 29,515）：既不在任何折的训练侧、也不在任何折的测试侧。",
+        "ii": "折号由 RepeatedKFold(n_splits=5, n_repeats=10, random_state=42) 在 29,515 行池上重新生成，不是沿用 data/processed/v032_ablation_predictions.csv。",
+        "iii": "冠军由全池生产模型打分，走与其他池成员完全相同的评分路径（L4：无特判、无人工赋分）。",
+        "pool_rows_before_champion_removal": 29519,
+        "pool_rows_after_champion_removal": 29515,
+        "l1_strictly_satisfied": true
+      },
+      "fold_source_by_channel": "见本节的 fold_source_by_channel：介电通道名册 = data/processed/v032_ablation_predictions.csv；Batt-P30K 的 HOMO/LUMO 通道 = 由 RepeatedKFold(5,10,42) 在 29,515 行池上现场生成。原 fold_source 原文保留不动（预注册纪律：只增不改）。",
+      "locked_values_unchanged": true,
+      "locked_values_touched": [],
+      "locked_values_restated": {
+        "K": 20,
+        "C2_solvent_max_abs_delta_log10_epsilon": 0.1,
+        "C2_additive_max_abs_delta_ev": 0.15,
+        "C3_permutation_seed": 20260928,
+        "C3_max_champion_hits": 1,
+        "min_scored_per_list": 100,
+        "pass_expression": "C1 and C2_solvent and C2_additive and C3"
+      },
+      "locked_values_restated_note": "七个锁定常量仍逐值不变：K = 20 / 0.10 / 0.15 / 20260928 / 1 / 100 / pass_expression。本 amendment 一个字都未动它们。",
+      "why_this_is_not_a_threshold_relaxation": "本 amendment 补正「哪张表/哪条规则提供哪条通道的折号」这张映射，并同时明确 HOMO/LUMO 通道的折来源与冠军评分口径（三条读法见 champion_scoring_clause，机读落盘）；此外还额外把上限收紧（冠军整体移出池）。没有任何阈值被放宽，七个锁定常量与 pass_expression 逐字未动。",
+      "original_text_preserved": {
+        "fold_source": "data/processed/v032_ablation_predictions.csv",
+        "fold_policy": "沿用既有 leave-EC-out 先例（probes/dielectric_leave_ec_out_sensitivity.py）：其余行的折号逐位不变，只把冠军行从其所在折的训练侧剔除；冠军本身仍按原折号做样本外评分。"
+      },
+      "decision_log_anchor": "reports/decisions_log.md 2026-09-26 Week 13 §20",
+      "manual_anchor": "手册附录 T-14",
+      "guard": "tests/test_l3_backvalidation_prereg.py（锁定常量逐条断言；amendment_3 专项：test_amendment_3_records_the_per_channel_fold_source_and_scoring_clause / test_amendment_3_timestamps_are_monotonic_and_precede_the_consuming_artifact / test_amendment_3_pool_size_is_interlocked_with_the_homo_lumo_summary）/ tests/test_l3_stage1_pilot.py（七常量）/ tests/test_homo_lumo_baselines.py（fold_scheme 与 seed_scheme 逐字）；fold_scheme / seed_scheme 未动，故既有折方案守卫不变。"
+    }
+  },
+  "criteria": {
+    "C1_recall_at_K": {
+      "rule": "K = 20；每个清单里，该清单的两名冠军必须都落在各自清单的前 20 名。",
+      "rationale": "K 直接等于终局交付物「top-20 溶剂 + top-20 添加剂」，不是另设的门槛。",
+      "pass_condition": "两个清单各自 2/2 冠军进入前 20（合计 4/4）。",
+      "K": 20,
+      "champions_required_in_top_k_total": 4
+    },
+    "C2_magnitude_solvent": {
+      "rule": "EC 与 PC 的预测值与冻结真值之比，落在 |Δlog10(ε)| ≤ 0.10 以内。",
+      "rationale": "0.10 约等于 ±26%。冻结基准（random RepeatedKFold，10 折）里 log(ε−1) 变换的 Morgan+Physical 模型回变换到 raw ε 尺度后，全表 MAE = 6.2727（同块 raw 基线 6.6862；出处 probes/v032_target_scaffold_summary.json → summary.random_repeated_kfold.log_epsilon_minus_one['Morgan+Physical'].mae.mean）。同一块的分层 MAE 同为 raw ε 尺度且在高 ε 区很大（mae_20_60 = 10.79、mae_gt60 = 72.64），所以对**留出外推**的冠军用 log10 尺度的比值设 ±26% 的带，是刻意收紧、而非放水。该带在本节写入时确定，早于任何冠军预测的生成，事后不得加宽。",
+      "pass_condition": "EC 与 PC 两条都 ≤0.10。",
+      "max_abs_delta_log10_epsilon": 0.1
+    },
+    "C2_additive": {
+      "rule": "FEC 与 VC 的预测还原自由能与真值之差 ≤ 0.15 eV。",
+      "rationale": "直接沿用本项目既有的氧化还原预注册门 `MAE < 0.15 eV`（probes/p4_redox_summary.json），不另造数字。",
+      "pass_condition": "FEC 与 VC 两条都 ≤0.15 eV。",
+      "max_abs_delta_ev": 0.15,
+      "source_of_threshold": "probes/p4_redox_summary.json -> gate.threshold_mae"
+    },
+    "C3_negative_control": {
+      "rule": "同一池、同一折号、同一管线，只把池内标签按固定种子 20260928 随机置换后重跑；对照臂进入前 20 的冠军数必须 ≤1。",
+      "rationale": "若打乱标签也能把冠军顶进前 20，说明名次来自池的结构性偏置而非预测力，C1 不成立。",
+      "pass_condition": "对照臂冠军命中数 ≤1（分母 4）。",
+      "permutation_seed": 20260928,
+      "max_champion_hits": 1
+    },
+    "pass": "C1 ∧ C2_solvent ∧ C2_additive ∧ C3 —— 合取，没有「部分通过」。",
+    "failure_handling": "任一不过：本次结论只能写成「漏斗的回溯验证未通过」，并按 §10.3 的同一条纪律处理 —— 不得把未通过的漏斗用于对外文本；必须如实定位到具体通道后再决定是否重建。",
+    "pass_expression": "C1 and C2_solvent and C2_additive and C3"
+  },
+  "stage_1_pilot": {
+    "allowed": true,
+    "verdict_eligible": false,
+    "scope": "只跑介电通道、只在池内做、只报 EC/PC 两条。",
+    "label_rule": "产物与文本必须显式标注 `stage_1_pilot_not_a_verdict`，不得作为 L3 回溯验证结论引用，不得进入任何对外文本。",
+    "reason": "FEC/VC 的还原门本就是红的（见 current_state），四通道齐活之前不允许用单通道结果替代结论。"
+  },
+  "reporting_rules": [
+    "必须逐通道、逐清单报告，禁止把两条清单合并成一个平均分或一个总结论。",
+    "必须同时给出：冠军名次、K、池规模、适用域标志、预测值、真值、误差、对照臂命中数。",
+    "命中即命中、未命中即未命中：不得用「接近前 20」「考虑不确定性后落在区间内」等措辞改写 C1。",
+    "若池规模 <100，结论只能是「效力不足」，不得写成通过或未通过。"
+  ],
+  "current_state_2026_09_26": {
+    "summary": "本预注册写入当天，四通道里**没有任何一条**具备「对任意新分子出预测」的正式入口；四通道齐活的完整跑批今天不可能开始。",
+    "channels": {
+      "dielectric": {
+        "verdict": "部分可运行",
+        "facts": [
+          "排序口径已冻结：raw 用于 R2、log(epsilon-1) 用于排序/MAE（reports/week6_v03_model_freeze.md:38-40）。",
+          "适用域闸门已实现：src/electrolyte_ml/applicability.py，触发率 33.66%（2070/6150）。",
+          "仓库内无持久化模型文件（无 models/ 目录、无 .pkl/.joblib），排序只能读名册样本外预测。",
+          "无 SMILES→ε 的正式预测入口。"
+        ]
+      },
+      "redox": {
+        "verdict": "部分可运行，且门是红的",
+        "facts": [
+          "R2=0.9443164629360373 是 IP→氧化自由能的一维线性映射在 78 行留出集上的值，不是可调用的模型。",
+          "预注册门 MAE<0.15 eV 未通过：实测 MAE 0.2905180517963865（氧化）/ 氧化还原两目标的门都是红。",
+          "无 --smiles 入口；还原自由能 MAE 更差（0.4096），故 C2_additive 今天不可能通过。",
+          "IP 只对池内分子可得（Batt-P30K 29,519 个），xTB 兜底给不出 IP。"
+        ]
+      },
+      "homo_lumo": {
+        "verdict": "出口 2 模型不存在",
+        "facts": [
+          "附录 Q-2 出口 2 的产物 models/homo_lumo_baselines.json 在仓库内**零命中**，HOMO/LUMO 从未开训。",
+          "池内真值可用：Batt-P30K 29,519 个分子的 HOMO/LUMO 全非空（data/processed/redox_merged.csv）。",
+          "唯一训过的构象敏感目标是偶极矩，R2=0.5636，未过门。",
+          "xTB 兜底只有 homo_lumo_gap_ev（gap 粗值），不是 HOMO/LUMO 绝对值。"
+        ]
+      },
+      "viscosity": {
+        "verdict": "部分可运行（全局），族内排序无实现物",
+        "facts": [
+          "全局模型资产齐全：probes/viscosity_baseline_summary.json。",
+          "口径订正：0.064 与 0.175 是 log10_cP 的 **MAE**，不是 R2；group_key 口径未过 0.15 门。",
+          "四通道表里的「族内排序」在代码层没有实现物（仓库内 family_ranking 属介电线的 leave-EC-out 敏感性）。"
+        ]
+      }
+    },
+    "existing_end_to_end_entry": "probes/al_round1.py 是全仓唯一现成的端到端筛选入口（Batt-SLM.smi 115,756 行 → hazard_excluded 29,808 → safe 85,921 → longlist 300 → top30 30）；它可作为 L3 漏斗的起点，但它今天的打分只覆盖它自带的性质口径，不等于本预注册的四通道配方。",
+    "gating_items_before_the_full_run": [
+      "HOMO/LUMO 出口 2 模型（附录 Q-2 出口 2）必须先训练并过 MAE ≤0.2 eV 门；",
+      "氧化还原通道的门必须先变绿（MAE<0.15 eV），否则 C2_additive 预先注定不过；",
+      "介电通道需要一个不依赖名册样本外的 SMILES→ε 正式入口（或明确把池限制为名册内并如实声明）；",
+      "池定义落盘 + sha256 写入 pool_rule，然后才允许评分。"
+    ]
+  },
+  "inputs_pinned": {
+    "data/dielectric_v03.csv": {
+      "sha256": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+      "bytes": 130844
+    },
+    "probes/p4_redox_summary.json": {
+      "sha256": "b91e4438890ec7d918e9dde5142061af41a6c5b2213cbcb1845f04096f1fdbf6",
+      "bytes": 5224
+    },
+    "probes/dielectric_leave_ec_out_summary.json": {
+      "sha256": "3a8b94e1ffa94053e32ce793c33b956378ed0c2fe24f5296a71abedd97b81349",
+      "bytes": 18816
+    },
+    "probes/applicability_domain_summary.json": {
+      "sha256": "bc20c21c0a015b45a54a94711a34e4c46a377849c3c109b0c625a8275479fdd6",
+      "bytes": 2198
+    },
+    "probes/viscosity_baseline_summary.json": {
+      "sha256": "b1061d75f5bb0df142d4f614059e32774c8cb7bbcd6f16e383dffeffff0686f9",
+      "bytes": 6891
+    },
+    "probes/dielectric_ranking_head_summary.json": {
+      "sha256": "e647e66f05e59e5e843638a2c1e969c27ab360bdba801db4c0d552a21f04bc6c",
+      "bytes": 31026
+    },
+    "probes/al_round1_summary.json": {
+      "sha256": "7487a1912e66c60d27ac6ea1f2a1f71b6152b34c778b11ad6ce1f9fd50c1f11c",
+      "bytes": 4434
+    },
+    "src/electrolyte_ml/applicability.py": {
+      "sha256": "d5263290f24ea4170062cf62feb522bf7867f9c292b93ff9c820445a875a8009",
+      "bytes": 3072
+    },
+    "data/processed/v032_ablation_predictions.csv": {
+      "sha256": "1d2e42b14c5c706d39da382d78d71cb33aa7a14821a192b8ad210e8c2d2512e6",
+      "bytes": 865411
+    },
+    "data/processed/redox_merged.csv": {
+      "sha256": "5b0731db9f1af784e6dc672212bcfe5d2fa68219a2832dafac6063dff9062b65",
+      "bytes": 7967704
+    },
+    "data/raw/batt/Batt-P30K.h5": {
+      "sha256": "587f1490613a008b91f45ee9de607a2e057c88c301fa9e5c9d7785b1968d118d",
+      "bytes": 183771012
+    }
+  },
+  "relationship_to_prior_decisions": [
+    "与 §10（placebo 三臂预注册）同一纪律：先锁判据、后跑批、事后不放宽。",
+    "与手册附录 S-2 判据 2 同一条：本文件是它的可机读实现。",
+    "不改变 v1.0 已发布工件：data/dielectric_v03.csv 的 digest 不得因本验证改动。"
+  ],
+  "inputs_pinned_note": "inputs_pinned 的 sha256 是 locked_at_utc 当天的**快照式**记录（供审计回溯用）；硬闸门只有一条：data/dielectric_v03.csv 的 digest 不得变动。"
+}

@@ -756,3 +756,556 @@ G2 外部测试（PC/EC 预测 21.6/33.7 vs 真值 64.9/90.5）定量了**第三
 ---
 
 > 至此手册覆盖：探针（P0–P5）→ 周计划（W4–13）→ 附录 A–K（逐周实测调整与裁决）→ L/M（论文冲刺与投稿）。v1.0 之后的新方向一律先在 `decisions_log.md` 立项再动手。
+
+---
+
+## 附录 N：3D 结构直训、温度维度与降方差路线图（回答"能不能用空间结构直接训练 + 加温度 + 提精度降方差"）
+
+### N-0 裁决逻辑（证据链已闭环）
+从零训 3D 模型（SchNet/PaiNN 类）在 236 行上不可行：MLP（R²<0）与 Chemprop（0.237<0.364）已证明 2D 图网络都养不活，3D 等变网络参数更多、需构象系综，数据饥渴更甚。物理警告：ε 是集体性质，单分子表示（2D 或 3D）的信息上限相同——三条边界（缔合盲区/极性非质子空洞/骨架外推）皆为此的临床表现。多体项只有两个来源：Kirkwood-Fröhlich 物理修正，或系综模拟（MD）。
+
+### N-1 v1.x：温度分辨观测级表（投稿后 1–3 个月，最大杠杆）
+- **数据**：主表从"298 K 单点/化合物"扩为 ε(T) 观测级表；来源 = NBS 514 α 系数存量（42/110 行带系数）+ ThermoML 文献 ε(T) 系列回采；目标 1,500–3,000 行（同批化合物 5–10×）；schema：observation 级（inchikey, T_K, ε, source）+ compound 级汇总；
+- **模型**：冻结管线 + T_K 特征（已有）；ε(T) 单调下降提供额外物理约束；
+- **预期**：精度与折间方差同时改善（数据量 ×5–10 + 物理约束）；这是不动架构的最大单项收益；
+- **与 v0.4 合并**：xTB 协议整表迁移（4 行 blocked）并入同一大版本，摊薄重钉成本。
+
+### N-2 近期降方差三件套（不动数据面，本周可做）
+1. **Bagging 部署模型**：训练集 bootstrap ×50 个 XGBoost 取均值（半天；冻结管线不动，只改集成层）；
+2. **分域精度声明**：精密声明收窄至 ε<20 非缔合域（域内 MAE 2.55–3.95），域外只给排序——把全域 R²=0.364 拆成分域声明；
+3. **构象 Boltzmann 平均偶极**（C5 变体，1 天）：flexible 分子（glyme 类）多构象加权 μ，修复已声明的 conformer limitation。
+
+### N-3 v2.0：3D 预训练微调探针（投稿后，2–3 天）
+Uni-Mol 类 3D 基础模型（数百万构象预训练）冻结主干 + 236 行微调；输入直接用现有 xTB 构象。判据沿用 Go/Kill：超 hybrid 的 CV 置信区间才晋升。这是"3D 直训"在小数据上唯一正确的打开方式。
+
+### N-4 Phase 2 大招：MD 偶极涨落计算层
+ε = 1 + (⟨M²⟩−⟨M⟩²)/(3ε₀VkT)：3D、温度、多体关联原生包含。**先试算探针**：10 个有实验锚点的分子，GROMACS+GAFF2、5–10 ns NPT、偶极涨落 → 计算 ε vs 实验相关性与单分子成本（半天搭建 + 数天机时）。相关性好 → v2.0 开计算层（数百–数千分子 MD ε，供 3D 模型预训练/多任务）；差 → 负结果写一段。把计算层从 xTB 标量升级到系综模拟。
+
+### N-5 定位纪律
+MD 层落地前，"排序器不是测量仪"的定位不变；能力边界说明（"能用/不能用"清单）进论文 Usage Notes——该清单即审稿人最想看到的诚实度。
+
+### 修订后的版本路线总图
+| 版本 | 内容 | 治什么 |
+|---|---|---|
+| v1.0（冻结中） | 236 行单温点，排序器 | — |
+| v1.x | ε(T) 观测级表 1,500–3,000 行 + T 特征 + bagging + 构象平均 μ + v0.4 协议迁移 | 精度/方差/温度 |
+| v2.0 | Uni-Mol 3D 微调 + MD 计算层 | 3D 直训/多体物理 |
+
+---
+
+## 附录 O：v1.0 发布后的实际启动方案（数据源网站清单 + 三步行军）
+
+> 状态锚点（2026-09-25）：v1.0 已发布（Zenodo `10.5281/zenodo.22957696`，CC-BY-4.0）；论文全稿 1047 行 + 六图 + 对抗审读收口；868 测试全绿；`--phase released` 绿、`--phase submission` 红（缺 cover letter 作者三项）。对账：J-STAGE 开放路线被四方证伪（Hagiyama 仅剩馆际互借）；PC/EC 免费旁证已落地；DC-200 经 Zenodo Range 查档判定包内无成员表，仅剩作者索取。
+
+### O-1 Week 11 上半周：投稿收口
+1. 补齐 cover letter 三个 `[TODO]`（作者/单位/ORCID）→ `--phase submission` 转绿；
+2. 提交入口 `https://www.nature.com/sdata/submit`；稿件包 = full_draft + 六图 + Data Availability（Zenodo DOI）+ cover letter；
+3. 投出即封存，启动 v1.x。
+
+### O-2 v1.x 数据源清单（按优先级；第一刀不需要新网站）
+
+| 序 | 来源 | 入口 | 免费 | 用途 |
+|---|---|---|---|---|
+| 1 | **本地 242 个 ThermoML XML 重解析** | 已在硬盘 | ✓ | 打开温度闸门重抽 246 个已有化合物的全部 ε(T) 观测，预期 1,000–2,500 行，零新数据源 |
+| 2 | NBS 514 α 系数（存量） | 本地 | ✓ | 调和列 + 温度系数作先验特征 |
+| 3 | NIST ThermoML 在线 | `trc.nist.gov/ThermoML` | ✓ | 补抓 2019 后新增介电文献 |
+| 4 | OpenAlex + Unpaywall API | `api.openalex.org` / `api.unpaywall.org` | ✓ | 缺失电池溶剂 ε(T) 一手文献定向扫漏（glyme/adiponitrile/氟代醚 × 253–333 K），只收 OA 全文 |
+| 5 | ILThermo | `ilthermo.boulder.nist.gov` | ✓ | v0.4 若收离子液体的正门：温度分辨、CSV 导出 |
+| 6 | DDB Online Search | `www.ddbst.com` | 部分 | 纯组分 ε(T) 散点线索 |
+
+### O-3 三步行军（每步带验收/判据）
+1. **W11 下半周**：`scripts/build_dielectric_observations.py` 重解析本地 XML → `dielectric_observations_v11.csv`；验收：≥1,200 行、source_doi 齐全、verifier 通过；
+2. **W12**：观测级 benchmark（XGBoost + T_K 特征）；**评估必须 GroupKFold by InChIKey**（同化合物不同温度点禁止跨折——黏度线 random_row 0.064 vs group_key 0.175 的教训前置）；随机行 CV 仅作参照；判据：grouped R² ≥ 0.364 即温度维度成立；
+3. **W13**：OpenAlex/Unpaywall 扫漏（查询模板 `(dielectric OR permittivity) AND (glyme OR adiponitrile OR ...)`，2000 年后 + OA）→ 补录清单 = AL Round 3。
+
+### O-4 v2.0 探针备料（v1.x 稳定后再启动，现在只建环境）
+- **MD 试算**：`openff-toolkit` + `openmm`（conda-forge）；packmol ~500 分子盒子，NPT 5–10 ns，偶极涨落 ε = 1 + (⟨M²⟩−⟨M⟩²)/(3ε₀VkT)；先试 10 个有实验锚点的分子（水/AN/PC/DMC/甲醇）；
+- **Uni-Mol 微调**：`github.com/dptech-corp/Uni-Mol` 官方预训练权重 + 现有 xTB 构象输入。
+
+### O-5 纪律
+v1.x 全程不动 v1.0 已发布工件；观测级表为**新文件**，化合物级主表 digest 保持 `ff214293…35ccce4`；投稿后至首轮审稿意见返回前，不接受任何新主线（只跑本附录内容）。
+
+---
+
+## 附录 P：方向修正——回归"溶剂/添加剂筛选"主线（2026-09-26）
+
+### P-1 漂移诊断（诚实记录）
+原始目标 = **筛选**（换溶剂→算性质→提候选；小体系、笔记本可算）。实际轨迹：P1 数据稀缺 → 建数据集 → 审计工程 → 数据集论文（v1.0 已发布）。每个分叉当时都合理，但合成效果是：终点从"筛出新溶剂"滑成"数清旧溶剂"；原手册第 11 周的"应用演示——双指标筛选"被挤掉。数据集论文是必要基础设施与独立的本科成果，但它是第一章，不是全书。**修正：投稿后将筛选闭环升回主线。**
+
+### P-2 关键资产重估：筛选模型其实已凑齐
+- **添加剂筛选的正主是氧化还原线**（VC/FEC 类成膜添加剂看还原电位/LUMO，不看介电）：RX-392 红线 R²=0.944，全项目最强模型，此前一直被当旁线；
+> **订正（2026-09-26，见附录 T-12 与 U-3/U-4）**：本行的「RX-392 红线 R²=0.944，全项目最强模型」是**旧口径、已作废** —— 0.944 是 IP→氧化自由能**一维线性映射**在 78 行留出集上的 R²，不是可调用模型；其预注册门 `MAE < 0.15 eV` 实测 **0.2905180517963865** 未过，**门是红的**，且仓库内**没有 `--smiles` 可调用入口**。现状一律以附录 U-3/U-4 为准。
+- 介电线 = 溶剂极性的分诊排序器（适用域闸门可直接复用为筛选过滤规则）；
+- 黏度线 = 族内排序参照；xTB 管线 = 候选复核工具（P5b 已标定本机算力）。
+
+### P-3 筛选闭环方案（人机协同，笔记本可算）
+1. **候选池**：Batt-P30K（29.5k，自带 HOMO/LUMO/IP/EA）+ ECW-308 + RDKit 虚拟枚举（碳酸酯/醚/腈骨架取代变体）；
+2. **漏斗**：合法性/可合成性过滤 → **适用域闸门（数据集论文的三条边界 = 应用工作的过滤规则，两篇工作叙事闭环）** → 多指标打分（氧化还原窗口 × 介电排序 × 黏度族内序）→ Top-20；
+3. **机器验证**：Top-20 xTB 全特征复核 → 最终 5 个上 MD 短程验证（高配笔记本即可）；
+4. **人决策**：人工审视 Top-20，挑新骨架/反常识候选回喂 = 真正的 AL Round 2；
+5. **产出**：《电解液溶剂/添加剂多指标筛选报告》——第二篇论文种子（域刊，非数据刊）。
+
+### P-4 与附录 O 的关系
+v1.x 温度扩展**降级为数据侧并行线**（重解析本地 XML 为主，机时活）；筛选闭环升为主线。筛选报告若需要工作温区论述，届时再正式启动 v1.x，需求更明确。
+
+### P-5 纪律
+- 投稿收口（附录 O-1）完成后才启动筛选闭环；
+- 筛选全程复用冻结模型，**不为筛选重训 v1.0**（新模型属于下一轮论文）；
+- Top-20 候选的每个结论必须带适用域标志与不确定性说明——数据集论文的诚实标准平移到应用工作。
+
+---
+
+## 附录 Q：性质模型覆盖缺口与补齐方案（HOMO/LUMO 等，2026-09-26）
+
+### Q-1 现状对账
+介电 ✓（v1.0）；氧化还原 ✓（RX-392，R²=0.944，添加剂筛选的决策性质）；黏度 △（族内排序）；**HOMO/LUMO/IP/EA ✗**（P2 只训过偶极矩且未过门；HOMO/LUMO 从未开训）。注意：P2 的 0.5636 失败是**偶极矩**（构象敏感难目标），其枪毙判据不迁移到 HOMO/LUMO。
+> **订正（2026-09-26，见附录 T-11 与 U-3/U-4）**：上面这句里的「氧化还原 ✓（RX-392，R²=0.944）」是**旧口径、已作废** —— 0.944 是 IP→氧化自由能**一维线性映射**在 78 行留出集上的 R²，不是可调用模型；其预注册门 `MAE < 0.15 eV` 实测 **0.2905180517963865**，**门是红的**，且仓库内**没有 `--smiles` 可调用入口**。现状一律以附录 U-3/U-4 为准。
+
+### Q-2 三个出口（按成本）
+1. **零成本**：候选池限 Batt-P30K 内 → 直接读 29.5k 分子的 ωB97X-V 级 HOMO/LUMO/IP/EA 真值，无需模型；
+2. **半天（推荐）**：复用 P2 管线在 Batt-P30K 上换标签训 HOMO/LUMO/IP/EA 四个 Morgan+XGBoost 模型；大数据 regime（29.5k）下预期 MAE 0.1–0.2 eV；验收门 MAE ≤0.2 eV；输出 `models/homo_lumo_baselines.json`；
+3. **兜底**：xTB `homo_lumo_gap_ev` 粗值 + 用 Batt-P30K 重叠分子做 ωB97X-V↔xTB 校准线。
+线索存档：GSDS Zenodo 归档内含 MACEOFF 微调的 dipole/HOMO/LUMO/IP/EA 模型（177 个 .pth），许可允许时可作对照；自训更干净。
+
+### Q-3 筛选漏斗四通道（修订 P-3）
+| 通道 | 来源 | 覆盖 |
+|---|---|---|
+| 氧化还原窗口 | RX-392 模型 | 任意分子 |
+| 介电排序 | v1.0 + 适用域闸门 | 域内 |
+| HOMO/LUMO | Batt-P30K 真值（池内）/ Q-2 出口 2 模型（池外）/ xTB 校准（兜底） | 全覆盖 |
+| 黏度 | 族内排序 | 参照级 |
+
+> **订正（2026-09-26，见附录 T-11 与 U-3/U-4）**：本表「氧化还原窗口 / RX-392 模型 / **任意分子**」这一行的覆盖声称**不成立** —— 该模型门是红的（`MAE` 实测 0.2905 > 0.15 eV），且**当前没有 `--smiles` 可调用入口**；四通道里只有「HOMO/LUMO」一行在把池限为 Batt-P30K 时才谈得上「全覆盖」。现状以附录 U-3/U-4 为准。
+
+### Q-4 纪律
+出口 2 的训练属"筛选基础设施"，不是 v1.0 改动；数据面 digest 不动；四个新模型各自带 Dummy 对照与折号记录，沿用全项目验证纪律。
+
+---
+
+## 附录 R：数据库补给清单与 Reaxys 裁决（2026-09-26）
+
+### R-1 按用途的补给图
+| 用途 | 首选（免费） | 受权限/付费 | 备注 |
+|---|---|---|---|
+| 介电 ε(T) 温度序列（v1.x） | 本地 242 XML 重解析 → trc.nist.gov/ThermoML 补 2019 后；OpenAlex/Unpaywall 扫 OA | Reaxys、DDB 完整版、SpringerMaterials | 大头已在本地 |
+| FEC/VC/MOPN 冲突裁决 | 馆际互借（Hagiyama） | **Reaxys**（可能直接解开，见 R-2） | 当前最痛点 |
+| HOMO/LUMO/IP/EA | Batt-P30K 真值 + 自训模型；NIST CCCBDB（cccbdb.nist.gov，免费）验校准 | — | — |
+| 氧化还原补充 | RX-392 已有 | Reaxys（电化学字段） | 不急 |
+| 筛选过滤性质（mp/bp/闪点/密度=液态窗口） | PubChem PUG-REST（可批量）、NIST WebBook（蒸气压/Antoine） | Reaxys | 漏斗合法性过滤层 |
+| 离子液体（若 v0.4 收编） | ILThermo（免费、温度分辨、CSV 导出） | — | IL 线正门 |
+| 供体数 DN | GSDS 归档 DonorNum 产物 | — | 第五通道候选 |
+
+### R-2 Reaxys 裁决：有用，且有一个被低估的具体价值
+- **先决动作**：图书馆数据库导航查 Reaxys/SciFinder-n 订阅（tier-4 记的是"未验证"不是"没有"）；
+- 若有权限，四个用途按价值排序：① **Reaxys 人工摘录论文实验数据点（值+温度+条件+出处），Hagiyama 2008 的 FEC 107 及其测量条件可能直接以结构化字段存在——一次检索或可同时解 FEC/VC/MOPN 三个 blocked 项，绕过馆际互借**；② v1.x ε(T) 批量补给；③ 候选分子液态窗口（mp/bp/闪点）批量过滤；④ 黏度/密度 T 依赖；
+- **纪律**：Reaxys = 带原始指针的汇编层，provenance 记 `reaxys←一手文献题录`（Reaxys 渲染表只给题录、不给 DOI，故 provenance 到题录一级），关键决策值回溯原文；**手动逐条查询+记录合规，爬虫批量导出违反 ToS，禁止**；
+- 若无权限：SciFinder-n 次之；皆无则免费栈（ThermoML + OpenAlex/Unpaywall + PubChem + NIST WebBook/CCCBDB + ILThermo + DDB 免费层）覆盖约八成，余者进 Limitations。
+
+### R-3 行动序
+1. 查 Reaxys/SciFinder-n 权限（10 分钟 + 一封馆员邮件）；
+2. 若有 → 第一小时查 FEC permittivity 全部摘录记录（目标：107 的温度/频率/方法）；
+3. 无论有无 → 投稿收口优先；v1.x 本地重解析不依赖外部库。
+
+### R-补记（2026-09-26）：Reaxys 权限确认在手，tier-4 只剩 SpringerMaterials
+
+**格局更新**：Reaxys 可用 → R-2 的四个用途全部激活；SpringerMaterials 缺的 GVL/DME/环丁砜交叉核验由 Reaxys 摘录层替代（同一批一手文献；纪律：`reaxys←一手文献题录` provenance、只读核验、不进可分发数据集）。
+
+**优先查询队列（按解锁价值）**：
+1. **FEC**（SMILES `O=C1OCC(F)O1`）：Physical Data → Dielectric constant，找 107 记录的温度/频率/方法/出处（是否指向 Hagiyama 2008）。找到 = 双腿条件层面对齐、免 ILL；找不到 = 维持 ILL；
+2. **VC**：核对 Knovel 78–127 区间内每个值的出处与条件（Saadi & Lee 1966 的 126±1.0 应在内，重点找独立第二测量）；
+3. **MOPN**：找 Ue 1994 或任何独立于 Perricone 的一手测量；找到 → 解除 corroboration + 补 xTB 特征行 → 可入库；
+4. **GVL/DME/环丁砜**：受限交叉核验替身（见上）；
+5. **v1.x 备货（投稿后）**：glyme/adiponitrile/氟代醚 ε(T) 序列 → AL Round 3 补录清单。
+
+**操作要点**：物质检索（SMILES/InChIKey/名称）→ Physical Data → Dielectric constant（或 Query Builder 直接建字段查询）；每条记录抄四样：值、温度、频率/方法、一手出处（卷期页）；**手动逐条查询合规，批量爬虫导出违反 ToS，禁止**。
+
+---
+
+## 附录 S：Week 11 总结、计划修订与终局目标重述（2026-09-26）
+
+### S-1 Week 11 记账
+
+**确认（可入库的结论）**：
+- 观测级 v11 表：1,630 行 / 103 化合物（频率闸门合并后 2,065 行 / 153 化合物）；
+- 固定评分池（457 行 / 97 化合物、同折号）：paired_base R²=0.4091 → paired_plus_coverage R²=0.5332，**ΔR²=+0.1241，ΔMAE=−1.5362，Δρ=+0.1081**，训练池 97→147 化合物；
+- 对抗审计 5 确认 / 0 反驳（13,706/13,710 预测格变化；与评分池 0 重叠；rank-invariance 演示排除"先验漂移"）；
+- 1,591 测试绿；v1.0 数据面 digest 未动。
+
+**证伪（同样值钱）**：
+- ThermoML 在线 11,923 条 = 0 新增 vs 本地；
+- ILThermo ε 数据集 109 个仅 1 个 T-span>5K → 温度维度关闭，降级为单点 ε 补充源；
+- DDB 免费层 = 0 值；
+- OpenAlex/Unpaywall 37 篇 OA 候选 = 0 个 ε 值被读出（仅线索）；
+- NBS α 先验特征 0/97 覆盖 = inert → **新准则：任何新特征入库前先过覆盖率检查**。
+
+**悬置（未过关不许引用）**：
+- +0.1241 的归因：观测级信息 vs 样本量/正则化效应未分离 → **placebo 重训是 Week 12 第一技术任务**；
+- xTB 体积列随 OMP_NUM_THREADS 漂移 → v1.x/v2.0 任何 xTB 特征入库前必须修复；
+- 投稿收口仍红（`--phase submission` 未绿；cover letter 有 [TODO] 作者项）→ **仍是顶门**。
+
+### S-2 终局目标重述（三层金字塔 + 完成判据）
+
+```
+L3 终局：候选溶剂/添加剂排序清单 + 筛选应用论文（第二篇）
+   ↑ 由四通道漏斗产出：氧化还原 ✓ / 介电 ε(T) / HOMO-LUMO / 黏度排序
+L2 模型层：v1.x 温度分辨介电模型（Week 11 方向已实证）
+   ↑ 训练在观测级温度分辨表上
+L1 基础设施：v1.0 数据集论文（已发布，DOI 在手）✅
+```
+> **订正（2026-09-26，见附录 T-12 与 U-3/U-4）**：上面金字塔图里的「氧化还原 ✓」是**旧口径、已作废** —— 0.944 是 IP→氧化自由能**一维线性映射**在 78 行留出集上的 R²，不是可调用模型；其预注册门 `MAE < 0.15 eV` 实测 **0.2905180517963865** 未过，**门是红的**，且仓库内**没有 `--smiles` 可调用入口**。现状一律以附录 U-3/U-4 为准。
+
+**为什么 ε(T) 是终局的刚需而非支线**：电解液工作温度窗口 −20~60 °C，298K 单点排序无法回答"低温下谁还保持高 ε/低黏度"。v1.x 把介电通道从室温排序升级为温度窗口排序——这是筛选闭环的合法组成，不是漂移。
+
+**L3 完成判据（可检验，防自欺）**：
+1. top-20 溶剂 + top-20 添加剂候选清单，每条四通道预测值 + 适用域闸门标记（结构性 SMARTS）+ 不确定性 + 实验优先级；
+2. **回溯验证（预注册）**：训练时排除 EC/PC/FEC/VC 等已知冠军分子，漏斗须把它们排回前列——0 成本、筛选论文最有说服力的验证。**已于 2026-09-26 落为锁定预注册**：机读常量 `probes/l3_backvalidation_prereg.json`（`status = LOCKED`）+ 正文 `reports/decisions_log.md` §14 + 手册**附录 U**；判据 = C1（K = 20）∧ C2_solvent（|Δlog10(ε)| ≤ 0.10）∧ C2_additive（≤ 0.15 eV）∧ C3（置换种子 20260928，对照臂命中 ≤1）；
+3. 第二篇论文（筛选应用）草稿。
+
+### S-3 计划修订（Week 11 后格局）
+
+**数据增长引擎切换**：外部免费扩张收官（源 3/5/6 证伪），增长只剩三通道——
+| 通道 | 状态 | 下一步 |
+|---|---|---|
+| 本地 XML 重解析 | ✅ 已收割（+0.1241 的载体） | 完成 |
+| Reaxys 摘录层 | 权限在手 | 按 R-补记优先队列执行：FEC→VC→MOPN→GVL/DME/环丁砜→v1.x 备货 |
+| 37 条 OA 线索 | 仅线索 | 标题/摘要分流 → 全文本人工阅读清单（周末缓冲，不进主线） |
+
+**纪律重申**：Reaxys 手动逐条查询合规、批量爬虫禁止；受限值只作 `restricted_crosscheck_only` / `reaxys←一手文献题录` provenance，永不进可分发数据集；投稿收口仍是一切的顶门。
+
+### S-4 Week 12 逐日任务表
+
+| 日 | 任务 | 验收门 |
+|---|---|---|
+| 周一 | **投稿收口（顶门）**：cover letter [TODO] 作者项补齐；`--phase submission` 转绿 | 绿灯截图 + 提交回执 |
+| 周二 | **Placebo 三臂预注册 + 开跑**（见 S-5） | 预注册文本进 decisions_log §10，跑批启动 |
+| 周三 | Placebo 判读 + **xTB 线程修复**：固定 OMP_NUM_THREADS 重跑体积列，出 diff 报告 | 判读结论入档；体积列复现差 <0.1% |
+| 周四 | Reaxys 队列第一刀：FEC（107 的温度/频率/方法/出处）+ VC（Knovel 区间逐值溯源） | 逐条记录值/T/频率方法/一手出处 |
+| 周五 | Reaxys 队列第二刀：MOPN（独立一手）+ GVL/DME/环丁砜交叉核验；周收尾审计 | 审计报告；手册附录更新 |
+| 周末缓冲 | 37 OA 线索标题/摘要分流（不读全文） | AL Round 3 补录清单草稿 |
+
+### S-5 Placebo 重训预注册规范（三臂）
+
+**目的**：分离 +0.1241 的归因——观测级信息 vs 样本量/正则化。固定评分池与折号不变（沿用 Week 11 paired 设计）。
+
+| 臂 | 构造 | 预期（若增益为信息驱动） |
+|---|---|---|
+| Arm A 标签安慰剂 | 新增 50 化合物的 ε 标签在化合物间随机置换（行数、组成、正则化全同） | ΔR² 塌缩至 ≈0（阈值 ≤+0.02） |
+| Arm B 剂量曲线 | 新增行按 25%/50%/75%/100% 四档子采样重训 | 增益单调递增（剂量-响应证据） |
+| Arm C 均值退化 | 新增化合物只保留化合物均值行（消灭 T/频率分辨率，保留化合物数） | 增益显著低于全量臂 → 证明温度分辨率是载体 |
+
+**判据**：Arm A Δ≤+0.02 且 Arm B 单调 → 才许把 +0.1241 表述为"观测级信息驱动"；任一不过 → 表述降级为"数据量效应"，v1.x 叙事重写。**过关前 +0.1241 不进任何对外文本（论文、摘要、封面信、GitHub README）**。
+
+### S-6 对账（Orchestrator 侧，诚实记账）
+
+- ✅ R-1 "ThermoML 大头已在本地" —— 被证实（在线 0 新增）；
+- ⚠️ ILThermo 被标为"温度分辨的 IL 线正门" —— ε 温度维度实际关闭（1/109），降级为单点补充源，IL 线 ε(T) 希望缩水；
+- ⚠️ OpenAlex/Unpaywall 扫描源 —— 实际只产线索不产值，人工成本低估；结论不变但排位降至周末缓冲；
+- 准则沉淀：**"先验特征要过覆盖率检查"** 与 **"placebo 不过门，增益不引用"** 两条入全项目纪律。
+
+
+## 附录 T：Week 12 收口 —— placebo 判决把 +0.1241 打下来了（2026-09-26）
+
+### T-1 头条（本轮唯一改变对外结论的结果）
+
+**S-5 三臂 placebo 的判决是 `data_volume_effect`（数据量效应）。Week 11 的 ΔR² = +0.1241 从一切对外文本中撤下。**
+
+| S-5 判据 | 阈值 | 实测 | 结果 |
+| --- | --- | --- | --- |
+| Arm A 标签安慰剂塌缩 | ΔR² ≤ +0.02 | **+0.0141** | PASS |
+| Arm B 剂量曲线单调递增 | 25→50→75→100% 每步为正 | 步长 **+0.0004 / +0.1163 / −0.0164** | **FAIL** |
+| Arm C 均值退化低于全量臂 | 机制旁证，不入判据 | +0.1021（+0.0997）vs +0.1241 | PASS |
+
+判据是**合取**（S-5 原文：Arm A 过 **且** Arm B 单调）。Arm B 没过 → 降级。**预注册跑批前锁定，事后未放宽一个字。**
+
+**怎么读**：Arm A 塌到 +0.0141 其实**支持**"信息驱动"，但单臂不足定案（只打乱标签、保住行数/组成/正则化，本就会打散靠标签分布撑起来的拟合——这正是要求 B 臂同时单调的原因）。**决定性证据是 B 臂的非单调**：75% 档（93 行/折）比 100% 档（127 行/折）还高 +0.0164；若增益是观测级信息随剂量累积，100% 档理应最高。Arm C 方向一致：把 127 行压成 50 行（每化合物 1 行、消灭 T/频率分辨率）仍保住 +0.1021，只亏 0.0220 → **温度分辨率不是增益的主要载体**。
+
+**处置**：v1.x 叙事改为"建温度分辨观测表是**基础设施**投入（覆盖度/可复现性/口径统一）"，**不以该 ΔR² 为卖点**。GroupKFold by InChIKey 仍是诚实评估唯一口径。
+
+**完整性**：W11 钉死值 `paired_base` 0.4091179943351143、`paired_plus_coverage` 0.5332044440328436、ΔR² 0.1240864496977293 **逐位复现**（`bit_exact=True`）；15 项完整性自检全 PASS；10 次重复、无降级；种子 = 折 42 / 置换 20260926 / 剂量 20260927。
+
+### T-2 S-4 逐日对账
+
+| 日 | S-4 任务 | 状态 |
+| --- | --- | --- |
+| 周一 | 投稿收口（cover letter TODO + `--phase submission` 转绿） | **部分**：仓库 URL 与 `v1.0` tag 已填（GitHub API 实测仓库 public、远端 tag `v1.0` 存在）；**剩 3 项作者个人数据（姓名/单位/email）待用户提供**，故仍红 |
+| 周二 | placebo 三臂预注册 + 开跑 | **完成**：§10 预注册落 `decisions_log.md`；三臂跑完 |
+| 周三 | placebo 判读 + xTB 线程修复 | **完成**：判读 = 数据量效应；xTB 固定线程修复落地 |
+| 周四 | Reaxys 第一刀：FEC + VC | **完成并超额**：扩到 FEC / VC / GVL / DME / sulfolane 五个分子 |
+| 周五 | Reaxys 第二刀 + 周收尾审计 + 手册附录更新 | **完成**：第二刀并入周四同批；审计与本节 |
+| 周末缓冲 | 37 条 OA 线索分流 | **完成**（提前） |
+
+### T-3 xTB 线程修复（S-1 悬置项闭环）
+
+- **根因**：xTB 6.7.1 的 SCF 与解析梯度按 OpenMP 线程做浮点归约，**加法不满足结合律** → 收敛梯度带线程数与运行相关的扰动；`--opt` 以梯度范数停机，于是 `xtbopt.xyz` 停在略不同的点，而 RDKit `ComputeMolVolume(gridSpacing=0.2)` 量化到 **0.008 Å³** 格子，翻一格就改写体积列。
+- **最小证据**：同输入同行命令，只改子进程环境 → 请求 4 线程时 **15/15 次跑出 15 种不同几何**（体积跨 93.368–93.448）；请求 1 线程恒为 93.408。
+- **修复**：新增唯一 launcher `src/electrolyte_ml/xtb_runner.py`，钉死 `OMP_NUM_THREADS=1` / `MKL_NUM_THREADS=1` / `OMP_DYNAMIC=FALSE` / `MKL_DYNAMIC=FALSE`，并清除父进程泄漏的同名变量；特征路径的 `threads` 形参与 `--threads` CLI 一并删除。
+- **验收**：同输入重跑 **0 个格变化**（体积列最大相对差 **0.0000%**，门限 < 0.1%）；跨线程 1/2/4/8/16 五档几何逐字节相同。全表 42 行只动 8 个格（两分子的 4 个体积派生列），其余 39 行全部 23 列逐位相同。
+- **顺带固化第二前置条件**：工作目录残留 `xtbrestart` 会被当 SCF 重启读入，1 线程下也能复现 → 必须清空工作目录。
+- **诚实边界**：修复前的漂移在本机这两行上**并未突破 0.1%**（15 次最大 0.0856%）。修复理由是**结果不可复现**，不是"已证实的 >0.1% 误差"；**冻结表未覆盖**。
+
+### T-4 Reaxys 第一刀（五个分子，S-3 队列走完）
+
+| 化合物 | Reaxys 条目 | 本地观测行 | 净新增 | 判决 |
+| --- | ---: | ---: | ---: | --- |
+| FEC | 1（Static） | 1 | 0 | 只有 78.4 @ 23 °C（Kobayashi 2003），**无 107 腿** |
+| VC | 1 | 1 | 0 | 无数值**引用存根**；DOI 与冻结行 `source_doi` **逐字相同** |
+| **GVL** | 1 | **0** | **+1** | **真缺口**：36.9（Segato 2021, SI）vs 冻结 36.1（iScience 2026 综述表），**两者都无温度** |
+| DME | 7 | 9 | +1 线索 | 本地温度序列已在；新增唯一带温度区间的源 Werblan 1985（7–9.1 @ −30…25 °C, 1591 Hz） |
+| **sulfolane** | 12 | 8 | 0 | 与本地**逐点一致**（同一 DOI）→ 独立再确认 |
+
+**Reaxys 数据模型（结构性事实，会影响后面所有摘录计划）**：介电数据分两个类别——`Static Dielectric Constant`（列：值/温度/Location/Comment/Reference，**无频率列**）与 `Dielectric Constant`（**有 Frequency 列**）。**两类都没有"方法"列**，只有 `Location`/`Comment` 两个自由文本列偶尔承载方法信息。→ **"频率/方法/出处"三件套里，方法必须回到一手文献**；FEC 恰好落在 Static 类别，连频率都给不了。
+
+**净产出**：没有翻出任何本地缺失的成品数据；真收获是「GVL 真缺口 + DME 新源线索 + sulfolane 独立再确认」+ 两条否定性证据（FEC 无 107 腿、VC 无值）。
+
+### T-5 37 条 OA 线索分流（周末缓冲，提前完成）
+
+- P0/P1/P2/P3 = **0 / 4 / 20 / 13**；进人工阅读清单 **4**、待定 20、丢弃 13。
+- 有 ε 数值线索 **1** 条；温窗覆盖 true/false/unknown = 1 / 2 / **34**；OA 全文可得 9 / 25 / 3。
+- API 请求 **116** 次（上限 220）：OpenAlex 37、Unpaywall 37、OA 链接探测 37、Crossref 5。
+- 诚实边界：**5 条摘要读不到**（两家 API 都返回 200 但无摘要字段）；21 条 OA 链接返回 403（出版商 Cloudflare）；OA 可达性是**瞬时状态敏感**的（同一链接上一轮 200、本轮 403）。
+
+### T-6 投稿门禁状态（顶门仍未开）
+
+- 已填（**均为可核实事实，非编造**）：`paper/cover_letter.md` 的仓库 URL = `https://github.com/LittleAlety/electrolyte-solvent-dielectric-ml`（GitHub API 实测 `private=false`）；版本 tag `v1.0`（GitHub tags API 返回 `["v1.0"]`）。
+- **仍红 3 项**：`[TODO: corresponding author name]` / `[TODO: affiliation]` / `[TODO: email]` —— **属个人数据，必须由本人提供，不得编造**。
+- `scripts/check_release_readiness.py --phase submission` 当前报 3 条 unresolved TODO。
+
+### T-7 成果输出位置
+
+`E:\Claude Code\电解质ML\成果输出\week12\` —— **31 个文件**（27 件产物 + `README.md` / `verification.json` / `week12_summary.json` / `SHA256SUMS`；其中 3 件在 `artifacts/` 子目录），含 `week12_summary.json`、`verification.json`、`README.md`、`decisions_log.md`（含 §10 预注册 + §11 判决 + §12 手册回退 + §13 Reaxys MOPN 复验 + §14 `l3_backvalidation_prereg.json` 预注册 + §15 池闸门 amend）、四路产物与其逐折明细。
+门禁实测：`probes/export_week12_results.py --overwrite` → `verification_passed = true`；`verify_export_manifests.py --output-dir 成果输出/week12` → **[PASS]**。
+
+### T-8 纪律（本轮新增/重申）
+
+1. **placebo 不过门，增益不引用** —— 本轮第一次真正执行，撤下了自己 Week 11 的头条数字；
+2. **新特征先过覆盖率检查**（NBS α 教训）；
+3. **Reaxys 手动逐条查询合规、批量爬虫禁止**；受限值只作 `restricted_crosscheck_only`，**永不进可分发数据集**；
+4. **预注册要写在跑批之前**，且事后不许放宽（本轮 §10 先落档、§11 严格按合取判据执行）。
+
+### T-9 下一步（不新开主线）
+
+1. 拿到作者三项个人数据 → `--phase submission` 转绿 → 投出（`https://www.nature.com/sdata/submit`）；
+2. GVL 是 v1.x 温度表第一优先缺口（本地 0 观测）；Segato 2021 与 iScience 2026 的 36.9 vs 36.1 冲突待判；
+3. Hagiyama 2008（`10.1246/cl.2008.210`）仍是 FEC 107 腿唯一收口项，Reaxys 帮不上，只剩馆际互借；
+4. 4 条进人工阅读清单的 OA 线索（tetraglyme / adiponitrile / succinonitrile ×2）排在 v1.x 之后。
+### T-10 手册正文回退的发现与恢复（同轮，先于交付包封版）
+
+**症状**：本轮全量 `pytest` 的唯一红灯是 `tests/test_manual_appendix_reconciliation.py::test_committed_manual_fixture_still_carries_the_round5_guards`（已提交 fixture 不等于当前手册的抽取）。
+
+**定位**：不是「追加附录 T 使抽取末尾变长」这种表面原因，而是手册正文**整整回退了一个版本** —— 缺失附录 J-补记三的「§十二 v0.3.14（D2）」整节、附录 J-补记九（J-STAGE 路线核查）整节，以及附录 K 的「修订说明二」与 D2/D3/D5 三行裁决。
+
+**三条互相独立的判据**：
+1. 正文引用的 `probes/dielectric_leave_ec_out_probe.py` **不存在**；仓库里实际是 `probes/dielectric_leave_ec_out_sensitivity.py`（22,856 B），正是 fixture 写的那个名字；
+2. `reports/jstage_corroboration.md`、`probes/jstage_corroboration_evidence.json`、`tests/test_jstage_corroboration.py`（9 项）都在仓库里，而记录它们的补记九已从手册消失；
+3. 冻结数据集实测 digest = `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`（v0.3.14；4 行 `out_of_scope_ionic_or_organometallic`、`model_ready=true` 恰 240 条），而正文写的是「当前规范哈希 `a446c216…c01085`」（v0.3.13）。
+
+**处置**：先备份到 `bak/执行手册_探针与周计划.md.bak-20260926-preW12restore`（151,955 B），再用本手册自己的已提交抽取替换「附录 J-补记三 → 附录 M」区间，**本轮新写的附录 N–T 全部保留**。恢复后手册 1,699 行 / 160,949 B。
+
+**验收**：新生 fixture 与已提交 fixture 的 diff 为**单处纯追加（末尾 +327 行 = 附录 N–T）、删除 0 行**，说明恢复逐行精确；手册守卫 26 passed（含「excerpt 必须钉住现行规范 digest」这条硬闸门）；探针工件按恢复后的手册重生（stale 命中 0、forbidden 命中 0）。
+
+**成因未定（如实记录）**：`bak/` 里 8 个快照（2026-09-24 至 09-25）**没有一个**含补记九或修订说明二，所以这不是某次 `.bak` 还原能解释的；此处只写「现象已查清、成因未锁定」，不做猜测性归因。完整记录见 `reports/decisions_log.md` §12。
+
+### T-11 附录 Q 陈旧结论的订正（同轮；成对订正 + fixture 重生）
+
+**发现来源**：本轮只读对抗审读指出附录 Q 的 Q-1 与 Q-3 仍把氧化还原通道写成「✓ / RX-392 全项目最强模型 / 覆盖任意分子」，与同文件的附录 U-3/U-4（门是红的、无 `--smiles` 入口）正面冲突；这段陈旧文本已进入受守卫的 CI 抽取 `tests/fixtures/manual_appendix_j_snapshot.md`，不修就会一直留着。
+
+**改了哪两个位置**（只**新增订正行**，不删除原文）：
+1. Q-1 段末新增一行订正（紧随 Q-1 正文）：写明「0.944 是一维线性映射的留出 R²、预注册门实测 0.2905 未过、无 `--smiles` 可调用入口」；
+2. Q-3 四通道表下新增一行订正（紧随 Q-3 表）：写明「氧化还原窗口那一行的覆盖声称不成立」，并指向附录 U-3/U-4。
+
+**验收**：
+- `probes/manual_appendix_reconciliation.py --write-manual-fixture` 重生抽取 → 新生 fixture 与改前 fixture 的 diff = **净增 26 行（新增 27 行、改写 1 行、删除 0 行）**；实测 fixture 1146 → 1172 行、手册 1760 → 1786 行（原位订正：原写「新增 27 行」是插入操作数，净增为 26；绝对行号引用已改为锚点式，避免随后续插入漂移）；
+- `tests/test_manual_appendix_reconciliation.py` **26 passed**（含「excerpt 必须钉住现行规范 digest」这条硬闸门）；`tests/test_jstage_corroboration.py`、`tests/test_l3_backvalidation_prereg.py` 全绿；
+- 手册 CRLF 计数仍为 **0**。
+
+**与本轮其它 amend 的关系**：这与 `reports/decisions_log.md` §15 是同一轮的两个动作 —— §15 管机读预注册（池闸门 + 阈值 rationale 勘误，见附录 U-6），T-11 管手册正文的陈旧结论；共同点是**只补订正、不动任何锁定数值**。
+
+
+### T-12 同源陈旧断言的第二处闭合 + 闸门边界（第二轮，2026-09-26）
+
+**现象**：T-11 只订正了附录 Q 的 Q-1/Q-3；对抗复审指出同一断言还有两处未标注 —— **P-2**（「RX-392 红线 R²=0.944，全项目最强模型」）与 **S-2 三层金字塔图**（「由四通道漏斗产出：氧化还原 ✓ / …」）。本轮补上，并把「机读闸门能证明什么」的边界写清。
+
+**改了哪两行**（只**新增订正行**，不删除原文）：
+1. P-2 首条 bullet 之下新增一行订正（紧随 P-2 首条 bullet）：口径与 Q-1/Q-3 一致 —— 0.944 是 IP→氧化自由能**一维线性映射**在 78 行留出集上的 R²，不是可调用模型；预注册门 `MAE < 0.15 eV` 实测 **0.2905180517963865** 未过（门是红的）；仓库内无 `--smiles` 可调用入口；现状以附录 U-3/U-4 为准；
+2. S-2 金字塔图**围栏代码块之后**新增一行订正（代码块内不插行，否则订正会被渲染成代码）。
+
+**实测数字（本轮）**：手册 **1786 → 1803 行**、fixture **1172 → 1189 行**（均净增 **17**：2 行新订正 + 15 行 T-12 本体，另 T-11 内 3 行被就地改写、净增 0）；CRLF 仍为 **0**；`probes/manual_appendix_reconciliation.json`：`stale_phrase_hit_count = 0`、`forbidden_token_hit_count = 0`、`current_digest_pinned = true`。
+
+**验证**：`tests/test_manual_appendix_reconciliation.py` 26 passed；全手册 grep「未标注的 `氧化还原 ✓` / `全项目最强模型` / `覆盖任意分子`」= **0**（其余命中都紧跟订正行或属 T-11/T-12 的自我叙述）。完整记录见 `reports/decisions_log.md` §16。
+
+**闸门边界（同轮订正两处措辞）**：`tests/test_l3_backvalidation_prereg.py` 的「评分产物存在 ⇒ 池字段必须非 null」闸门**只能证明池曾被落盘且规模达标**，**不能**证明落盘早于看见冠军排名 —— 那一条仍靠纪律（纳入口径不得以冠军排名为条件）+ `pool_sha256` 的时间戳审计；本次只改措辞，未删任何断言、未弱化任何守卫。
+
+### T-13 §17.7 的「断言只增不减」表述订正（本轮；只改措辞，不删断言、不动锁值）
+
+**来源**：本轮独立只读审读（Minor 1）指出 `reports/decisions_log.md` §17.7 与守卫 docstring 现写「断言只增不减、未删未弱化」/
+「strictly more than the old assertions checked」，**字面为假**。
+
+**实测（审读员对 week12 快照做的扁平 diff）**：`tests/test_l3_backvalidation_prereg.py::test_pool_rule_carries_the_machine_readable_freeze_fields`
+的真实改法是 —— **3 条 `is None` 占位断言被替换掉**（`pool_path` / `pool_sha256` / `pool_size_by_list`，换成「路径存在 + digest 与磁盘文件一致 + 每个清单规模过锁值」），
+**1 条 `is False` 被翻转成 `is True`**（`pool_frozen_before_scoring`）；即每条断言是**被改写而非新增**。**净强度提高、没有丢弃任何检查**，
+七个锁定常量仍逐条断言；**本轮未删任何断言、未动任何锁定值**。
+
+**改了哪两处**（只改措辞，不删正文）：
+1. `reports/decisions_log.md` §17.7 的结论句改为「该守卫的断言没有净丢失、强度净提高」，并把上述 diff 事实写进正文；
+2. `tests/test_l3_backvalidation_prereg.py` 该守卫 docstring 的同句改为 replaced / flipped 的准确描述。
+
+**保留原状的一处（如实声明）**：`probes/l3_stage1_pilot_summary.json` 的 `conflicts_with_frozen_points[0].resolution` 用的是
+「upgraded, never weakened」——该表述与订正后的版本**相容**（它未声称「只增不减」），且该文件是**上游写手的产物、不在本轮写入集内**，
+因此**保留不改**；这一条不是回避，而是把「哪句是真的、哪句只是相容」分开写清。
+
+**互相指向**：本小节 ↔ `reports/decisions_log.md` §17.7 与 §18.9。
+
+### T-14 预注册 `fold_source` 补正 + 试点摘要措辞收口（本轮；只增不改、不动锁值）
+
+1. **A（预注册 amend 落文本）**：`probes/l3_backvalidation_prereg.json → fold_and_seed.fold_source` 指向介电通道的 `data/processed/v032_ablation_predictions.csv`（**不含 Batt-P30K 分子**），对 HOMO/LUMO 通道**不成立**；本轮**只增不改**地新增 `fold_and_seed.fold_source_by_channel`（`dielectric_roster` = 该介电表；`batt_p30k_homo_lumo` = 「generated_by RepeatedKFold(5,10,42) on the 29,515-row pool」）与 `fold_and_seed.amendment_3`（`kind = per_channel_fold_source_correction`），原 `fold_source` / `fold_policy` 原文一字未动。
+2. **A 的更严读法（不是放宽阈值）**：冠军**整体移出建模池**（29,519 → 29,515），折号由 `RepeatedKFold(5,10,42)` 在 29,515 行上**重新生成**，冠军由**全池生产模型**打分；比预注册字面要求（只从冠军所在折的训练侧剔除）**更严**。七个锁定常量（`K = 20` / `0.10` / `0.15` / `20260928` / `1` / `100` / `pass_expression`）与 `fold_scheme` / `seed_scheme` 逐字未动。
+3. **B（措辞收口）**：`probes/l3_stage1_pilot_summary.json` 的 `conflicts_with_frozen_points[0].resolution` 由 `upgraded, never weakened` 改为准确表述（3 条 `is None` 被替换、1 条 `is False` 被翻转、无检查丢失）；**只改措辞，未动任何数值字段**。T-13 那句「保留原状」在本轮被取代。
+4. **sha256（旧 → 新）**：`probes/l3_backvalidation_prereg.json` `39cc5e67…f435e9` → `6394209ae292ce7b9dde72fa852e5eca160376f3b463b3e8f7320b9c05fd74ef`；`probes/l3_stage1_pilot_summary.json` `e57dff25…89d37` → `212ec2493dcaf4b757ea6a25295890b7144694191f49aeee4b8bba8bfec272d7`。
+5. **未改（禁改项，如实记录）**：`probes/l3_stage1_pilot.py`（生成器会把 B 的措辞打回旧串）、`models/homo_lumo_baselines.json`（仍记 `prereg_sha256 = 39cc5e67…`，属历史记录）。
+
+**互相指向**：本小节 ↔ `reports/decisions_log.md` §20（A 另见 §18.7、B 另见 §18.9）。
+
+### T-15 Reaxys v1.x 备货扫描（本轮；数据侧第四路，队列可复现、读数为人工转录；含对抗审读收口）
+
+1. **触发**：手动 Reaxys 队列的最后一格（FEC → VC → MOPN → GVL/DME/环丁砜 → **v1.x 备货**）本轮用 **Edge 已登录会话**走完；**手动逐条查询，未用批量爬虫、无导出、无自动化遍历**；全部读数 `restricted_crosscheck_only`，**不进 `data/`、不进池、不替代任何冻结读数**。
+2. **合规串已按审读改正（原串不实）**：原串称「查询产物不含任何受限数值字段的机器可读镜像」，而产物自身的 `readings[].rendered_rows` 与 `net_new_detail[].value` 就是渲染表数值列的**逐值机器可读镜像**，该自述被自己证伪。现串如实承认镜像存在，并写明「只存于本仓库与 week13 交付包内，**禁止再次分发**」；机读侧新增 `restricted_values_contract`（`machine_readable_mirror_present = true`、`redistribution = not_permitted`、`declares_channel_availability = false`）。provenance 由 `reaxys←primary_doi` 改为 `reaxys<-bibliographic_citation`——Reaxys 渲染表只给文献题录、不给 DOI。
+3. **先修正自己的错（覆盖度检查的键）**：按俗名（adiponitrile、diglyme、triglyme、tetraglyme）去本地观测表匹配会**全部误判为「本地 0 行」**——本地表用 IUPAC 登记名（`hexanedinitrile`、`2,5,8-trioxanonane`、`2,5,8,11-tetraoxadodecane`、`2,5,8,11,14-pentaoxapentadecane`），实测本地温度点数为 31 / 6 / 5 / 5。**队列因此改为按 InChIKey 重算**：覆盖度检查本身也要用不依赖命名的键。
+4. **队列（两个计数口径已分开；旧稿把 236/167/106 写混）**：池 236 个溶剂里 **167 个没有温度序列**（`<2` 个不同温度），池内**有**温度序列的是 **69** 个（167 + 69 = 236，脚本内已断言）。旧稿那句「有温度序列的只有 106 个」是**观测表全表**（153 个物质）口径，167 + 106 ≠ 236 本身即自相矛盾；现两个计数分别落在 `pool_members_with_two_or_more_distinct_T` 与 `observation_table_compounds_with_two_or_more_distinct_T` 两个键下。优先级 **P1 = 2**、**P2 = 22**、**P3 = 143**；**P1 由池内 `is_champion=true` 派生**（不再硬编码 EC/PC 两个名字），`model_ready` 条件在本队列上恒真（已记 `model_ready_filter_is_vacuous_on_this_queue`）；**P2 是族级复核顺序、不是可用性判断**——`fluorinated` 是子串规则，会把非电解液芳烃（Fluorobenzene、m-/o-/p-Fluorotoluene、Trifluoroacetic acid 等 9 行）一并排进 P2。产物 `probes/reaxys_v1x_stocking_queue.csv`；复核 `probes/verify_reaxys_v1x_stocking_scan.py`（**独立重算同一集合**，**70 项检查全过**）。
+5. **族分类规则已修（审读给出 ≥5 例误分类）**：`ionic_liquid` 提到 `fluorinated` **之前**（否则含氟阴离子会把咪唑盐拖进 `fluorinated`，并补 `imidazol-3-ium` / `azolium` 拼法）；新增 `siloxane` 规则挡在 `glyme_ether` 之前（`oxa` 会命中「disiloxane」，Hexamethyldisiloxane 曾被判成 `glyme_ether`）；补「-ol / diol」后缀规则（`1,2-ethanediol` 曾落到 `other`），并显式排除硫醇（`1-Butanethiol`）。
+6. **校验器已补非派生列覆盖（原校验器 36/36 可被伪造）**：审读手工把 `target_dielectric=11.1`、`target_T_K=999.0`、`local_rows=42` 改进去，原校验器仍 36/36 全过、pytest 22 passed。现校验器逐行重算 `name / smiles / target_dielectric / target_T_K / family_tag（对 classify()）/ local_rows / is_champion / champion_short / model_ready / probed_in_this_round / access`，并给池与观测表各加 sha256 钉（观测表 `159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9`）。
+7. **Reaxys 探测读数（7 个物质）**：唯一带温度序列的是 **tetraglyme**（声明 8 hits、实际渲染 7 行、1 MHz、14.99–54.99 °C，Rivas et al., *J. Chem. Thermodynamics* 2006, 38(3), 245-256）；triglyme 与己二腈各只有 1 条**五列全空**的「提及级」条目（本地反而有 5 点 / 31 点温度序列）；diglyme 与 TTE 在 Reaxys 侧为 0 条。EC / PC 在**观测表**里是 0 行，人工转录的那 1 个点取自 **v03 冻结表**冠军行——两个计数口径不同，报告中列名已分开。
+8. **净新增 = 4 条 / 2 个物质 / 3 篇一手文献**：tetraglyme 高端 2 条（318.14 K、328.14 K，1 MHz）；PC 的 20 °C、35 °C 两点（2 MHz，Laurence 1994 / Ritzoulis 1989）。tetraglyme 其余 5 点与本地逐点重合（差 0.01 K）。**口径限定**：PC 的「净新增 2 条」以 **v03 冻结表冠军行**为基线（观测表基线为 0 行）；4 条全部带给定频率口径。
+9. **冠军核对（判决按证据强度降级；旧稿的「独立旁证」已推翻）**：旧稿称 PC「被两个互相独立的一手来源复现」，**与本仓库自己的溯源结论相反**——`reports/jstage_corroboration.md` 已写明 64.92 来自 Nanbu 2007 转引的 Riddick《Organic Solvents》4th ed. 汇编（原文：Corroboration here means *agreement with a compilation restatement*, not independent measurement）。判决降级为 `compilation_restatement_agrees`，证据链写成机读字段（互异题录 + 共同汇编出处 + 交叉引用与**逐字引文**，由守卫断言引文确实出现在被引文件里）。EC 那条同时补上旧稿漏用的既有事实：89.78 在本仓库溯源里是 **40 °C = 313.15 K**（正是 EC 冻结温度，相对偏差 0.80%），Reaxys 却标 25 °C，而 EC 熔点 36.4 °C——判决为 `value_matches_but_reaxys_temperature_label_conflicts`，这本身即「Reaxys 温度栏不可信」的内部证据。
+10. **与既有结论的关系**：**方向一致，不改结论**——与「外部免费 ε(T) 扩张收官」（ThermoML 在线 / ILThermo 温度维度 / DDB 免费层 / OA 直读四源全证伪）同向，四源证据分别见 `reports/thermoml_online_topup_round6.md`、`reports/ilthermo_probe.md`、`reports/ddb_free_search_probe.md`、`reports/al_round3.md`；本次探测**强化**该结论，不推翻、不重开。
+11. **未闭合**：tetraglyme 声明 8 hits 但表内只渲染 7 行（疑缺 39.99 °C 那条）；**PC 声明 10 hits 但只渲染 7 行（差 3 行）**，本轮未读到；EC 的 5.4 @ 25 °C 条目与同物质其余三条差一个数量级，只登记、不判定；TTE 在 Reaxys 与本地都只有单点，缺口未闭合。
+12. **本产物不产生任何通道可用性声明**：不说介电通道可用、不说任何家族过门、不替代任何冻结读数；第 9 条是**证据强度**判决，不是通道判决。
+
+
+
+---
+
+## 附录 U：L3 回溯验证预注册（锁定）+ 四通道现状对账（2026-09-26）
+
+> 本附录是手册对「机读预注册」的索引。锁定常量的唯一权威是 `probes/l3_backvalidation_prereg.json`（`status = LOCKED`），正文版本在 `reports/decisions_log.md` §14，两者由 `tests/test_l3_backvalidation_prereg.py` 看守。
+
+### U-1 锁了什么
+
+- **冠军集**（真值逐字取自冻结表 `data/dielectric_v03.csv`，digest `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`）：
+  - 溶剂侧：EC `KMTRUDSVKNLOMY-UHFFFAOYSA-N`（ε=90.5）、PC `RUOJZAUFBMNUDX-UHFFFAOYSA-N`（ε=64.9）；
+  - 添加剂侧：FEC `SBLRHMKNNHXPHG-UHFFFAOYSA-N`（ε=78.4）、VC `VAYTZRYEBVHVLE-UHFFFAOYSA-N`（ε=126.0）。
+- **判据（合取，没有部分通过）**：C1 召回（**K = 20**，两清单各 2/2）∧ C2_solvent（**|Δlog10(ε)| ≤ 0.10**）∧ C2_additive（**≤ 0.15 eV**，直接沿用既有还原门 `p4_redox_summary.json → gate.threshold_mae`）∧ C3 阴性对照（置换种子 **20260928**，对照臂进前 20 的冠军数 **≤1**）。
+- **排除四层 L1–L4**：训练集 / 特征构造 / 选择环节 / 评分路径，冠军一律不得进入。
+- **池规则**：每清单 **≥100 个可评分分子**（`min_scored_per_list = 100`），不足即判「效力不足」；池必须先落盘并把 sha256 写入 `pool_rule` 才允许评分；**反挑选**：纳入口径不得以冠军排名为条件。
+- **阶段一试点**：允许先只跑介电通道、池内、只报 EC/PC，但必须显式标注 `stage_1_pilot_not_a_verdict`，不得作为结论引用。
+
+### U-2 不对称（必须照写，不许含糊）
+
+FEC 与 VC 的 `model_ready` 本来就是 `false`，它们**已经**不在冻结介电拟合集里 —— 介电通道对它们无需额外剔除；真正需要额外剔除的只有 EC 与 PC。**不许**写成「四个都做了留一」。
+
+### U-3 四通道现状对账（只读子智能体实测审计，2026-09-26）
+
+| 通道 | 判决 | 关键事实 |
+| --- | --- | --- |
+| 介电排序 | 部分可运行 | 口径已冻结（raw→R²、`log(epsilon-1)`→排序）；适用域闸门 `src/electrolyte_ml/applicability.py`，触发率 **33.66%**；**无持久化模型文件**；无 `SMILES→ε` 入口 |
+| 氧化还原 | 部分可运行，**门是红的** | R²=**0.9443164629360373** 是 IP→氧化自由能**一维线性映射**在 78 行留出集上的值；预注册门 `MAE<0.15 eV` **未过**（实测 **0.2905180517963865**）；还原侧 **0.4096** |
+| HOMO/LUMO | **出口 2 模型不存在** | 附录 Q-2 的 `models/homo_lumo_baselines.json` 全仓零命中；池内真值可用（Batt-P30K 29,519 分子）；唯一训过的构象敏感目标是偶极矩，R²=0.5636 未过门 |
+| 黏度 | 部分可运行（全局） | **族内排序在代码层没有实现物**；全局资产齐全 |
+
+**现成起点**：`probes/al_round1.py` 是全仓唯一现成的端到端筛选入口（`Batt-SLM.smi` 115,756 行 → hazard_excluded 29,808 → safe 85,921 → longlist 300 → top30 30）。
+
+### U-4 两处订正（本轮新增，必须传下去）
+
+1. **黏度的 0.064 / 0.175 是 `log10_cP` 的 MAE，不是 R²**（出处 `probes/viscosity_baseline_summary.json` 的 `splits.*.models.MorganTemperatureXGBoost.log10_cP.mae`）。此前多处写作「R² 0.064 vs 0.175」属口径笔误；教训本身不变（同分子跨折会虚高，`primary_gate` 里 `group_key_passed = false`）。
+2. **「RX-392 R²=0.944」≠「氧化还原通道能用」**：它是一维线性映射的留出 R²，且其预注册门是红的；把 0.944 当成四通道里最可靠的那条会误导排期。
+
+### U-5 启动完整跑批前的阻塞项（按依赖排序）
+
+1. **HOMO/LUMO 出口 2 模型**（附录 Q-2）必须先训练并过 `MAE ≤ 0.2 eV` 门；
+2. **氧化还原门必须先变绿**（`MAE < 0.15 eV`），否则 C2_additive 预先注定不过；
+3. 介电通道需要不依赖名册样本外的 `SMILES→ε` 正式入口，**或**把池限制为名册内并如实声明；
+4. 池定义落盘 + sha256 写入 `pool_rule`，然后才允许评分。
+
+**纪律**：判据先锁、后跑批、事后不放宽（与附录 T 的 §10/§11 同一条）。
+
+### U-6 池闸门落地与阈值 rationale 勘误（2026-09-26 同轮 amend；锁值未动）
+
+- **池闸门**：`probes/l3_backvalidation_prereg.json → pool_rule` 新增四个预留运行时字段（`pool_path` / `pool_sha256` / `pool_size_by_list` / `pool_frozen_before_scoring`，初值 `null` / `null` / `null` / `false`），并新增 `amendment_1` 元数据；`stage_1_pilot` 新增 `verdict_eligible = false`。守护测试新增 4 条，其中一条是**「评分产物 `probes/l3_backvalidation_run_summary.json` 存在 ⇒ 池字段必须非 null」**（该文件今天不存在，闸门空转，跑批那天才咬人）。
+- **阈值 rationale 勘误**：C2_solvent 的 rationale 原把 `probes/v032_target_scaffold_summary.json` 的 `log_epsilon_minus_one['Morgan+Physical'].mae.mean = 6.2727` 读成「log(ε−1) 尺度的点估计 MAE」，据此推出 ≈0.040 log10；同块分层值（`mae_20_60 = 10.79`、`mae_gt60 = 72.64`）证明它是**回变换到 raw ε 尺度**的全表 MAE。原句已逐字保存在 `amendment_1.rationale_erratum.original_text`，正文改动与 `reports/decisions_log.md` §15 成对。
+- **这不是放宽阈值**：七个锁定常量（`K = 20`、`0.10`、`0.15 eV`、`20260928`、`max_champion_hits = 1`、`min_scored_per_list = 100`、`pass_expression`）与折号/种子一个字未动（`tests/test_l3_backvalidation_prereg.py::test_pool_rule_amendment_preserves_every_locked_value` 逐值看守）；新增的全是更严的闸门。
+
+**互相指向**：本小节 ↔ `reports/decisions_log.md` §15；T-11 记录同一轮的手册正文订正。
+
+---
+
+## 附录 V：进展索引 —— L3 阶段一试点 / 出口 2 / 氧化还原 v2（2026-09-26）
+
+> 本附录是本轮三项结果的**索引与读法**，不是新判据。所有数值一律以仓库产物为准（机读 JSON + 报告）；本附录只做导航与「怎么读 / 不许怎么读」。
+
+### V-1 阶段一试点：介电通道 · 池内 · EC/PC —— **未过，但这不是判决**
+
+- 标签 `stage_1_pilot_not_a_verdict`；预注册 `stage_1_pilot.verdict_eligible = false`。
+- 池 `probes/l3_stage1_pilot_pool.csv`，**236 行**，sha256 `b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18`；已回填 `pool_rule` 四个运行时字段 + `amendment_2`。
+- **C1 = 0/2**：EC 第 **24** 名（预测 ε 23.0565，真值 90.5）、PC 第 **58** 名（预测 17.0438，真值 64.9）。
+- **C2_solvent 未过**：Δlog10 = **−0.5939**（EC）/ **−0.5807**（PC），约为门宽 `0.10` 的 **5.8 倍**。
+- **C3 显式未跑**（`c3_not_run_stage_1_pilot`）；**C2_additive 显式未跑**（`not_run_stage_1_pilot_redox_channel_not_executed`）。
+- 回归锚点：与 `probes/v032_target_scaffold_summary.json` 六臂 × 9 指标**最大绝对差 = 0.0**，14,160 个逐行预测字符串**逐字符一致** ⇒ 失败不是实现问题。
+- 温度：EC `T_K = 313.15`、PC `T_K = 298.15`，与预注册真值温度一致。
+- 最有价值的观察：**剔除训练侧后 EC 从第 14 退到第 24、PC 从第 43 退到第 58**（未剔除时 EC 14 / PC 43）；top-20 里 13 个被适用域闸门判为 `outside_associated_liquid`。
+
+**怎么读（硬规定）**：
+
+1. **不得写成「L3 未通过」。** 预注册的 `failure_handling` 只管**四通道完整跑批**；本试点只跑介电通道的一条腿，
+   合取式 `C1 ∧ C2_solvent ∧ C2_additive ∧ C3` 因此**无法**被本轮任何数字满足或否定（`verdict_eligible = false`）。
+2. **`pool_frozen_before_scoring = true` 是自述值（self-attested）**：旁证只有 mtime 先后 + 一个自身承认
+   「无法证明冻结早于看见冠军名次」的闸门；后一条仍靠纪律（纳入口径不得以冠军排名为条件）。
+3. 独立只读审读员复核结论：**无 Critical / 无 Important**（锚点、锁值、冠军真值、温度、「未跑」声明、标签、17 条守卫的可咬人性全部成立）。
+
+### V-2 出口 2：HOMO/LUMO/IP/EA 门读数 —— **2/4（「四个全过」未通过）**
+
+| 目标 | 折均 MAE (eV) ± std | 合并 OOF（次级读数） | 判定 |
+| --- | ---: | ---: | --- |
+| LUMO | 0.13855 ± 0.00286 | 0.13352 | **过门** |
+| HOMO | 0.19051 ± 0.00287 | 0.18455 | **过门** |
+| IP | 0.20110 ± 0.00321 | 0.19466 | **未过**（差 1.1 meV） |
+| EA | 0.23415 ± 0.00379 | 0.22777 | **未过**（差 34 meV） |
+
+- `gate.passed = false`、`targets_passed = 2/4`；协议是**未降级的** `RepeatedKFold(5, 10, 42)`（逐折 seed = 42 + 全局折号，共 50 折）。
+- **不许**用合并 OOF 次级口径把 IP 救成「过」（0.19466 < 0.20 只是次级读数）；**不许**据此说「出口 2 已可用」——只有 LUMO/HOMO 两个目标过门。
+- 可及下限：**IP 的 0.20 eV 地板是结构性的**（IP−HOMO 常数差 2.403 eV、散布 0.158 eV、r = −0.9876）；
+  **EA 是数据受限**（学习曲线未饱和，幂律指数 ≈ −0.165；进 0.20 eV 约需 **2.4× 数据 ≈ 58k**）。
+- 特征只允许读 h5 的 `smiles`；`gap`/`homo`/`lumo`/`ip`/`ea`/`dipole`/`quadrupole`/`ener*` 全在 `forbidden_inputs`。
+
+### V-3 氧化还原 v2（富特征）—— **门仍红**
+
+- 留出 MAE 氧化 **0.2174** / 还原 **0.3317**；CV（5×10）氧化 **0.2061 ± 0.0060** / 还原 **0.3183 ± 0.0115**；门 `0.15 eV` **未动**，`passed = false`。
+- 相对 v1 最优 **−25.2% / −19.0%**；Dummy 共折 CV **0.9669 / 1.1405**。
+- 锚点复现：`deterministic_split(392, 0.2, 42)` → **314 / 78**，`test_id_hash` 逐位相同；v1 `linear` 的 MAE `0.2905180517963865` / R² `0.9443164629360373` **实差 0**。
+- 瓶颈是 **n = 392 的标注量**：训练残差 0.0508 / 0.0780（远低于门），学习曲线单调下降**未走平**，单特征曲线基本水平。
+
+**纪律（硬规定）**：**门是红的 ⇒ 氧化还原通道不得被表述为可用**；富特征改善**只作方向证据，不得进任何对外文本**
+（与附录 T-1 及 `decisions_log.md` §11 把 Week 11 的 `+0.1241` 从对外文本撤下同一条纪律）。
+
+### V-4 新事实与裁定（本轮）
+
+1. **裁定：`fold_policy` 分歧采纳写手的更严读法。** 预注册 `fold_and_seed.fold_policy` 写「其余行折号逐位不变、只把冠军从其所在折的训练侧剔除」，
+   其 `fold_source` 指向 `data/processed/v032_ablation_predictions.csv`（**该表不含 Batt-P30K 分子**）；
+   写手按「冠军整体移出建模池（29,519 → 29,515）+ 折号在 29,515 行上由 `RepeatedKFold(5,10,42)` 重新生成」执行，
+   预注册 L1 被**严格满足**。**协调者裁定：采纳写手读法**；**同时必须如实记录：预注册的 `fold_policy` 对 HOMO/LUMO 通道的 `fold_source` 指向不成立，
+   需下一步 amend 补正 —— 不许假装原本就一致。**
+2. **归档盲区：`data/processed/*` 被仓库既有 `.gitignore` 排除**，出口 2 的折记录 CSV 与 OOF 明细 CSV **不进 git**，只能由脚本重跑再生；
+   week13 交付包把这两份表**复制进包**作为唯一归档途径。本轮**未改** `.gitignore`（不在写手写入集内）。
+3. **门红不得表述为可用**：氧化还原（V-3）与出口 2 的 IP/EA（V-2）**不得**表述为可用；阶段一试点（V-1）**不得**表述为 L3 判决。
+4. **自述值边界**：守卫对 `amendment_2` 的自我分类字段（`kind` / `locked_values_unchanged`）属**自我复述**，不是独立证据；
+   独立证据是审读员对 week12 快照做的**扁平 diff**（只有 4 个运行时字段填值 + `amendment_2` 新增，无锁定值移动）。
+5. **一处表述订正**：`decisions_log.md` §17.7 与守卫 docstring 原写「断言只增不减/未删未弱化」字面为假，已改为准确表述；详见 T-13。
+
+### V-5 下一步与阻塞
+
+1. **出口 2**：IP 卡在门口（1.1 meV）、EA 数据受限 —— 若要 EA 过 0.20 eV，需要约 **2.4× 数据**或换 3D/GNN 表示；**不能**靠放宽特征禁用清单。
+2. **预注册 amend**：补正 `fold_policy` 对 HOMO/LUMO 通道的 `fold_source` 指向（裁定已下，文本尚未落）。
+3. **氧化还原**：门仍红；学习曲线外推需补标注量（氧化 ≈ n 630、还原 ≈ n 950，仅量级指示，不构成承诺）。
+4. **L3 四通道完整跑批**：仍被门槛挡着 —— 出口 2 门 2/4 未过、氧化还原门红、介电通道仍无「名册外」的 `SMILES→ε` 入口
+   （备选方案 = 名册内池 + 如实声明，本试点已按此执行）。
+
+**互相指向**：V-1 ↔ 附录 U（预注册与四通道对账）与 `reports/l3_stage1_pilot.md`；V-2 ↔ 附录 Q-2 与 `reports/homo_lumo_baselines.md`；
+V-3 ↔ 附录 U-3/U-4 与 `reports/p4_redox_v2_enriched.md`；V-4/V-5 ↔ `reports/decisions_log.md` §18 / §19。
