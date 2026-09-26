@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "task": "week16_lever9_knowledge_purity_sweep_erratum",
+  "title": "Lever 9 erratum round: offset-aware permutation importance, whole k grid re-run",
+  "locked_at_utc": "2026-09-26T07:24:48Z",
+  "status": "locked_before_run",
+  "lock_rule": "Criteria and kill lines frozen before the run. Never relaxed afterwards. This round corrects a measurement; it does not re-open the question.",
+  "why": "The Week 15 adversarial review (finding C-1) showed that version 1 of this lever measured the wrong columns: the ten knowledge-pool names were attached to the first ten columns of the frozen physical block. A reading produced by an invalid measurement cannot stand as the lever's reading, so the whole k grid is re-run with the corrected column targeting. Version 1's numbers are preserved verbatim, never overwritten, and both readings are published side by side.",
+  "defect_under_correction": {
+    "raised_by": "week15 adversarial review, finding C-1 (Critical)",
+    "site": "probes/dielectric_knowledge_purity_sweep.py:560 builds full = hstack([frozen_physical, knowledge]) with the physical block first; :565-573 hands permutation_importance the label list KNOWLEDGE_POOL; :307 enumerates the passed labels from position 0.",
+    "mechanism": "permutation_importance shuffles reference[:, position] while position enumerates the *passed labels* from zero. The feature matrix it is handed is [physical | knowledge], so position 0..9 addresses the first ten physical columns and the ten knowledge names are only labels on them. Every score is therefore a physical-column importance carrying a knowledge name.",
+    "second_effect": "the top-k selection is taken from that broken order and the arm's column order is then set by it (:596-599, columns = [position_of[m] for m in order]); XGB_PARAMS carries colsample_bytree=0.8 (probes/dielectric_representation_ablation.py:48), so the fit itself, not only the selection, depends on the order.",
+    "consequence": "the k=2/4/6 arms do not measure the intended subsets at all, and the k=10 reading is not an invariant of the measurement: it moves with the column order."
+  },
+  "correction_rule": {
+    "definition": "rank the pool members by permutation importance computed with a label list that covers the whole feature matrix, i.e. columns = [one label per frozen-block column] + list(KNOWLEDGE_POOL). The callee's position then addresses the same feature column it is labelled with, so every score is attached to the column that was actually shuffled. Frozen-block scores are computed and discarded; the ranking keeps only the pool members.",
+    "tie_break": "identical to version 1: ties keep the pre-registered pool order, so the ranking stays a pure function of the inputs.",
+    "k_grid": [
+      2,
+      4,
+      6,
+      10
+    ],
+    "leak_rule": "unchanged from version 1. The ranking is measured on the fold's own training rows only, never on test rows. A ranking computed on the pooled dataset is a leak and is forbidden.",
+    "what_changes": "the column targeting, and nothing else.",
+    "what_must_not_drift": "the fold dealing and its signature, the score mask, the scored compound set, the baseline arm, the model hyper-parameters, the knowledge pool members and their order, the k grid and the thresholds. Any of these moving invalidates this round rather than being folded into it."
+  },
+  "thresholds": {
+    "pass_delta_r2": 0.02,
+    "kill_delta_r2": 0.005,
+    "min_positive_repeats": 8,
+    "placebo_collapse_tolerance": 0.02,
+    "note": "the same four constants version 1 used (probes/dielectric_knowledge_purity_sweep.py:161-164), inherited verbatim and not relaxed. The corrected measurement is judged against the same bar as the invalid one."
+  },
+  "pass_criterion": "the best k reaches a grouped R2 delta of at least +0.0200 against the baseline arm re-run in the same script, AND the delta is positive in at least 8 of the 10 repeats, AND the placebo arm collapses",
+  "kill_line": "every k stays below +0.0050 -> dead, reported as dead. A pass carried by a single repeat is not a pass.",
+  "shape_finding_to_report": "the shape of the delta-R2 against k curve is itself a deliverable. The paper's mechanism predicts an interior peak (too few knowledge dimensions loses signal, too many adds burden). A monotone decrease would contradict the mechanism and must be reported as such.",
+  "shots_policy": {
+    "shots_registered_up_front": 4,
+    "rule": "the same four-point grid as version 1, declared before this run.",
+    "why": "an erratum of an invalid measurement is not a fresh attempt at the prize. The decision is read off the corrected curve while both curves are reported side by side. Had the corrected curve crossed the pass bar, the correction itself would have to be disclosed as the reason and the version-1 reading preserved next to it. No k is selected after the fact in either case, and the four points remain four shots in the standing shot count."
+  },
+  "validation_checks_required_before_the_verdict_is_read": [
+    "the baseline arm re-runs to 0.4091179943351143 within 1e-9 on the identical fold signature",
+    "the defect is reproduced numerically rather than asserted: the multiset of version-1 scores equals the multiset of the offset-aware importances of the first K frozen-block columns, which is what it means for the labels to have been attached to the physical block",
+    "the corrected ranking is invariant to the order of the label list it is handed, once that list still maps each label to its own feature column"
+  ],
+  "erratum_discipline": [
+    "the version-1 prereg, script, summary, report and importance artefact are pinned by digest below and must stay byte-identical",
+    "version-1 readings are quoted verbatim and are never edited, overwritten or recomputed in place",
+    "the corrected reading is published next to the version-1 reading, each labelled by its column-targeting rule, so a reader can see which number came from which measurement",
+    "no test-fold row may enter the ranking",
+    "AB-6's per-feature narrative and its top-three list stay uncitable unless the corrected ranking agrees with them",
+    "the erratum is reported even if the corrected verdict is unchanged, because an unchanged verdict is not evidence that the defect was harmless"
+  ],
+  "version_1_pins": {
+    "probes/dielectric_knowledge_purity_sweep_prereg.json": "e0b1093246517d440b27a168fb01d53a0479a007797797d1bb03aead52625623",
+    "probes/dielectric_knowledge_purity_sweep.py": "373707f59d7a468e4beb8826dca12960ce05f38204196bfe1233842ee726dcef",
+    "probes/dielectric_knowledge_purity_sweep_summary.json": "76e3c832302acd2cce86e90dd65b2f8cc574700e0e4c703e635e4b3a54ff7ee3",
+    "reports/dielectric_knowledge_purity_sweep.md": "cc5444619817053c32d10caa55d3fb0d4733c7e95edd5075348a5db1568ba2d3",
+    "probes/artifacts/dielectric_knowledge_purity_sweep_importance.csv": "3f175e5beadab9bc988bf12b007244bdae210a98cdf1c4c11118a7dfb243e007"
+  },
+  "frozen_red_lines_untouched": [
+    "data/dielectric_v03.csv digest ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "probes/l3_stage1_pilot_pool.csv digest b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "probes/l3_backvalidation_prereg.json digest 77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+    "data/processed/dielectric_observations_v11plus.csv digest 159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9"
+  ],
+  "forbidden": [
+    "ranking knowledge with any test-fold row in view",
+    "selecting k after seeing the results and then quoting only the best k without counting all four as shots",
+    "row-level random splits for any conclusion",
+    "silently shrinking the scored pool",
+    "changing the score mask, the compound set or the fold numbers",
+    "quoting the paper's R2 0.97-0.99 as a target for our target",
+    "quoting 0.5332 or 0.5454 next to the v1.0 headline 0.364 without their pool definitions",
+    "quoting the corrected reading without the version-1 reading beside it",
+    "treating the corrected k grid as a fresh four-shot attempt at the same question",
+    "editing or rewriting the version-1 summary, report or importance artefact"
+  ]
+}

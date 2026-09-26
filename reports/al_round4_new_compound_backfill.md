@@ -55,7 +55,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=off; epsilon=wording_only; leads=3
 - ε 线索：wording_only（无数值）；证据类型 汇编转述
 - OA：bronze;green，可达=true；线索来源 https://edoc.unibas.ch/48169/1/No%2037%20Hankache_JPhysChemA_2012_116_8159.pdf
-- 本地非介电痕迹：data/external/chew_2024_viscosity_supp_2.csv:name;data/processed/landolt_boernstein_2015_pure_liquid_queue.csv:name;data/processed/viscosity_baseline_predictions.csv:key;data/processed/viscosity_raw.csv:key;data/restricted/springer_materials/interactive_pure_dielectric_catalog.json:name;data/viscosity_v01.csv:key
+- 本地非介电痕迹：data/external/chew_2024_viscosity_supp_2.csv:name;data/processed/eta_epsilon_joint_observations.csv:key;data/processed/landolt_boernstein_2015_pure_liquid_queue.csv:name;data/processed/viscosity_baseline_predictions.csv:key;data/processed/viscosity_raw.csv:key;data/restricted/springer_materials/interactive_pure_dielectric_catalog.json:name;data/viscosity_v01.csv:key
 - 受限痕迹：命中 data/restricted/ 下的文件。本清单只记路径、不取任何值；该物质应走受限交叉核对通道判定，而不是靠新取数解决。
 
 ### P3 · decafluoropentane（放弃）
@@ -92,7 +92,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=off; epsilon=none; noise_veto=pool_boiling_heat_transfer; leads=1
 - ε 线索：none（无数值）；证据类型 无ε线索
 - OA：gold，可达=true；线索来源 https://doi.org/10.1088/1742-6596/2685/1/012064
-- 本地非介电痕迹：data/processed/viscosity_raw.csv:key;data/viscosity_v01.csv:key
+- 本地非介电痕迹：data/processed/eta_epsilon_joint_observations.csv:key;data/processed/viscosity_raw.csv:key;data/viscosity_v01.csv:key
 
 ### P3 · tripropylene glycol（仅线索）
 
@@ -101,7 +101,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=adjacent; epsilon=none; leads=1
 - ε 线索：none（无数值）；证据类型 无ε线索
 - OA：bronze，可达=false；线索来源 https://pubs.aip.org/aip/jcp/article-pdf/doi/10.1063/1.4740236/14080820/064508_1_online.pdf
-- 本地非介电痕迹：data/external/chew_2024_viscosity_supp_2.csv:name;data/processed/viscosity_baseline_predictions.csv:name;data/processed/viscosity_raw.csv:name;data/viscosity_v01.csv:name
+- 本地非介电痕迹：data/external/chew_2024_viscosity_supp_2.csv:name;data/processed/eta_epsilon_joint_observations.csv:name;data/processed/viscosity_baseline_predictions.csv:name;data/processed/viscosity_raw.csv:name;data/viscosity_v01.csv:name
 
 ## 4. 本地已覆盖条目（对账行，不计入补录）
 

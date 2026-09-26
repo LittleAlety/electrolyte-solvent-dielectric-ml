@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "task": "week16_eta_epsilon_joint_schema",
+  "title": "eta-epsilon joint temperature-resolved observation table: the build contract",
+  "locked_at_utc": "2026-09-26T07:50:46Z",
+  "status": "locked_before_run",
+  "lock_rule": "The schema, the quality-layer rule, the merge rules, the exclusion list and the evaluation contract are frozen before the first build. Later rounds may add columns; they may not relax a rule, and a rule that has to change is reported as a correction rather than edited in place.",
+  "why": "Appendix Z-5立项ed the eta-epsilon joint temperature-resolved dataset as paper-2 material on six axes: open, per-value provenance, temperature-resolved, machine-checkable, honest evaluation and an applicability gate. Those axes are cheap to claim and expensive to hold, so they are written down as a schema and a set of rules before any row is assembled.",
+  "axis_mapping": {
+    "open": "licence and redistributable are per-row columns; the restricted 858 rows are excluded by construction, not by convention",
+    "per_value_provenance": "source_doi + source_file + source_row_index + source_file_sha256 on every row",
+    "temperature_resolved": "T_K is required and has no default; a row without a temperature is not an observation",
+    "machine_checkable": "a verifier recomputes the schema, the unit rule and the digests, and a manifest pins the table",
+    "honest_evaluation": "GroupKFold by InChIKey with an asserted group_overlap == 0; random-row is a leak reference only",
+    "applicability": "phase, method, n_components and the quality layer travel with the row so a gate can be defined later without re-reading the sources"
+  },
+  "observation_schema": {
+    "grain": "one measured value at one temperature for one substance, from one source row",
+    "columns": [
+      {
+        "name": "row_id",
+        "dtype": "str",
+        "required": true,
+        "note": "stable, {dataset_id}:{source_row_index}; the merge never renumbers a source row"
+      },
+      {
+        "name": "dataset_id",
+        "dtype": "str",
+        "required": true,
+        "note": "which corpus the row came from; one of the frozen enum below"
+      },
+      {
+        "name": "property",
+        "dtype": "str",
+        "required": true,
+        "note": "epsilon or viscosity; the joint table exists for exactly these two"
+      },
+      {
+        "name": "property_family",
+        "dtype": "str",
+        "required": true,
+        "note": "dielectric_constant or dynamic_viscosity"
+      },
+      {
+        "name": "inchikey",
+        "dtype": "str",
+        "required": true,
+        "note": "the identity key AND the cross-validation group key; never a name, never a CID"
+      },
+      {
+        "name": "name",
+        "dtype": "str",
+        "required": false,
+        "note": "display only, never joined on"
+      },
+      {
+        "name": "smiles",
+        "dtype": "str",
+        "required": false,
+        "note": "carried for feature recomputation; the identity check is the InChIKey"
+      },
+      {
+        "name": "T_K",
+        "dtype": "float",
+        "required": true,
+        "note": "kelvin; no room-temperature default"
+      },
+      {
+        "name": "value",
+        "dtype": "float",
+        "required": true,
+        "note": "the measured value in the canonical unit below"
+      },
+      {
+        "name": "unit",
+        "dtype": "str",
+        "required": true,
+        "note": "canonical unit: '1' for epsilon, 'Pa*s' for viscosity; never mixed inside the column"
+      },
+      {
+        "name": "phase",
+        "dtype": "str",
+        "required": false,
+        "note": "as reported by the source"
+      },
+      {
+        "name": "method",
+        "dtype": "str",
+        "required": false,
+        "note": "the measurement method as the source states it; empty is allowed and means unstated"
+      },
+      {
+        "name": "uncertainty",
+        "dtype": "float",
+        "required": false,
+        "note": "source uncertainty, original scale"
+      },
+      {
+        "name": "uncertainty_kind",
+        "dtype": "str",
+        "required": false,
+        "note": "expanded / standard / unknown; an uncertainty without its kind is not comparable"
+      },
+      {
+        "name": "confidence_level",
+        "dtype": "float",
+        "required": false,
+        "note": "as reported"
+      },
+      {
+        "name": "frequency_mhz",
+        "dtype": "float",
+        "required": false,
+        "note": "epsilon only; a dielectric value without its frequency is not a defined measurement"
+      },
+      {
+        "name": "pressure_kpa",
+        "dtype": "float",
+        "required": false,
+        "note": "as reported"
+      },
+      {
+        "name": "n_components",
+        "dtype": "int",
+        "required": true,
+        "note": "1 for a pure substance; the modelled target is the pure-substance subset"
+      },
+      {
+        "name": "pure_or_mixture",
+        "dtype": "str",
+        "required": true,
+        "note": "pure or mixture"
+      },
+      {
+        "name": "source_doi",
+        "dtype": "str",
+        "required": false,
+        "note": "required for quality_layer=publishable_core, allowed empty only in filter_only"
+      },
+      {
+        "name": "source_kind",
+        "dtype": "str",
+        "required": true,
+        "note": "primary_thermoml_measurement / published_supplement_open_subset / compilation"
+      },
+      {
+        "name": "source_file",
+        "dtype": "str",
+        "required": true,
+        "note": "the file the row was read from"
+      },
+      {
+        "name": "source_row_index",
+        "dtype": "int",
+        "required": true,
+        "note": "0-based index in that file"
+      },
+      {
+        "name": "source_file_sha256",
+        "dtype": "str",
+        "required": true,
+        "note": "the digest of the source file at build time; provenance that can be rechecked"
+      },
+      {
+        "name": "quality_layer",
+        "dtype": "str",
+        "required": true,
+        "note": "publishable_core or filter_only; see the two-layer rule"
+      },
+      {
+        "name": "licence",
+        "dtype": "str",
+        "required": true,
+        "note": "thermoml_open / cc_by_4_0 / publisher_terms_see_source; recorded per row, not per project"
+      },
+      {
+        "name": "redistributable",
+        "dtype": "bool",
+        "required": true,
+        "note": "false for every row whose source terms forbid redistribution, regardless of quality layer"
+      }
+    ],
+    "identity_rule": "the primary key is (inchikey, property, T_K, source_file, source_row_index); a duplicate on that key is a defect, not a merge candidate",
+    "unit_rule": "epsilon is dimensionless and stored as unit='1'; viscosity is stored in Pa*s and the cP copy the sources carry is NOT a second column here, it is recomputed by anyone who wants it",
+    "temperature_rule": "T_K is kelvin, one value per row, taken from the source; a value quoted at 'room temperature' without a number does not enter"
+  },
+  "quality_layers": {
+    "publishable_core": "a first-hand source DOI is present and the value is an experimental measurement reported by that source. These are the rows the dataset is defended on.",
+    "filter_only": "compilation-level values (PubChem depositor aggregates, safety sheets). Allowed into the table with quality_layer=filter_only so the funnel can use them, never quoted as a core value and never counted in the publishable headline.",
+    "rule": "a row is publishable_core only if source_kind is a measurement and source_doi is non-empty and quality_layer says so explicitly; the layer is a stored column, never inferred at read time"
+  },
+  "merge_rules": {
+    "no_averaging": "conflicting values at the same (inchikey, property, T_K) are all kept; they are never averaged, and the conflict count is reported per key",
+    "no_silent_drops": "a row excluded from the table is written to an exclusions file with the reason; a shrinking row count without an exclusion record is a defect",
+    "provenance_is_not_optional": "every row keeps source_file and source_row_index; a row that cannot be traced back to a source row does not enter",
+    "first_build_sources": [
+      "data/processed/dielectric_observations_v11plus.csv (epsilon, existing)",
+      "data/processed/viscosity_observations_thermoml.csv (viscosity, existing)",
+      "data/viscosity_v01.csv (viscosity, the Schrodinger open subset)",
+      "data/external/g1plus/pubchem/liquid_window/ (MP/BP/FP/density, filter_only)"
+    ],
+    "dataset_id_enum": [
+      "epsilon_observations_v11plus",
+      "thermoml_viscosity",
+      "schrodinger_viscosity_v01_open_subset",
+      "pubchem_liquid_window_harvest"
+    ]
+  },
+  "exclusions": [
+    {
+      "item": "the Schrodinger supplement's restricted 858 values (4440 - 3582)",
+      "rule": "never fetched, never inferred, never reconstructed; the 3582-row open subset is the whole of what this project may use"
+    },
+    {
+      "item": "supp_3 (650 rows, data_status=predicted)",
+      "rule": "predicted values are not observations; they do not enter the observation table"
+    },
+    {
+      "item": "Reaxys values",
+      "rule": "restricted_crosscheck_only; they adjudicate conflicts and never enter a distributable dataset"
+    },
+    {
+      "item": "mixture rows as modelling targets",
+      "rule": "they may be stored, but the modelled target is the pure-substance subset and a mixture row is not silently treated as pure"
+    }
+  ],
+  "evaluation_contract": {
+    "splitter": "GroupKFold by InChIKey",
+    "group_overlap_assertion": "the builder and any benchmark assert group_overlap == 0 between train and test groups; a failing assertion is a stop, not a warning",
+    "random_row_role": "a leak reference only. It is reported next to the grouped reading and never enters a verdict. The viscosity line already paid for this: random_row 0.93689 vs group_key 0.74813.",
+    "why": "the same compound appears at many temperatures. Splitting rows at random puts the same compound on both sides of the split and the temperature series leaks; the reading stops being an out-of-sample reading at exactly the moment it starts looking good."
+  },
+  "verification_contract": {
+    "checks": [
+      "every required column is present and non-empty according to its rule",
+      "unit is consistent with property on every row",
+      "pure_or_mixture agrees with n_components",
+      "quality_layer=publishable_core implies source_kind is a measurement and source_doi is non-empty",
+      "redistributable=false rows are enumerated by source in the manifest",
+      "the primary key has no duplicates",
+      "every excluded row has an exclusion record"
+    ],
+    "manifest": "a SHA256 manifest over the built table, the exclusions file and the builder script"
+  },
+  "deliverables": [
+    "data/processed/eta_epsilon_joint_observations.csv",
+    "data/processed/eta_epsilon_joint_exclusions.csv",
+    "probes/build_eta_epsilon_joint_table.py",
+    "probes/verify_eta_epsilon_joint_table.py",
+    "probes/eta_epsilon_joint_summary.json",
+    "reports/eta_epsilon_joint_table.md"
+  ],
+  "frozen_red_lines_untouched": [
+    "data/dielectric_v03.csv digest ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "data/processed/dielectric_observations_v11plus.csv digest 159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9",
+    "data/viscosity_v01.csv digest 12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26",
+    "data/processed/viscosity_observations_thermoml.csv digest e0d647d6eadc0adc61ed05b222b9b4fc26ac13c9c84de63a1282e58823ccbf83",
+    "probes/l3_stage1_pilot_pool.csv, probes/l3_backvalidation_prereg.json, probes/l3_stage1_pilot_summary.json"
+  ],
+  "forbidden": [
+    "fetching or reconstructing the restricted 858 values",
+    "averaging conflicting values",
+    "letting a predicted value into the observation table",
+    "letting a Reaxys value into a distributable artefact",
+    "storing a row without source_file and source_row_index",
+    "inferring the quality layer at read time instead of storing it",
+    "row-level random splits for any conclusion",
+    "quoting the publishable headline over a table that includes filter_only rows"
+  ]
+}

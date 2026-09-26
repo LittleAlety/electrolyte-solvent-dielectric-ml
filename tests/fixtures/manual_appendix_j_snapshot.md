@@ -1697,3 +1697,74 @@ R² 对评分池敏感（同模型：97 池 0.409 / 236 冻结池 0.364 / 1594 �
 - `data/dielectric_v03.csv` = `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`（**INTACT**）
 - `data/processed/dielectric_observations_v11plus.csv` = `159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9`（**INTACT**）
 - `probes/l3_stage1_pilot_pool.csv`、`probes/l3_backvalidation_prereg.json`、`probes/l3_stage1_pilot_summary.json` **均 INTACT**；七个锁定常量一个字未动；`data/viscosity_v01.csv` 与 `data/external/*` 零改动。
+
+## 附录 AD：Week 16 开局 —— 杠杆 9 勘误轮、ηε 联表首建与 Reaxys 渲染缺口闭合（2026-09-26）
+
+> 命名说明：紧随附录 AC 之后取 **AD**。范围 = AC-7 登记的「Week 16 首位技术债」清偿，加上用户点名要求的 Reaxys 实做。机读台账见 `reports/decisions_log.md` **§25**。本轮**不动笔（不写论文）**、不开新主线、不碰冻结件。
+
+### AD-1 三臂并行与验收
+
+| 臂 | 任务 | 交付（新增） | 验收 |
+|---|---|---|---|
+| A | 杠杆 9 **勘误轮**（AC-6 的 P0 技术债） | `probes/dielectric_knowledge_purity_sweep_erratum.py`＋`_prereg.json`＋`_summary.json`＋6 份 artifacts CSV＋报告＋测试（11 件） | `--check` 24/24；`14 passed`；ruff 绿 |
+| B | 观测级 **ηε 联表**首建（AC-7 第二项） | `probes/build_eta_epsilon_joint_table.py`＋verifier＋schema 预注册＋summary＋两张 `data/processed/eta_epsilon_joint_*.csv`＋报告＋测试（8 件） | 8,359 行；`group_overlap=0`；测试绿 |
+| C | **Reaxys 渲染缺口闭合**（用户点名） | `probes/reaxys_render_gap_closure.csv`＋summary＋verifier＋报告＋测试（5 件） | verifier 85 项检查全过；`22 passed` |
+
+另两条并行线出料：`probes/kpi_shortlist_extraction.py`（Gao 2025 两幅图共 29 行短名单 → `data/reference/kpi_15_14_shortlists.csv`）与 `probes/pubchem_liquid_window_harvest.py`（314 键液相窗口 M/B/F 收割）。两者都不产判决，只产候选料。**披露（M-6）**：`data/reference/kpi_15_14_shortlists.csv` 的 29 行**全部自带 `redistributable=false` / `usage=cross_check_only`**（逐字转录已发表 SI 的图 S20/S21，汇编级证据），随仓库分发，**只作交叉核对，不得当数据集再用**。
+
+### AD-2 杠杆 9 勘误轮：AC-6 的技术债已清，判决未变
+
+- 预注册 `2026-09-26T07:24:48Z` 锁定、`shots_registered_up_front = 4`（k = 2/4/6/10）；判据**照抄 v1**（pass +0.0200 / kill +0.005 / 正向重复 ≥ 8/10 / 安慰剂容差 0.02），**未放宽**。
+- 同 50 折（`signature_sha256 = 864b3a53…86be`，与 AC-6 一致）三基线**逐位**复现：Morgan `0.06487386371009436`、Morgan+Physical `0.4091179943351143`、Physical `0.2531659995294713`，`abs_difference = 0.0`。
+- **修正读数（修正重要度列序）**：k2 `−0.005136434` / k4 `+0.005201058` / k6 `+0.004912652` / k10 `+0.015746812`，正向重复 5 / 4 / 6 / 7。
+- **判决 `sub_threshold`（与 v1 同判）**：k=10 过 kill 线（+0.005）但未过 pass 线（+0.0200）；`carried_into_the_merge_arm = false`。
+- 曲线 `edge_peak_high_k`、无内点峰 → 论文「知识越多精度越低」的**下降支在冻结网格内未被复现**；但 k=10 已是全池，**不能排除网格外的峰**。
+- 安慰剂塌缩：地板 R² `−0.0063523871448647904`、安慰剂 `−0.054562963693843815`、超地板 `−0.04821057654897903`；管线内 |增量| `0.00869829255732573` < 0.02。**预注册没有为「塌缩增量」指定参照**，故同时报「地板」与「真标签基线」两种读法。
+- 缺陷复现 50/50 折、`worst_max_abs_score_difference = 0.0`；修正排序的标签-列绑定 3/3 折、`worst_max_abs_difference = 0.0`。
+- v1 五件套 digest 逐位未变（`version_1_reading_not_rewritten`）——**v1 读数未改写、未就地重算**。判决未变**不等于**缺陷无害：勘误照样上报。
+
+### AD-3 【必须记住】AC-6 / §24.6 / §24.9 的 k=10 标签写错
+
+- 这三处把 `+0.008666009048` 标成「**修正（正确）列序**下的 k=10 读数」。**这个标签是错的。**
+- 实测：`+0.008666009048190704` 是**预注册池序**读数（与重审引用的 `+0.008666` **12 位小数吻合（= 10 位有效数字）**，`k10_exact_difference = 1.9070335588455833e-13` —— 相对差，**不是逐位相等**）；**修正重要度列序**下的 k=10 是 `+0.015746812033317625`。
+- **原文逐字保留、不回改**，依据是项目既有规则「**已落盘读数不被就地改写**」，更正以并列方式追加；守卫只做关键串**存在性**检查，**不是不回改的理由**。更正**只在本附录与 §25 给**。
+- 三序并列：v1 破损序 `+0.014709978` / 预注册池序 `+0.008666009` / 修正重要度序 `+0.015746812`（spread `0.007080803`）；**三序全部低于 +0.0200**，判决仍 `sub_threshold`。口径是**更正一个标签，不是重开一个问题**。
+
+### AD-4 ηε 联表首建（观测级）
+
+- 8,359 行观测 / 1,043 个 InChIKey；ε 2,065 行、η 6,294 行；纯组分 6,293 / 混合物 2,066。
+- `publishable_core` **8,196 行 / 1,037 键**（`filter_only` 163 行按 `redistributable = false` 单列）。
+- 来源四分：ε 观测表 2,065（冻结件）、ThermoML-η 2,549（源 2,725 行，176 行运动黏度排除）、Schrödinger 开放子集 3,582（冻结件）、PubChem 液相窗口 163（源 11,910 行）。
+- **冲突不平均**：`(inchikey, property, T_K)` 多值的键 304 个（全表）/ 283 个（纯核内），**原值保留、`averaging_applied = false`**。
+- **排除留痕** 11,977 条；「行数缩水而无排除记录」被定义为缺陷（`source_rows_uncovered = 0`）。
+- **评估口径前置写死**：`GroupKFold by InChIKey`、5 折、`publishable_core ∧ pure`（6,130 行 / 1,032 组）、**每折断言 `group_overlap == 0`**。同轮对照 **random_row 泄漏比例 0.906199**（只作泄漏参照，**永不进判决**）—— AC-7 的「训练方向」那条由此落成机器断言。
+- 本轮**不拟合任何模型**（`verdict_derived_this_round = none`），不花 R² 配额。
+
+### AD-5 Reaxys 渲染缺口闭合（用户点名：把已登录的 Reaxys 用起来）
+
+- **路线与合规**：Edge + 用户已登录的 Reaxys 会话，**手动逐条**查询；无爬虫、无批量导出、无自动遍历。产物是**离线转录镜像**（`network_calls_made_by_this_artifact = 0`）。
+- **核心 UI 发现（方法学）**：Reaxys 属性表（`Physical Data > Dielectric Constant`）**未点表上方「Show all」时只渲染前 M 行**；**「声明数 > 渲染数」是 UI 折叠，不是数据缺失**。这一条同时解释了上一轮登记的两条「未读到的行未闭合」。
+- **PC（碳酸丙烯酯，CAS 108-32-7）**：声明 10 / 未点渲染 7 / 点后 10。新读到第 8 行 `64 @ 2E+06 Hz @ 30 °C`、第 9 行 `64.4 @ 2E+06 Hz @ 25 °C`（Ritzoulis 1989, *Can. J. Chem.* 67, 1105-1108）、第 10 行**无数值引用存根** → 与第 6/7 行合为 **2 MHz 上 20/25/30/35 °C 的 ε(T) 序列**（**只是线索**：受限、只到题录一级）。
+- **tetraglyme（四乙二醇二甲醚，CAS 143-24-8）**：声明 8 / 未点渲染 7 / 点后 8；第 8 行六列全空（Ugelstad 1965 + Graczyk 1978 的**引用存根**）→ 上一轮猜测「缺的那条疑为 **39.99 °C = 313.14 K**」**被证伪**，不得再当事实引用。
+- **同线另两轮（已完成，一并留档）**：伸到 FEC / VC / GVL / DME / sulfolane / MOPN —— **MOPN 三级否定**（物质层 103 条 / 24 类无介电类别、属性检索 0 条、文献层 112 篇无值）→ Reaxys 侧关闭，唯一电学量是偶极矩 4.04 D；**sulfolane** 8 点与本地 Vahidi 2013 逐点一致（再确认，非新增）；**GVL** 36.9（Segato 2021）vs 36.1（iScience 2026）冲突待判、本地 0 行 → v1.x 第一优先缺口；**FEC** 仅 1 条、无 107 腿。
+- **反面证据（重要）**：EC 的 `89.78` 在 Reaxys 被标 **25 °C**，本仓溯源记 **40 °C = 313.15 K**，且 EC 熔点 36.4 °C、25 °C 本就不是液态 → **Reaxys 温度栏会错标**，引用其温度必须与本地溯源比对。
+- **纪律**：`restricted_crosscheck_only`、**永不进 `data/`、永不进任何池**；Reaxys 不给 DOI，provenance 只到**题录一级**；**不构成通道可用性声明**。
+
+### AD-6 AL Round 4 二次重算与 Week 15 交付包补齐
+
+- `local_trace_files` 是**磁盘状态的函数**：新增 `data/processed/eta_epsilon_joint_*.csv` 与 `data/reference/kpi_15_14_shortlists.csv` 后按生成器重跑，**128 → 146**（`by_row_kind` 未变 1/12/7/1）。正解 `git ls-files` 未被采纳，缺陷登记为待办。
+- **Week 15 首次有导出器**：新建 `probes/export_week15_results.py`（733 行，T1–T5 五通道 + 守卫快照 + AL4 读段，28 件产物）；`scripts/verify_export_manifests.py` 的 `LATEST_WEEK` **14 → 15**（原默认 range 会静默跳过 week11–15 并照样报成功）；实跑 week1–week15 **全 [PASS]**。
+- 包内 `verification.json` **4/4** verifier 退 0；冻结红线扩到 **6 条** 全 INTACT；T5 在导出时**逐位复现** `0.4091179943351143`；`shots.main_scoreboard_attempts = 0`。
+- **已知文案漂移（登记不只修）**：包内 `README.md` 正文仍写「114 → 128」，而机器字段已是 **146** —— 已登记，下次导出统一。
+
+### AD-7 训练方向与下一步（不许忘记）
+
+- **训练方向**：ηε-Joint 建模继承 v1.x 诚实口径 —— **观测级 + GroupKFold by InChIKey + 每折训练侧排序**，断言 `group_overlap == 0`；`random_row` 只作泄漏参照、**从不进判决**（黏度线的学费：`log10_cP` 的 **MAE 0.064 vs 0.175**；R² 口径为 **0.93689 vs 0.74813** —— **这对数字是 MAE 不是 R²**，本手册此前已登记过该笔误）。**温度维度已就绪**（`T_K` 特征已在管线里，无需新增）。
+- **v1.x 第一刀（零新网站）**：打开本地 242 个 ThermoML XML 的**温度闸门**重抽 ε(T)（入库时按 293–303 K 窗口过滤掉了大量序列点）→ 预计 1,000–2,500 行观测。
+- **Week 16 余项**：① KPI 15+14 漏斗交叉试跑（`data/reference/kpi_15_14_shortlists.csv` 已就位）；② Uni-Mol 探针规格定稿（缓冲项）；③ Reaxys 侧待办只剩**全文阅读**，不再是 Reaxys 待办。
+- **等待期纪律**：审稿意见回来前只跑本附录与 §25 登记的内容，不开新主线。
+
+### AD-8 冻结红线复核
+
+- 六件 digest 逐位未变：`data/dielectric_v03.csv` `ff2142936e…35ccce4`、`probes/l3_stage1_pilot_pool.csv` `b838febb…`、`probes/l3_backvalidation_prereg.json` `77f61a83…`、`data/processed/dielectric_observations_v11plus.csv` `159b928f80…68a49af9`、`probes/dielectric_r2_levers_prereg.json` `ab3503c0…`、`data/viscosity_v01.csv` `12dfa03f…1c5b26`。
+- **本轮** Reaxys 产物未进 `data/`、也未进任何交付包；**但既有例外要照实登记（I-1）**：week12 / week13 交付包里**已经**装运过 Reaxys 受限镜像（`成果输出/week12/reaxys_dielectric_queue_first_cut.csv`、`成果输出/week13/reaxys_v1x_stocking_scan_summary.json`），按原口径**禁止再分发**。Schrödinger 受限 **858** 条未被绕取（`withheld_points = 858`、`supp_3_rows_merged_into_experimental_table = 0`）。

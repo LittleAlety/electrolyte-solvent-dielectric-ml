@@ -1,0 +1,1262 @@
+{
+  "schema_version": 1,
+  "task": "week16_lever9_knowledge_purity_sweep_erratum",
+  "title": "Lever 9 erratum round: offset-aware permutation importance, whole k grid re-run",
+  "generated_at_utc": "2026-09-26T08:11:54Z",
+  "prereg": {
+    "path": "probes/dielectric_knowledge_purity_sweep_erratum_prereg.json",
+    "sha256": "88c45e4a58f333eb638b69ea8f6639da028fa5f2d96b5c003fba3f06a2273daf",
+    "status": "locked_before_run",
+    "locked_at_utc": "2026-09-26T07:24:48Z",
+    "lock_rule": "Criteria and kill lines frozen before the run. Never relaxed afterwards. This round corrects a measurement; it does not re-open the question.",
+    "thresholds": {
+      "pass_delta_r2": 0.02,
+      "kill_delta_r2": 0.005,
+      "min_positive_repeats": 8,
+      "placebo_collapse_tolerance": 0.02,
+      "note": "the same four constants version 1 used (probes/dielectric_knowledge_purity_sweep.py:161-164), inherited verbatim and not relaxed. The corrected measurement is judged against the same bar as the invalid one."
+    },
+    "k_grid": [
+      2,
+      4,
+      6,
+      10
+    ],
+    "pass_criterion": "the best k reaches a grouped R2 delta of at least +0.0200 against the baseline arm re-run in the same script, AND the delta is positive in at least 8 of the 10 repeats, AND the placebo arm collapses",
+    "kill_line": "every k stays below +0.0050 -> dead, reported as dead. A pass carried by a single repeat is not a pass.",
+    "correction_rule": {
+      "definition": "rank the pool members by permutation importance computed with a label list that covers the whole feature matrix, i.e. columns = [one label per frozen-block column] + list(KNOWLEDGE_POOL). The callee's position then addresses the same feature column it is labelled with, so every score is attached to the column that was actually shuffled. Frozen-block scores are computed and discarded; the ranking keeps only the pool members.",
+      "tie_break": "identical to version 1: ties keep the pre-registered pool order, so the ranking stays a pure function of the inputs.",
+      "k_grid": [
+        2,
+        4,
+        6,
+        10
+      ],
+      "leak_rule": "unchanged from version 1. The ranking is measured on the fold's own training rows only, never on test rows. A ranking computed on the pooled dataset is a leak and is forbidden.",
+      "what_changes": "the column targeting, and nothing else.",
+      "what_must_not_drift": "the fold dealing and its signature, the score mask, the scored compound set, the baseline arm, the model hyper-parameters, the knowledge pool members and their order, the k grid and the thresholds. Any of these moving invalidates this round rather than being folded into it."
+    },
+    "shots_registered_up_front": 4,
+    "erratum_discipline": [
+      "the version-1 prereg, script, summary, report and importance artefact are pinned by digest below and must stay byte-identical",
+      "version-1 readings are quoted verbatim and are never edited, overwritten or recomputed in place",
+      "the corrected reading is published next to the version-1 reading, each labelled by its column-targeting rule, so a reader can see which number came from which measurement",
+      "no test-fold row may enter the ranking",
+      "AB-6's per-feature narrative and its top-three list stay uncitable unless the corrected ranking agrees with them",
+      "the erratum is reported even if the corrected verdict is unchanged, because an unchanged verdict is not evidence that the defect was harmless"
+    ],
+    "forbidden": [
+      "ranking knowledge with any test-fold row in view",
+      "selecting k after seeing the results and then quoting only the best k without counting all four as shots",
+      "row-level random splits for any conclusion",
+      "silently shrinking the scored pool",
+      "changing the score mask, the compound set or the fold numbers",
+      "quoting the paper's R2 0.97-0.99 as a target for our target",
+      "quoting 0.5332 or 0.5454 next to the v1.0 headline 0.364 without their pool definitions",
+      "quoting the corrected reading without the version-1 reading beside it",
+      "treating the corrected k grid as a fresh four-shot attempt at the same question",
+      "editing or rewriting the version-1 summary, report or importance artefact"
+    ]
+  },
+  "main_scoreboard": {
+    "rows_scored": 457,
+    "compounds_scored": 97,
+    "splits": 50,
+    "n_splits": 5,
+    "repeats_requested": 10,
+    "repeats_executed": 10,
+    "seed": 42,
+    "splitter": "GroupKFold by InChIKey (masked_splits)",
+    "min_test_rows_per_fold": 2,
+    "baseline_to_reproduce": 0.4091179943351143,
+    "tolerance": 1e-09,
+    "folds_frozen": true,
+    "fold_deal": {
+      "splits": 50,
+      "signature_sha256": "864b3a531e404d49c3399bae1426c49abce79f1fab812f5ae8ed15f676bb86be",
+      "scored_signature_sha256": "11399b8bdfe5197cdc3a1e1f1539577031dca2bd03e4852ed10bedfe04684294",
+      "reproduced_by_a_second_deal": true,
+      "executed_repeats": 10,
+      "matches_version_1_signature": true
+    },
+    "repeat_note": ""
+  },
+  "baseline_reproduces": {
+    "arm": "paired_base",
+    "representations": {
+      "Morgan": {
+        "expected": 0.06487386371009436,
+        "reproduced": 0.06487386371009436,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      },
+      "Morgan+Physical": {
+        "expected": 0.4091179943351143,
+        "reproduced": 0.4091179943351143,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      },
+      "Physical": {
+        "expected": 0.2531659995294713,
+        "reproduced": 0.2531659995294713,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      }
+    },
+    "reproduced_r2": 0.4091179943351143,
+    "published_r2": 0.4091179943351143,
+    "abs_difference": 0.0,
+    "tolerance": 1e-09,
+    "verified": true
+  },
+  "readings": {
+    "paired_base": {
+      "Morgan": {
+        "r2": {
+          "mean": 0.06487386371009436,
+          "std": 0.12756423159062394,
+          "n": 10
+        },
+        "mae": {
+          "mean": 11.085225396826887,
+          "std": 1.066222599261893,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 17.680941136425623,
+          "std": 1.1800646579899972,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.494994800871032,
+          "std": 0.2558315207124181,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 7.016358381800293,
+          "std": 1.595332482177116,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 13.534955276822174,
+          "std": 0.9335439726280093,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 67.31664593476515,
+          "std": 1.406870277147763,
+          "n": 10
+        }
+      },
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.4091179943351143,
+          "std": 0.08896659338164581,
+          "n": 10
+        },
+        "mae": {
+          "mean": 8.040673846399821,
+          "std": 1.0163761980594126,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.0504394656373,
+          "std": 1.0060012939542327,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7762564780701202,
+          "std": 0.11534266085166892,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.8820684793058,
+          "std": 1.5896193181641838,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.934666717201002,
+          "std": 1.0711445895673308,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 55.713141056941105,
+          "std": 2.6657225058234455,
+          "n": 10
+        }
+      },
+      "Physical": {
+        "r2": {
+          "mean": 0.2531659995294713,
+          "std": 0.23228852049508575,
+          "n": 10
+        },
+        "mae": {
+          "mean": 9.241225646401663,
+          "std": 1.8478311557603,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 15.667155140564446,
+          "std": 2.4060575562247575,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.8027186759283931,
+          "std": 0.10003074766251538,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 6.049494745288631,
+          "std": 1.9134811660495652,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 11.885881278913093,
+          "std": 3.4377436327564963,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 44.1738981114901,
+          "std": 4.813331401324833,
+          "n": 10
+        }
+      }
+    },
+    "pool_order_control_k2": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.41511312930919564,
+          "std": 0.0855470614656558,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.897868901628958,
+          "std": 1.1234633725472982,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 13.980492134289324,
+          "std": 0.9771248791521994,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7809255320165167,
+          "std": 0.0947275770587743,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.882570727201619,
+          "std": 1.459352905881972,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.471237515670313,
+          "std": 1.1729510290021514,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 56.56420500535231,
+          "std": 2.9928134891307523,
+          "n": 10
+        }
+      }
+    },
+    "pool_order_control_k4": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.39928909633929743,
+          "std": 0.06213505100089553,
+          "n": 10
+        },
+        "mae": {
+          "mean": 8.014907821578644,
+          "std": 0.8991294542999109,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.182829500642239,
+          "std": 0.7242134883260863,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7844345119899611,
+          "std": 0.07073491305149524,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.791502489261148,
+          "std": 1.2918010701889586,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.862820554994526,
+          "std": 1.0325753801675288,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 57.66294526026799,
+          "std": 2.590668311245804,
+          "n": 10
+        }
+      }
+    },
+    "pool_order_control_k6": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.40911288886386954,
+          "std": 0.04404689766120332,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.905828106228853,
+          "std": 0.6802567706602707,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.074311370248044,
+          "std": 0.5176410081631023,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.792832992288759,
+          "std": 0.07432255612438998,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.571223358619443,
+          "std": 1.1772980405562425,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.872219442406856,
+          "std": 0.9126072851636299,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 58.43660919189453,
+          "std": 2.3937988874733063,
+          "n": 10
+        }
+      }
+    },
+    "pool_order_control_k10": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.417784003383305,
+          "std": 0.057898091670245275,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.884648534944897,
+          "std": 0.8363438056718889,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 13.964202222544795,
+          "std": 0.6815431036327977,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7793339822332251,
+          "std": 0.10518224439458443,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.772192911325543,
+          "std": 1.4460249666485256,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.5663737832132965,
+          "std": 0.847931501073644,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 57.26083722921518,
+          "std": 2.87324957593025,
+          "n": 10
+        }
+      }
+    },
+    "corrected_purity_k2": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.4039815599789713,
+          "std": 0.0841320203228274,
+          "n": 10
+        },
+        "mae": {
+          "mean": 8.08973505385735,
+          "std": 1.128652184863732,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.114667211360608,
+          "std": 0.9579283546463072,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7725948905835415,
+          "std": 0.11167875799711592,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.777289770611452,
+          "std": 1.469721261630574,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 8.110509043306292,
+          "std": 1.1475936608785946,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 57.4546985743596,
+          "std": 2.3460184154871917,
+          "n": 10
+        }
+      }
+    },
+    "corrected_purity_k4": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.4143190526569436,
+          "std": 0.05796456357133655,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.893794690459939,
+          "std": 0.8824208836296941,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.006132382865525,
+          "std": 0.6734969737621799,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7857797441673868,
+          "std": 0.0989932191570025,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.7023465653986225,
+          "std": 1.2990137108537247,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.667045617661908,
+          "std": 0.8956401408358008,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 57.80361191382775,
+          "std": 2.3852838171240385,
+          "n": 10
+        }
+      }
+    },
+    "corrected_purity_k6": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.41403064635984144,
+          "std": 0.06079644758289712,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.838629065583393,
+          "std": 0.8543168432737985,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.008265730329336,
+          "std": 0.7033851482393183,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.78174220719994,
+          "std": 0.10712565632999903,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.677457885431951,
+          "std": 1.4456693521596982,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.528792414643258,
+          "std": 0.8218637600573008,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 58.153229578458344,
+          "std": 2.266621704610076,
+          "n": 10
+        }
+      }
+    },
+    "corrected_purity_k10": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.42486480636843194,
+          "std": 0.058155557358087404,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.788747208107713,
+          "std": 0.8743169406281496,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 13.878588282713498,
+          "std": 0.687310897181199,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7819788235074923,
+          "std": 0.10575152027470089,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.740703902011995,
+          "std": 1.391834695729542,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.329967339315703,
+          "std": 1.0253872963779578,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 57.565882650522084,
+          "std": 2.5398150325809503,
+          "n": 10
+        }
+      }
+    },
+    "placebo_frozen_block_reference": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.045864671136518084,
+          "std": 0.009533952326076834,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.79705971855581,
+          "std": 0.11184622854494898,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.08586062871458,
+          "std": 0.08702729413422665,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.04025609651610691,
+          "std": 0.025517243411324057,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 10.339033206614493,
+          "std": 0.26617131282872714,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.39410879609023,
+          "std": 0.3626046451253488,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 70.02073452459064,
+          "std": 0.6114425378828375,
+          "n": 10
+        }
+      }
+    },
+    "corrected_placebo_purity_k2": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.05466136343511001,
+          "std": 0.012458715101176408,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.866779662017823,
+          "std": 0.15515527057725123,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.165835277678884,
+          "std": 0.11331903961668964,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.02744588656419391,
+          "std": 0.025584086145857266,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 10.459293565891265,
+          "std": 0.3409300671205482,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.331263337924618,
+          "std": 0.44685085377334366,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 70.09992670658656,
+          "std": 0.6982354095732087,
+          "n": 10
+        }
+      }
+    },
+    "corrected_placebo_purity_k4": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.05440918736894442,
+          "std": 0.01614400516917183,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.84576626777599,
+          "std": 0.16689911361534754,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.163339298427694,
+          "std": 0.146789523631322,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.024881831139740403,
+          "std": 0.026528473197573458,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 10.417615983341216,
+          "std": 0.27471914677332016,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.347707381445414,
+          "std": 0.34212054173367995,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 70.22214727047512,
+          "std": 0.6306157588894542,
+          "n": 10
+        }
+      }
+    },
+    "corrected_placebo_purity_k6": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.05477825756601318,
+          "std": 0.012981653854079326,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.888495146933792,
+          "std": 0.12870798300089575,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.16687127902455,
+          "std": 0.11812810104412591,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.02797964013926893,
+          "std": 0.030043569079272293,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 10.493190655577184,
+          "std": 0.2647432231733101,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.327272053403775,
+          "std": 0.40327870515053765,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 70.06905784252712,
+          "std": 0.6882507496527253,
+          "n": 10
+        }
+      }
+    },
+    "corrected_placebo_purity_k10": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.054562963693843815,
+          "std": 0.012155596878127738,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.86809603490216,
+          "std": 0.13141236161957953,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.164956545141443,
+          "std": 0.11038698989015694,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.021836133800606845,
+          "std": 0.02796266454317103,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 10.448472950485229,
+          "std": 0.26098537064058547,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.357811300311823,
+          "std": 0.37524825212009877,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 70.15698241833277,
+          "std": 0.5791309076377716,
+          "n": 10
+        }
+      }
+    },
+    "corrected_placebo_purity_floor": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.0063523871448647904,
+          "std": 0.0035589952186534848,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.4258488074398,
+          "std": 0.056979734197200246,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 18.722010941244182,
+          "std": 0.03309861995947581,
+          "n": 10
+        },
+        "spearman": {
+          "mean": -0.07212498684932825,
+          "std": 0.04111282899098717,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 9.663177501190965,
+          "std": 0.11665603660383936,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.747907905974635,
+          "std": 0.09212884796597787,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 70.24310229885712,
+          "std": 0.2086819222264356,
+          "n": 10
+        }
+      }
+    }
+  },
+  "arms": {
+    "baseline": "paired_base",
+    "corrected": {
+      "2": "corrected_purity_k2",
+      "4": "corrected_purity_k4",
+      "6": "corrected_purity_k6",
+      "10": "corrected_purity_k10"
+    },
+    "placebo": {
+      "2": "corrected_placebo_purity_k2",
+      "4": "corrected_placebo_purity_k4",
+      "6": "corrected_placebo_purity_k6",
+      "10": "corrected_placebo_purity_k10"
+    },
+    "pool_order": {
+      "2": "pool_order_control_k2",
+      "4": "pool_order_control_k4",
+      "6": "pool_order_control_k6",
+      "10": "pool_order_control_k10"
+    },
+    "placebo_floor": "corrected_placebo_purity_floor"
+  },
+  "delta_r2_by_k": {
+    "2": -0.005136434356143027,
+    "4": 0.005201058321829266,
+    "6": 0.004912652024727127,
+    "10": 0.015746812033317625
+  },
+  "per_repeat_delta_r2": {
+    "2": {
+      "0": -0.054828838362501964,
+      "1": 0.013092267748704423,
+      "2": -0.00890326338280667,
+      "3": 0.041670663398348684,
+      "4": 0.013080861628410823,
+      "5": -0.004822385717519473,
+      "6": -0.048918793142512906,
+      "7": 0.018881619739980815,
+      "8": -0.04494232843975454,
+      "9": 0.02432585296822043
+    },
+    "4": {
+      "0": -0.04989496864504839,
+      "1": 0.033369089191806034,
+      "2": -0.015936112180339745,
+      "3": 0.02189860727031423,
+      "4": 0.02845691403485906,
+      "5": -0.014264142837427385,
+      "6": -0.004005753044028504,
+      "7": -0.006594830316281053,
+      "8": -0.03687998971588713,
+      "9": 0.09586176946032476
+    },
+    "6": {
+      "0": -0.06932934337079921,
+      "1": 0.03207515692307439,
+      "2": 0.007165908503075746,
+      "3": 0.04176686910185978,
+      "4": 0.03311969344571619,
+      "5": -0.016142953150032002,
+      "6": 0.0033834302805824112,
+      "7": -0.0012915512822022635,
+      "8": -0.06792588731138782,
+      "9": 0.08630519710738349
+    },
+    "10": {
+      "0": -0.059252155645798,
+      "1": 0.029368869298998956,
+      "2": 0.0174671186776153,
+      "3": 0.035389035910998845,
+      "4": 0.021225935651104533,
+      "5": -0.009308522938975772,
+      "6": 0.009906671569148706,
+      "7": 0.02182874015250058,
+      "8": -0.023739674564271063,
+      "9": 0.11458210222185383
+    }
+  },
+  "positive_repeats_by_k": {
+    "2": 5,
+    "4": 4,
+    "6": 6,
+    "10": 7
+  },
+  "curve": {
+    "k_grid": [
+      2,
+      4,
+      6,
+      10
+    ],
+    "delta_r2_by_k": {
+      "2": -0.005136434356143027,
+      "4": 0.005201058321829266,
+      "6": 0.004912652024727127,
+      "10": 0.015746812033317625
+    },
+    "best_k": 10,
+    "best_delta_r2": 0.015746812033317625,
+    "best_delta_is_positive": true,
+    "shape": "edge_peak_high_k",
+    "monotone_decreasing": false,
+    "monotone_increasing": false,
+    "interior_peak": false,
+    "interior_peak_is_strict": false,
+    "paper_mechanism_prediction": "an interior peak: a small k loses signal, a large k adds learning burden",
+    "contradicts_mechanism": true,
+    "mechanism_reading": "no_interior_peak_edge_peak",
+    "contradiction_explanation": "the paper's law that more embedded knowledge lowers accuracy predicts an interior peak; inside the frozen grid the curve has none, so that law is not reproduced. What is falsified is the decline branch, not the existence of an optimum: the grid caps at k=10, which is the whole knowledge pool, so a peak beyond the grid cannot be excluded"
+  },
+  "pool_order_curve": {
+    "k_grid": [
+      2,
+      4,
+      6,
+      10
+    ],
+    "delta_r2_by_k": {
+      "2": 0.005995134974081329,
+      "4": -0.009828897995816877,
+      "6": -5.105471244770676e-06,
+      "10": 0.008666009048190704
+    },
+    "best_k": 10,
+    "best_delta_r2": 0.008666009048190704,
+    "best_delta_is_positive": true,
+    "shape": "edge_peak_high_k",
+    "monotone_decreasing": false,
+    "monotone_increasing": false,
+    "interior_peak": false,
+    "interior_peak_is_strict": false,
+    "paper_mechanism_prediction": "an interior peak: a small k loses signal, a large k adds learning burden",
+    "contradicts_mechanism": true,
+    "mechanism_reading": "no_interior_peak_edge_peak",
+    "contradiction_explanation": "the paper's law that more embedded knowledge lowers accuracy predicts an interior peak; inside the frozen grid the curve has none, so that law is not reproduced. What is falsified is the decline branch, not the existence of an optimum: the grid caps at k=10, which is the whole knowledge pool, so a peak beyond the grid cannot be excluded"
+  },
+  "order_sensitivity": {
+    "question": "is a top-k reading an invariant of the measurement, or does the order of the appended pool columns move it?  The defect made the order a function of the broken ranking, so three orders are measured rather than argued about",
+    "k10_by_order": {
+      "version_1_broken_order_quoted_from_the_pinned_v1_summary": 0.014709977559720422,
+      "preregistered_pool_order": 0.008666009048190704,
+      "corrected_importance_order": 0.015746812033317625
+    },
+    "k10_spread": 0.007080802985126922,
+    "grid_by_order": {
+      "version_1_broken_order": {
+        "10": 0.014709977559720422,
+        "2": 0.002941058158484944,
+        "4": 0.007773677626773612,
+        "6": 0.008825444045175823
+      },
+      "preregistered_pool_order": {
+        "2": 0.005995134974081329,
+        "4": -0.009828897995816877,
+        "6": -5.105471244770676e-06,
+        "10": 0.008666009048190704
+      },
+      "corrected_importance_order": {
+        "2": -0.005136434356143027,
+        "4": 0.005201058321829266,
+        "6": 0.004912652024727127,
+        "10": 0.015746812033317625
+      }
+    },
+    "best_by_order": {
+      "version_1_broken_order": {
+        "best_k": 10,
+        "best_delta_r2": 0.014709977559720422
+      },
+      "preregistered_pool_order": {
+        "best_k": 10,
+        "best_delta_r2": 0.008666009048190704,
+        "shape": "edge_peak_high_k"
+      },
+      "corrected_importance_order": {
+        "best_k": 10,
+        "best_delta_r2": 0.015746812033317625,
+        "shape": "edge_peak_high_k"
+      }
+    },
+    "re_review_canonical_order_is_the_pool_order": {
+      "quoted": {
+        "2": 0.005995,
+        "4": -0.009829,
+        "6": -5e-06,
+        "10": 0.008666009048
+      },
+      "measured_here_under_the_pool_order": {
+        "2": 0.005995134974081329,
+        "4": -0.009828897995816877,
+        "6": -5.105471244770676e-06,
+        "10": 0.008666009048190704
+      },
+      "tolerance": 5e-05,
+      "agreement": {
+        "2": true,
+        "4": true,
+        "6": true,
+        "10": true
+      },
+      "k10_exact_difference": 1.9070335588455833e-13,
+      "what_it_settles": "the figure the week 15 ledger quoted as the corrected k=10 is the reading with the pool appended in the PRE-REGISTERED order, not the reading with the pool appended in the corrected importance order.  Both are legitimate orders and they are different measurements; the ledger' s label for that number was wrong, and the erratum reports all three side by side"
+    },
+    "reading": "the curve is not order-free.  At k=10 the three measured orders give three different deltas, which is the substantive content of finding C-1: the k=10 cell was never an invariant.  What the order does not change is the verdict -- every order stays below the pre-registered +0.0200 pass line, so the correction moves a number, not a decision",
+    "all_orders_below_the_pass_line": true
+  },
+  "placebo": {
+    "frozen_reference": "placebo_frozen_block_reference",
+    "frozen_reference_r2": -0.045864671136518084,
+    "delta_r2_by_k": {
+      "2": -0.008796692298591924,
+      "4": -0.008544516232426337,
+      "6": -0.008913586429495093,
+      "10": -0.00869829255732573
+    },
+    "curve": {
+      "k_grid": [
+        2,
+        4,
+        6,
+        10
+      ],
+      "delta_r2_by_k": {
+        "2": -0.008796692298591924,
+        "4": -0.008544516232426337,
+        "6": -0.008913586429495093,
+        "10": -0.00869829255732573
+      },
+      "best_k": 4,
+      "best_delta_r2": -0.008544516232426337,
+      "best_delta_is_positive": false,
+      "shape": "interior_peak",
+      "monotone_decreasing": false,
+      "monotone_increasing": false,
+      "interior_peak": true,
+      "interior_peak_is_strict": true,
+      "paper_mechanism_prediction": "an interior peak: a small k loses signal, a large k adds learning burden",
+      "contradicts_mechanism": false,
+      "mechanism_reading": "interior_peak",
+      "contradiction_explanation": "the observed curve peaks strictly inside the grid, as the paper's law predicts"
+    },
+    "collapse": {
+      "placebo_r2_at_best_real_k": -0.054562963693843815,
+      "placebo_floor_r2": -0.0063523871448647904,
+      "placebo_floor_definition": "the training-fold-mean predictor scored on the identical folds and the identical permuted label vector as the placebo arm",
+      "delta_over_the_floor": -0.04821057654897903,
+      "placebo_within_pipeline_delta_r2": -0.00869829255732573,
+      "abs_placebo_within_pipeline_delta_r2": 0.00869829255732573,
+      "real_baseline_r2": 0.4091179943351143,
+      "delta_vs_the_real_label_baseline": -0.46368095802895815,
+      "best_real_k": 10,
+      "tolerance": 0.02,
+      "floor_rule_holds": true,
+      "within_pipeline_rule_holds": true,
+      "collapsed": true,
+      "wording_note": "the pre-registration names no reference for the collapse delta; against the real-label baseline the test is unsatisfiable by construction, so the floor reading is primary and the within-pipeline reading is reported beside it"
+    },
+    "permutation_sha256": "f981cba257511f62831cb04e7a7c8ef87d97f4ccadfe96a284f23f17feaae00e",
+    "why": "the same top-k pipeline on shuffled labels must manufacture nothing, so the placebo curve is taken against the placebo frozen-block reference on the identical folds rather than against the real baseline"
+  },
+  "defect_reproduction": {
+    "folds_checked": 50,
+    "folds_where_version_1_labels_sat_on_the_frozen_block": 50,
+    "reproduced_in_every_fold": true,
+    "worst_max_abs_score_difference": 0.0,
+    "tolerance": 1e-12,
+    "what_it_shows": "version 1 passed ten pool names to a callee that enumerates labels from position zero while handing it a matrix whose leading ten columns are the frozen block; the scores it reported are those columns' importances and the names are only labels on them"
+  },
+  "label_to_column_binding": {
+    "folds_checked": 3,
+    "folds_verified": 3,
+    "worst_max_abs_difference": 0.0,
+    "tolerance": 1e-15,
+    "what_it_shows": "the corrected ranking's score for a pool member equals the score obtained by shuffling that member's own column, addressed by explicit index rather than by label"
+  },
+  "order_invariance_reading": {
+    "declared_check": "the corrected ranking is invariant to the order of the label list it is handed, once that list still maps each label to its own feature column",
+    "status": "adjusted_and_flagged",
+    "why": "the frozen callee addresses a column by the label's position in the list it is handed, so permuting the label list does not enumerate the same measurement twice -- it produces a mislabelled matrix, which is the defect under correction. Binding and determinism are the well-formed readings of the same intent and are reported instead; the adjustment is flagged for the next review round rather than counted as met",
+    "binding_verified": true,
+    "determinism_verified": true
+  },
+  "comparison_with_version_1": {
+    "version_1_decision": "sub_threshold",
+    "corrected_decision": "sub_threshold",
+    "decision_changed": false,
+    "version_1_delta_r2_by_k": {
+      "2": 0.002941058158484944,
+      "4": 0.007773677626773612,
+      "6": 0.008825444045175823,
+      "10": 0.014709977559720422
+    },
+    "corrected_delta_r2_by_k": {
+      "2": -0.005136434356143027,
+      "4": 0.005201058321829266,
+      "6": 0.004912652024727127,
+      "10": 0.015746812033317625
+    },
+    "k10_version_1": 0.014709977559720422,
+    "k10_corrected": 0.015746812033317625,
+    "k10_moved_by": 0.0010368344735972035
+  },
+  "verdict": {
+    "decision": "sub_threshold",
+    "reasons": [
+      "k=10 moved grouped R2 by +0.0157: above the kill line +0.005 but below the pass line +0.02",
+      "the delta-R2 curve is `edge_peak_high_k` with no interior peak (`no_interior_peak_edge_peak`): the paper's law that more embedded knowledge lowers accuracy is not reproduced inside the frozen grid, and the contradiction is reported as such rather than filed as a non-result"
+    ],
+    "criteria_applied": {
+      "pass_criterion": "the best k reaches a grouped R2 delta of at least +0.02, positive in at least 8 of 10 repeats, placebo collapsed",
+      "kill_line": "every k stays below +0.005 -> dead",
+      "placebo_rule": "the shuffled-label arm must not beat the no-information floor on the identical permuted labels by more than 0.02, and the same top-k pipeline on shuffled labels must not manufacture a delta beyond 0.02",
+      "single_repeat_rule": "a pass carried by a single repeat is not a pass"
+    },
+    "best_k": 10,
+    "best_delta_r2": 0.015746812033317625,
+    "positive_repeats": 7,
+    "repeats_total": 10,
+    "placebo_collapsed": true,
+    "delta_r2_by_k": {
+      "2": -0.005136434356143027,
+      "4": 0.005201058321829266,
+      "6": 0.004912652024727127,
+      "10": 0.015746812033317625
+    },
+    "carried_into_the_merge_arm": false
+  },
+  "version_1_digest_check": {
+    "probes/dielectric_knowledge_purity_sweep_prereg.json": {
+      "expected": "e0b1093246517d440b27a168fb01d53a0479a007797797d1bb03aead52625623",
+      "observed": "e0b1093246517d440b27a168fb01d53a0479a007797797d1bb03aead52625623",
+      "intact": true
+    },
+    "probes/dielectric_knowledge_purity_sweep.py": {
+      "expected": "373707f59d7a468e4beb8826dca12960ce05f38204196bfe1233842ee726dcef",
+      "observed": "373707f59d7a468e4beb8826dca12960ce05f38204196bfe1233842ee726dcef",
+      "intact": true
+    },
+    "probes/dielectric_knowledge_purity_sweep_summary.json": {
+      "expected": "76e3c832302acd2cce86e90dd65b2f8cc574700e0e4c703e635e4b3a54ff7ee3",
+      "observed": "76e3c832302acd2cce86e90dd65b2f8cc574700e0e4c703e635e4b3a54ff7ee3",
+      "intact": true
+    },
+    "reports/dielectric_knowledge_purity_sweep.md": {
+      "expected": "cc5444619817053c32d10caa55d3fb0d4733c7e95edd5075348a5db1568ba2d3",
+      "observed": "cc5444619817053c32d10caa55d3fb0d4733c7e95edd5075348a5db1568ba2d3",
+      "intact": true
+    },
+    "probes/artifacts/dielectric_knowledge_purity_sweep_importance.csv": {
+      "expected": "3f175e5beadab9bc988bf12b007244bdae210a98cdf1c4c11118a7dfb243e007",
+      "observed": "3f175e5beadab9bc988bf12b007244bdae210a98cdf1c4c11118a7dfb243e007",
+      "intact": true
+    }
+  },
+  "inputs": {
+    "coverage_table": "data/processed/dielectric_observations_v11plus.csv",
+    "lever_script": "probes/dielectric_knowledge_purity_sweep_erratum.py",
+    "lever_script_sha256": "f634c1b9a2a03dee8ec7f0814bc9d510208167948e419a75de81f4c227b26520",
+    "reused_module": "probes/dielectric_knowledge_purity_sweep.py",
+    "reused_module_sha256": "373707f59d7a468e4beb8826dca12960ce05f38204196bfe1233842ee726dcef"
+  },
+  "importance_stability": {
+    "folds": 50,
+    "top_k": 3,
+    "distinct_top_k_sets": 13,
+    "top_k_set_counts": {
+      "donor_acceptor_pair_density|acceptor_count|rotatable_bond_count": 1,
+      "donor_acceptor_pair_density|donor_count|heteroatom_over_carbon": 3,
+      "donor_acceptor_pair_density|double_bond_count|donor_count": 3,
+      "donor_acceptor_pair_density|double_bond_count|has_1_donor": 1,
+      "donor_acceptor_pair_density|double_bond_count|heteroatom_over_carbon": 4,
+      "donor_acceptor_pair_density|double_bond_count|rotatable_bond_count": 1,
+      "donor_acceptor_pair_density|heteroatom_over_carbon|donor_count": 11,
+      "donor_acceptor_pair_density|heteroatom_over_carbon|double_bond_count": 6,
+      "donor_acceptor_pair_density|heteroatom_over_carbon|has_1_donor": 2,
+      "donor_acceptor_pair_density|heteroatom_over_carbon|rotatable_bond_count": 8,
+      "donor_acceptor_pair_density|rotatable_bond_count|double_bond_count": 5,
+      "donor_acceptor_pair_density|rotatable_bond_count|heteroatom_over_carbon": 4,
+      "heteroatom_over_carbon|donor_acceptor_pair_density|rotatable_bond_count": 1
+    },
+    "modal_top_k_set": [
+      "donor_acceptor_pair_density",
+      "heteroatom_over_carbon",
+      "donor_count"
+    ],
+    "modal_top_k_set_count": 11,
+    "changes_between_consecutive_folds": 44,
+    "members_in_every_top_k_set": [
+      "donor_acceptor_pair_density"
+    ],
+    "per_member": {
+      "donor_count": {
+        "folds": 50,
+        "mean_rank": 4.14,
+        "median_rank": 4.0,
+        "min_rank": 2,
+        "max_rank": 7,
+        "top_3_folds": 17,
+        "mean_importance": 1.1440642775954684
+      },
+      "acceptor_count": {
+        "folds": 50,
+        "mean_rank": 5.88,
+        "median_rank": 6.0,
+        "min_rank": 2,
+        "max_rank": 10,
+        "top_3_folds": 1,
+        "mean_importance": 0.3371118264107673
+      },
+      "has_1_donor": {
+        "folds": 50,
+        "mean_rank": 7.12,
+        "median_rank": 7.0,
+        "min_rank": 3,
+        "max_rank": 10,
+        "top_3_folds": 3,
+        "mean_importance": 0.293250641016299
+      },
+      "has_2_donors": {
+        "folds": 50,
+        "mean_rank": 8.06,
+        "median_rank": 8.0,
+        "min_rank": 6,
+        "max_rank": 10,
+        "top_3_folds": 0,
+        "mean_importance": 0.023079664235260172
+      },
+      "has_3plus_donors": {
+        "folds": 50,
+        "mean_rank": 8.76,
+        "median_rank": 9.0,
+        "min_rank": 6,
+        "max_rank": 10,
+        "top_3_folds": 0,
+        "mean_importance": 0.012081757060958188
+      },
+      "donor_acceptor_pair_density": {
+        "folds": 50,
+        "mean_rank": 1.02,
+        "median_rank": 1.0,
+        "min_rank": 1,
+        "max_rank": 2,
+        "top_3_folds": 50,
+        "mean_importance": 56.15275270493086
+      },
+      "ring_count": {
+        "folds": 50,
+        "mean_rank": 8.8,
+        "median_rank": 10.0,
+        "min_rank": 4,
+        "max_rank": 10,
+        "top_3_folds": 0,
+        "mean_importance": 0.0665165021300062
+      },
+      "double_bond_count": {
+        "folds": 50,
+        "mean_rank": 4.12,
+        "median_rank": 4.0,
+        "min_rank": 2,
+        "max_rank": 8,
+        "top_3_folds": 20,
+        "mean_importance": 1.213708351801491
+      },
+      "rotatable_bond_count": {
+        "folds": 50,
+        "mean_rank": 4.22,
+        "median_rank": 4.0,
+        "min_rank": 2,
+        "max_rank": 10,
+        "top_3_folds": 20,
+        "mean_importance": 1.260815854532905
+      },
+      "heteroatom_over_carbon": {
+        "folds": 50,
+        "mean_rank": 2.88,
+        "median_rank": 2.0,
+        "min_rank": 1,
+        "max_rank": 10,
+        "top_3_folds": 39,
+        "mean_importance": 3.417659198544255
+      }
+    }
+  },
+  "guards": {
+    "ranking_scope_checked_on_every_fold": true,
+    "test_rows_visible_to_ranking": 0,
+    "fold_deal_matches_version_1": true
+  }
+}

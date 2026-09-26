@@ -16,9 +16,9 @@ DEFAULT_OUTPUT_ROOT = REPOSITORY_ROOT.parent / "成果输出"
 
 # The newest week the project has exported.  This used to be a hardcoded
 # ``range(1, 11)`` under a docstring that promised "all week output
-# directories", so weeks 11-13 (and then 14) were silently skipped by the default run while
-# still reporting success.  Bump this when a new week is exported.
-LATEST_WEEK = 14
+# directories", so weeks 11-13 (and then 14, and then 15) were silently skipped by the
+# default run while still reporting success.  Bump this when a new week is exported.
+LATEST_WEEK = 15
 WEEK_DIRECTORIES = tuple(f"week{week}" for week in range(1, LATEST_WEEK + 1))
 
 
