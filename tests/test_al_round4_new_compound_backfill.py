@@ -560,6 +560,51 @@ def test_summary_lists_the_local_rejections_with_their_flags(
         assert entry["row_kind"] != "new_compound"
 
 
+def test_list_stats_counts_each_row_kind_exactly_once(summary, list_rows) -> None:
+    """The v0 list is counted by ``row_kind`` only; no field may double count it.
+
+    ``local_duplicate_reconciliation_rows`` used to read 13 while
+    ``by_row_kind["local_duplicate_reconciliation"]`` read 12: the roster-gap row
+    (succinonitrile) is a non-new row that is *not* a reconciliation row.  The
+    field is now named for what it actually counts, and the note says which
+    column each non-new row lands in.
+    """
+
+    stats = summary["list_stats"]
+    by_kind = stats["by_row_kind"]
+    counter = Counter(row["row_kind"] for row in list_rows)
+
+    assert by_kind == dict(sorted(counter.items()))
+    assert sum(by_kind.values()) == stats["rows"] == len(list_rows) == 21
+    assert "local_duplicate_reconciliation_rows" not in stats
+
+    non_new = [
+        row
+        for row in list_rows
+        if row["is_new_compound"] == "no" and row["row_kind"] != "gap_family"
+    ]
+    assert stats["non_new_rows_excluding_family_gaps"] == len(non_new) == 13
+    assert stats["non_new_rows_excluding_family_gaps"] == (
+        by_kind["local_duplicate_reconciliation"] + by_kind["roster_gap"]
+    )
+    assert by_kind["local_duplicate_reconciliation"] == 12
+    assert summary["local_rejections"]["count"] == stats["non_new_rows_excluding_family_gaps"]
+    rejected = {
+        entry["compound_name"]: entry["row_kind"] for entry in summary["local_rejections"]["rows"]
+    }
+    roster_gap = sorted(
+        row["compound_name"] for row in list_rows if row["row_kind"] == "roster_gap"
+    )
+    assert roster_gap == ["succinonitrile"]
+    assert rejected["succinonitrile"] == "roster_gap"
+
+    note = stats["row_kind_note"]
+    for name in roster_gap:
+        assert name in note
+    assert "local_duplicate_reconciliation" in note
+    assert "non_new_rows_excluding_family_gaps" in note
+
+
 def test_summary_reports_the_three_honesty_boundaries(summary) -> None:
     boundaries = summary["honesty_boundaries"]
     assert len(boundaries) == 3

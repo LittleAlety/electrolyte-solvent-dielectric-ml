@@ -1696,6 +1696,26 @@ def build_summary(
     new_rows = [row for row in candidates if row["is_new_compound"] == "yes"]
     recon_rows = [row for row in candidates if row["is_new_compound"] == "no"]
     gap_family = [row for row in candidates if row["row_kind"] == "gap_family"]
+    roster_gap_rows = [row for row in candidates if row["row_kind"] == "roster_gap"]
+
+    by_row_kind = dict(sorted(Counter(row["row_kind"] for row in candidates).items()))
+    # Every non-new row except the family-gap placeholder.  This is the same set
+    # that local_rejections lists, so it is NOT the same number as
+    # by_row_kind["local_duplicate_reconciliation"]: a roster_gap row is non-new
+    # but is not a reconciliation row.  The name says which set this counts.
+    non_new_rows_excluding_family_gaps = len(recon_rows) - len(gap_family)
+    row_kind_note = (
+        "by_row_kind counts every row once ("
+        + ", ".join(f"{kind}={count}" for kind, count in by_row_kind.items())
+        + "). non_new_rows_excluding_family_gaps="
+        + str(non_new_rows_excluding_family_gaps)
+        + " is the local_rejections set: every row with is_new_compound=no except the "
+        "family-gap placeholder. It therefore also counts the roster_gap row(s) ("
+        + (", ".join(row["compound_name"] for row in roster_gap_rows) or "none")
+        + "), which are not local_duplicate_reconciliation rows (that count is "
+        + str(by_row_kind.get("local_duplicate_reconciliation", 0))
+        + ")."
+    )
 
     reached: set[str] = set()
     for row in candidates:
@@ -1730,10 +1750,11 @@ def build_summary(
         "inputs": inputs,
         "list_stats": {
             "rows": len(candidates),
-            "by_row_kind": dict(sorted(Counter(row["row_kind"] for row in candidates).items())),
+            "by_row_kind": by_row_kind,
             "by_priority": dict(sorted(Counter(row["priority"] for row in candidates).items())),
             "new_compound_rows": len(new_rows),
-            "local_duplicate_reconciliation_rows": len(recon_rows) - len(gap_family),
+            "non_new_rows_excluding_family_gaps": non_new_rows_excluding_family_gaps,
+            "row_kind_note": row_kind_note,
             "gap_family_rows": len(gap_family),
             "grouped_round3_compounds": stats["grouped_compounds"],
             "triplet_mismatch_rows": stats["triplet_mismatch_rows"],

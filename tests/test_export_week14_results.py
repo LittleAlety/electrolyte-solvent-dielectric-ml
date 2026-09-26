@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -13,6 +14,8 @@ from electrolyte_ml.exporting import verify_export_manifest
 from probes.export_week14_results import (
     ARTIFACTS,
     BASELINE_R2,
+    BLOCK_V2_AMENDMENT_NOTE,
+    COORDINATION_BLOCK_FEATURES,
     FROZEN_DIGEST,
     OBSERVATIONS_SHA256,
     PILOT_POOL_SHA256,
@@ -22,6 +25,7 @@ from probes.export_week14_results import (
     VERIFIERS,
     WEEK,
     _parse_args,
+    blockless_status_counts,
     export_results,
 )
 
@@ -166,7 +170,8 @@ def test_lever_8_keeps_the_v1_dead_verdict_and_ships_the_amendment_separately(
     assert v2["decision"] == "pass_under_amended_placebo_clause"
     assert lever8["v2_decision"] == "pass_under_amended_placebo_clause"
     assert v2["v1_decision_is_still_in_force"] == "dead"
-    assert lever8["v2_note"] == "dead"
+    assert lever8["v1_decision_is_still_in_force"] == "dead"
+    assert "v2_note" not in lever8
     # same block, same folds, same shuffled vector: the readout is bit-identical
     assert v1["delta_r2"] == v2["delta_r2"]
 
@@ -237,6 +242,9 @@ def test_al_round_4_is_offline_and_keeps_its_two_tables_distinct(
 
     assert al4["run_mode"] == "offline_local_only"
     assert al4["network_calls"] == 0
+    assert al4["runs"] == 1
+    assert "shots" not in al4
+    assert _json("probes/al_round4_new_compound_backfill_summary.json")["shots"] == 1
     assert al4["list_stats"]["rows"] == 21
     assert al4["new_compound_stats"]["count"] == 7
     boundaries = "\n".join(al4["honesty_boundaries"])
@@ -258,3 +266,97 @@ def test_every_exported_csv_is_lf_only(exported: tuple[Path, dict]) -> None:
         if b"\r\n" in path.read_bytes():
             offenders.append(path.name)
     assert offenders == []
+
+
+def test_summary_separates_the_artifacts_commit_from_the_export_time_head(
+    exported: tuple[Path, dict],
+) -> None:
+    """``head_commit`` alone cannot say whether the shipped files came from a commit.
+
+    The v1.0 package recorded ``head_commit = f5663a0`` while shipping week-14
+    files that commit does not contain, so the package now records the
+    export-time HEAD *and* the dirty state that decides whether that HEAD is a
+    usable coordinate for the shipped artefacts.
+    """
+
+    root, _ = exported
+    summary = _summary(root)
+
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=REPOSITORY_ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    ).stdout.strip()
+
+    assert isinstance(summary["artifacts_commit"], str)
+    assert summary["artifacts_commit"] == head
+    assert isinstance(summary["head_commit"], str)
+    assert summary["head_commit"] == head
+    assert isinstance(summary["worktree_dirty"], bool)
+    assert isinstance(summary["worktree_dirty_paths"], int)
+    assert summary["worktree_dirty_paths"] >= 0
+    assert summary["worktree_dirty"] is (summary["worktree_dirty_paths"] > 0)
+    note = summary["provenance_note"]
+    assert "artifacts_commit" in note
+    assert "head_commit" in note
+    assert "worktree_dirty" in note
+    # An unconditional "artifacts_commit is the coordinate" sentence would
+    # contradict a dirty export, which is exactly the v1.0 failure mode.
+    assert "only when worktree_dirty is false" in note
+
+
+def test_the_v2_block_clause_ships_as_a_post_reading_amendment(
+    exported: tuple[Path, dict],
+) -> None:
+    """v2 was locked after the v1 readout, so it is not a blind pre-registration."""
+
+    root, _ = exported
+    defects = _summary(root)["preregistration_defects"]
+
+    assert defects["block_v2_post_reading_amendment"] == BLOCK_V2_AMENDMENT_NOTE
+    assert BLOCK_V2_AMENDMENT_NOTE in README_TEXT
+    for phrase in (
+        "非盲锁",
+        "03:57:03Z",
+        "04:02:50Z",
+        "5 分 47 秒",
+        "pass_under_amended_placebo_clause",
+        "v1 的 dead 逐字保留",
+    ):
+        assert phrase in BLOCK_V2_AMENDMENT_NOTE, phrase
+    assert "仅预注册、本轮未跑" in README_TEXT
+
+
+def test_the_blockless_compounds_are_counted_from_the_feature_table(
+    exported: tuple[Path, dict],
+) -> None:
+    root, _ = exported
+    lever8 = _summary(root)["levers"]["lever_8_coordination_block"]
+
+    blockless = blockless_status_counts(COORDINATION_BLOCK_FEATURES)
+    assert blockless == {"undefined_no_hetero_site": 9}
+    assert lever8["scored_compounds_without_the_block"] == sum(blockless.values()) == 9
+    note = lever8["coverage_note"]
+    assert "compounds_without_the_block=60" in note
+    assert "scored_compounds_without_the_block=9" in note
+    assert "+ 51 compounds" in note
+    block = _json("probes/dielectric_coordination_block_summary.json")["coordination_block"]
+    assert len(block["compounds_without_the_block"]) == 60
+
+
+def test_the_blockless_counter_reads_the_status_column(tmp_path: Path) -> None:
+    path = tmp_path / "features.csv"
+    path.write_text(
+        "inchikey,name,status\n"
+        "AAAAAA-AAAAA-AAAAA,a,ok\n"
+        "BBBBBB-BBBBB-BBBBB,b,undefined_no_hetero_site\n"
+        "CCCCCC-CCCCC-CCCCC,c,ok\n"
+        "DDDDDD-DDDDD-DDDDD,d,undefined_no_hetero_site\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    assert blockless_status_counts(path) == {"undefined_no_hetero_site": 2}

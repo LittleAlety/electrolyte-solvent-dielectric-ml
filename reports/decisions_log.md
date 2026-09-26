@@ -3680,7 +3680,7 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 
 **该读法先于杠杆 8 v1 的读数落盘**，时序以文件 mtime 为据：`dielectric_r2_levers_prereg.json` 01:45:52Z → `dielectric_association_features_summary.json` 02:37:56Z（杠杆 2 摘要内已含地板读法）→ `dielectric_knowledge_purity_sweep_prereg.json` 02:39:22Z（把地板读法写进预注册）→ **杠杆 8 v1 摘要 03:57:03Z**。即修复形式不是为救杠杆 8 而事后发明。
 
-**缺陷二：`locked_at_utc` 自述字段与文件 mtime 不一致。** 六份本轮预注册里三份的自述锁定时间**晚于自身文件 mtime**（锁不可能晚于文件写出）：
+**缺陷二：`locked_at_utc` 自述字段与文件 mtime 不一致。** 六份本轮**预注册/修订文件**里三份的自述锁定时间**晚于自身文件 mtime**（锁不可能晚于文件写出）：
 
 | 预注册 | 文件 mtime (UTC) | 自述 `locked_at_utc` | 差 |
 | --- | --- | --- | ---: |
@@ -3693,12 +3693,14 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 
 **裁定：以文件 mtime 为锁定证据，`locked_at_utc` 自述字段不得单独用作锁定证据。** 三份缺陷字段**照实保留、不回填**（回填会抹掉审计痕迹）；每一份的自述时间都仍**早于其对应结果产物**的 mtime，故「先锁后跑」在 mtime 口径下全部成立。
 
+**补充事实（盲锁分类更正，2026-09-26 审查收口轮）：** 六份登记件里只有 **5 份是盲锁**。`probes/dielectric_coordination_block_prereg_v2.json`（mtime **04:02:50Z**）是**读到杠杆 8 v1 读数（03:57:03Z）之后**才写出的修订，**晚 5 分 47 秒**，属**读后修订、非盲锁**；其合法性**只**依赖「缺陷一是构造性缺陷」这一判断（§23.6 第 2 条），不得被表述为盲预注册结果。`probes/l3_backvalidation_prereg_v2.json` 为「**仅预注册、本轮未跑**」。文件本体一律**不回填**。
+
 **缺陷三：布尔塌缩字段不得作为门。** `placebo_collapsed` / `control_collapsed` 一律只作披露字段；门只用**同一跑内的对照关系**（迁移 Δ 与控制 Δ 的间距、地板距离）。
 
 #### 23.6 杠杆 8 的 amendment 记录
 
 1. **v1 判决 `dead` 逐字保留、未被推翻**（§22 纪律：判据不许事后放宽）。v1 的预注册与 7 份产物 digest 全部 INTACT。
-2. 因缺陷一是**条构造性**缺陷（而非结果驱动），另立**新文件** `probes/dielectric_coordination_block_prereg_v2.json`（锁定 04:02:50Z，自述与 mtime 一致），把旧条款**逐字留档**在 `superseded_clause`，并**显式**写明新条款三条（地板上界、同管线真实臂、同管线打乱内对照，同一 +0.0200）与「本条修复形式与杠杆 2 / 杠杆 9 一致、不是为了救杠杆 8」。
+2. 因缺陷一是**条构造性**缺陷（而非结果驱动），另立**新文件** `probes/dielectric_coordination_block_prereg_v2.json`（锁定 04:02:50Z，自述与 mtime 一致），把旧条款**逐字留档**在 `superseded_clause`，并**显式**写明新条款三条（地板上界、同管线真实臂、同管线打乱内对照，同一 +0.0200）与「本条修复形式与杠杆 2 / 杠杆 9 一致、不是为了救杠杆 8」。 **时序事实（照实记录）**：本文件 mtime **04:02:50Z**，晚于 v1 读数落盘 **03:57:03Z** 共 **5 分 47 秒**——它是**读后修订，不是盲锁**；`pass_under_amended_placebo_clause` 的合法性只依赖「缺陷一是构造性的」，**v1 的 `dead` 逐字保留、未被推翻**。
 3. **新增独立一枪**（计入 shots）。读数与 v1 **逐位相同**（同一块、同一折号、同一打乱标签向量）：ΔR² = +0.044058816215696295，安慰剂 R² = −0.0408，三条规则全过（−0.0365 / −0.4940 / −0.0104），正向重复 8/10。判决 `pass_under_amended_placebo_clause`。
 4. **合并臂裁定：本枪不携带。** 理由：本轮合并规则属杠杆 2/3/7 的预注册范围，而那三条全死；杠杆 8 的 v2 是**新增一枪**、且建立在一次条款修订之上，把它立刻并入合并臂等于用修订后的条款去抬高一个「修订前判死」的杠杆。杠杆 8 只作为**下周合并臂与 v0.4 数据面变更的候选**登记。
 
@@ -3722,3 +3724,15 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 7. **random_row 只作泄漏参照**：`paired_base_random_row_leak` R² = 0.7385332681453336 与杠杆 4 的同一批行；它**从不进入任何判决**，只用来量行级切分能虚高多少。
 8. **包络闸门次判据不过**：236 池 LOO 升旗率 33.9% > 20%，即两规则在池内假阳性过高；主判据（EC/PC 被升旗）成立但**不得**把该闸门宣称为可用过滤器。
 9. 杠杆 2 的安慰剂塌缩判据其参照物由本仓先例推定（无信息地板），两种读法并列上报；**其 dead 判决与读法无关**（ΔR² 已低于枪毙线）。
+
+#### 23.9 导出契约变更（审查收口轮，2026-09-26）
+
+> 本节记录 `probes/export_week14_results.py` 与 `probes/al_round4_new_compound_backfill.py` 的机读口径更正。**读数、判决、shots 计数、CSV 与报告正文一律未变**；变的是字段名与新增的溯源字段。手册侧的对应记录见**附录 AB-8**。
+
+1. **溯源坐标（I-1）**：导出摘要新增 `artifacts_commit`（导出时 HEAD）、`worktree_dirty`（布尔）、`worktree_dirty_paths`（脏文件计数）与 `provenance_note`。理由：本轮交付件落在 `659066a` 之上且带未提交修复，**导出时 `worktree_dirty=true`**——包内 4 个文件（`al_round4_new_compound_backfill.py`、其 `_summary.json`、`decisions_log.md`、`test_al_round4_new_compound_backfill.py`）的字节在 `659066a` 里**并不存在**，故单靠任何提交 SHA 都定位不到工件。**规则（条件式）**：`artifacts_commit` **只在 `worktree_dirty=false` 时才可作工件坐标**；本轮须在审查收口提交**之后**从该提交重新导出，再把新的 `artifacts_commit` 写入引用。**不得**把 `artifacts_commit` 无条件当作坐标。
+2. **预注册清单分列（I-2）**：README 的预注册清单由「六份盲锁」改为 **5 份盲锁 + 1 份读后修订**，逐条注明 `dielectric_coordination_block_prereg_v2.json` 为「读后修订（非盲锁）」（03:57:03Z → 04:02:50Z，晚 5 分 47 秒）、`l3_backvalidation_prereg_v2.json` 为「仅预注册、本轮未跑」。
+3. **AL Round 4 计数字段（M-1）**：summary 的 `local_duplicate_reconciliation_rows`（值 13）更名为 `non_new_rows_excluding_family_gaps`（值仍 **13**），并新增 `row_kind_note`；`by_row_kind` 实为 `new_compound 7` / `local_duplicate_reconciliation 12` / `roster_gap 1`（succinonitrile）/ `gap_family 1`。原字段名与 `by_row_kind` 的 12 曾互相矛盾，改名后语义自洽。**CSV 与报告逐字节未变**。
+4. **键名（M-2 / M-3）**：杠杆 8 的 `v2_note` → `v1_decision_is_still_in_force`（v1 的 `dead` 逐字保留）；`al_round_4.shots` → `al_round_4.runs`（离线本地扫描不是主记分牌尝试）。**主记分牌 `shots` 块不受影响**，仍为 10 次 + 包络闸门 1 次另计。
+5. **无块化合物分母（M-4）**：新增 `scored_compounds_without_the_block = 9` 与 `coverage_note`，明写 `compounds_without_the_block = 60 = 9`（`undefined_no_hetero_site`）+ `51`（有记分观测但在配位块特征表无行）。
+6. **导出守卫接线（M-6）**：`verification.json` 的 VERIFIERS 增加 `tests/test_manual_appendix_reconciliation.py`（**新增**；不含 `test_export_week14_results.py`，避免自引用）。接线的直接后果：手册与已提交 fixture 一旦漂移，交付包即刻 `verification_passed=false`。
+7. **残余技术债（M-5，登记不修）**：杠杆 4 的 xTB 迁移探针仍缺 `--check` 与脚本 digest 钉，本轮未修。

@@ -26,10 +26,12 @@ readable backing for every fold-level number in the summaries.
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -54,7 +56,24 @@ OBSERVATIONS_SHA256 = "159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec6
 R2_LEVERS_PREREG_SHA256 = "ab3503c037f05ac398b3c0c59d0e4845943d49fa5a5349fa46b8944f2bc1bdaa"
 BASELINE_R2 = 0.4091179943351143
 
-README_TEXT = """# Week 14 交付包（六杠杆 R² 战役 + 包络闸门 + AL Round 4）
+# Lever 8's v2 clause was locked at 04:02:50Z, i.e. 5 min 47 s AFTER the v1
+# readout landed at 03:57:03Z.  It is a post-reading amendment, not a blind
+# pre-registration, so the v2 verdict may not be reported as a blind result.
+# The sentence is shared verbatim by the README and the machine summary so the
+# two can never drift apart; the v2 pre-registration file itself is never
+# backfilled (the project rule is that locked files stay as written).
+BLOCK_V2_AMENDMENT_NOTE = (
+    "杠杆 8 的 v2 条款是**读后修订（非盲锁）**，不是盲预注册：v1 读数于 03:57:03Z 落盘，"
+    "probes/dielectric_coordination_block_prereg_v2.json 于 04:02:50Z 落盘，晚 5 分 47 秒。"
+    "因此 pass_under_amended_placebo_clause 不是盲预注册下的结果，其合法性只依赖"
+    "「缺陷是构造性的」这一判断；v1 的 dead 逐字保留。"
+)
+
+COORDINATION_BLOCK_FEATURES = (
+    REPOSITORY_ROOT / "probes" / "artifacts" / "dielectric_coordination_block_features.csv"
+)
+
+README_TEXT = f"""# Week 14 交付包（六杠杆 R² 战役 + 包络闸门 + AL Round 4）
 
 数据血缘: 规范数据集 data/dielectric_v03.csv **未改动**（digest
 ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4）；本轮全部产物为新增文件，
@@ -71,7 +90,8 @@ v1.0 已发布工件与 week11–week13 交付包未被触碰。
 3. **两越线，但都不许单独外推**：杠杆 4（v0.4 构象平均偶极迁移）ΔR² = **+0.0558384525472409**，
    判据 +0.0100（附录 X 期望带下沿，跑前写死），**pass**，但覆盖 **95/97 化合物**；
    杠杆 8（Li⁺ 配位块）ΔR² = **+0.044058816215696295**，v1 因**预注册安慰剂条款构造性缺陷**判 `dead`，
-   v2 以**新预注册**独立重跑后得 `pass_under_amended_placebo_clause`（读数与 v1 逐位相同）。
+   v2 以**读后修订条款**独立重跑同一块后得 `pass_under_amended_placebo_clause`（读数与 v1 逐位相同）；
+   该条款**非盲锁**（落盘晚于 v1 读数 5 分 47 秒），详见「入口」节的预注册分列。
 4. **两未过门**：杠杆 7（bagging）均值 ΔR² **+0.001750**、重复级 σ 只收窄 **6.73%**（需 ≥20%）→ `dead`；
    杠杆 9（知识纯度扫描）k=10 ΔR² **+0.014709977559720422**、正向重复 6/10 → `sub_threshold`。
    合并臂按预注册 `if_nothing_passes` **不开跑**（新增实测 0 次）。
@@ -85,9 +105,11 @@ v1.0 已发布工件与 week11–week13 交付包未被触碰。
 - week14_summary.json - 机器可读摘要（七通道读数 + shots + 缺陷登记 + 红线复核）
 - verification.json - verifier 退出码与报告
 - decisions_log.md - 含 §22（Week 14 预注册）与 §23（读数、判决、shots、缺陷登记、诚实边界）
-- dielectric_r2_levers_prereg.json / dielectric_knowledge_purity_sweep_prereg.json /
-  dielectric_coordination_block_prereg.json / dielectric_coordination_block_prereg_v2.json /
-  dielectric_feature_envelope_gate_prereg.json / l3_backvalidation_prereg_v2.json - 六份预注册（先锁后跑）
+- 预注册**盲锁件**（先锁后跑）共五份，其中四份本轮落跑：dielectric_r2_levers_prereg.json /
+  dielectric_knowledge_purity_sweep_prereg.json / dielectric_coordination_block_prereg.json /
+  dielectric_feature_envelope_gate_prereg.json
+- l3_backvalidation_prereg_v2.json - 第五份盲锁件，**仅预注册、本轮未跑**（单列在此，勿计入本轮读数）
+- dielectric_coordination_block_prereg_v2.json - {BLOCK_V2_AMENDMENT_NOTE}
 - 杠杆 2：dielectric_association_features_probe.py / _summary.json / artifacts/*.csv /
   reports 报告 / test_...py
 - 杠杆 3：dielectric_target_transform_probe.py / _summary.json / artifacts/*.csv / 报告 / 测试
@@ -109,7 +131,7 @@ v1.0 已发布工件与 week11–week13 交付包未被触碰。
 1. **「塌缩」判据必须写参照物**。预注册里「安慰剂塌缩 = `|ΔR²| ≤ 0.0200`」未写明参照；对**真实标签基准**
    取绝对距离时，该式在安慰剂**真塌缩**时**必然不满足**（构造性不可满足）。本轮该式命中五处。统一读法：
    塌缩 = 安慰剂臂**不得击败其「同折、同打乱标签向量」上的无信息地板**超过 +0.0200，并并列上报管线内增量。
-2. **`locked_at_utc` 自述字段不得单独作为锁定证据**。六份预注册里 **三份**的自述锁定时间**晚于自身文件
+2. **`locked_at_utc` 自述字段不得单独作为锁定证据**。六份预注册/修订文件里 **三份**的自述锁定时间**晚于自身文件
    mtime**（最多晚 101 分钟）。**以文件 mtime 为准**；自述字段照实保留、**不回填**。
 3. **布尔塌缩字段不得作为门**。`placebo_collapsed` / `control_collapsed` 一律只作披露字段。
 
@@ -248,6 +270,7 @@ VERIFIERS = (
         "tests/test_dielectric_knowledge_purity_sweep.py "
         "tests/test_dielectric_feature_envelope_gate.py "
         "tests/test_al_round4_new_compound_backfill.py tests/test_repo_hygiene.py "
+        "tests/test_manual_appendix_reconciliation.py "
         "-q -p no:cacheprovider"
     ),
 )
@@ -264,6 +287,31 @@ def _head_commit(source_root: Path) -> str:
         check=False,
     )
     return (completed.stdout or "").strip()
+
+
+def _worktree_status(source_root: Path) -> tuple[bool, int]:
+    """Say whether the worktree was dirty at export time, and by how many paths."""
+
+    completed = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=source_root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    paths = [line for line in (completed.stdout or "").splitlines() if line.strip()]
+    return bool(paths), len(paths)
+
+
+def blockless_status_counts(path: Path) -> dict[str, int]:
+    """The non-ok statuses of the lever-8 coordination feature table, counted."""
+
+    with path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    counts = Counter(row["status"] for row in rows if row.get("status") != "ok")
+    return dict(sorted(counts.items()))
 
 
 def _sha256(path: Path) -> str:
@@ -299,9 +347,45 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
     prereg_v1_digest = _sha256(REPOSITORY_ROOT / "probes" / "l3_backvalidation_prereg.json")
     r2_levers_digest = _sha256(REPOSITORY_ROOT / "probes" / "dielectric_r2_levers_prereg.json")
 
+    artifacts_commit = _head_commit(REPOSITORY_ROOT)
+    worktree_dirty, worktree_dirty_paths = _worktree_status(REPOSITORY_ROOT)
+    blockless = blockless_status_counts(COORDINATION_BLOCK_FEATURES)
+    blockless_total = sum(blockless.values())
+    blockless_breakdown = (
+        ", ".join(f"{name}={count}" for name, count in blockless.items()) or "none"
+    )
+    unscored_without_block = block_v1.get("coordination_block", {}).get(
+        "compounds_without_the_block"
+    ) or []
+    uncovered_compounds = len(unscored_without_block) - blockless_total
+    if uncovered_compounds < 0:
+        # A new non-"ok" status in the block table would push this remainder
+        # negative and the note below would silently advertise a negative
+        # subtraction instead of failing the export.
+        raise SystemExit(
+            "the coordination-block feature table reports more undefined-status "
+            f"compounds ({blockless_total}) than the frozen v1 summary records "
+            f"as blockless ({len(unscored_without_block)}); reconcile the two "
+            "before exporting"
+        )
+
     summary = {
         "week": WEEK,
-        "head_commit": _head_commit(REPOSITORY_ROOT),
+        # The export-time HEAD.  Kept under its historical name; on its own it is
+        # not a coordinate for the shipped files, see provenance_note.
+        "head_commit": artifacts_commit,
+        "artifacts_commit": artifacts_commit,
+        "worktree_dirty": worktree_dirty,
+        "worktree_dirty_paths": worktree_dirty_paths,
+        "provenance_note": (
+            "artifacts_commit is the commit to fetch the shipped artefacts from, but "
+            "only when worktree_dirty is false; head_commit is kept under its "
+            "historical name and carries the same value. When worktree_dirty is true, "
+            "at least one shipped file was copied from an uncommitted working tree, "
+            "so no commit on its own identifies the shipped bytes: seal the worktree "
+            "into a commit, re-export from that commit and cite it before quoting any "
+            "artefact coordinate."
+        ),
         "main_scoreboard": {
             "rows_scored": 457,
             "compounds_scored": 97,
@@ -372,9 +456,20 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                 "v1_decision": block_v1.get("verdict", {}).get("decision"),
                 "v1_kill_reasons": block_v1.get("verdict", {}).get("kill_reasons"),
                 "v2_decision": block_v2.get("verdict", {}).get("decision"),
-                "v2_note": block_v2.get("verdict", {}).get("v1_decision_is_still_in_force"),
+                "v1_decision_is_still_in_force": block_v2.get("verdict", {}).get(
+                    "v1_decision_is_still_in_force"
+                ),
                 "coverage": block_v1.get("coordination_block", {}).get("coverage")
                 or block_v1.get("coordination_block"),
+                "scored_compounds_without_the_block": blockless_total,
+                "coverage_note": (
+                    "compounds_without_the_block="
+                    f"{len(unscored_without_block)} = scored_compounds_without_the_block="
+                    f"{blockless_total} ({blockless_breakdown}: scoreboard compounds whose "
+                    "block status is undefined) + "
+                    f"{uncovered_compounds} compounds that carry scoreboard observations "
+                    "but have no row in the coordination-block feature table"
+                ),
                 "summary": "probes/dielectric_coordination_block_summary.json",
                 "summary_v2": "probes/dielectric_coordination_block_v2_summary.json",
             },
@@ -402,7 +497,8 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
         "al_round_4": {
             "run_mode": al4.get("run_mode"),
             "network_calls": al4.get("network_calls"),
-            "shots": al4.get("shots"),
+            # an offline local scan, not an attempt at the main scoreboard
+            "runs": al4.get("shots"),
             "list_stats": al4.get("list_stats"),
             "new_compound_stats": al4.get("new_compound_stats"),
             "honesty_boundaries": al4.get("honesty_boundaries"),
@@ -430,6 +526,7 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
             ),
         },
         "preregistration_defects": {
+            "block_v2_post_reading_amendment": BLOCK_V2_AMENDMENT_NOTE,
             "placebo_collapse_clause": (
                 "the pre-registered '|delta R2| <= 0.0200' never names its reference; "
                 "taken against the real-label baseline it is unsatisfiable by "
@@ -438,7 +535,8 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                 "its same-shuffle no-information floor by more than 0.0200."
             ),
             "locked_at_utc_vs_mtime": (
-                "three of six pre-registrations carry a self-reported locked_at_utc that "
+                "three of the six pre-registration / amendment files carry a self-reported "
+                "locked_at_utc that "
                 "postdates the file's own mtime (by up to 101 minutes). The file mtimes "
                 "are authoritative; the fields are left as written rather than backfilled."
             ),
