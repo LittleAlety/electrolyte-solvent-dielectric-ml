@@ -148,6 +148,8 @@
 
 其中「逐字复刻」严格说只有 **3 列**（AvgX/AvgI/AvgA）：公式逐字来自 SI，但**元素值表是论文没印的**，本模块采用 CRC Handbook 的 Pauling 电负性与 NIST ASD 的第一电离能/电子亲和能，属于另择来源。
 
+**与模块 docstring 三档账本的对齐**：`src/electrolyte_ml/kpi_descriptors.py` 的保真度账本用三档（VERBATIM / APPROXIMATE / UNCONFIRMED）。上表四档与它的对应关系是：`逐字复刻` → VERBATIM；`RDKit 原生` 与 `本仓自写` → **APPROXIMATE**（合计 **57 列**）；`未确证` → UNCONFIRMED。`ValE` 原先在三档账本里**漏登记**，现已显式归入 APPROXIMATE——S9 只给了名字（number of valence electrons），没说数哪些电子，本模块的选择是「**含氢**的全部原子外层电子数」（`PeriodicTable.GetNOuterElecs`），这也是 `compute_kpi_descriptors` 要 `Chem.AddHs` 的原因。
+
 ---
 
 ## 4 未确证列清单

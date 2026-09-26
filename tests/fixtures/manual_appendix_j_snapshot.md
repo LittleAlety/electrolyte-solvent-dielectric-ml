@@ -1659,8 +1659,8 @@ R² 对评分池敏感（同模型：97 池 0.409 / 236 冻结池 0.364 / 1594 �
 ### AC-4 T3：PubChem 身份层 L0（314/314）
 
 - 覆盖集 = 名册 246 ∪ lowfreq 50 ∪ ilthermo 47 = **314 键**；**246/246 名册键全部解析**，缺口 **0**，InChIKey 回环 314/314。
-- 成本记账：提交态 `network_calls=0`（缓存全命中）；填缓存那次收割 **315 次请求**、窗口 `05:49:15Z → 05:55:08Z`、限流 **0.25 s/请求**，运行记录追加进 git-ignored 的 `_harvest_runs.jsonl`。
-- 顺带查出：**5 条本地 SMILES 与 PubChem 真分歧**（含一条**不同阴离子**：`LBHLGZNUPKUZJC` 本地 `N#C[N-]C#N` vs PubChem 碳二亚胺）**待人工裁决**；**2 对立体异构体共用一个 PubChem SMILES** → 身份层**必须按 InChIKey 建键**；**1 条 CID 冲突**。
+- 成本记账（审查收口轮改为只用仓库内可复算的口径）：提交态 `network_calls=0`（缓存全命中）；**可复算的填充痕迹** = `data/external/g1plus/pubchem/identity_layer/` 下 **628 个文件**（314 `.json` + 314 `.url`），mtime 窗口 **2026-09-26T05:49:15Z → 05:55:08Z**（352.7 s），限流常量 `DEFAULT_THROTTLE_SECONDS = 0.25` s/请求（`probes/pubchem_identity_layer.py:62`）。**必须照实说明**：`_harvest_runs.jsonl` 现存各行**全部是收割之后**的缓存命中运行（首行 `05:56:02Z`，晚于窗口结束 `05:55:08Z`，逐行 `network_calls=0 / retries=0`）——**收割那一次本身没有落运行记录行，请求级计数在仓库内不可复现**，不得据此记账。
+- 顺带查出：**5 条本地 SMILES 与 PubChem 画法不同**——`identity_check` 全部 `roundtrip_match`、`pubchem_inchikey` 与 `inchikey` **逐字相同**，即**同一 InChIKey 下的画法差异、身份全部无误**（2 条咪唑鎓溴化物本地写电中性、1 条二氰胺本地 `N#C[N-]C#N` vs PubChem `C(=[N-])=NC#N`、2 条酰胺写成亚胺酸互变异构体），待人工决定是否改写本地 SMILES；**2 对立体异构体共用一个 PubChem SMILES** → 身份层**必须按 InChIKey 建键**；**1 条 CID 冲突**；另 10 条为 `ConnectivitySMILES` 无立体层的假警报。
 - 本轮**未做任何 Reaxys 裁决**（AA-1：Reaxys 是法官）。
 
 ### AC-5 T4：KPI 64 特征模块复刻（列级诚实清点）
@@ -1681,14 +1681,15 @@ R² 对评分池敏感（同模型：97 池 0.409 / 236 冻结池 0.364 / 1594 �
 **（b）【P0 缺陷】杠杆 9 洗错了列 → AB-6 的三强叙述不可引用**
 
 - `probes/dielectric_knowledge_purity_sweep.py:560` 构造 `full = hstack([frozen_physical, knowledge])`（物理块在前），但 `:565` 传 `columns=KNOWLEDGE_POOL`，而 `permutation_importance` 在 `:307` 用 `enumerate(columns)` → **`position` 从 0 起**，洗的是 `full[:, 0..K-1]`（**物理块前 K 列**），**知识池名字只是标签**。
-- 后果：k 臂的 `order[:k]` 等价于「按物理列重要度打乱顺序的知识池子集」→ **k=2/4/6 的扫描没有测到它想测的东西**；**k=10 = 全池不受影响**。
+- 后果：k 臂的 `order[:k]` 等价于「按物理列重要度打乱顺序的知识池子集」→ **k=2/4/6 的扫描没有测到它想测的东西**；**k=10 的「选择集」不受影响（十名全取），但其列序由破损排序决定**——探针 `:596-599` 用 `columns = [position_of[m] for m in order]` 定列序，而 `XGB_PARAMS` 含 `colsample_bytree: 0.8`，拟合**依赖列序**，故 **k=10 的列序与读数都不是不变量**。
 - 独立复算（同 50 折、另一实现）：`donor_acceptor_pair_density` 49/50、`heteroatom_over_carbon` 42/50、`ring_count` **0/50**；「线性计数垫底」按字面规则**不成立**（`donor_count` 3.60/4.14、`acceptor_count` 5.50/5.88）。与 AB-6 实际引用的表逐折 top-3 一致率 **2/50**，与修正后的置换 **27/50**。
-- **裁定**：**AB-6 的逐特征解释与「三强」名单在勘误前不得引用**；杠杆 9 的判决 `sub_threshold` 与 **k=10 读数**不受影响，但 **k=2/4/6 读数所依据的排序无效**。修正需**新预注册 + 独立重跑**（沿用杠杆 8 v2 范式：v1 读数逐字保留、不覆盖），**本轮不跑**，列为 Week 16 首位技术债。
+- **k=10 列序复算（审查收口轮独立完成，脚本未入库、待 Week 16 勘误轮固化）**：破损列序 **+0.014709977559720422**（在任上报值）→ 正确列序 **+0.008666009048**，差 **0.006044（41%）**，单重复最大差 **4.878e-02**。
+- **裁定（C-1 修正后）**：**AB-6 的逐特征解释与「三强」名单在勘误前不得引用**；杠杆 9 的判决在**两种已测列序下均为 `sub_threshold`**（修正列序值仍未跨过判据带），但**修正排序下的正式 k 扫描尚未跑**、其判决**待 Week 16 勘误轮重跑后确定，不得写成已定结论**；**k=2/4/6 读数所依据的排序无效**。修正需**新预注册 + 独立重跑**（沿用杠杆 8 v2 范式：v1 读数逐字保留、不覆盖），**本轮不跑**，列为 Week 16 首位技术债。
 
 ### AC-7 下一步与边界
 
 - **Week 16 首位**：杠杆 9 引用表勘误轮（新预注册 → 独立重跑 → 勘误读数与 v1 并列留档）；其次仍是 AA-5 的 ηε-joint schema 预注册 → 首建合并（ε 观测表 ∪ ThermoML-η ∪ Schrödinger 子集，全带 provenance）。
-- **仍未做**：T1 在线黏度切片核查；T3 的 5 条 SMILES 分歧人工裁决；ηε-joint 联合观测表**尚未新建**（本仓只有 Week 3 的 loose-join 探索表 `dielectric_viscosity_intersection.csv`，456 行 / 46 keys / `model_ready=false`）。
+- **仍未做**：T1 在线黏度切片核查；T3 的 5 条同一 InChIKey 下的画法差异人工决定是否改写本地 SMILES；ηε-joint 联合观测表**尚未新建**（本仓只有 Week 3 的 loose-join 探索表 `dielectric_viscosity_intersection.csv`，456 行 / 46 keys / `model_ready=false`）。
 - **训练方向（不许忘记）**：ηε-joint 建模须继承 v1.x 诚实口径——**观测级 + GroupKFold by InChIKey + 每折训练侧排序**，并断言 `group_overlap == 0`（黏度线已交学费：`random_row` 0.93689 vs `group_key` 0.74813）；`random_row` 只作泄漏参照、从不进判决。
 
 ### AC-8 冻结红线复核（本附录落盘时实测）

@@ -9,8 +9,16 @@ row-aligned comparison instead of leaving it as a belief.
 It also pins the hard boundary on the third supplement: ``..._supp_3.csv`` holds
 650 *model predictions* (``EdgePool_log(Viscosity)_pred``) together with an
 ``is_within_training`` flag, so it must never be merged into the experimental
-table. The probe writes that prohibition as an explicit assertion and records
-``rows_merged_into_experimental_table = 0``.
+table. That prohibition is a *design* statement (this probe has no code path
+that writes into an experimental table at all), and it is now reported as one.
+``rows_merged_into_experimental_table`` is no longer a hardcoded literal: it is
+the result of actually scanning the experimental tables for predicted rows or a
+prediction column.
+
+The row-aligned comparison alone is not enough to prove "the same file": the
+stored table is derived from the supplement, so it would share the row order
+even if the contents differed. ``compare_multiset`` therefore adds a second,
+row-order-independent comparison and both results are reported.
 
 Read-only with respect to every frozen artefact.
 """
@@ -44,6 +52,7 @@ SUPP3_PATH = "data/external/chew_2024_viscosity_supp_3.csv"
 OPEN_DOI = "10.1186/s13321-024-00820-5"
 SUPP3_PREDICTION_COLUMN = "EdgePool_log(Viscosity)_pred"
 SUPP3_DATA_STATUS = "predicted"
+PREDICTION_COLUMN_MARKERS: tuple[str, ...] = (SUPP3_PREDICTION_COLUMN,)
 DEFAULT_SUMMARY = REPOSITORY_ROOT / "probes" / "schrodinger_si_reconciliation_summary.json"
 TOLERANCE = 1e-9
 # Manual appendix Z-2: the paper's source dataset has 4,440 points but only the
@@ -58,6 +67,16 @@ ROW_COLUMN_PAIRS: tuple[tuple[str, str], ...] = (
     ("smiles", "CANON_SMILES"),
 )
 NUMERIC_LEFT_COLUMNS = frozenset({"T_K", "viscosity_cP"})
+
+LEFT_COLUMNS: tuple[str, ...] = tuple(left for left, _ in ROW_COLUMN_PAIRS)
+RIGHT_COLUMNS: tuple[str, ...] = tuple(right for _, right in ROW_COLUMN_PAIRS)
+
+# Tables that hold *experimental* observations.  The supplements prohibition is
+# only worth something if it is measured against these instead of asserted.
+EXPERIMENTAL_TABLES: tuple[str, ...] = (
+    VISCOSITY_V01_PATH,
+    "data/processed/viscosity_observations_thermoml.csv",
+)
 
 RECON_EXPECTATIONS: dict[str, int] = {
     "row_aligned_matches": 3582,
@@ -127,6 +146,87 @@ def compare_row_aligned(
     }
 
 
+def _row_signature(row: Mapping[str, str], columns: Sequence[str]) -> tuple[str, ...]:
+    return tuple((row.get(column) or "").strip() for column in columns)
+
+
+def compare_multiset(
+    left_rows: Sequence[Mapping[str, str]],
+    right_rows: Sequence[Mapping[str, str]],
+) -> dict[str, object]:
+    """Compare the two tables as multisets, i.e. independently of row order.
+
+    Sorting the two lists of row signatures and comparing them element by
+    element answers "same set of rows?" without assuming anything about the
+    order.  This matters because the stored table is derived from the
+    supplement: identical order is expected either way and proves nothing.
+    """
+
+    left_sorted = sorted(_row_signature(row, LEFT_COLUMNS) for row in left_rows)
+    right_sorted = sorted(_row_signature(row, RIGHT_COLUMNS) for row in right_rows)
+    return {
+        "left_rows": len(left_rows),
+        "right_rows": len(right_rows),
+        "multiset_matches": left_sorted == right_sorted,
+        "comparison_columns": [
+            {"left": left, "right": right} for left, right in ROW_COLUMN_PAIRS
+        ],
+        "order_independent": True,
+        "note": (
+            "先对每行取 4 个对齐字段的原始单元格、再对两侧的行签名排序后逐项比对；"
+            "与逐行比对相互独立（不依赖行序）。"
+        ),
+    }
+
+
+def scan_experimental_tables_for_predicted_rows() -> dict[str, object]:
+    """Actually look for supp_3-style prediction rows in the experimental tables.
+
+    The previous version recorded ``rows_merged_into_experimental_table = 0`` as
+    a literal, which proved nothing because the probe has no merge code path in
+    the first place.  This scan replaces the literal: it reads the experimental
+    tables and counts rows that carry a predicted status or a prediction column.
+    """
+
+    per_table: dict[str, object] = {}
+    total = 0
+    for relative_path in EXPERIMENTAL_TABLES:
+        table_path = REPOSITORY_ROOT / relative_path
+        if not table_path.is_file():
+            per_table[relative_path] = {
+                "present": False,
+                "rows": 0,
+                "predicted_rows": 0,
+            }
+            continue
+        rows = read_csv_rows(table_path)
+        predicted = 0
+        for row in rows:
+            status = (row.get("data_status") or "").strip().lower()
+            carries_prediction_column = any(
+                marker in row for marker in PREDICTION_COLUMN_MARKERS
+            )
+            if status == SUPP3_DATA_STATUS or carries_prediction_column:
+                predicted += 1
+        per_table[relative_path] = {
+            "present": True,
+            "rows": len(rows),
+            "predicted_rows": predicted,
+        }
+        total += predicted
+    return {
+        "kind": "measured_over_experimental_tables",
+        "tables": per_table,
+        "prediction_column_markers": list(PREDICTION_COLUMN_MARKERS),
+        "predicted_status_searched": SUPP3_DATA_STATUS,
+        "predicted_rows_found": total,
+        "note": (
+            "真的去读实验表并按 predicted 状态 / 预测列计数，不是字面量；"
+            "结果 0 表示没有任何预测行混进实验表。"
+        ),
+    }
+
+
 def _centipoise_matches_pascal_second(row: Mapping[str, str]) -> bool:
     pa_s = to_float(row.get("viscosity_Pa_s") or "")
     centipoise = to_float(row.get("viscosity_cP") or "")
@@ -144,6 +244,8 @@ def build_summary(*, summary_path: Path = DEFAULT_SUMMARY) -> dict[str, object]:
     supp2_rows = read_csv_rows(REPOSITORY_ROOT / SUPP2_PATH)
     supp3_rows = read_csv_rows(REPOSITORY_ROOT / SUPP3_PATH)
     comparison = compare_row_aligned(v01_rows, supp2_rows)
+    multiset_comparison = compare_multiset(v01_rows, supp2_rows)
+    supp3_scan = scan_experimental_tables_for_predicted_rows()
 
     unique_keys = {
         (row.get("inchikey") or "").strip()
@@ -222,9 +324,11 @@ def build_summary(*, summary_path: Path = DEFAULT_SUMMARY) -> dict[str, object]:
                 "subset published as Schrödinger et al. (2024) supplement 2?"
             ),
             "method": (
-                "Position-by-position table comparison on (T_K, viscosity_cP, "
-                "name, smiles) with a 1e-9 numeric tolerance, plus explicit "
-                "boundary assertions on supplement 3."
+                "Two independent comparisons on (T_K, viscosity_cP, name, "
+                "smiles) with a 1e-9 numeric tolerance: position-by-position, "
+                "and a row-order-independent multiset comparison. Supplement 3 "
+                "is kept out of the experimental tables by a measured scan, not "
+                "by a hardcoded flag."
             ),
             "network_access": False,
             "promotes_values_into_frozen_dataset": False,
@@ -255,6 +359,7 @@ def build_summary(*, summary_path: Path = DEFAULT_SUMMARY) -> dict[str, object]:
         "source_doi_set": source_dois,
         "source_doi_set_matches_expected": source_dois == [OPEN_DOI],
         "row_aligned_comparison": comparison,
+        "row_multiset_comparison": multiset_comparison,
         "stored_table": {
             "rows": len(v01_rows),
             "unique_keys": len(unique_keys),
@@ -292,8 +397,18 @@ def build_summary(*, summary_path: Path = DEFAULT_SUMMARY) -> dict[str, object]:
             "prediction_column": SUPP3_PREDICTION_COLUMN,
             "prediction_column_present_in_every_row": supp3_prediction_column_present,
             "is_within_training_counts": supp3_within_training,
-            "rows_merged_into_experimental_table": 0,
+            "rows_merged_into_experimental_table": int(
+                supp3_scan["predicted_rows_found"]
+            ),
+            "merge_boundary_measurement": supp3_scan,
             "merge_forbidden": True,
+            "merge_forbidden_kind": "design_declaration_not_measurement",
+            "merge_forbidden_note": (
+                "这个探针没有任何写入实验表的代码路径，所以 merge_forbidden=True "
+                "是设计声明而非测量结果；可复算的那一半由 "
+                "merge_boundary_measurement 承载——它真的去读实验表，按 predicted "
+                "状态与预测列计数，结果为 0。"
+            ),
             "assertion": (
                 "supp_3 是 EdgePool 的模型预测（650 行 / 50 个溶剂），"
                 "必须保持 data_status=predicted，禁止并入实验表、禁止进入任何可发表层、"
@@ -319,8 +434,12 @@ def build_summary(*, summary_path: Path = DEFAULT_SUMMARY) -> dict[str, object]:
                 "10.1186/s13321-024-00820-5。附录 Z-2 的“待核实假设”因此升级为已核实事实。"
             ),
             (
-                "两份表的行序也一致（supp_2 的 Index 与存量表的 record_id 都是 0..3581 的顺序编号），"
-                "所以这不是“集合相同但顺序不同”的弱结论，而是同一份文件的逐行同一性。"
+                "本次对账做了两种相互独立的比对：① 逐行（position-by-position）比对，"
+                "3,582/3,582 行、4 个对齐字段全部相同；② 多重集比对（对每行的 4 个对齐字段取"
+                "原始单元格、排序后逐项比对），两侧多重集也完全相同。"
+                "行序一致（supp_2 的 Index 与存量表的 record_id 各自都是 0..3581 的顺序编号）"
+                "只是两侧各自的编号性质，**不构成独立证据**——存量表本就由该补充材料生成，"
+                "同源必然同序；证据是上面的逐行 + 多重集双重比对。"
             ),
             (
                 "supp_3 是预测而非观测：650 行 / 50 个溶剂，含 EdgePool_log(Viscosity)_pred 列，"

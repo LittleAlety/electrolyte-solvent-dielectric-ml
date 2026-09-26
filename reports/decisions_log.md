@@ -3766,8 +3766,8 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 ### 24.4 T3：PubChem 身份层 L0（314/314）
 
 - 覆盖集 = 名册 246 ∪ lowfreq 50 ∪ ilthermo 47 = **314 个 InChIKey**；**246/246 名册键全部解析**，314/314 全解析，**缺口清单 0**，InChIKey 回环 314/314 `roundtrip_match`。
-- **成本记账**：提交态 `_summary.json` 的 `network_calls=0`（缓存全命中）；填满缓存的那次收割实测 **315 次请求**（314 键 + 1 次重试），窗口 **2026-09-26T05:49:15Z → 05:55:08Z**，限流 **0.25 s/请求**（累计 77.86 s）。为避免「零调用」掩盖原始成本，探针每次运行向 `data/external/g1plus/pubchem/identity_layer/_harvest_runs.jsonl` 追加一行（该目录被 `.gitignore` 覆盖，不进版本库）。
-- **顺带查出三条真问题（已机读化 + 测试钉死）**：① **5 条本地 SMILES 与 PubChem 真分歧**（`FSXANJBLYFVXEU`/`OOKUTCYPKPJYFV` 本地中性 vs PubChem 离子对；`LBHLGZNUPKUZJC` 本地 `N#C[N-]C#N` vs PubChem 碳二亚胺 `N#CN=C=[N-]`——**不同阴离子**；`OHLUUHNLEMFGTQ`/`ZHNUHDYFZUAESO` 互变异构体差异），**待人工裁决**；另 10 条为 `ConnectivitySMILES` 无立体层的假警报；② **2 对立体异构体共用一个 PubChem SMILES**（`KFUSEUYYWQURPO-OWOJBTEDSA-N`/`-UPHRSURJSA-N`、`ZQDPJFUHLCOCRG-AATRIKPKSA-N`/`-WAYWQWQTSA-N`）→ 身份层**必须按 InChIKey 建键**的操作性证据；③ **1 条 CID 冲突**（`FSXANJBLYFVXEU`：ilthermo 表记 60196376，PubChem 实为 57351531）。
+- **成本记账（审查收口轮改为只用仓库内可复算的口径）**：提交态 `_summary.json` 的 `network_calls=0`（缓存全命中）。**可复算的填充痕迹**：`data/external/g1plus/pubchem/identity_layer/` 下 **628 个文件**（314 个 `.json` + 314 个 `.url`），mtime 窗口 **2026-09-26T05:49:15Z → 05:55:08Z**（352.7 s）；限流常量 `DEFAULT_THROTTLE_SECONDS = **0.25**` s/请求（`probes/pubchem_identity_layer.py:62`）。**必须照实说明**：`_harvest_runs.jsonl` 现存各行**全部是收割之后**的缓存命中运行（首行 `2026-09-26T05:56:02Z`，晚于窗口结束 `05:55:08Z`，逐行 `network_calls=0 / retries=0 / throttle_seconds=0.0`）——**收割那一次本身没有落运行记录行，因此请求级计数在仓库内不可复现**，不得据此记账。
+- **顺带查出三条问题（已机读化 + 测试钉死；① 的措辞经审查收口轮更正）**：① **5 条本地 SMILES 与 PubChem 画法不同**——这 5 行的 `identity_check` **全部为 `roundtrip_match`**、`pubchem_inchikey` 与 `inchikey` **逐字相同**，即它们是**同一 InChIKey 下的画法差异、身份全部无误**（2 条咪唑鎓溴化物本地写成电中性分子、1 条二氰胺本地 `N#C[N-]C#N` vs PubChem `CanonicalSMILES` `C(=[N-])=NC#N`、2 条酰胺本地写成亚胺酸互变异构体），**待人工决定是否改写本地 SMILES**；另 10 条为 `ConnectivitySMILES` 无立体层的假警报（`difference_kind=stereo_only`）；② **2 对立体异构体共用一个 PubChem SMILES**（`KFUSEUYYWQURPO-OWOJBTEDSA-N`/`-UPHRSURJSA-N`、`ZQDPJFUHLCOCRG-AATRIKPKSA-N`/`-WAYWQWQTSA-N`）→ 身份层**必须按 InChIKey 建键**的操作性证据；③ **1 条 CID 冲突**（`FSXANJBLYFVXEU`：ilthermo 表记 60196376，PubChem 实为 57351531）。
 - **纪律**：本轮**未做任何 Reaxys 裁决**（AA-1：Reaxys 是法官，不进本表）。
 
 ### 24.5 T4：KPI 64 特征模块复刻（列级诚实清点）
@@ -3789,9 +3789,10 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 **（b）【P0 缺陷】杠杆 9 的 `permutation_importance` 洗错了列（附录 AB-6 的三强叙述因此不可引用）**
 
 - **缺陷**：`probes/dielectric_knowledge_purity_sweep.py:560` 构造 `full = np.hstack([frozen_physical, knowledge])`（物理块在前），但 `:565` 的调用把 `columns=KNOWLEDGE_POOL` 交给 `permutation_importance`，而该函数 `:307` 用 `for position, name in enumerate(columns)` → **`position` 从 0 起**，于是它洗的是 `full[:, 0..K-1]`（**物理块的前 K 列**），**十个知识池名字只是贴在这些物理列上的标签**。
-- **后果**：① `order`（= 按物理列 MSE 降序排列的**名字**）与真实知识特征重要度无关；② k 臂的 `chosen = order[:k]` 因此等价于「**按物理列重要度打乱顺序**的知识池子集」，k=2/4/6 的扫描**没有测到它想测的东西**；③ **k=10 = 全池，不受影响**。
+- **后果**：① `order`（= 按物理列 MSE 降序排列的**名字**）与真实知识特征重要度无关；② k 臂的 `chosen = order[:k]` 因此等价于「**按物理列重要度打乱顺序**的知识池子集」，k=2/4/6 的扫描**没有测到它想测的东西**；③ k=10 的**选择集**确实不受影响（十名全取），**但其列序由破损排序决定**——本探针 `:596-599` 用 `columns = [position_of[m] for m in order]` 决定列序，而 `XGB_PARAMS` 含 `colsample_bytree: 0.8`（`probes/dielectric_representation_ablation.py:48`），拟合**依赖列序**，因此 **k=10 的列序与读数都不是不变量**。
+- **【C-1 修正】k=10 列序复算（审查收口轮独立完成，脚本未入库、待 Week 16 勘误轮固化）**：用同一 50 折、同一评分函数、同一冻结基线复算两种列序——破损列序 **+0.014709977559720422**（与在任上报值逐位吻合至 ~7e-14）→ 正确列序 **+0.008666009048**，差 **0.006044（41%）**，单重复最大差 **4.878e-02**。
 - **影响范围**：`probes/dielectric_knowledge_purity_sweep_importance.csv`（500 行）与**附录 AB-6 的全部逐特征叙述**（「三强」`heteroatom_over_carbon` / `donor_acceptor_pair_density` / `ring_count`、以及「线性计数垫底」）。本探针用独立实现在同 50 折上复算：`donor_acceptor_pair_density` 49/50、`heteroatom_over_carbon` 42/50、`ring_count` **0/50**；「线性计数垫底」按字面规则**不成立**（`donor_count` 3.60/4.14、`acceptor_count` 5.50/5.88）。与 AB-6 实际引用的表逐折 top-3 一致率仅 **2/50 = 0.040**（`inconsistent`），与修正后的置换为 **27/50 = 0.540**（`partially_consistent`）。
-- **裁定（照实登记，不静默修）**：**AB-6 的逐特征解释与「三强」名单在勘误前不得引用**；杠杆 9 的**判决**（`sub_threshold`）与 **k=10 读数**不受影响，但 **k=2/4/6 的读数所依据的排序无效**。修正需**新预注册 + 独立重跑**（沿用杠杆 8 v2 的范式：v1 读数逐字保留、不覆盖），**本轮不跑**，登记为 Week 16 首位技术债。
+- **裁定（照实登记，不静默修；本句为 C-1 修正后的版本）**：**AB-6 的逐特征解释与「三强」名单在勘误前不得引用**；杠杆 9 的**判决**在**两种已测列序下均为 `sub_threshold`**（修正列序值 **+0.008666009048** 仍未跨过 +0.0200 判据带）；但**修正排序下的正式 k 扫描尚未跑**，其判决**待 Week 16 勘误轮重跑后确定**——**不得写成已定结论**；**k=2/4/6 的读数所依据的排序无效**。修正需**新预注册 + 独立重跑**（沿用杠杆 8 v2 的范式：v1 读数逐字保留、不覆盖），**本轮不跑**，登记为 Week 16 首位技术债。
 
 ### 24.7 AL Round 4 产物的重算（磁盘状态耦合——已知脆弱点）
 
@@ -3803,4 +3804,19 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 
 - 三臂均未改动任何**已跟踪**文件；5 个冻结红线文件 + `data/viscosity_v01.csv` + `data/external/*` 的 `git diff` **无输出**。
 - `data/dielectric_v03.csv` = `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`（**INTACT**）；`data/processed/dielectric_observations_v11plus.csv` = `159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9`（**INTACT**）；七个锁定常量一个字未动。
-- **本周边界**：T1 未做在线黏度切片核查；T2 无官方校验和可对；T3 未做 Reaxys 裁决、5 条 SMILES 分歧待人工裁决；T4 未确证列的实际数量高于「4 列」这一乐观口径（见 24.5 偏差点）；T5 的名次不稳且引用表缺陷待勘误。**ηε-joint 的联合观测表仍未新建**（本仓只有 Week 3 的 loose-join 探索表 `dielectric_viscosity_intersection.csv`，456 行 / 46 keys / `model_ready=false`）。
+- **本周边界**：T1 未做在线黏度切片核查；T2 无官方校验和可对；T3 未做 Reaxys 裁决、5 条同一 InChIKey 下的画法差异待人工决定是否改写本地 SMILES；T4 未确证列的实际数量高于「4 列」这一乐观口径（见 24.5 偏差点）；T5 的名次不稳且引用表缺陷待勘误。**ηε-joint 的联合观测表仍未新建**（本仓只有 Week 3 的 loose-join 探索表 `dielectric_viscosity_intersection.csv`，456 行 / 46 keys / `model_ready=false`）。
+
+### 24.9 审查收口轮修正（2026-09-26，Optimizer 轮）
+
+- **C-1（Critical）**：§24.6 原把 k=10 这一格当作「属于全池因而在排序缺陷之外」。审查收口轮实测证伪——列序由破损排序决定，`colsample_bytree: 0.8`（`probes/dielectric_representation_ablation.py:48`）使拟合依赖列序，故 k=10 的**列序与读数都不是不变量**：正确列序下 ΔR² = **+0.008666009048**（在任上报值 +0.014709977559720422），差 **0.006044（41%）**，单重复最大差 **4.878e-02**。裁定句已改写为「两种已测列序下判决均为 `sub_threshold`；修正排序下的正式 k 扫描**待 Week 16 勘误轮重跑后确定**，不得写成已定结论」。
+- **I-1（Important）**：§24.4 ① 原把这 5 条本地 SMILES 写成与 PubChem 的结构性分歧，并引用了一个仓库里零命中的 PubChem 串。实测 `data/reference/identity_map.csv` 的 `identity_check` 为 **314/314 `roundtrip_match`**、`pubchem_inchikey` 与 `inchikey` **逐字相同** → 它们是**同一 InChIKey 下的画法差异，身份全部无误**；产物里的真实串是 **`C(=[N-])=NC#N`**。
+- **I-2（Important）**：§24.4 原记的请求级计数与累计限流秒数**在仓库内无承载物**（`_harvest_runs.jsonl` 现存各行全部是收割之后的缓存命中运行，首行 `2026-09-26T05:56:02Z` 晚于窗口结束 `05:55:08Z`）。已换成可复算口径：**314 个键**、缓存目录 **628 个文件**（314 `.json` + 314 `.url`）、mtime 窗口 **2026-09-26T05:49:15Z → 05:55:08Z**（352.7 s）、限流常量 **0.25** s/请求（`probes/pubchem_identity_layer.py:62`）。
+- **M-1 / M-2（Minor，一并修）**：T2 探针删掉「行序一致 ⇒ 同一份文件」的因果句（存量表本就由该补充材料生成，同源必然同序，行序不构成独立证据），改为**逐行 + 多重集**双重比对（新增 `compare_multiset`；payload 新增 `row_multiset_comparison.multiset_matches = True`）；`rows_merged_into_experimental_table` 由硬编码字面量改为**真扫两张实验表**（`data/viscosity_v01.csv` 3,582 行、`data/processed/viscosity_observations_thermoml.csv` 2,725 行）按 `data_status=predicted` / 预测列计数（结果 0）；`merge_forbidden = True` 照实标为 `merge_forbidden_kind = design_declaration_not_measurement`（本探针没有写入实验表的代码路径）。
+- **M-7（Minor，一并修）**：KPI 64 特征模块的保真度账本原先漏登记 `ValE`，现已显式归入 **APPROXIMATE**（S9 只给名字、未说数哪些电子；本模块取「含氢的全部原子外层电子数」），`reports/kpi_64_feature_module.md` 同步给出四档 ↔ 三档的对应关系。
+- **登记不修（照实留档，不扩张）**：M-3（T2 的 1e-9 容差在本对照里从未生效，两侧逐字节相同）／M-4（`cid_conflicts` 缺提交产物的字面量断言）／M-5（`kpi_columns_table()` 依赖 dict 插入序）／M-6（SHAP 守卫记录里的 `0` 是 raise 的后置条件而非测量值）／M-8（两处弱文档守卫：纯存在性循环、markdown 子串断言）。
+- **新增守护**：`tests/test_week15_reporting_accuracy.py` —— 断言 §24 与附录 AC 区间**不再出现**被证伪的句子，且**必须出现**更正后的关键串（`+0.008666009048` / `4.878e-02` / `C(=[N-])=NC#N` / `314/314` / `0.25`）。
+- **Re-review 轮（第 5 步，2026-09-26）**：**无新 Critical / Important**；上一轮 C-1 / I-1 / I-2 / M-1 / M-2 / M-7 经独立复算与**变异测试**确认**全部已修**。同轮新增 6 条 Minor 的处置如下——
+  - **已修**：守卫原先只匹配一个**裸数字片段**，现改为要求**带上下文前缀**的形态（否则未来任何含同样数字的无关量都会被无理由 RED）；本节因此不再逐字复述该被禁串。
+  - **登记不修（照实留档）**：① `probes/pubchem_identity_layer_summary.json` 的 `smiles_differing_keys` 仍标 `difference_kind="structural"`——prose 已改口为「同一 InChIKey 下的画法差异、身份全部无误」，**机器字段名保留原语义**，读 JSON 者须知此差异；② 守卫作用域是整个 §24，故被证伪句的**逐字副本只能存放在 §24 之外**（如 `tests/test_week15_reporting_accuracy.py` 的 docstring）；③ 守卫的「必须出现」是存在性检查，删掉**单点**副本不会 RED（删光才 RED）；④ `scan_experimental_tables_for_predicted_rows` 只认 supp_3 的**已知标记**（该预测列名 + `data_status=predicted`），属「按已知标记扫描」而非全面污染检测；⑤ `compare_multiset`（字节级，严）与 `compare_row_aligned`（1e-9 容差）目前结论一致（两侧 3,582/3,582 逐字节相同），但**两者冲突时的采信优先级**未写进 payload。
+  - **Re-review 轮补测（重要旁证，非本轮判决）**：审读者独立复算了**整条 k 网格（规范列序）**——k=2 `+0.005995` / k=4 `−0.009829` / k=6 `−0.000005` / k=10 `+0.008666`；并逐折重建破损序，**50 折里 0 折等于规范序**（共 45 个不同序），首折破损序前两位恰是 `heteroatom_over_carbon` / `donor_acceptor_pair_density`（印证 AB-6「三强」是破损排序的产物）。这既印证「k=2/4/6 在册读数完全由破损列序决定」，也使「两种已测列序下判决均为 `sub_threshold`」这句**在整条网格上站得住**。该复算脚本**未入库**，正式勘误仍待 Week 16 的新预注册 + 独立重跑。
+

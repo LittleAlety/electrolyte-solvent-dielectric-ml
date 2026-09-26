@@ -34,6 +34,12 @@ APPROXIMATE (paper gives words only, no SMARTS, no formula)
     SMARTS pattern or a graph algorithm is written here; each such choice is
     listed in ``reports/kpi_64_feature_module.md``.
 
+    ``ValE`` belongs here too, not to the tier above. Table S9 names it
+    ("number of valence electrons") but never says which electrons are
+    counted, so the choice is ours: the module sums the outer-shell electron
+    count of every atom *including hydrogens* (``PeriodicTable.GetNOuterElecs``),
+    which is the reason ``compute_kpi_descriptors`` calls ``Chem.AddHs``.
+
 UNCONFIRMED (paper never states the method at all)
     ``MaxPC`` / ``MinPC`` / ``MaxAPC`` / ``MinAPC``. No charge model is named.
     Gasteiger charges are used as the closest RDKit-native choice, computed on

@@ -1,9 +1,9 @@
 {
   "schema_version": "schrodinger_si_reconciliation/v1",
-  "generated_at_utc": "2026-09-26T05:50:30+00:00",
+  "generated_at_utc": "2026-09-26T06:39:46+00:00",
   "design": {
     "question": "Are the project's 3,582 stored viscosity rows literally the open subset published as Schrödinger et al. (2024) supplement 2?",
-    "method": "Position-by-position table comparison on (T_K, viscosity_cP, name, smiles) with a 1e-9 numeric tolerance, plus explicit boundary assertions on supplement 3.",
+    "method": "Two independent comparisons on (T_K, viscosity_cP, name, smiles) with a 1e-9 numeric tolerance: position-by-position, and a row-order-independent multiset comparison. Supplement 3 is kept out of the experimental tables by a measured scan, not by a hardcoded flag.",
     "network_access": false,
     "promotes_values_into_frozen_dataset": false
   },
@@ -106,6 +106,31 @@
       }
     ]
   },
+  "row_multiset_comparison": {
+    "left_rows": 3582,
+    "right_rows": 3582,
+    "multiset_matches": true,
+    "comparison_columns": [
+      {
+        "left": "T_K",
+        "right": "Temperature (K)"
+      },
+      {
+        "left": "viscosity_cP",
+        "right": "Viscosity (cP)"
+      },
+      {
+        "left": "name",
+        "right": "Name"
+      },
+      {
+        "left": "smiles",
+        "right": "CANON_SMILES"
+      }
+    ],
+    "order_independent": true,
+    "note": "先对每行取 4 个对齐字段的原始单元格、再对两侧的行签名排序后逐项比对；与逐行比对相互独立（不依赖行序）。"
+  },
   "stored_table": {
     "rows": 3582,
     "unique_keys": 957,
@@ -139,7 +164,30 @@
       "True": 247
     },
     "rows_merged_into_experimental_table": 0,
+    "merge_boundary_measurement": {
+      "kind": "measured_over_experimental_tables",
+      "tables": {
+        "data/viscosity_v01.csv": {
+          "present": true,
+          "rows": 3582,
+          "predicted_rows": 0
+        },
+        "data/processed/viscosity_observations_thermoml.csv": {
+          "present": true,
+          "rows": 2725,
+          "predicted_rows": 0
+        }
+      },
+      "prediction_column_markers": [
+        "EdgePool_log(Viscosity)_pred"
+      ],
+      "predicted_status_searched": "predicted",
+      "predicted_rows_found": 0,
+      "note": "真的去读实验表并按 predicted 状态 / 预测列计数，不是字面量；结果 0 表示没有任何预测行混进实验表。"
+    },
     "merge_forbidden": true,
+    "merge_forbidden_kind": "design_declaration_not_measurement",
+    "merge_forbidden_note": "这个探针没有任何写入实验表的代码路径，所以 merge_forbidden=True 是设计声明而非测量结果；可复算的那一半由 merge_boundary_measurement 承载——它真的去读实验表，按 predicted 状态与预测列计数，结果为 0。",
     "assertion": "supp_3 是 EdgePool 的模型预测（650 行 / 50 个溶剂），必须保持 data_status=predicted，禁止并入实验表、禁止进入任何可发表层、禁止用于拟合或评估。本对照把它们隔离在实验表之外，因此本探针不把它们计入 row_aligned_matches。"
   },
   "competing_table_note": "本仓已存在 data/processed/dielectric_viscosity_intersection.csv（456 行 / 46 keys，pair_type=loose_join、model_ready=false），属探索性 loose join，不是 ε+η 联合观测表；ηε-joint 的联合骨架仍需新建。",
@@ -169,7 +217,7 @@
   },
   "findings": [
     "存量 data/viscosity_v01.csv 与 Schrödinger 2024 supp_2 在同一行序上逐行一致：3,582/3,582 行全等，0 处不一致（T_K、viscosity_cP 用 1e-9 容差，name、CANON_SMILES 精确比对），957 个 InChIKey，source_doi 唯一且等于 10.1186/s13321-024-00820-5。附录 Z-2 的“待核实假设”因此升级为已核实事实。",
-    "两份表的行序也一致（supp_2 的 Index 与存量表的 record_id 都是 0..3581 的顺序编号），所以这不是“集合相同但顺序不同”的弱结论，而是同一份文件的逐行同一性。",
+    "本次对账做了两种相互独立的比对：① 逐行（position-by-position）比对，3,582/3,582 行、4 个对齐字段全部相同；② 多重集比对（对每行的 4 个对齐字段取原始单元格、排序后逐项比对），两侧多重集也完全相同。行序一致（supp_2 的 Index 与存量表的 record_id 各自都是 0..3581 的顺序编号）只是两侧各自的编号性质，**不构成独立证据**——存量表本就由该补充材料生成，同源必然同序；证据是上面的逐行 + 多重集双重比对。",
     "supp_3 是预测而非观测：650 行 / 50 个溶剂，含 EdgePool_log(Viscosity)_pred 列，is_within_training 为 False 403 行 / True 247 行；与 supp_2 只共享 19 个溶剂。它必须保持 data_status=predicted，本探针拒绝把任何一行并入实验表。"
   ],
   "limitations": [

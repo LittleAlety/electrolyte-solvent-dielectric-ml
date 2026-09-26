@@ -20,9 +20,10 @@
 1. 按**行序**拉链对齐两份 3,582 行的表（不做集合运算、不做排序）。
 2. 逐行比对 4 个可对齐字段：`T_K ↔ Temperature (K)`、`viscosity_cP ↔ Viscosity (cP)`（数值，绝对容差 **1e-9**）、`name ↔ Name`、`smiles ↔ CANON_SMILES`（字符串精确）。
 3. 记录逐列不一致计数与前 10 条不一致样例；行数差单列记录。
-4. 附加内部一致性检查：存量表的 `viscosity_Pa_s × 1000` 是否等于 `viscosity_cP`；`record_id` / `Index` 是否是从 0 起的顺序编号（用于确认「同一份文件」而不是「集合相同、顺序不同」）。
-5. 对 `supp_3` 下硬边界断言：是预测行、必须保持 `data_status=predicted`、不得并入实验表。
-6. 幂等性：去掉 `generated_at_utc` 后连续两次运行逐键一致。
+4. **与逐行比对相互独立的第二种比对**：多重集比对——对每行取 4 个对齐字段的原始单元格，两侧分别排序后逐项比对（不依赖行序）。存量表本就由该补充材料生成，同源必然同序，所以行序一致**不构成证据**，证据是「逐行 + 多重集」双重比对。
+5. 附加内部一致性检查：存量表的 `viscosity_Pa_s × 1000` 是否等于 `viscosity_cP`；`record_id` / `Index` 是否从 0 起顺序编号（这只是两侧各自的编号性质，**不作为**「同一份文件」的证据）。
+6. 对 `supp_3` 的硬边界改成**测量**：真的去读两张实验表（`data/viscosity_v01.csv`、`data/processed/viscosity_observations_thermoml.csv`），按 `data_status=predicted` 或预测列计数，结果为 0；`merge_forbidden=True` 是**设计声明**（本探针没有写入实验表的代码路径），并在汇总里标为 `design_declaration_not_measurement`。
+7. 幂等性：去掉 `generated_at_utc` 后连续两次运行逐键一致。
 
 ## 读数
 
@@ -38,14 +39,16 @@
 ### 明细
 
 - **逐行、逐列全等**：3,582/3,582 行匹配；逐列不一致数 `T_K = 0`、`viscosity_cP = 0`、`name = 0`、`smiles = 0`；不一致样例列表为空；两侧行数差为 0。**附录 Z-2 的「关键待核实假设」升级为已核实事实。**
-- **行序也一致**：`supp_2.Index` 与 `viscosity_v01.record_id` 都是 0…3581 的顺序编号（`index_is_sequential = True`）。所以结论不是「集合相同但顺序不同」的弱命题，而是**同一份文件的逐行同一性**。
+- **逐行 + 多重集双重比对**：除逐行比对外，还做了**与行序无关的多重集比对**（每行取 4 个对齐字段的原始单元格，两侧分别排序后逐项比对），`multiset_matches = True`。
+- **行序一致不作为证据**：`supp_2.Index` 与 `viscosity_v01.record_id` 各自都是 0…3581 的顺序编号（`index_is_sequential = True`），但这只是两侧各自的编号性质——存量表本就由该补充材料生成，同源必然同序。
 - **DOI 唯一**：存量表 3,582 行的 `source_doi` 只有一个取值。
 - **内部一致**：3,582 行的 `viscosity_Pa_s × 1000 == viscosity_cP`（容差内）全部成立；`data_status` 全为 `experimental`，**没有任何 predicted 行混入**。
 - **`supp_3` 是预测，已隔离**：
   - 650 行 / 50 个溶剂；含 `EdgePool_log(Viscosity)_pred` 列，**100% 的行都有该列**；
   - `is_within_training` = False 403 行 / True 247 行；
   - 与 `supp_2` 只共享 19 个 SMILES；
-  - `data_status = predicted`、`merge_forbidden = True`、**`rows_merged_into_experimental_table = 0`**。
+  - `data_status = predicted`；**并入检查是测量而非字面量**：真的去读 `data/viscosity_v01.csv`（3,582 行）与 `data/processed/viscosity_observations_thermoml.csv`（2,725 行）两张实验表，按 `data_status=predicted` 或预测列计数 → `predicted_rows_found = 0`，即 `rows_merged_into_experimental_table = 0`。
+  - `merge_forbidden = True` 是**设计声明**（本探针没有写入实验表的代码路径），汇总里标为 `merge_forbidden_kind = design_declaration_not_measurement`。
 - **受限部分照实登记**：论文原始数据 4,440 点，公开子集 3,582 点，**差额 858 点**按要求保留为「声称的受限量」。
 
 ## 边界（不许省略）
