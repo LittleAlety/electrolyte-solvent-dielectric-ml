@@ -3736,3 +3736,71 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 5. **无块化合物分母（M-4）**：新增 `scored_compounds_without_the_block = 9` 与 `coverage_note`，明写 `compounds_without_the_block = 60 = 9`（`undefined_no_hetero_site`）+ `51`（有记分观测但在配位块特征表无行）。
 6. **导出守卫接线（M-6）**：`verification.json` 的 VERIFIERS 增加 `tests/test_manual_appendix_reconciliation.py`（**新增**；不含 `test_export_week14_results.py`，避免自引用）。接线的直接后果：手册与已提交 fixture 一旦漂移，交付包即刻 `verification_passed=false`。
 7. **残余技术债（M-5，登记不修）**：杠杆 4 的 xTB 迁移探针仍缺 `--check` 与脚本 digest 钉，本轮未修。
+## §24 Week 15 数据层周（2026-09-26，三臂并行）
+
+> 范围 = 附录 AA-4 的周一至周五（ηε-joint 数据层）。本轮**不动笔、不做建模判决、不碰冻结件**（附录 Z-7）；三个执行臂写集互不重叠，合并后定向测试 **113 passed**、`ruff check src probes tests` 全绿。
+
+### 24.1 三臂并行与写集
+
+| 臂 | 任务 | 交付（新增，均未跟踪→本轮入库） |
+|---|---|---|
+| A | T1 ThermoML 黏度重解析 + T2 存量 vs Schrödinger SI 对照 | `probes/thermoml_viscosity_coverage_probe.py`、`probes/schrodinger_si_reconciliation.py` + 两份 `_summary.json` + 两份 `reports/*.md` + 两个测试 + `data/processed/viscosity_observations_thermoml.csv`（9 件） |
+| B | T3 PubChem 身份层 L0 + T4 KPI 64 特征模块复刻 | `data/reference/identity_map.csv`、`probes/pubchem_identity_layer.py` + `_summary.json`、`src/electrolyte_ml/kpi_descriptors.py`、`tests/test_pubchem_identity_layer.py`、`tests/test_kpi_descriptors.py`、`reports/kpi_64_feature_module.md`（7 件） |
+| C | T5 SHAP 跑 ε hybrid | `probes/dielectric_hybrid_shap.py` + `_summary.json` + 两份 `artifacts/*.csv` + `reports/dielectric_hybrid_shap.md` + `tests/test_dielectric_hybrid_shap.py`（6 件） |
+
+### 24.2 T1：ThermoML 黏度重解析——附录 Z-4 的前提证实，但规模须下修
+
+- **全量重解析 242 个本地 XML**（走仓内 `electrolyte_ml.thermoml.parse_thermoml_file`，未新写解析器），11 项验收值与侦察预期**逐项相符**（`expectation_mismatches = []`）：`viscosity_files=29`、`viscosity_rows=2725`（`Viscosity, Pa*s` 2549 + `Kinematic viscosity, m2/s` 176）、`pure_rows=569` / `mixture_rows=2156`（`pure+mixture=2725` 成立）、`pure_keys=47`、`overlap_eps_obs=37`、`overlap_viscosity_v01=28`、`new_vs_eps_and_v01=3`。
+- **「未收割」由假设升级为机读事实**：存量三张抽取表（`thermoml_normalized.csv` 625 行、`dielectric_raw.csv`、`thermoml_source_manifest.csv`）的黏度行数**全为 0**，连黏度列都不存在。
+- **规模必须下修**：纯组分只有 **569 行 / 47 个 InChIKey**，相对 ε 观测表(153 键)与存量黏度表(957 键)的并集，**净新增实体仅 3 键**。附录 Z-4 的语气暗示这是千行级新矿脉——**不成立**。
+- **边界（不许省略）**：① 本地 XML 只是 NIST 全库（11,923 条记录）的**筛选子集**，「29 个文件含黏度」**不构成 NIST 黏度总体上界**，要下总体结论必须另做在线黏度切片核查（本轮**未做**）；② 多组分 2,156 行**未做**溶质/溶剂角色拆分，`inchikey` 列对多组分行只是第一个组分；③ 运动黏度 176 行无密度无法换算成 Pa·s。
+- **顺带锚点**：PC（`RUOJZAUFBMNUDX-UHFFFAOYSA-N`）本地有 **28 行纯组分 η(T)**，而本仓已证实本地无 PC 的 ε——PC 的 η 不需要外部源，ε 才需要。
+
+### 24.3 T2：存量 3,582 行 = Schrödinger 开放子集——附录 Z-2 假设落锤
+
+- **逐行同一性**：`data/viscosity_v01.csv`(3,582 行) 与 `data/external/chew_2024_viscosity_supp_2.csv` 逐行对齐，**`row_aligned_matches=3582` / `mismatches=0`**（`T_K`/`viscosity_cP` 容差 1e-9；`name`/SMILES 精确比对），`unique_keys=957`，`source_doi` 唯一且 = `10.1186/s13321-024-00820-5`。→ **附录 Z-2 的「关键待核实假设」由「待对账」降级为「已证实的既定条件」**。
+- **受限边界照实登记**：Schrödinger 原始 **4,440** 点中仅 **3,582** 可公开，差额 **858** 条属受限，**不得绕版权获取**；开放子集再利用须遵其许可并注明出处。`4,440` 是论文声称值，**本地不可复算**。
+- **supp_3 不得并入**：650 行 / 50 溶剂，`data_status=predicted`（列含 `EdgePool_log(Viscosity)_pred`，`is_within_training` False 403 / True 247）；`supp_3_merged_into_experimental_table = 0`，已由测试钉死。
+- **边界**：逐行同一性只证明「存量表 = 开放子集」，**不能**证明开放子集本身没有抄录错误；本地无 Schrödinger 官方校验和可对。
+
+### 24.4 T3：PubChem 身份层 L0（314/314）
+
+- 覆盖集 = 名册 246 ∪ lowfreq 50 ∪ ilthermo 47 = **314 个 InChIKey**；**246/246 名册键全部解析**，314/314 全解析，**缺口清单 0**，InChIKey 回环 314/314 `roundtrip_match`。
+- **成本记账**：提交态 `_summary.json` 的 `network_calls=0`（缓存全命中）；填满缓存的那次收割实测 **315 次请求**（314 键 + 1 次重试），窗口 **2026-09-26T05:49:15Z → 05:55:08Z**，限流 **0.25 s/请求**（累计 77.86 s）。为避免「零调用」掩盖原始成本，探针每次运行向 `data/external/g1plus/pubchem/identity_layer/_harvest_runs.jsonl` 追加一行（该目录被 `.gitignore` 覆盖，不进版本库）。
+- **顺带查出三条真问题（已机读化 + 测试钉死）**：① **5 条本地 SMILES 与 PubChem 真分歧**（`FSXANJBLYFVXEU`/`OOKUTCYPKPJYFV` 本地中性 vs PubChem 离子对；`LBHLGZNUPKUZJC` 本地 `N#C[N-]C#N` vs PubChem 碳二亚胺 `N#CN=C=[N-]`——**不同阴离子**；`OHLUUHNLEMFGTQ`/`ZHNUHDYFZUAESO` 互变异构体差异），**待人工裁决**；另 10 条为 `ConnectivitySMILES` 无立体层的假警报；② **2 对立体异构体共用一个 PubChem SMILES**（`KFUSEUYYWQURPO-OWOJBTEDSA-N`/`-UPHRSURJSA-N`、`ZQDPJFUHLCOCRG-AATRIKPKSA-N`/`-WAYWQWQTSA-N`）→ 身份层**必须按 InChIKey 建键**的操作性证据；③ **1 条 CID 冲突**（`FSXANJBLYFVXEU`：ilthermo 表记 60196376，PubChem 实为 57351531）。
+- **纪律**：本轮**未做任何 Reaxys 裁决**（AA-1：Reaxys 是法官，不进本表）。
+
+### 24.5 T4：KPI 64 特征模块复刻（列级诚实清点）
+
+- **定义源**：正文 PDF 里 `Table S` 只出现 1 次、**确无 64 特征表**；同目录 SI `anie202416506-sup-0001-misc_information.pdf`（64 页）提取成功，Table S6/S7/S8/S9 分别落在字符位 25,973 / 26,471 / 27,310 / 28,719，AvgI/AvgA/AvgX 的求和公式原文在 SI 第 4 节（位 5,097）。**未用回退源**。
+- **64 列清点**：**逐字复刻 3 列**（`AvgX`/`AvgI`/`AvgA` 公式照抄 SI；但元素值表论文没印，值取 CRC/NIST，标为「值表另择」）+ **RDKit 原生直接映射 15 列**（`Molwt`/`#Heavy`/`#Donor`/`#Accept`/`#Rot`/`#Ring` + 9 个环分类计数）+ **本仓自写 42 列**（论文只给措辞，SMARTS/图算法由我们选）+ **未确证 4 列**（`MaxPC`/`MinPC`/`MaxAPC`/`MinAPC`——SI 从未说明电荷模型，用 Gasteiger 并写明「隐式氢、氢不带电荷」）。
+- **已知偏差点（不许省略）**：`#R=R` 按字面「全部双键」执行（DMSO 的 S=O 计入）；`#Bran` 用分支限界 DFS（论文用 NetworkX 枚举全部简单路径），等长链时可能差 1；`#Nring` 取 SSSR 最大环；`#Donor`/`#Accept` 用 RDKit Lipinski 定义（水会得 0）。名册含白名单外元素 B(4)/Si(1)/**Fe(1，五羰基铁)**，Fe 三个性质表都无值取 0.0 参与平均，由 `element_coverage()` 单独暴露。
+- 名册 2 条 `[PF6]⁻` 离子液体的 7 个 P/F 原子无 Gasteiger 参数 → 显式 0.0 兜底，测试钉住「恰好 2 条 × 7 原子」。
+
+### 24.6 T5：SHAP 跑 ε hybrid，与【P0 缺陷】杠杆 9 引用表错位
+
+**（a）本轮 SHAP 读数**
+
+- **泄漏守卫**：`assert_shap_ranking_scope` 在**每折**生产路径上执行（hybrid/知识/置换三臂），`leak_guard.folds_checked=150`、`max_test_rows_visible_to_ranking=0`；importance CSV 每行 `test_rows_visible_to_ranking=0`。折划分**完全复用杠杆 9 主记分牌**（`signature_sha256=864b3a53…86be`），基线逐位复现 `0.4091179943351143`。
+- **零依赖实现**：`shap` 未安装；走 `xgboost.predict(DMatrix, pred_contribs=True)`，末列 bias **被校验剔除**（150 次拟合，最大相对残差 4.73e-06 / 3.14e-06，容差 1e-05）。
+- **hybrid top-10**：`mu_sq_over_Vm`(2.648，平均名次 1.64)、`total_energy_hartree`(1.911)、`tpsa_A2`(1.626)、`molecular_volume_A3`(1.528)、`morgan_bit_0790`(1.326)、`morgan_bit_0427`(0.969)、`morgan_bit_0114`(0.907)、`morgan_bit_0080`(0.738)、`hbd`(0.709)、`morgan_bit_0650`(0.670)；家族份额 Morgan 50.2% / physical 49.8%。
+- **名次极不稳（不许省略）**：2,061 列里 `stable` 仅 6 列、`unstable` 2,055 列，**1,880 列从未被任何树分裂**（名次是并列位次而非测量值）；`morgan_bit_0790`/`0427` 名次标准差高达 269.6 / 190.5。
+
+**（b）【P0 缺陷】杠杆 9 的 `permutation_importance` 洗错了列（附录 AB-6 的三强叙述因此不可引用）**
+
+- **缺陷**：`probes/dielectric_knowledge_purity_sweep.py:560` 构造 `full = np.hstack([frozen_physical, knowledge])`（物理块在前），但 `:565` 的调用把 `columns=KNOWLEDGE_POOL` 交给 `permutation_importance`，而该函数 `:307` 用 `for position, name in enumerate(columns)` → **`position` 从 0 起**，于是它洗的是 `full[:, 0..K-1]`（**物理块的前 K 列**），**十个知识池名字只是贴在这些物理列上的标签**。
+- **后果**：① `order`（= 按物理列 MSE 降序排列的**名字**）与真实知识特征重要度无关；② k 臂的 `chosen = order[:k]` 因此等价于「**按物理列重要度打乱顺序**的知识池子集」，k=2/4/6 的扫描**没有测到它想测的东西**；③ **k=10 = 全池，不受影响**。
+- **影响范围**：`probes/dielectric_knowledge_purity_sweep_importance.csv`（500 行）与**附录 AB-6 的全部逐特征叙述**（「三强」`heteroatom_over_carbon` / `donor_acceptor_pair_density` / `ring_count`、以及「线性计数垫底」）。本探针用独立实现在同 50 折上复算：`donor_acceptor_pair_density` 49/50、`heteroatom_over_carbon` 42/50、`ring_count` **0/50**；「线性计数垫底」按字面规则**不成立**（`donor_count` 3.60/4.14、`acceptor_count` 5.50/5.88）。与 AB-6 实际引用的表逐折 top-3 一致率仅 **2/50 = 0.040**（`inconsistent`），与修正后的置换为 **27/50 = 0.540**（`partially_consistent`）。
+- **裁定（照实登记，不静默修）**：**AB-6 的逐特征解释与「三强」名单在勘误前不得引用**；杠杆 9 的**判决**（`sub_threshold`）与 **k=10 读数**不受影响，但 **k=2/4/6 的读数所依据的排序无效**。修正需**新预注册 + 独立重跑**（沿用杠杆 8 v2 的范式：v1 读数逐字保留、不覆盖），**本轮不跑**，登记为 Week 16 首位技术债。
+
+### 24.7 AL Round 4 产物的重算（磁盘状态耦合——已知脆弱点）
+
+- A 臂新增 `data/processed/viscosity_observations_thermoml.csv`、B 臂新增 `data/reference/identity_map.csv` 之后，`tests/test_al_round4_new_compound_backfill.py::test_list_csv_equals_the_generator` **变红**：AL Round 4 的 `local_trace_files` 由现场递归扫描 `data/` 全树生成（`probes/al_round4_new_compound_backfill.py:650`），因此**任何新增 data/ 文件都会让已提交的清单漂移**。
+- **处置**：按生成器重算 AL Round 4 全部产物。`distinct_local_trace_files` **114 → 128**（+14，其中 12 个是 `identity_layer` 缓存路径）；`probes/al_round4_backfill_list_v0.csv` 有 **12 行**的 `local_trace_files` 字段更新；**21 行的 `row_kind`、真新化合物 7 个、`by_row_kind` 四项计数（7/12/1/1）一律未变**。同时补 `.gitignore` 例外 `!data/processed/viscosity_observations_thermoml.csv`，让 T1 观测表入库（与既有 85 个 `data/processed` 产物同惯例）。
+- **登记为已知脆弱点（不许省略）**：`local_trace_files` 是**磁盘状态的函数**，不是版本库内容的函数——它会把**未入库的下载缓存**（如 `data/external/g1plus/pubchem/...`）当作「项目知识痕迹」，使清单在别人 clone 出来的仓库里**无法逐字节复现**。正解是改为**只认被版本库跟踪的文件**（`git ls-files` 过滤）；本轮**不擅自改**上一轮已定的扫描语义，登记为待办。
+
+### 24.8 诚实边界与红线复核（本节落盘时实测）
+
+- 三臂均未改动任何**已跟踪**文件；5 个冻结红线文件 + `data/viscosity_v01.csv` + `data/external/*` 的 `git diff` **无输出**。
+- `data/dielectric_v03.csv` = `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`（**INTACT**）；`data/processed/dielectric_observations_v11plus.csv` = `159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9`（**INTACT**）；七个锁定常量一个字未动。
+- **本周边界**：T1 未做在线黏度切片核查；T2 无官方校验和可对；T3 未做 Reaxys 裁决、5 条 SMILES 分歧待人工裁决；T4 未确证列的实际数量高于「4 列」这一乐观口径（见 24.5 偏差点）；T5 的名次不稳且引用表缺陷待勘误。**ηε-joint 的联合观测表仍未新建**（本仓只有 Week 3 的 loose-join 探索表 `dielectric_viscosity_intersection.csv`，456 行 / 46 keys / `model_ready=false`）。

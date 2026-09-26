@@ -1625,3 +1625,74 @@ R² 对评分池敏感（同模型：97 池 0.409 / 236 冻结池 0.364 / 1594 �
 - **M-4 无块化合物分母**：新增 `scored_compounds_without_the_block = 9` 与 `coverage_note`，明写分母构成 `compounds_without_the_block = 60 = 9`（`undefined_no_hetero_site`）+ `51`（有记分观测、但在配位块特征表里无行）。
 - **M-6 导出守卫接线**：`verification.json` 的 VERIFIERS 新增 `tests/test_manual_appendix_reconciliation.py`（此前只在 CI 的 fixture 路径上校验，未进导出关）；**不含** `test_export_week14_results.py`，避免自引用。
 - **残余项（登记不修）**：杠杆 4 的 xTB 迁移探针仍缺 `--check` 与脚本 digest 钉（M-5），本轮**未修**，留作下周技术债。
+
+---
+
+## 附录 AC：Week 15 数据层周 —— 黏度重解析、身份层、KPI 64 特征与 SHAP（2026-09-26）
+
+> 命名说明：紧随附录 AB 之后取 **AC**。范围 = 附录 AA-4 的周一至周五（ηε-joint 数据层）。机读台账见 `reports/decisions_log.md` **§24**。本轮**不动笔、不做建模判决、不碰冻结件**（附录 Z-7）。
+
+### AC-1 三臂并行与写集
+
+| 臂 | 任务 | 交付（新增） |
+|---|---|---|
+| A | T1 ThermoML 黏度重解析 + T2 存量 vs Schrödinger SI 对照 | `probes/thermoml_viscosity_coverage_probe.py`、`probes/schrodinger_si_reconciliation.py`＋两份 summary＋两份报告＋两个测试＋`data/processed/viscosity_observations_thermoml.csv`（9 件） |
+| B | T3 PubChem 身份层 L0 + T4 KPI 64 特征模块 | `data/reference/identity_map.csv`、`probes/pubchem_identity_layer.py`＋summary、`src/electrolyte_ml/kpi_descriptors.py`、两个测试、`reports/kpi_64_feature_module.md`（7 件） |
+| C | T5 SHAP 跑 ε hybrid | `probes/dielectric_hybrid_shap.py`＋summary＋两份 artifacts、`reports/dielectric_hybrid_shap.md`、测试（6 件） |
+
+合并后定向测试 **113 passed**，`ruff check src probes tests` 全绿；三臂**均未改动任何已跟踪文件**。
+
+### AC-2 T1：ThermoML 黏度重解析——Z-4 前提证实，但规模须下修
+
+- 全量重解析 **242** 个本地 XML（走仓内 `electrolyte_ml.thermoml.parse_thermoml_file`），11 项验收值与侦察预期**逐项相符**（`expectation_mismatches=[]`）：`viscosity_files=29`、`viscosity_rows=2725`（`Viscosity, Pa*s` 2549 + `Kinematic viscosity, m2/s` 176）、`pure_rows=569`／`mixture_rows=2156`（`pure+mixture=2725`）、`pure_keys=47`、`overlap_eps_obs=37`、`overlap_viscosity_v01=28`、`new_vs_eps_and_v01=3`。
+- **「未收割」由假设升级为机读事实**：存量三张抽取表的黏度行数**全为 0**、连黏度列都不存在。
+- **规模下修**：纯组分只有 **569 行 / 47 键**，相对 ε 观测表(153) 与存量黏度表(957) 并集，**净新增实体仅 3 键**——Z-4 语气暗示的「千行级新矿脉」**不成立**。
+- 边界：本地 XML 只是 NIST 全库（11,923 条记录）的**筛选子集**，「29 个文件」**不是** NIST 黏度总体上界，在线黏度切片核查**本轮未做**；多组分 2,156 行未做溶质/溶剂角色拆分；运动黏度 176 行无密度无法换算。
+- 顺带锚点：PC（`RUOJZAUFBMNUDX-UHFFFAOYSA-N`）本地有 **28 行纯组分 η(T)**，而本地无 PC 的 ε——PC 的 η 不需外部源，ε 才需要。
+
+### AC-3 T2：存量 3,582 行 = Schrödinger 开放子集（Z-2 假设落锤）
+
+- 逐行对齐：**`row_aligned_matches=3582` / `mismatches=0`**（`T_K`/`viscosity_cP` 容差 1e-9），`unique_keys=957`，`source_doi` 唯一 = `10.1186/s13321-024-00820-5`。→ Z-2 的「关键待核实假设」**降级为已证实的既定条件**。
+- 受限边界：原始 **4,440** 点中仅 **3,582** 可公开，差额 **858** 条受限，**不得绕版权获取**；`4,440` 是论文声称值、**本地不可复算**。
+- `supp_3`（650 行 / 50 溶剂）`data_status=predicted`，**并入实验表 0 行**（已由测试钉死）。
+
+### AC-4 T3：PubChem 身份层 L0（314/314）
+
+- 覆盖集 = 名册 246 ∪ lowfreq 50 ∪ ilthermo 47 = **314 键**；**246/246 名册键全部解析**，缺口 **0**，InChIKey 回环 314/314。
+- 成本记账：提交态 `network_calls=0`（缓存全命中）；填缓存那次收割 **315 次请求**、窗口 `05:49:15Z → 05:55:08Z`、限流 **0.25 s/请求**，运行记录追加进 git-ignored 的 `_harvest_runs.jsonl`。
+- 顺带查出：**5 条本地 SMILES 与 PubChem 真分歧**（含一条**不同阴离子**：`LBHLGZNUPKUZJC` 本地 `N#C[N-]C#N` vs PubChem 碳二亚胺）**待人工裁决**；**2 对立体异构体共用一个 PubChem SMILES** → 身份层**必须按 InChIKey 建键**；**1 条 CID 冲突**。
+- 本轮**未做任何 Reaxys 裁决**（AA-1：Reaxys 是法官）。
+
+### AC-5 T4：KPI 64 特征模块复刻（列级诚实清点）
+
+- 定义源：正文 PDF **确无** 64 特征表；同目录 SI（64 页）提取成功，Table S6–S9 在字符位 25,973 / 26,471 / 27,310 / 28,719。**未用回退源**。
+- 64 列 = **逐字复刻 3**（`AvgX`/`AvgI`/`AvgA`，公式照抄 SI；元素值表论文没印、值取 CRC/NIST）+ **RDKit 原生映射 15** + **本仓自写 42**（论文只给措辞）+ **未确证 4**（`MaxPC`/`MinPC`/`MaxAPC`/`MinAPC`；SI 未说明电荷模型，用 Gasteiger）。
+- 已知偏差点：`#R=R` 按字面计入 S=O；`#Bran` 等长链可能差 1；`#Nring` 取 SSSR 最大环；`#Donor`/`#Accept` 用 Lipinski（水会得 0）。名册含白名单外 **B(4)/Si(1)/Fe(1)**，Fe 取 0.0 参与平均并由 `element_coverage()` 暴露。
+
+### AC-6 T5：SHAP 跑 ε hybrid，与【P0 缺陷】杠杆 9 引用表错位
+
+**（a）本轮读数**
+
+- 泄漏守卫在**每折生产路径**执行：`folds_checked=150`、`max_test_rows_visible_to_ranking=0`；折划分**完全复用杠杆 9 主记分牌**（`signature_sha256=864b3a53…86be`），基线逐位复现 `0.4091179943351143`。
+- 零依赖实现：`shap` 未安装 → 走 `xgboost.predict(pred_contribs=True)`，末列 bias **被校验剔除**（相对残差 ≤ 4.73e-06）。
+- hybrid top-10：`mu_sq_over_Vm`(2.648／平均名次 1.64)、`total_energy_hartree`(1.911)、`tpsa_A2`(1.626)、`molecular_volume_A3`(1.528)、`morgan_bit_0790`(1.326)、`morgan_bit_0427`(0.969)、`morgan_bit_0114`(0.907)、`morgan_bit_0080`(0.738)、`hbd`(0.709)、`morgan_bit_0650`(0.670)；Morgan 50.2% / physical 49.8%。
+- **名次极不稳**：2,061 列里 `stable` 仅 6、`unstable` 2,055，**1,880 列从未被任何树分裂**（名次是并列位次而非测量值）。
+
+**（b）【P0 缺陷】杠杆 9 洗错了列 → AB-6 的三强叙述不可引用**
+
+- `probes/dielectric_knowledge_purity_sweep.py:560` 构造 `full = hstack([frozen_physical, knowledge])`（物理块在前），但 `:565` 传 `columns=KNOWLEDGE_POOL`，而 `permutation_importance` 在 `:307` 用 `enumerate(columns)` → **`position` 从 0 起**，洗的是 `full[:, 0..K-1]`（**物理块前 K 列**），**知识池名字只是标签**。
+- 后果：k 臂的 `order[:k]` 等价于「按物理列重要度打乱顺序的知识池子集」→ **k=2/4/6 的扫描没有测到它想测的东西**；**k=10 = 全池不受影响**。
+- 独立复算（同 50 折、另一实现）：`donor_acceptor_pair_density` 49/50、`heteroatom_over_carbon` 42/50、`ring_count` **0/50**；「线性计数垫底」按字面规则**不成立**（`donor_count` 3.60/4.14、`acceptor_count` 5.50/5.88）。与 AB-6 实际引用的表逐折 top-3 一致率 **2/50**，与修正后的置换 **27/50**。
+- **裁定**：**AB-6 的逐特征解释与「三强」名单在勘误前不得引用**；杠杆 9 的判决 `sub_threshold` 与 **k=10 读数**不受影响，但 **k=2/4/6 读数所依据的排序无效**。修正需**新预注册 + 独立重跑**（沿用杠杆 8 v2 范式：v1 读数逐字保留、不覆盖），**本轮不跑**，列为 Week 16 首位技术债。
+
+### AC-7 下一步与边界
+
+- **Week 16 首位**：杠杆 9 引用表勘误轮（新预注册 → 独立重跑 → 勘误读数与 v1 并列留档）；其次仍是 AA-5 的 ηε-joint schema 预注册 → 首建合并（ε 观测表 ∪ ThermoML-η ∪ Schrödinger 子集，全带 provenance）。
+- **仍未做**：T1 在线黏度切片核查；T3 的 5 条 SMILES 分歧人工裁决；ηε-joint 联合观测表**尚未新建**（本仓只有 Week 3 的 loose-join 探索表 `dielectric_viscosity_intersection.csv`，456 行 / 46 keys / `model_ready=false`）。
+- **训练方向（不许忘记）**：ηε-joint 建模须继承 v1.x 诚实口径——**观测级 + GroupKFold by InChIKey + 每折训练侧排序**，并断言 `group_overlap == 0`（黏度线已交学费：`random_row` 0.93689 vs `group_key` 0.74813）；`random_row` 只作泄漏参照、从不进判决。
+
+### AC-8 冻结红线复核（本附录落盘时实测）
+
+- `data/dielectric_v03.csv` = `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`（**INTACT**）
+- `data/processed/dielectric_observations_v11plus.csv` = `159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9`（**INTACT**）
+- `probes/l3_stage1_pilot_pool.csv`、`probes/l3_backvalidation_prereg.json`、`probes/l3_stage1_pilot_summary.json` **均 INTACT**；七个锁定常量一个字未动；`data/viscosity_v01.csv` 与 `data/external/*` 零改动。

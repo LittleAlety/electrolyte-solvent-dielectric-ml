@@ -1,0 +1,181 @@
+{
+  "schema_version": "schrodinger_si_reconciliation/v1",
+  "generated_at_utc": "2026-09-26T05:50:30+00:00",
+  "design": {
+    "question": "Are the project's 3,582 stored viscosity rows literally the open subset published as Schrödinger et al. (2024) supplement 2?",
+    "method": "Position-by-position table comparison on (T_K, viscosity_cP, name, smiles) with a 1e-9 numeric tolerance, plus explicit boundary assertions on supplement 3.",
+    "network_access": false,
+    "promotes_values_into_frozen_dataset": false
+  },
+  "inputs": {
+    "viscosity_v01": {
+      "path": "data/viscosity_v01.csv",
+      "rows": 3582,
+      "columns": [
+        "record_id",
+        "inchikey",
+        "smiles",
+        "name",
+        "T_K",
+        "viscosity_Pa_s",
+        "density",
+        "density_status",
+        "viscosity_cP",
+        "source_doi",
+        "n_observations",
+        "source_scope",
+        "data_status",
+        "gate_flags"
+      ],
+      "sha256": "12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26"
+    },
+    "supp_2": {
+      "path": "data/external/chew_2024_viscosity_supp_2.csv",
+      "rows": 3582,
+      "columns": [
+        "Index",
+        "Name",
+        "CANON_SMILES",
+        "Temperature (K)",
+        "Inverse temperature (1/K)",
+        "Viscosity (cP)",
+        "log(Viscosity)",
+        "MD_density",
+        "MD_FV",
+        "MD_Rg",
+        "MD_SP_E",
+        "MD_SP_V",
+        "MD_SP",
+        "MD_HV",
+        "MD_RMSD",
+        "Reference"
+      ],
+      "sha256": "8a8cb6810779d305922b25be1ea507f7de60a5eafec8ef8584571f32553d8fa0"
+    },
+    "supp_3": {
+      "path": "data/external/chew_2024_viscosity_supp_3.csv",
+      "rows": 650,
+      "columns": [
+        "Index",
+        "Solvent Name",
+        "CANON_SMILES",
+        "Temperature (K)",
+        "Inverse temperature (1/K)",
+        "EdgePool_log(Viscosity)_pred",
+        "is_within_training"
+      ],
+      "sha256": "48435a88214fbd441aca8e48923a8b2aee0994816b03ce0bfe1933266e6f4795"
+    }
+  },
+  "row_aligned_matches": 3582,
+  "mismatches": 0,
+  "unique_keys": 957,
+  "source_doi_set": [
+    "10.1186/s13321-024-00820-5"
+  ],
+  "source_doi_set_matches_expected": true,
+  "row_aligned_comparison": {
+    "rows_compared": 3582,
+    "row_aligned_matches": 3582,
+    "mismatches": 0,
+    "row_count_delta_left_minus_right": 0,
+    "per_column_mismatches": {
+      "T_K": 0,
+      "viscosity_cP": 0,
+      "name": 0,
+      "smiles": 0
+    },
+    "mismatch_examples": [],
+    "tolerance": 1e-09,
+    "column_pairs": [
+      {
+        "left": "T_K",
+        "right": "Temperature (K)"
+      },
+      {
+        "left": "viscosity_cP",
+        "right": "Viscosity (cP)"
+      },
+      {
+        "left": "name",
+        "right": "Name"
+      },
+      {
+        "left": "smiles",
+        "right": "CANON_SMILES"
+      }
+    ]
+  },
+  "stored_table": {
+    "rows": 3582,
+    "unique_keys": 957,
+    "record_id_is_sequential": true,
+    "data_status_counts": {
+      "experimental": 3582
+    },
+    "pascal_second_consistent_rows": 3582,
+    "pascal_second_inconsistent_rows": 0
+  },
+  "open_subset": {
+    "open_table": "supp_2",
+    "open_rows": 3582,
+    "unique_smiles": 957,
+    "index_is_sequential": true,
+    "claimed_total_points": 4440,
+    "withheld_points": 858,
+    "claimed_total_points_provenance": "Manual appendix Z-2 / decisions_log.md 2026-09-22 viscosity source note; the withheld remainder is not public, so this number is a claim about the paper, not a locally recomputable count.",
+    "withheld_note": "受限的 858 条被作者以版权原因保留，不得以任何方式绕版权获取、不得推测其内容，也不得把它计入本地语料规模。",
+    "license_note": "开放子集（supp_2）的再利用须遵守 Schrödinger 2024 的许可并注明出处 (DOI 10.1186/s13321-024-00820-5)。"
+  },
+  "supp_3": {
+    "rows": 650,
+    "unique_smiles": 50,
+    "overlap_smiles_with_supp_2": 19,
+    "data_status": "predicted",
+    "prediction_column": "EdgePool_log(Viscosity)_pred",
+    "prediction_column_present_in_every_row": true,
+    "is_within_training_counts": {
+      "False": 403,
+      "True": 247
+    },
+    "rows_merged_into_experimental_table": 0,
+    "merge_forbidden": true,
+    "assertion": "supp_3 是 EdgePool 的模型预测（650 行 / 50 个溶剂），必须保持 data_status=predicted，禁止并入实验表、禁止进入任何可发表层、禁止用于拟合或评估。本对照把它们隔离在实验表之外，因此本探针不把它们计入 row_aligned_matches。"
+  },
+  "competing_table_note": "本仓已存在 data/processed/dielectric_viscosity_intersection.csv（456 行 / 46 keys，pair_type=loose_join、model_ready=false），属探索性 loose join，不是 ε+η 联合观测表；ηε-joint 的联合骨架仍需新建。",
+  "expectation_vs_remeasured": [
+    {
+      "metric": "row_aligned_matches",
+      "recon_expectation": 3582,
+      "remeasured": 3582,
+      "verdict": "match"
+    },
+    {
+      "metric": "mismatches",
+      "recon_expectation": 0,
+      "remeasured": 0,
+      "verdict": "match"
+    },
+    {
+      "metric": "unique_keys",
+      "recon_expectation": 957,
+      "remeasured": 957,
+      "verdict": "match"
+    }
+  ],
+  "expectation_mismatches": [],
+  "outputs": {
+    "summary_path": "probes/schrodinger_si_reconciliation_summary.json"
+  },
+  "findings": [
+    "存量 data/viscosity_v01.csv 与 Schrödinger 2024 supp_2 在同一行序上逐行一致：3,582/3,582 行全等，0 处不一致（T_K、viscosity_cP 用 1e-9 容差，name、CANON_SMILES 精确比对），957 个 InChIKey，source_doi 唯一且等于 10.1186/s13321-024-00820-5。附录 Z-2 的“待核实假设”因此升级为已核实事实。",
+    "两份表的行序也一致（supp_2 的 Index 与存量表的 record_id 都是 0..3581 的顺序编号），所以这不是“集合相同但顺序不同”的弱结论，而是同一份文件的逐行同一性。",
+    "supp_3 是预测而非观测：650 行 / 50 个溶剂，含 EdgePool_log(Viscosity)_pred 列，is_within_training 为 False 403 行 / True 247 行；与 supp_2 只共享 19 个溶剂。它必须保持 data_status=predicted，本探针拒绝把任何一行并入实验表。"
+  ],
+  "limitations": [
+    "逐行同一性只证明“存量表 = 开放子集”，不能证明开放子集本身没有抄录错误；原始参考文献的正确性需要回到 Schrödinger 论文与其引用源才能判定。",
+    "4,440 这个总点数来自论文/手册的说法，本地只有开放子集，所以 858 条受限记录是“声称的差额”，不是本地可复算的观测数。",
+    "本地没有 Schrödinger 官方发布的校验和，因此本次对账是表内对账（逐行同一性），不是与官方产物的字节级比对。",
+    "本探针只做对账：不建模、不改评分池、不把任何值写进冻结数据集。"
+  ]
+}
