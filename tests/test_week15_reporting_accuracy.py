@@ -35,13 +35,22 @@ import pytest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DECISIONS_LOG = REPOSITORY_ROOT / "reports" / "decisions_log.md"
-MANUAL = Path("E:/大二/d2qc/电解液（长期项目）/文献调研/执行手册_探针与周计划.md")
+MANUAL = Path(
+    "E:/大二/d2qc/电解液（长期项目）/文献调研/"
+    "执行手册_探针与周计划_v2周融合版.md"
+)
 MANUAL_FIXTURE = (
     REPOSITORY_ROOT / "tests" / "fixtures" / "manual_appendix_j_snapshot.md"
 )
 
 DECISIONS_SECTION_HEADING = "## §24 "
-MANUAL_APPENDIX_HEADING = "## 附录 AC"
+# The v2 (weekly-merged) manual folded this appendix into the Week 15 chapter
+# under a new heading, and the excerpt is a sub-section now, so the anchor is
+# the v2 heading and _section() stops at the next same-or-higher heading.
+MANUAL_APPENDIX_HEADING = (
+    "#### Week 15 数据层周 —— 黏度重解析、身份层、KPI 64 特征与 SHAP（2026-09-26）"
+    "｜原附录 AC"
+)
 
 # Sentences the review proved wrong.  Each one is a claim, so "roughly right"
 # is not an option: either the statement is true or it must not be written.
@@ -69,7 +78,14 @@ CORRECTED_FACTS = (
 
 
 def _section(text: str, prefix: str) -> str:
-    """Return the block starting at ``prefix`` up to the next top-level heading."""
+    """Return the block starting at ``prefix``, up to the next heading that is
+    at the same level or higher.
+
+    The pre-v2 manual kept these appendices as ``##`` sections, so "stop at the
+    next ``## ``" was the same rule.  The v2 (weekly-merged) manual nests them
+    inside the weekly chapters as ``####`` sub-sections, so the stop rule is
+    stated in terms of the anchor's own level instead.
+    """
 
     lines = text.splitlines()
     start = next(
@@ -77,9 +93,14 @@ def _section(text: str, prefix: str) -> str:
         None,
     )
     assert start is not None, "no heading starting with " + repr(prefix)
+    level = len(prefix) - len(prefix.lstrip("#"))
     end = len(lines)
     for index in range(start + 1, len(lines)):
-        if lines[index].startswith("## "):
+        line = lines[index]
+        if not line.startswith("#"):
+            continue
+        heading_level = len(line) - len(line.lstrip("#"))
+        if 0 < heading_level <= level:
             end = index
             break
     return chr(10).join(lines[start:end])

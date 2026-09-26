@@ -157,7 +157,8 @@ ROUND5_VERBATIM_GATE = "fec_78_4_leg_primary_source"
 ROUND5_VERBATIM_LABEL = "Table 1 entry 21 逐字"
 
 DEFAULT_MANUAL = Path(
-    "E:/大二/d2qc/电解液（长期项目）/文献调研/执行手册_探针与周计划.md"
+    "E:/大二/d2qc/电解液（长期项目）/文献调研/"
+    "执行手册_探针与周计划_v2周融合版.md"
 )
 # The dataset digest the manual's appendix is supposed to pin.  The round-5
 # guards prove the excerpt matches the manual; they cannot prove the manual is
@@ -169,7 +170,12 @@ CANONICAL_DATASET = REPOSITORY_ROOT / "data" / "dielectric_v03.csv"
 MANUAL_FIXTURE = (
     REPOSITORY_ROOT / "tests" / "fixtures" / "manual_appendix_j_snapshot.md"
 )
-MANUAL_FIXTURE_SECTION = "## 附录 J-补记三"
+# The v2 (weekly-merged) manual restructured the appendices into the weekly
+# chapters, so the old "## 附录 J-补记三" anchor no longer exists.  The excerpt
+# now starts at the same block under its new heading (manual 附录 C, item 1).
+MANUAL_FIXTURE_SECTION = (
+    "#### 两条介电腿闭死与 G1+ 第五轮爬取（2026-09-25）｜原附录 J-补记三"
+)
 MANUAL_FIXTURE_HEADER = (
     "<!--\n"
     "Manual snapshot for CI.\n"

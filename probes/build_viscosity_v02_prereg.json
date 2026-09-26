@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "task": "build_viscosity_v02",
+  "title": "W17-3 扩物质·在线黏度切片入库：从 NIST/TRC ThermoML 建 viscosity_v02 纯组分黏度表",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-26T13:30:32Z",
+  "locked_by": "子智能体 probe 臂 W17-3（本轮执行者）",
+  "rationale": [
+    "W17-3 立项句：收割 ThermoML 在线黏度切片（\"Viscosity, Pa*s\"、\"Kinematic viscosity, m2/s\"）落 viscosity_v02 新表；v01 冻结件 12dfa03f… 一个字节不动。",
+    "数据源沿用 Week 16/17 已验证的 NIST/TRC ThermoML 入口：/ThermoML-API/objects 这个 JSON 检索 API（同一 UA、同一节流、同一套分页/缓存/--check 骨架），检索词换成本臂的两个黏度属性。",
+    "已落盘的 probes/thermoml_viscosity_online_slice_summary.json 已证在线三数（* 记录数 11923 / Pa*s 切片 1690 / kinematic 切片 70）与 pageNum 0 基语义；本臂把它从「只核查」推进到「建表入库」。",
+    "运动黏度解冻沿用 W17-4 密度臂 criterion_c_unfreeze 的实测口径（本地 176 行 / 5 个 InChIKey / 1e-3 K exact 176 命中）。",
+    "本臂只建表与计数：不拟合模型、不产 R2/MAE、不改任何既有文件、不把任何值写进六件冻结件。"
+  ],
+  "api": {
+    "endpoint": "https://trc.nist.gov/ThermoML-API/objects",
+    "method": "GET",
+    "params": [
+      "query",
+      "pageSize",
+      "pageNum"
+    ],
+    "user_agent": "electrolyte-ml/0.0.0 (+https://trc.nist.gov/ThermoML/)",
+    "throttle_seconds": 0.25,
+    "request_budget_limit": 20000,
+    "page_size": 100,
+    "page_num_base": 0,
+    "first_page_num": 0,
+    "pagination_note": "pageNum 是 0 基的：窗口为 [pageNum*pageSize, (pageNum+1)*pageSize)，返回条数 min(pageSize, size - pageNum*pageSize)。T1 探针已实测锁死该语义（kinematic 切片 pageSize=20 时 pageNum 0/1/2/3 返回 20/20/20/10），本臂沿用。",
+    "pagination_offset_is_pre_run_recon": true,
+    "raw_cache_dir": "data/external/thermoml_api/（viscosity_pa_s/ 与 kinematic_viscosity/ 两个子目录）",
+    "raw_cache_is_gitignored": true,
+    "raw_cache_note": "每页一个 JSON（page-NNNN.json）+ 一个 .url 取数凭据（page-NNNN.json.url）。该目录被 .gitignore 的 data/external/thermoml_api/ 规则忽略。",
+    "direct_connection_note": "本机环境变量 HTTPS_PROXY/HTTP_PROXY 指向一个已失效的本地端口，而 NIST TRC 可直连（密度臂已实测 HTTP 200）。故探针显式用 ProxyHandler({}) 走直连 opener，不继承环境代理。"
+  },
+  "queries": {
+    "total_records": {
+      "id": "total_records",
+      "query": "*",
+      "page_size": 1,
+      "page_num": 0,
+      "role": "全库记录数分母（口径：记录数）"
+    },
+    "slices": [
+      {
+        "id": "viscosity_pa_s",
+        "query": "\"Viscosity, Pa*s\"",
+        "property_name": "Viscosity, Pa*s",
+        "page_num_start": 0,
+        "page_num_stop_exclusive": "ceil(size / pageSize)",
+        "role": "动力黏度切片（主切片）"
+      },
+      {
+        "id": "kinematic_viscosity",
+        "query": "\"Kinematic viscosity, m2/s\"",
+        "property_name": "Kinematic viscosity, m2/s",
+        "page_num_start": 0,
+        "page_num_stop_exclusive": "ceil(size / pageSize)",
+        "role": "运动黏度切片（另册 + 解冻源）"
+      }
+    ],
+    "all_queries": [
+      "*",
+      "\"Viscosity, Pa*s\"",
+      "\"Kinematic viscosity, m2/s\""
+    ]
+  },
+  "frozen_expectations": {
+    "total_records_size": 11923,
+    "pa_s_slice_size": 1690,
+    "pa_s_slice_pages": 17,
+    "kinematic_slice_size": 70,
+    "kinematic_slice_pages": 1,
+    "local_viscosity_dois": 29,
+    "local_pa_s_rows": 2549,
+    "local_kinematic_rows": 176,
+    "local_kinematic_keys": 5,
+    "local_pure_rows": 569,
+    "local_pure_keys": 47,
+    "density_v01_rows": 182154,
+    "density_v01_keys": 2178,
+    "frozen_before_run": true,
+    "frozen_basis": "跑前侦察实测（见 recon_evidence）。探针运行时逐位重算，任何不一致由判据 A/B 暴露，绝不回填。"
+  },
+  "recon_evidence": {
+    "measured_before_freeze": true,
+    "sizes_seen_in_recon": {
+      "*": 11923,
+      "\"Viscosity, Pa*s\"": 1690,
+      "\"Kinematic viscosity, m2/s\"": 70
+    },
+    "doi_overlap_recon": {
+      "note": "两个切片 DOI 的交集与并集为跑前侦察实测：并集 1743，交集 17。",
+      "pa_s_dois": 1690,
+      "kinematic_dois": 70,
+      "intersection": 17,
+      "union": 1743
+    },
+    "local_subset_recon": {
+      "note": "本地 29 个含黏度 DOI（27 个 Pa*s + 3 个 kinematic，交 1）全部落在两个切片的在线并集里 —— 判据 B 跑前已看到期望为全命中。",
+      "local_pa_s_dois": 27,
+      "local_kinematic_dois": 3,
+      "local_union_dois": 29,
+      "missing_from_online": 0
+    },
+    "api_carries_no_measured_values": "跑前侦察实测：/ThermoML-API/objects 的 JSON 只带 Citation / Compound / PureOrMixtureData 的定义（Component、Property、Variable、Constraint）与 data_summary 计数，不含 NumValues 数值行。故本臂把 JSON API 当作「目录层」，把数值层显式改挂到同源的 ThermoML XML（见 value_source）。",
+    "page0_bytes": {
+      "viscosity_pa_s": 11817024,
+      "kinematic_viscosity": 4952076
+    }
+  },
+  "value_source": {
+    "reason": "JSON 检索 API 无实测数值（见 recon_evidence.api_carries_no_measured_values），故数值层取同源 XML：https://trc.nist.gov/ThermoML/{doi}.xml。",
+    "xml_cache_dir": "data/raw/thermoml_viscosity_pa_s/",
+    "xml_cache_is_gitignored": true,
+    "xml_note": "每个 DOI 一个 XML + 一个 .xml.url 取数凭据；与目录层同源同 DOI，但不是同一份字节。既有的 data/raw/thermoml/ 242 个 XML 一个不动。",
+    "parser": "electrolyte_ml.thermoml.parse_thermoml_file（与本仓既有 ThermoML 提取同一解析器）"
+  },
+  "unit_table": {
+    "note": "单位诚实三档的第一档：显式换算表。不在表里的单位一律进 unit_rejected 账本，不静默丢。",
+    "Viscosity, Pa*s": {
+      "Pa*s": 1,
+      "Pa s": 1,
+      "Pa.s": 1,
+      "Pas": 1,
+      "N*s/m2": 1,
+      "N.s/m2": 1,
+      "kg/(m*s)": 1,
+      "kg/(m.s)": 1,
+      "mPa*s": 0.001,
+      "mPa.s": 0.001,
+      "mPa s": 0.001,
+      "uPa*s": 0.000001,
+      "µPa*s": 0.000001,
+      "μPa*s": 0.000001,
+      "cP": 0.001,
+      "centipoise": 0.001,
+      "P": 0.1,
+      "poise": 0.1
+    },
+    "Kinematic viscosity, m2/s": {
+      "m2/s": 1,
+      "m^2/s": 1,
+      "m2 s-1": 1,
+      "m2.s-1": 1,
+      "mm2/s": 0.000001,
+      "cm2/s": 0.0001,
+      "cSt": 0.000001,
+      "St": 0.0001
+    },
+    "temperature_range_k": [
+      100,
+      1000
+    ],
+    "value_range_si": {
+      "Viscosity, Pa*s": [
+        0.000001,
+        1000
+      ],
+      "Kinematic viscosity, m2/s": [
+        1e-10,
+        0.001
+      ]
+    }
+  },
+  "unfreeze": {
+    "scope": "本地 176 行运动黏度（data/processed/viscosity_observations_thermoml.csv 的 Kinematic viscosity, m2/s 子集），与 W17-4 密度臂 criterion_c_unfreeze 同一口径。",
+    "formula": "eta [Pa*s] = kappa [m2/s] * rho [kg/m3]",
+    "density_source": "data/density_v01.csv（W17-4 已落盘）",
+    "exact_tolerance_k": 0.001,
+    "nearest_tolerance_k": 1,
+    "no_interpolation": "只做同 InChIKey（主组分）+ 同温度（exact）或最近邻且 |dT| <= 1.0 K 的配对；不插值、不外推。",
+    "multi_component_rule": "多组分记录未做溶质/溶剂角色拆分前不入主表：反解值只进 summary 的 per_row 另册（pooled_into_main_table=false）。"
+  },
+  "pre_registered_criteria": {
+    "A_online_slice_reproduction_and_pagination": {
+      "id": "A",
+      "statement": "在线三数（* 记录数 11923、Viscosity Pa*s 切片 1690 条记录、Kinematic viscosity 切片 70 条记录）逐位复现；两个切片按 pageSize=100、从 pageNum=0 起分页抓全到 size（抓到的记录数 == size、DOI 无重复、无缺口、零失败页）。允许违反数 = 0。",
+      "machine_readable": {
+        "expected_sizes": {
+          "*": 11923,
+          "\"Viscosity, Pa*s\"": 1690,
+          "\"Kinematic viscosity, m2/s\"": 70
+        },
+        "require_pagination_complete": true,
+        "require_unique_dois": true,
+        "require_no_missing_pages": true,
+        "require_page_num_base_zero": true
+      },
+      "allowed_violations": 0,
+      "threshold": "three_sizes_match AND pagination_complete_for_both_slices AND no_duplicate_doi AND page_num_base_is_zero AND zero_failed_requests"
+    },
+    "B_local_subset_of_online": {
+      "id": "B",
+      "statement": "本地 29 个含黏度 XML 的 DOI 逐个必须出现在在线两个切片 DOI 的并集里。逐条判定、未命中即违反。允许违反数 = 0。",
+      "machine_readable": {
+        "local_dois_source": "probes/thermoml_viscosity_coverage_summary.json 的 files_with_viscosity",
+        "expected_local_dois": 29,
+        "require_all_hit": true
+      },
+      "allowed_violations": 0,
+      "threshold": "all_local_dois_in_online_union"
+    },
+    "C_unit_honesty": {
+      "id": "C",
+      "statement": "单位换算表显式列全；未识别单位 / 超范围温度 / 非法值各自进 ledger；分档账本合计 == 命中属性名的总观测；不静默丢任何一条。允许违反数 = 0。",
+      "machine_readable": {
+        "require_explicit_unit_table": true,
+        "require_ledger_sum_equals_total": true,
+        "silent_drop_allowed": false
+      },
+      "allowed_violations": 0,
+      "threshold": "unit_table_explicit AND ledger_sum_equals_total_named_rows AND zero_silent_drop"
+    },
+    "D_basis_honesty": {
+      "id": "D",
+      "statement": "在线目录层的 size 是记录数不是数据行数：记录数 / XML 观测行数 / InChIKey 数三个口径分开报，禁止相除；多组分记录未拆分前另册登记、不入主表。允许违反数 = 0。",
+      "machine_readable": {
+        "size_unit": "record",
+        "online_row_count": "unknown",
+        "value_basis": "thermoml_xml_observation_row",
+        "must_report_dual_basis": true,
+        "row_comparison_allowed": false
+      },
+      "allowed_violations": 0,
+      "threshold": "all_honesty_fields_present AND online_row_count_is_unknown AND dual_basis_counts_reported AND multi_component_deferred_reported"
+    }
+  },
+  "extra_checks": {
+    "E_row_reconciliation": "与本地 2549 行 Pa*s 观测逐行对账（同 DOI + 同 InChIKey + 同温度 + 同源行号）：重复行只标 source_priority，不合并、不平均；匹配数与未命中数照实报。",
+    "group_overlap_assertion": "联表重建时跑一次真 GroupKFold by InChIKey，断言 group_overlap == 0；失败即停，不是告警。random_row 只作泄漏参照。",
+    "unfreeze_report": "解冻行数照实报（过不过线都报）：exact / nearest / converted / pooled / deferred 五数分开。"
+  },
+  "forbidden": [
+    "不许用在线 size（记录数）冒充数据行数，也不许把 11923 / 1690 与本地或新建 CSV 的行数相减或相除后当覆盖率。",
+    "不许把本地缓存（data/raw/thermoml/ 的 242 个 XML）说成 NIST 全库或在线全量。",
+    "不许从 pageNum=1 起分页：API 的 pageNum 是 0 基的，从 1 起会把最前 pageSize 条永久漏掉。",
+    "不许在单位换算是靠猜或静默丢弃未知单位的行；未知单位必须进 ledger 并在报告里逐条列账。",
+    "不许做任何插值/外推来凑配对；1.0 K 之外的密度不得参与 nearest 配对。",
+    "不许把多组分反解行混进主表（未做溶质/溶剂角色拆分前一律另册）。",
+    "不许对本地与在线的重复观测做平均或去重：重复行只标 source_priority。",
+    "不许拟合任何模型、不许训练/评分/调参、不产任何 R2 或 MAE。",
+    "不许回填、放宽本预注册的任何阈值；跑完后不得修改本文件（改动会使 summary.prereg.sha256 失配并由测试钉死）。",
+    "不许把 XML 下载失败当成「该记录没有黏度数据」：失败必须进 failures 清单。",
+    "不许改六件冻结件（data/dielectric_v03.csv、data/processed/dielectric_observations_v11plus.csv、data/viscosity_v01.csv、probes/l3_stage1_pilot_pool.csv、probes/l3_backvalidation_prereg.json、probes/dielectric_r2_levers_prereg.json）或 data/ 下任何既有文件。",
+    "不许改 .gitignore（需要纳入版本库的新文件名由执行者在回报里列给负责人）。",
+    "不许在报告或摘要里出现未加「记录」限定语的 11923 / 1690 断言式措辞。"
+  ],
+  "wording_guard": {
+    "bare_number_tokens": [
+      "11923",
+      "1690"
+    ],
+    "required_qualifier_any_of": [
+      "记录",
+      "records"
+    ],
+    "forbidden_row_units": [
+      "行",
+      "rows"
+    ],
+    "adjacency_window_chars": 6,
+    "prose_scope": [
+      "reports/viscosity_v02.md"
+    ],
+    "prose_rule": "报告里任何含 bare_number_tokens 的文本行，必须同时含 required_qualifier_any_of 之一；且这些数字不得与 forbidden_row_units 相邻（窗口 adjacency_window_chars 字符内）。",
+    "json_scope": [
+      "probes/viscosity_v02_summary.json"
+    ],
+    "json_rule": "summary 的 JSON 文本里禁止把 bare_number_tokens 与 forbidden_row_units 相邻（窗口 adjacency_window_chars 字符内）。",
+    "enforced_by": [
+      "探针自身：render_report 之后立刻跑守卫，不通过就 raise，拒绝写出失真的措辞。",
+      "tests/test_build_viscosity_v02.py：独立复跑同一个守卫。"
+    ]
+  },
+  "write_set": {
+    "new": [
+      "probes/build_viscosity_v02_prereg.json",
+      "probes/build_viscosity_v02.py",
+      "probes/viscosity_v02_summary.json",
+      "data/viscosity_v02.csv",
+      "data/processed/viscosity_v02_raw.csv",
+      "scripts/verify_viscosity_v02.py",
+      "tests/test_build_viscosity_v02.py",
+      "reports/viscosity_v02.md",
+      "data/external/thermoml_api/（目录层原始响应缓存，被 .gitignore 忽略）",
+      "data/raw/thermoml_viscosity_pa_s/（数值层 XML 缓存，被 .gitignore 忽略）"
+    ],
+    "modified": [],
+    "modified_note": "本臂不修改任何既有文件，也不改 .gitignore。",
+    "untouched": [
+      "六件冻结件 digest 不变（data/viscosity_v01.csv 12dfa03f… 一字节不动）",
+      "data/raw/thermoml/ 既有 242 个 XML 一个不动（新缓存另起 data/raw/thermoml_viscosity_pa_s/）",
+      "data/processed/viscosity_observations_thermoml.csv 与 data/density_v01.csv 只读引用，不写"
+    ],
+    "gitignore_request": [
+      "data/processed/viscosity_v02_raw.csv（现行 .gitignore 的 data/processed/* 规则会忽略它，需加 ! 反选才能入库）"
+    ]
+  },
+  "reproducibility": {
+    "first_run": ".venv\\Scripts\\python.exe probes/build_viscosity_v02.py --resolve-online",
+    "incremental": ".venv\\Scripts\\python.exe probes/build_viscosity_v02.py",
+    "offline_check": ".venv\\Scripts\\python.exe probes/build_viscosity_v02.py --check",
+    "verifier": ".venv\\Scripts\\python.exe scripts/verify_viscosity_v02.py --check",
+    "check_tiers": [
+      "tier 1（任何机器，零网络）：判据 A 拿已提交 summary 里的实测 size 记录数与预注册比对；判据 B 把本地 29 个 DOI（取自已提交的覆盖率摘要）与 summary 的在线清单逐条比对；再断言 report == render_report(summary)、viscosity_v02.csv/raw 的字面量一致。",
+      "tier 2（本机有 data/external/thermoml_api/ 与 data/raw/thermoml_viscosity_pa_s/ 原始缓存时）：从原始字节重算目录层与数值层，要求与已提交 summary 的 dataset 一节逐字段一致，把清单钉死在原始响应上。"
+    ],
+    "clean_clone_note": "目录层原始响应与数值层 XML 都不在版本库里；干净克隆上判据 A/B/C/D 走 tier 1：目录层用已提交 summary，数值层用已提交 data/viscosity_v02.csv + data/processed/viscosity_v02_raw.csv。"
+  }
+}

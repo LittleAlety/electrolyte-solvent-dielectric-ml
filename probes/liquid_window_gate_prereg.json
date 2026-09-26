@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "task": "week17_liquid_window_gate",
+  "arm": "W17-5",
+  "title": "Liquid-window hard gate (MP/BP): criteria pre-registered before any run",
+  "locked_at_utc": "2026-09-26T12:42:28Z",
+  "status": "locked_before_run",
+  "lock_rule": "Every threshold, counting rule and kill line below is frozen before probes/build_liquid_window_features.py is executed. Nothing is relaxed after the numbers are seen. A later change is a new prereg, never an edit of this one.",
+  "why": "AD-1 harvested the melting point, boiling point, flash point and density of all 314 coverage-set keys from PubChem PUG-REST. This arm promotes that harvest into (a) official per-key feature columns and (b) the funnel's first hard gate. The gate is cheap (the value is already cached) and hard (it is a phase statement, not a model score), so it runs before the epsilon ranking channel.",
+  "question": "Given a candidate pure compound and a working-temperature window, is the compound a liquid across the whole window? If not, evict it before it is ever scored.",
+  "gate": {
+    "id": "liquid_window_mp_bp",
+    "kind": "hard_gate_before_epsilon_ranking",
+    "T_low_C": -20.0,
+    "T_high_C": 60.0,
+    "window": "[-20, +60] degC, inclusive endpoints",
+    "rule": "blocked if (mp_C > T_low_C) OR (bp_C < T_high_C); pass if both are known and neither clause fires; unknown otherwise",
+    "physical_basis": "A pure substance is a liquid strictly between its melting point and its boiling point. For it to stay liquid across the whole window it must both not freeze at the cold end (mp <= T_low) and not boil at the hot end (bp >= T_high). The two clauses are separate failure modes and either one alone evicts.",
+    "window_reason": "-20 degC .. +60 degC is the industry-standard operating/survival window of commercial Li-ion cells (0..45 degC charge/discharge, -20..60 degC survival), so an electrolyte solvent that is not a liquid across that band is unusable as a pure component. It also brackets the two sanity anchors below: EC (mp 36.4 degC, a room-temperature solid) is inside the band and must be evicted, while ordinary liquid co-solvents (DEC mp -43 degC, PC mp -48.8 degC) pass. The band is stated, not fitted: no candidate was inspected before it was chosen.",
+    "relation_to_applicability_smarts_gate": "The two gates test different things and are complementary, not redundant. The applicability-domain gate (src/electrolyte_ml/applicability.py, SMARTS [O,S,N;!H0], trigger rate 33.66% on the 6,150 out-of-fold rows) is a chemistry statement: a candidate that can donate a hydrogen bond forms a self-associated liquid the single-molecule dielectric model cannot represent. The liquid-window gate is a physical-state statement: a candidate outside the working window is not a liquid at all. A compound may pass either, both or neither. Because the liquid-window evidence is already cached and the decision is a two-number comparison, it is placed before the epsilon ranking and alongside (not instead of) the SMARTS gate.",
+    "flash_point_role": "Flash point is harvested and exported as a feature column but is NOT part of this hard gate. Flash point is a flammability/safety property, not a phase boundary of the pure liquid: a compound can be liquid across the whole window and still have a low flash point. Using it here would mix a safety filter into a phase filter; it is left as a reported feature for a separate safety review.",
+    "density_role": "Density is exported as a feature column only. It is not a gate: it does not bound the liquid window and it carries a mixed measurement basis (absolute g/cm3, relative-to-water, or a unit-less depositor row), reported honestly per row rather than converted into a silent gate.",
+    "unknown_policy": "A missing mp_C or bp_C is NEVER defaulted to pass and NEVER defaulted to evict. Such a key is labelled 'unknown' and counted separately. Both trigger-rate readings are reported: (a) blocked-only = blocked / N, which credits an unknown as a pass; (b) blocked-plus-unknown = (blocked + unknown) / N, the conservative funnel reading in which an unknown does not get through. A blocked verdict stands even on one-sided evidence: if mp_C > T_low the compound freezes regardless of whether bp is known, so a single fired clause is enough to block.",
+    "ordering": "Runs before the epsilon ranking channel. A blocked or unknown key is routed to measurement or a different source (ILThermo, primary literature) instead of being silently ranked."
+  },
+  "sanity_checks": [
+    {
+      "id": "EC_is_a_room_temperature_solid",
+      "anchor": "ethylene carbonate (EC), InChIKey KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+      "fact": "mp = 36.4 degC (PubChem harvest, HSDB depositor), i.e. a solid at room temperature",
+      "expected_verdict": "blocked",
+      "expected_reason": "mp_above_T_low (36.4 > -20)",
+      "why_it_matters": "Pure EC cannot pass the gate. That is the whole point: the mass-screen funnel must refuse a pure solvent that is not liquid at room temperature. If the gate ever passes pure EC the gate is broken."
+    },
+    {
+      "id": "reaxys_temperature_label_lesson",
+      "fact": "Reaxys once labelled EC's permittivity 89.78 as measured at 25 degC; the repository's own trace (reports/jstage_corroboration.md) pins the same 89.78 to 40 degC = 313.15 K, and EC's melting point 36.4 degC means 25 degC is not liquid at all. Reaxys's temperature column was simply wrong.",
+      "rule": "A temperature label is never trusted on its own: it must cross-check against the compound's liquid window. A value whose stated temperature falls outside [mp, bp] is flagged, not consumed.",
+      "consequence_for_this_arm": "The gate consumes mp/bp only as phase boundaries and never reads a dielectric value's temperature label, so it cannot inherit the Reaxys mislabel. The lesson is recorded here so it is not lost when a later arm joins the liquid window to temperature-resolved dielectric rows."
+    }
+  ],
+  "coverage_expectation": {
+    "coverage_set": 314,
+    "note": "Exact key counts per property are READ from the upstream harvest, not asserted here: the prereg fixes the procedure, the summary reports the counts. The upstream summary already shows the shape (melting 202, boiling 216, flash 189, density 212 keys with a parsed value out of 314); the builder must reproduce whatever the cache says and never invent a value.",
+    "expected_shape": "melting ~202, boiling ~216, flash ~189, density ~212 keys with a parsed value; ~186 keys carry all three temperatures; ~96 keys carry none of MP/BP/FP/density"
+  },
+  "trigger_rate_reporting": {
+    "population": "the 314-key coverage set (data/reference/identity_map.csv), keyed by InChIKey",
+    "readings": [
+      "blocked_only: blocked / 314",
+      "blocked_plus_unknown: (blocked + unknown) / 314"
+    ],
+    "cross_reference": "order-of-magnitude only, against the applicability-domain SMARTS gate's 33.66% (2070/6150 out-of-fold rows, probes/applicability_domain_summary.json). The populations differ (314 unique candidate keys here vs 6,150 model-evaluation rows there), so this is a sanity bracket, not a like-for-like comparison.",
+    "same_population_control": "the SMARTS H-bond-donor rule is also recomputed on the same 314 keys from data/reference/identity_map.csv SMILES, so the two gates are compared on one population as well as against the historical 33.66%.",
+    "anomaly_rule": "If the liquid-window gate's trigger rate lands an order of magnitude away from the SMARTS gate's, the report must say so and explain it (composition of the coverage set: salt/ionic-liquid keys carry no PubChem Experimental Properties section and land in unknown), rather than quietly presenting the number."
+  },
+  "value_selection_discipline": {
+    "rule": "One primary value per (InChIKey, property). The primary is the upstream selected row (peer_reviewed_first_then_lower_median for temperatures; absolute_then_relative_then_unspecified; peer_reviewed_first; lower_median for density). Where several depositors disagree the values are NOT averaged: the primary travels with its own depositor and reference_number, and the alternative parsed values are summarised as a count plus min/max range so the disagreement stays visible.",
+    "tolerance": {
+      "temperature_C": 2.0,
+      "density_relative": 0.02,
+      "note": "Two parsed temperature values within 2 degC (or two density values within 2% relative) count as agreement; a wider spread raises the conflict flag."
+    },
+    "confidence_tiers": {
+      "high": "primary value is peer-reviewed AND at least one further parsed value agrees within tolerance (cross-depositor corroboration)",
+      "medium": "primary value is peer-reviewed but carries no corroborating agreement",
+      "low": "primary value is not peer-reviewed",
+      "absent": "no parsed value for this property",
+      "precedence": "absent first; otherwise the tier is read from the primary's peer_reviewed flag and the agreement test; the conflict flag is reported separately and never silently changes the primary."
+    },
+    "density_basis": "the density primary keeps its subtype (absolute / relative / unspecified). Only an 'absolute' row is a true g/cm3 mass density; a relative row is relative-to-water and an unspecified row states no unit. density_is_absolute_g_cm3 marks the honest case instead of pretending every number is g/cm3."
+  },
+  "inputs": {
+    "identity_map": "data/reference/identity_map.csv",
+    "harvest_selected": "data/external/g1plus/pubchem/liquid_window/liquid_window_selected.csv",
+    "harvest_values": "data/external/g1plus/pubchem/liquid_window/liquid_window_values.csv",
+    "upstream_summary": "probes/pubchem_liquid_window_harvest_summary.json",
+    "network_policy": "offline first: the harvest cache and the committed selected/values tables are the only inputs. The builder never touches the network; network_calls in run_telemetry must be 0."
+  },
+  "outputs": [
+    "data/processed/liquid_window_features.csv",
+    "data/processed/liquid_window_gate_report.csv",
+    "probes/liquid_window_gate_summary.json",
+    "reports/liquid_window_gate.md"
+  ],
+  "forbidden": [
+    "changing T_low_C or T_high_C after seeing which keys are blocked",
+    "defaulting a missing mp/bp to pass or to evict instead of labelling it unknown",
+    "averaging disagreeing depositor values into a synthetic primary",
+    "reporting only the trigger-rate reading that looks best",
+    "citing a temperature label without cross-checking it against the compound's liquid window",
+    "touching any of the six frozen red-line files"
+  ],
+  "frozen_red_lines_untouched": [
+    "data/dielectric_v03.csv digest ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "data/processed/dielectric_observations_v11plus.csv digest 159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9",
+    "data/viscosity_v01.csv digest 12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26",
+    "probes/l3_stage1_pilot_pool.csv digest b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "probes/l3_backvalidation_prereg.json digest 77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+    "probes/dielectric_r2_levers_prereg.json digest ab3503c037f05ac398b3c0c59d0e4845943d49fa5a5349fa46b8944f2bc1bdaa"
+  ],
+  "shots_policy": {
+    "rule": "attempts at this gate are counted in reports/decisions_log.md",
+    "counted_so_far": 0
+  }
+}

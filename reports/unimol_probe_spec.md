@@ -3,7 +3,7 @@
 **日期**：2026-09-26
 **范围**：执行手册附录 AA-5 的「缓冲」项、附录 Y 的 D7、附录 X 杠杆 6 修订、附录 O-4。
 **机读规格**：probes/unimol_probe_spec_prereg.json
-**规格 sha256**：40ba1d6f2c89e0339541d8674782d3b80dd91c8a77b12c229fd8cf4cbd132857
+**规格 sha256**：2562a85149ccff6257a25aea0b72a27998cc77f79f3cbdae6620df84161aef60
 **独立校验器**：probes/verify_unimol_probe_spec.py --check
 **单测**：tests/test_unimol_probe_spec.py
 
@@ -39,7 +39,7 @@
 
 **待建（查不到或不存在的，照实写「待建」并说明依据）**
 
-- RDKit 10 构象系综：**待建**。仓库最大系综是 8 构象（MAX_CONFORMERS = 8），冻结管线 1 构象/化合物；10 这个数来自 KPI SI 转述（手册行 1517），不是本仓口径。
+- RDKit 10 构象系综：**待建**。仓库最大系综是 8 构象（MAX_CONFORMERS = 8），冻结管线 1 构象/化合物；10 这个数来自 KPI SI 转述（手册行 1651），不是本仓口径。
 - LMDB 构象存储：**待建**。全仓零命中（按上条同一排除口径，即排除 .git 与全部虚拟环境目录），且 Python 环境未安装 lmdb 包。
 - Uni-Mol 预训练权重与运行时（torch / unimol）：**待建**。解释器 .venv/Scripts/python.exe（Python 3.12.14）中二者 importlib.util.find_spec 均为 None；pyproject.toml 依赖表也没有它们。
 - 以 InChIKey 为键的耐久系综产物：**待建**（现有产物均为暂存，唯一 tracked 的构象级产物是统计量 CSV）。
@@ -54,7 +54,7 @@
 
 | 项 | 值 | 出处 |
 |---|---|---|
-| 构象数 | RDKit 10 构象 | 手册附录 AA-3 第 2 条（快照 tests/fixtures/manual_appendix_j_snapshot.md 行 1517） |
+| 构象数 | RDKit 10 构象 | 手册附录 AA-3 第 2 条（快照 tests/fixtures/manual_appendix_j_snapshot.md 行 1651） |
 | 构象存储 | LMDB | 同上 |
 | 优化器 | Adam | 同上 |
 | 损失 | smooth MAE（smooth L1） | 同上 |
@@ -64,17 +64,17 @@
 | 学习率 | 1e-4 | 同上 |
 | 学习率调度 | 多项式衰减 | 同上 |
 
-**明确不抄的**：评估协议。KPI 用随机 8:1:1 + 4 折 CV（手册附录 Y-2 第 2 条，快照行 1408），本项目不得移植（见第七节）。另：手册附录 N-3（快照行 753）写「冻结主干 + 236 行微调」，KPI 原文的微调深度未在手册转述中写明，本条按手册口径执行。
+**明确不抄的**：评估协议。KPI 用随机 8:1:1 + 4 折 CV（手册附录 Y-2 第 2 条，快照行 1460），本项目不得移植（见第七节）。另：手册附录 N-3（快照行 782）写「冻结主干 + 236 行微调」，KPI 原文的微调深度未在手册转述中写明，本条按手册口径执行。
 
-**冷静剂**：KPI 目标是 MP/BP/FP（相变温度，原子数/键型主导，R² 0.974/0.990/0.986），本项目目标是 ε（集体极化）。超参可抄，「照抄超参就能拿到 0.99」不可推（手册附录 Y-2，快照行 1405-1409）。
+**冷静剂**：KPI 目标是 MP/BP/FP（相变温度，原子数/键型主导，R² 0.974/0.990/0.986），本项目目标是 ε（集体极化）。超参可抄，「照抄超参就能拿到 0.99」不可推（手册附录 Y-2，快照行 1457-1461）。
 
 ## 四、照实登记的来源冲突：11 构象 vs RDKit 10 构象
 
 | claim id | 说法 | 出处 | 行号 |
 |---|---|---|---|
-| claim_y1_11_conformers | 「+ 11 构象输入」 | 手册附录 Y-1（KPI 论文要点速查） | 1400 |
-| claim_d7_11_conformers | 「SHAP top-K 纯度 + 可学习流量 + 11 构象」 | 手册附录 Y-3 D7 | 1418 |
-| claim_aa3_rdkit_10_conformers | 「RDKit 10 构象 + LMDB」 | 手册附录 AA-3 第 2 条（KPI SI 超参） | 1517 |
+| claim_y1_11_conformers | 「+ 11 构象输入」 | 手册附录 Y-1（KPI 论文要点速查） | 1452 |
+| claim_d7_11_conformers | 「SHAP top-K 纯度 + 可学习流量 + 11 构象」 | 手册附录 Y-3 D7 | 1470 |
+| claim_aa3_rdkit_10_conformers | 「RDKit 10 构象 + LMDB」 | 手册附录 AA-3 第 2 条（KPI SI 超参） | 1651 |
 
 **处理方式**：不择一静默消解。两个数并列写进机读规格的 conformer_count_claims 数组（各带出处路径与行号），冲突状态 = unresolved，no_silent_resolution = true。单测会把手册该行**读回来**，确认它确实写着这两个数（tests/test_unimol_probe_spec.py::test_the_conflicting_claims_quote_the_manual_lines_verbatim）。
 
@@ -88,7 +88,7 @@
 
 ## 五、知识控制器（D7）与列绑定纪律
 
-**机制**（手册附录 Y-1 行 1400 / Y-3 D7 行 1418；交叉映射 reports/kpi_framework_mapping.md）
+**机制**（手册附录 Y-1 行 1452 / Y-3 D7 行 1470；交叉映射 reports/kpi_framework_mapping.md）
 
 - **纯度控制器** = 拼入表征的知识向量维数 top-K，K 由 SHAP top-K 决定。
 - **流量控制器** = 可学习嵌入比例。
@@ -101,7 +101,7 @@
 
 缺陷原文口径：probes/dielectric_knowledge_purity_sweep.py:560 构造 full = hstack([frozen_physical, knowledge])（物理块在前），:565 把 columns=KNOWLEDGE_POOL 递给 permutation_importance，而该函数在 :307 用 enumerate(columns) 从 position 0 起洗列 —— 于是被洗的是 full[:, 0..K-1]（**物理块前 K 列**），**十个知识池名字只是贴在这些物理列上的标签**。后果：k=2/4/6 的扫描没有测到它想测的东西；k=10 的选择集不受影响（十名全取），但其列序由破损排序决定，而 XGB_PARAMS 含 colsample_bytree=0.8，拟合依赖列序，故 **k=10 的列序与读数都不是不变量**。
 
-出处：手册附录 AC-6(b)（快照行 1683）、附录 AD-3（快照行 1726）、reports/decisions_log.md §24.6(b)（行 3791）、§25.2/§25.3（行 3834、3851）。三序列读数 spread = 0.007080802985126922（§25.3，行 3857）。
+出处：手册附录 AC-6(b)（快照行 1739）、附录 AD-3（快照行 1786）、reports/decisions_log.md §24.6(b)（行 3791）、§25.2/§25.3（行 3834、3851）。三序列读数 spread = 0.007080802985126922（§25.3，行 3857）。
 
 **落到本探针规格的硬纪律**：
 
@@ -111,7 +111,7 @@
 
 ## 六、枪毙线（D7 原文口径）与 236 表的核实
 
-**枪毙线原文**：「236 样本打不过 hybrid XGBoost 即停，记负结果」（手册附录 Y-3 D7，快照行 1418；旁证 X-3 杠杆 6，行 1365：「236 样本微调高风险，失败记负结果」）。动作 = 即停 + 记负结果，不得事后放宽。
+**枪毙线原文**：「236 样本打不过 hybrid XGBoost 即停，记负结果」（手册附录 Y-3 D7，快照行 1470；旁证 X-3 杠杆 6，行 1417：「236 样本微调高风险，失败记负结果」）。动作 = 即停 + 记负结果，不得事后放宽。
 
 **236 指的是哪张表（我方核到）**：**v1.0 冻结的 236 行 / 236 化合物拟合池**，即 headline R² 0.364 的同一张表。磁盘上有两种物化形式，二者是**同一个化合物集合**：
 
@@ -126,20 +126,20 @@
 
 **对照物**：冻结 v1.0 超参的 hybrid（Morgan+Physical 等权集成）XGBRegressor，在 236 池上 R² = 0.3636（发布值四舍五入 0.364；精确重放 0.36357268752900124，见 reports/dielectric_room_window_paired.md:115）。
 
-**未核实/口径待补**：手册原文未点名 236 是哪一张表（本判定是我方用集合相等核到的版本）；D7 的枪毙线**没有给比较算子**（点估计大小还是置信区间不相交）；手册附录 N-3（行 753）的「超 hybrid 的 CV 置信区间才晋升」是相关但不同的一句。跑前必须把该口径定死并写入跑批预注册。
+**未核实/口径待补**：手册原文未点名 236 是哪一张表（本判定是我方用集合相等核到的版本）；D7 的枪毙线**没有给比较算子**（点估计大小还是置信区间不相交）；手册附录 N-3（行 782）的「超 hybrid 的 CV 置信区间才晋升」是相关但不同的一句。跑前必须把该口径定死并写入跑批预注册。
 
 ## 七、评估协议：本项目标准（不移植 KPI 随机 8:1:1）
 
 - **观测级** + **GroupKFold by InChIKey** + **每折训练侧排序**，并**断言 group_overlap == 0**。
 - **不得**移植 KPI 的随机 8:1:1 + 4 折 CV；KPI 方法若引入，协议一律按本项目标准重做。
 - **random_row 只作泄漏参照、永不进判决**（黏度线学费：log10_cP 的 **MAE 0.064 vs 0.175**、**R² 0.93689 vs 0.74813** —— 0.93689 / 0.74813 是 **R²**，MAE 是 0.064 / 0.175；盘上实测见 probes/viscosity_baseline_summary.json 的 random_row / group_key）。
-- 出处：手册附录 O-3 第 2 条（行 792）、Y-2 第 2 条（行 1408）、Y-4（行 1426）、AC-7（行 1693）、AD-7（行 1762）。主记分牌的 5 折 × 10 重复 / seed 42 见 reports/decisions_log.md §22.3（行 3584）；本探针的具体折方案在跑批预注册里定死。
+- 出处：手册附录 O-3 第 2 条（行 830）、Y-2 第 2 条（行 1460）、Y-4（行 1478）、AC-7（行 1749）、AD-7（行 1822）。主记分牌的 5 折 × 10 重复 / seed 42 见 reports/decisions_log.md §22.3（行 3584）；本探针的具体折方案在跑批预注册里定死。
 
 ## 八、口径隔离
 
 - **主记分牌基线**：0.4091179943351143 —— 457 行 / 97 化合物固定评分池，GroupKFold by InChIKey，50 折，seed 42。
 - **辅记分牌 / v1.0 headline**：0.364 —— v1.0 冻结 236 池（枪毙线住在这个池上）。二者池不同，**不得混用、不得互相比较大小**。
-- **0.5332 / 0.5454 只许带池定义引用**：「147 化合物训练池在 97 化合物固定评分池上的分组 CV」（手册附录 X-2 行 1350-1351、X-6 行 1390）。
+- **0.5332 / 0.5454 只许带池定义引用**：「147 化合物训练池在 97 化合物固定评分池上的分组 CV」（手册附录 X-2 行 1402-1403、X-6 行 1442）。
 - 本探针若将来跑批：(a) 枪毙线只在 236 池上读；(b) 任何 457 池读数另行标注池定义；(c) 两组数字永不并列成一句比较。
 
 ## 九、未查到的项与不确定性登记
@@ -230,3 +230,39 @@ test_spec_digest_is_pinned_in_the_report 是 PASSED —— 因为报告正文自
 ### 5. 本轮写集
 
 本轮只新建四个文件：probes/unimol_probe_spec_prereg.json、reports/unimol_probe_spec.md、tests/test_unimol_probe_spec.py、probes/verify_unimol_probe_spec.py。没有改任何禁止文件（decisions_log.md、手册快照、paper/*、其它 *_prereg.json、data/ 下任何文件、六件冻结件、v1.0 已发布工件）。
+
+## 附录：v2 手册重组轮（Week 17）—— 快照锚点与行号 pin 重生
+
+**触发**：执行手册 v2（周融合版，2026-09-26）把全部旧附录按周融进「逐周记录」章节，
+旧快照锚点标题 `## 附录 J-补记三` 在该版中已不存在（新位置 = Week 7 章的
+`#### 两条介电腿闭死与 G1+ 第五轮爬取（2026-09-25）｜原附录 J-补记三`），
+且重组改变了块内行数（本快照从 1,993 行变为 2,260 行）。手册**新附录 C** 因此要求
+三件护栏按序重生；本轮照做。
+
+**本轮动作（全部只改行号引用与锚点，不改任何被引用的正文）**：
+
+1. **快照锚点**：`probes/manual_appendix_reconciliation.py` 的
+   `DEFAULT_MANUAL` 指向 v2 手册、`MANUAL_FIXTURE_SECTION` 改为新标题，
+   再 `--write-manual-fixture` 重生 `tests/fixtures/manual_appendix_j_snapshot.md`
+   （220,187 B → 248,118 B）。`tests/test_manual_appendix_reconciliation.py`
+   **26 passed**（与手册新附录 C 第 3 条预告的项数一致；此前因旧手册路径缺失而
+   有 2 项 skip，现在两项均实跑）。
+2. **行号 pin**：本规格里指向快照的 **29 条** `source_line` 全部按新快照重钉
+   （旧值 → 新值，逐条以「旧快照该行文本在新快照中的唯一命中」定线；
+   唯一例外是 `AD-3` 那条：v2 同时改了标题层级（`###` → `#####`），
+   故按正文内容重定位到第 **1786** 行）。规格正文里所有带「快照行 N」「行 N」
+   的引用数字同批改写。`probes/verify_unimol_probe_spec.py --check` **34/34**。
+   规格字节因此变更：sha256 `40ba1d6f…` → `2562a851…`（报告头已同步）。
+3. **登记（不回改）**：本报告正文「验收实测（2026-09-26）」一节里记录的旧运行
+   打印 `spec sha256=40ba1d6f…`，**属重钉之前的历史读数，逐字保留、不回改**
+   （依据项目既有规则「已落盘读数不被就地改写」）；其对应的是**旧**规格字节。
+
+**参考（本次重钉后实跑）**：
+
+```
+    .\.venv\Scripts\python.exe probes\verify_unimol_probe_spec.py --check
+    checks=34 passed=34 skipped=0 failed=0
+    spec sha256=2562a85149ccff6257a25aea0b72a27998cc77f79f3cbdae6620df84161aef60
+    python -m pytest tests/test_unimol_probe_spec.py tests/test_manual_appendix_reconciliation.py -q
+    48 passed
+```

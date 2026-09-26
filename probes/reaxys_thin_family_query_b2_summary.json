@@ -1,0 +1,139 @@
+{
+  "arm": "W17-15",
+  "channel_tally": {
+    "epsilon": {
+      "definition": "Dielectric Constant + Static Dielectric Constant",
+      "point_values": 16,
+      "point_values_from_the_comment_column": 0,
+      "reference_only_rows": 2,
+      "rows": 19,
+      "substances_with_point_values": 4,
+      "substances_with_rows": 4,
+      "valued_rows": 17
+    },
+    "eta": {
+      "definition": "Dynamic Viscosity + Kinematic Viscosity",
+      "point_values": 21,
+      "point_values_from_the_comment_column": 11,
+      "reference_only_rows": 1,
+      "rows": 22,
+      "substances_with_point_values": 3,
+      "substances_with_rows": 3,
+      "valued_rows": 21
+    },
+    "homo_lumo": {
+      "definition": "Ionization Potential + Calculated Properties (Reaxys labels this block Quantum Chemical Calculations on three of the four cards). Both are orbital-adjacent; neither is a HOMO, a LUMO or a gap, and every Calculated Properties row in this set is reference-only",
+      "point_values": 0,
+      "point_values_from_the_comment_column": 0,
+      "reference_only_rows": 12,
+      "rows": 12,
+      "substances_with_point_values": 0,
+      "substances_with_rows": 4,
+      "valued_rows": 0
+    },
+    "redox": {
+      "definition": "Electrochemical Characteristics (Electrochemical Behaviour deliberately excluded)",
+      "point_values": 0,
+      "point_values_from_the_comment_column": 0,
+      "reference_only_rows": 1,
+      "rows": 1,
+      "substances_with_point_values": 0,
+      "substances_with_rows": 1,
+      "valued_rows": 0
+    }
+  },
+  "correction_to_the_w17_rx_claim": {
+    "earlier_claim": "the W17-RX crosscheck concluded that HOMO/LUMO and the redox potential exist in Reaxys only as literature references, with 0 numbers",
+    "verdict": "unchanged by this batch",
+    "what_still_holds": "no HOMO, LUMO or gap column appears anywhere in this set and every Calculated Properties row is reference-only",
+    "why_it_matters": "the P4 redox label bottleneck is not relieved further: batch 2 adds one redox row and it carries no number in either the value or the Comment column, so the channel still holds no numeric value for these solvents"
+  },
+  "evidence": {
+    "dir": "data/raw/reaxys_w17c (git-ignored, kept verbatim in the repository)",
+    "distinct_source_pages": 7,
+    "harvest_files": 4,
+    "observations_csv": {
+      "rows": 54,
+      "sha256": "2aabe1f5681f38e7fbb7f71379e3df8b4752e13fc0bf65c15d530de0a21bf786"
+    },
+    "observations_summary_sha256": "abb2067dfe6a60e3a9a4f611632aae29f010c021b866696d6772659075d0a478",
+    "page_snapshots": 4,
+    "total_bytes": 93103
+  },
+  "extends": "W17-13 (the first executed pass over the same queue); W17-2 (the queue itself)",
+  "facts_path": "probes/reaxys_thin_family_query_b2_facts.csv",
+  "facts_sha256": "8c87bd6cc3941ce7951f93f82ac92dfc8fc72bfd5b2c285cbd4edd00d28484a5",
+  "findings": [
+    "the requested range cannot be keyed at all: queue rows 11-25 are fifteen springer_materials_title_index leads and every candidate_inchikey cell among them is empty, so the walk continues on the four keyed reaxys_stocking_queue rows W17-13 left behind",
+    "eta is again the richest channel and again the least numeric on the surface: 22 rows, 21 valued, 21 points, and 11 of those values sit in the Reaxys Comment column rather than the value column (gamma-valerolactone 4 of 4 rows, ethylene carbonate 7 of 17)",
+    "epsilon reaches all four substances: 19 rows, 17 valued, 16 points (ethylene carbonate 90.5 / 90.05 / 90.8 / 89.6 / 85.1 / 81 / 77.3 static plus 5.4 and two 89.78 dynamic; ethyl sulfite 17.5 / 15.9 / 13.7; ethyl methyl carbonate 2.958 / 2.96; gamma-valerolactone 36.9)",
+    "the only range in the epsilon channel belongs to ethyl methyl carbonate's static dielectric constant, 2.45 - 2.984, which is valued but not a point",
+    "the orbital channel is 12 rows and 0 values, and every row is reference-only: 11 Calculated Properties rows inside the Quantum Chemical Calculations block plus one bare Ionization Potential row for ethyl sulfite (Watanabe 1962) that carries no number either",
+    "the Quantum Chemical Calculations block is labelled Calculated Properties on three of the four cards; ethyl sulfite's card has no Other Data tab at all, so it has no Calculated Properties rows",
+    "redox is one row, on ethyl methyl carbonate, and its Comment says only 'potential diagram'; there is no number in it and none in the value column, so this batch adds zero redox point values"
+  ],
+  "limitations": [
+    "four substances is what the queue still holds that carries a verbatim key; the fifteen rows the brief named cannot be queried inside a key-asserted schema",
+    "Reaxys reports its own units and they were preserved, not repaired: the Dynamic Viscosity column is headed in poise while the Comment column states the same values in mPa*s",
+    "eleven of the eta values exist only in the Comment column, so any downstream reader that only looks at numeric columns will see 10 of 21 eta values",
+    "T_K is a deterministic conversion of the Celsius value Reaxys shows; ranges stay ranges, nothing was averaged and no value was imputed to 298.15 K",
+    "ethyl sulfite's card has no Other Data tab, so its orbital channel is one reference-only Ionization Potential row by evidence, not by omission",
+    "only Electrochemical Characteristics was counted as redox; Electrochemical Behaviour, Electrochemistry Data and Electron Binding were deliberately excluded"
+  ],
+  "non_interference": {
+    "data_tracked_files_modified": [],
+    "main_scoreboard_touched": false,
+    "models_fitted": 0,
+    "r2_reported": false
+  },
+  "queue_key_audit": {
+    "card_key_matches_queue_key": true,
+    "keys_from_the_w17_2_queue": 4,
+    "keys_not_from_the_queue": 0,
+    "queue_path": "probes/reaxys_thin_family_backfill_queue.csv",
+    "queue_sha256": "350b40f3b81de4d40b96f79557056711a69cebf593e99b2c4fa92516e3e5a426",
+    "rule": "every substance key must appear in the queue's candidate_inchikey column"
+  },
+  "restricted_contract": {
+    "decision": "reports/decisions_log.md section 28.2 (the author's ruling B)",
+    "raw_evidence_dir": "data/raw/reaxys_w17c (git-ignored)",
+    "this_lane_writes_only_under": [
+      "probes/",
+      "reports/",
+      "tests/"
+    ],
+    "values_enter_any_feature_table": false,
+    "values_enter_any_pool": false,
+    "values_enter_data": false,
+    "values_ship_in_this_bundle": false
+  },
+  "schema_version": "reaxys_thin_family_query/v1",
+  "scope": {
+    "executed_instead": "the queue rows that do carry a verbatim candidate_inchikey and were not walked by W17-13: rows 59, 60, 62 and 67, the four remaining reaxys_stocking_queue rows",
+    "executed_queue_rows": [
+      59,
+      60,
+      62,
+      67
+    ],
+    "queue_rows_walked_by_w17_13": 10,
+    "queue_rows_with_a_key": 14,
+    "queue_rows_with_a_key_left": 4,
+    "requested": "queue rows 11-25 of probes/reaxys_thin_family_backfill_queue.csv",
+    "requested_blocker": "all fifteen requested rows are springer_materials_title_index leads with an empty candidate_inchikey cell, so no key can be taken verbatim from the queue for them and the hand-typed-key ban leaves them unqueryable inside this schema",
+    "requested_rows_carry_a_key": 0,
+    "requested_rows_total": 15
+  },
+  "session": {
+    "blocked_by_session_modal": 0,
+    "blocked_note": "one attempt to reach quick search through the in-app navigation link did not route, so the tab was pointed at the quick-search URL directly; no search was submitted by that attempt and it is not counted as a query",
+    "channel": "the author's already signed-in Reaxys tab in Edge, taken over through the Codex browser channel; no profile copy, no fresh login, no headless scraping",
+    "interaction": "one substance card at a time; every category table expanded with its own \"Show all\" control to the row count Reaxys reports on the category button",
+    "queries_executed": 4,
+    "query_budget": 30
+  },
+  "substances_queried": 4,
+  "title": "Reaxys thin-family backfill, second batch: queue rows 11-25 carry no InChIKey at all, so the walk continues on the four keyed rows W17-13 left behind, where the carbonates land epsilon and eta numbers and the orbital channel is still only ionization potentials",
+  "value_semantics": "Reaxys writes ranges and points into the same value column, so \"valued\" (the cell is populated) and \"point\" (the cell parses as one float) are counted separately and never conflated. observations_summary.json's own *_numeric fields mean valued; this build asserts against them in those terms. Rows whose value column is empty but whose Comment column states the value are promoted into the value field with the comment marked in source_page, exactly as W17-13 handled the redox comment values.",
+  "week": "week17"
+}

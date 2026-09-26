@@ -1,0 +1,56 @@
+{
+  "arm": "W17-12",
+  "title": "Orbital second source (PubChemQC B3LYP/6-31G*//PM6, CC BY 4.0): bounded harvest, unit audit and cross-level calibration",
+  "status": "locked_before_run",
+  "created_utc": "2026-09-27",
+  "question": "Can a second, redistributable HOMO/LUMO source extend and calibrate the Week-17 orbit channel without touching the primary Batt-P30K values?",
+  "source": {
+    "dataset_id": "molssiai-hub/pubchemqc-b3lyp",
+    "dataset_revision": "15c15ae6a80c7ed84ee45e966390564e71e2e0bf",
+    "mirror": "https://hf-mirror.com",
+    "shard": "data/b3lyp_pm6/train/000000001-000253696.json",
+    "shard_size_bytes": 4348924286,
+    "shard_etag": "2b49c0ae0ea7470f8d2d79d4d3befb42cd5b469d47d83f0dd85ff21fefdc9c88",
+    "shard_lfs_sha256": "d790ccbda06e9c80a160fa14d2f02e942167ea1c0f7982e5144779a376b70b8c",
+    "citation_doi": "10.1021/acs.jcim.3c00899",
+    "license": "CC BY 4.0",
+    "origin_level": "B3LYP/6-31G*//PM6 (gas phase)",
+    "origin_level_evidence": "dataset card + RIKEN PubChemQC B3LYP/6-31G* page",
+    "raw_layer": "data/raw/pubchemqc_w17 (git-ignored)"
+  },
+  "primary_source_unchanged": {
+    "dataset": "data/raw/batt/Batt-P30K.h5",
+    "level": "wB97X-V/def2-TZVPPD/SMD(epsilon=18.5)",
+    "doi": "10.1021/acsnano.6c06255",
+    "rule": "the second source never overwrites HOMO_eV/LUMO_eV in data/processed/four_core_key_registry.csv"
+  },
+  "sampling": {
+    "seed": 20260927,
+    "epsilon_roster": "all unique InChIKeys of data/dielectric_v04.csv",
+    "viscosity_roster_sample": 300,
+    "registry_orbit_sample": 200,
+    "named_solvents": 23,
+    "head_scan_bytes": 12000000,
+    "cid_to_key_resolution": "PubChem PUG-REST listkey POST (comma-separated inchikey parameter); every candidate CID is re-verified by RDKit InChIKey equality against the record's pubchem-inchi"
+  },
+  "unit_hypothesis": {
+    "claim": "energy-alpha-homo/lumo/gap and orbital-energies carry eV, not hartree; the dataset card's 'hartree' annotation for orbital-energies is a documentation defect",
+    "why": "a valence HOMO of a neutral closed-shell organic molecule cannot sit at -4.6 hartree (~ -125 eV); the array element equals the eV-labelled scalar field exactly",
+    "test": "orbital-energies[0][homos[0]] == energy-alpha-homo and gap == lumo - homo, both to <= 1e-9 relative"
+  },
+  "judgements": {
+    "A_shard_structure": "cid is monotone increasing across the shard and the five structure probes return increasing cid windows; otherwise abort",
+    "B_unit_audit": "the unit test passes for >= 95% of audited records (>= 40 records); record the pass rate verbatim",
+    "C_second_source_coverage": "epsilon-roster hits >= 40 and viscosity-sample hits >= 100, else this arm reports reconnaissance only and publishes no layer",
+    "D_calibration_min_n": "a linear cross-level fit is only reported when >= 60 paired (PubChemQC, Batt-P30K) molecules exist",
+    "E_calibration_quality": "out-of-sample 2-fold MAE <= 0.35 eV and Pearson r >= 0.80 to label calibrated values usable_with_flag; otherwise reference_only",
+    "F_primary_untouched": "Batt-P30K remains the orbit channel primary; second-source values are additive only",
+    "G_reaxys_excluded": "no Reaxys-derived number may enter this layer",
+    "H_structure_identity": "a hit counts only when the record's RDKit InChIKey equals the target key; otherwise it is logged as structure_mismatch"
+  },
+  "expected_failure_modes": [
+    "level offset between gas-phase B3LYP/6-31G* and implicit-solvent wB97X-V/def2-TZVPPD is large and molecule-dependent",
+    "CID-to-key resolution may miss exotic fluorinated electrolytes that never entered PubChem",
+    "shard 0 only covers PubChem CIDs <= ~253696, so higher-CID electrolytes are out of reach in this arm"
+  ]
+}

@@ -75,6 +75,31 @@ jobs:
         run: python scripts/verify_al_round1.py
       - name: Verify P4 redox baseline
         run: python scripts/verify_p4_redox.py
+      # Week 17 additions.  Every step below was checked to pass on a
+      # simulated clean clone (tracked + non-ignored files only), so it does
+      # not depend on a gitignored download cache.
+      # scripts/verify_density_v01.py is deliberately NOT listed: its value
+      # layer needs data/raw/thermoml_density/ (54 MB, gitignored) or the
+      # committed data/processed/density_raw.csv, which is kept out of the
+      # repository on purpose, so it is a tier-2 (local-cache) verifier.
+      # scripts/verify_viscosity_v02.py --check is also deliberately NOT listed:
+      # its value layer needs data/raw/thermoml_viscosity_pa_s/ or the 81 MB
+      # data/processed/viscosity_v02_raw.csv, both kept out of the repository on
+      # purpose, so it is a tier-2 (local-cache) verifier as well.
+      - name: Verify dielectric v0.4 roster patch
+        run: python scripts/verify_dielectric_v04.py
+      - name: Verify liquid-window gate
+        run: python scripts/verify_liquid_window_gate.py --check
+      - name: Verify the Walden / donor-number channel
+        run: python scripts/verify_walden_dn_channel.py --check
+      - name: Verify the Uni-Mol probe specification
+        run: python probes/verify_unimol_probe_spec.py --check
+      - name: Verify the four-core cross-channel registry
+        run: python scripts/verify_four_core_registry.py --check
+      - name: Verify the W17-12 second-source orbital layer
+        run: python scripts/verify_orbital_second_source.py --check
+      - name: Verify the W17-14 THEMol / GFN2-xTB orbital layer
+        run: python scripts/verify_themol_orbital_layer.py --check
 
   environment:
     runs-on: ubuntu-latest

@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "task": "week17_w17_7_walden_dn_channel",
+  "title": "eps-eta Walden coupling pairs and the DN fifth-channel registration: the build contract",
+  "locked_at_utc": "2026-09-26T12:44:21Z",
+  "status": "locked_before_run",
+  "lock_rule": "The pairing rule, the temperature-alignment rule, the coupling definition, the DN admissibility rule and the DN coverage threshold are frozen before the first run. A later round may add a column; it may not relax a rule, and a rule that has to change is reported as a correction rather than edited in place.",
+  "why": "Appendix Z-4 called the Walden-type eps-eta coupling a free addition once the joint observation table existed (tests/fixtures/manual_appendix_j_snapshot.md, section Z-4). reports/solvating_power_descriptor_mapping.md section 2.2 rules that the Gutmann donor number is a probe-molecule property that is experimental only, and so can only ever enter as a small curated look-up table. This arm pairs the two channels of the joint table at a shared temperature, and performs the donor-number coverage check that decides whether that fifth channel may ever enter a feature table. No model is fitted.",
+  "input": {
+    "path": "data/processed/eta_epsilon_joint_observations.csv",
+    "role": "the only input table; read only, never written by this arm",
+    "read_only": true,
+    "expected_rows": 8359,
+    "expected_distinct_keys": 1043,
+    "expected_source_split": {
+      "epsilon_observations_v11plus": 2065,
+      "thermoml_viscosity": 2549,
+      "schrodinger_viscosity_v01_open_subset": 3582,
+      "pubchem_liquid_window_harvest": 163
+    },
+    "recount_rule": "the builder recounts rows, keys and the source split itself; a recount that disagrees with the expected value above is reported as a correction, never patched in place and never silently averaged away",
+    "identity_key": "inchikey",
+    "temperature_column": "T_K"
+  },
+  "walden_pairs": {
+    "grain": "one row per (epsilon observation, viscosity observation) pair drawn from the same InChIKey whose stored T_K agree under the temperature-alignment rule",
+    "t_alignment_rule": "abs(T_epsilon - T_viscosity) <= t_tolerance_k; no interpolation, no extrapolation, no temperature shift, no re-rounding of the stored value",
+    "t_tolerance_k": 1e-06,
+    "t_alignment_delta_basis": "the stored T_K values themselves; the joint table stores no temperature uncertainty, so the tolerance is a numeric-identity tolerance and not an uncertainty budget",
+    "t_alignment_sensitivity_ladder_k": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "sensitivity_ladder_role": "a reading only. It is reported as counts next to the primary reading, it never forms the pair table and it never enters a verdict. The stored temperatures sit on a coarse grid (e.g. 278.15, 280.65, 283.15 K), so a widened tolerance would merge physically distinct temperatures rather than recover a rounding artefact.",
+    "primary_coupling": {
+      "name": "walden_coupling_epsilon_times_eta",
+      "definition": "epsilon * viscosity_Pa_s",
+      "unit": "Pa*s",
+      "note": "epsilon is dimensionless (unit '1') and viscosity is Pa*s, so the product carries Pa*s. This is the Walden-type product analogue this arm registers; it is a derived pair statistic and never a measurement."
+    },
+    "secondary_coupling": {
+      "name": "walden_ratio_eta_over_epsilon",
+      "definition": "viscosity_Pa_s / epsilon",
+      "unit": "Pa*s",
+      "note": "reported as a second reading only; it is not the primary coupling and carries no verdict"
+    },
+    "conflict_rule": "when one (inchikey, T_K) cell holds m epsilon rows and n viscosity rows, all m*n combinations are emitted with both provenances; averaging_applied is false on every row and no value is ever tie-broken or dropped",
+    "conflict_reading_rule": "the number of overlapping cells and the number of cells with more than one value on either side are reported",
+    "source_quadrant_rule": "pair_source_quadrant = '{epsilon_dataset_id} x {viscosity_dataset_id}'; the four-way source split of the joint table is preserved per row so a pair is always attributable to both of its sources",
+    "pair_quality_layer_rule": "publishable_core only when both sides are publishable_core; otherwise filter_only. A filter_only pair may be used to filter and may never be quoted in a publishable headline; the epsilon side of this build is publishable_core throughout, so the pair layer is decided by the viscosity side",
+    "pair_id_rule": "pair_id = '{inchikey}|{T_K}|{epsilon_dataset_id}:{epsilon_source_row_index}|{viscosity_dataset_id}:{viscosity_source_row_index}'",
+    "row_order": "sorted by (inchikey, T_K, epsilon_source_row_index, viscosity_source_row_index), so a rebuild is byte-identical",
+    "no_model": "no model is fitted, no R2 is produced, and the frozen baseline 0.4091179943351143 is not touched"
+  },
+  "kinematic_thaw": {
+    "status_rule": "the joint table already excluded the kinematic viscosity (m2/s) rows with reason kinematic_viscosity_not_dynamic; they are not observations of that table and therefore cannot enter a pair here",
+    "frozen_count": 176,
+    "thaw_dependency": "data/density_v01.csv, produced by a sibling arm",
+    "thawed_rule": "thawed = data/density_v01.csv is present. While thawed is false this arm states only the family-level fact. When it becomes true a later revision may convert nu -> eta = nu * rho at a matched temperature and upgrade the reading from family level to key level, without touching this arm's committed pair table.",
+    "family_level_only_rule": "while thawed is false no key-level kinematic conclusion is stated; the arm reports the count and the dependency only"
+  },
+  "dn_channel": {
+    "role": "registration and coverage audit only. The channel is never fitted here and no model reads it in this arm.",
+    "target_key_set": "the distinct InChIKeys of the joint observation table",
+    "expected_target_keys": 1043,
+    "secondary_target_key_set": "the publishable_core and pure keys of the joint observation table",
+    "coverage_definition": "covered_keys / target_keys, where a key counts as covered only when it carries a donor number from an admissible source",
+    "coverage_threshold": 0.3,
+    "admissibility_rule": "a donor number is admissible only when it is an experimental measurement carrying a first-hand source DOI. reports/solvating_power_descriptor_mapping.md section 2.2 rules that DN measures the chemistry of a probe molecule (SbCl5) and is experimental only, so a predicted value, a compilation-level value, or a secondary value without a readable primary is inadmissible.",
+    "verdict_rule": "covered fraction >= coverage_threshold -> the channel is available to a later feature table; below -> the channel does not enter the feature table, and the criterion and the reading are reported. Passing the threshold is necessary, never sufficient: an inadmissible source cannot cover a key whatever the count.",
+    "predicted_sub_channel_rule": "a predicted donor-number column, if one exists locally, is audited separately and is never merged into the admissible coverage",
+    "candidate_sources": [
+      {
+        "source_id": "dn218_acs_nano_experimental",
+        "claim": "experimental",
+        "doi": "10.1021/acsnano.6c06255",
+        "local_evidence": "data/external/g1plus/compilations/nn6c06255_si_001.txt",
+        "what_the_local_text_holds": "the supporting-information text names a DN-218 experimental donor-number dataset (Figure S12) and describes a model trained on it; it carries captions only and no value table",
+        "values_present_locally": 0,
+        "admissible": true,
+        "status": "referenced_only"
+      },
+      {
+        "source_id": "solvfunc87_predicted_dn",
+        "claim": "predicted",
+        "doi": "",
+        "local_evidence": "data/external/SolvFunc-87.csv",
+        "column": "DN_Pred (kcal/mol)",
+        "admissible": false,
+        "inadmissible_reason": "predicted_not_experimental"
+      },
+      {
+        "source_id": "perricone2011_secondary_mopn",
+        "claim": "secondary_compilation",
+        "doi": "",
+        "local_evidence": "data/external/g1plus/mopn/perricone2011.txt",
+        "what_the_local_text_holds": "Tableau 4 prints MOPN DN = 14.6 at 25 C, transcribed from Ue 1994 (10.1149/1.2059270), whose body is blocked",
+        "admissible": false,
+        "inadmissible_reason": "secondary_compilation_without_a_readable_primary"
+      },
+      {
+        "source_id": "gsds_zenodo_donornum",
+        "claim": "predicted",
+        "doi": "10.5281/zenodo.21061162",
+        "local_evidence": "probes/artifacts/gsds_zenodo_archive_listing.json",
+        "what_the_local_evidence_holds": "the DonorNum paths are a scoring task over generated molecules (predict_dipole.out, generate-molecules outputs), not an experimental corpus; the archive carries no donor-number dataset file",
+        "admissible": false,
+        "inadmissible_reason": "generated_molecule_scoring_task_not_an_experimental_corpus"
+      }
+    ]
+  },
+  "artifacts": {
+    "pairs_table": "data/processed/walden_coupling_pairs.csv",
+    "dn_coverage_audit": "data/processed/dn_coverage_audit.csv",
+    "summary": "probes/walden_dn_channel_summary.json",
+    "report": "reports/walden_dn_channel.md",
+    "verifier": "scripts/verify_walden_dn_channel.py",
+    "new_files_only_rule": "this arm writes only the four artefacts above. data/processed/eta_epsilon_joint_observations.csv and data/processed/eta_epsilon_joint_exclusions.csv are committed products of Week 16 and are never written here."
+  },
+  "verification_contract": {
+    "checks": [
+      "the joint table is recounted (rows, distinct keys, source split) and a disagreement is reported rather than hidden",
+      "every pair row carries both provenances and averaging_applied is false",
+      "the temperature-alignment rule holds on every pair row",
+      "the coupling columns equal the registered formulas recomputed from the two stored values",
+      "the pair quality layer equals the both-sides rule",
+      "the DN coverage fraction equals covered_keys / target_keys and the verdict follows the threshold",
+      "the six frozen artefacts keep their digests"
+    ],
+    "manifest": "a SHA256 manifest over the pairs table, the DN coverage audit, the summary and the builder script",
+    "verifier": "scripts/verify_walden_dn_channel.py --check recomputes the pair table and the DN coverage offline from the joint table and exits 0 for PASS and 1 for FAIL"
+  },
+  "run_telemetry_contract": {
+    "fields": [
+      "generated_at_utc",
+      "network_calls",
+      "models_fitted",
+      "r2_reported",
+      "writes_under_data",
+      "run_mode"
+    ],
+    "rule": "network_calls is 0, models_fitted is 0, r2_reported is false, run_mode is offline; writes_under_data counts the two new tables this arm writes and is never zero by accident"
+  },
+  "frozen_red_lines": {
+    "data/dielectric_v03.csv": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "probes/l3_stage1_pilot_pool.csv": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "probes/l3_backvalidation_prereg.json": "77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+    "data/processed/dielectric_observations_v11plus.csv": "159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9",
+    "probes/dielectric_r2_levers_prereg.json": "ab3503c037f05ac398b3c0c59d0e4845943d49fa5a5349fa46b8944f2bc1bdaa",
+    "data/viscosity_v01.csv": "12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26"
+  },
+  "deliverables": [
+    "probes/walden_dn_channel.py",
+    "probes/walden_dn_channel_prereg.json",
+    "probes/walden_dn_channel_summary.json",
+    "data/processed/walden_coupling_pairs.csv",
+    "data/processed/dn_coverage_audit.csv",
+    "scripts/verify_walden_dn_channel.py",
+    "tests/test_walden_dn_channel.py",
+    "reports/walden_dn_channel.md"
+  ],
+  "forbidden": [
+    "averaging or tie-breaking conflicting values at one (inchikey, T_K)",
+    "interpolating or extrapolating a viscosity to an epsilon temperature",
+    "quoting a filter_only pair in a publishable headline",
+    "letting an inadmissible donor-number source cover a key",
+    "fitting a model, reporting an R2, or touching the frozen baseline 0.4091179943351143",
+    "writing data/processed/eta_epsilon_joint_observations.csv or data/processed/eta_epsilon_joint_exclusions.csv",
+    "stating a key-level kinematic viscosity conclusion before data/density_v01.csv exists"
+  ]
+}

@@ -67,8 +67,8 @@ REQUIRED_KPI_HYPERPARAMETERS = {
     "learning_rate": 1e-4,
     "lr_schedule": "polynomial decay",
 }
-KPI_SOURCE_LINE = 1517
-CLAIM_11_LINES = (1400, 1418)
+KPI_SOURCE_LINE = 1651
+CLAIM_11_LINES = (1452, 1470)
 EXPECTED_COUNTS = {10, 11}
 
 
@@ -177,14 +177,14 @@ def test_column_binding_is_explicit_and_cites_the_lever9_defect(spec: dict) -> N
     assert len(binding["mandatory_assertions_before_any_fit"]) >= 3
     assert binding["forbidden"]
     evidence_lines = {item["source_line"] for item in defect["evidence"]}
-    assert 1683 in evidence_lines
+    assert 1739 in evidence_lines
     assert 3791 in evidence_lines
 
 
 def test_kill_line_names_236_and_stops_on_a_loss(spec: dict) -> None:
     kill = spec["kill_line"]
     assert kill["verbatim_zh"] == "236 样本打不过 hybrid XGBoost 即停，记负结果"
-    assert kill["source"]["source_line"] == 1418
+    assert kill["source"]["source_line"] == 1470
     assert "即停" in kill["action_on_fail"]
     assert "负结果" in kill["action_on_fail"]
 

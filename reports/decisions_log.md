@@ -4122,3 +4122,719 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 **备案（非本仓缺陷，但需作者定披露口径）**：`probes/reaxys_dielectric_queue_first_cut.csv`（week12 落盘、随 week12 包分发）**16/19 行带非空 Reaxys 数值**，逐行标 `reaxys_crosscheck_only` / `restricted_crosscheck_only`。week16 README 的「Reaxys 值未进 `data/`、未进任何池」**字面成立且经审读者逐条复核**，但它只覆盖 `data/`：版本库的 `probes/` 下确实存着一份**带值**的交叉核对记录。**本轮不动它**，登记以备将来对外分发仓库或整包时由作者决定披露或脱敏口径。
 
 **结论**：终态提交 **可以信** —— 无 Critical、无 Important；上面 2、4 是下一轮导出器迭代的顺手项，1、3 已在本轮加固。
+
+---
+
+## 第28 Week 17 —— 扩物质与多维度立项执行（2026-09-26）
+
+### 28.1 裁决 A：F3 画法 = `no_rewrite`（作者确认，阻塞项解除）
+
+W17-11 要求作者先裁决 F3（身份层 5 条结构层画法差异是否就地改写）。**裁决结果：`no_rewrite`**，
+采纳探针 `probes/identity_smiles_drawing_decision_summary.json` 的建议
+（`status = recommended_no_rewrite_awaiting_human_confirmation`）。理由沿用探针取证：5 条差异全部
+`identity_check = roundtrip_match`、`pubchem_inchikey` 与 `inchikey` 逐字相同；5 条本地串都是**复制**
+而非撰写（4 条落在冻结件 `data/dielectric_v03.csv`、1 条落在 ilthermo 派生表、0 条由身份层撰写）；
+其中 **4 条携带几何派生特征**，就地改字会静默移动它们的物性特征。**本轮 `no_data_change_made = true`**，
+不改写。该裁决解除 W17-6 计算段的瓶颈（其预注册本就不依赖 F3）。
+
+### 28.2 裁决 B：Reaxys 队列披露/脱敏口径（作者确认，阻塞项解除）
+
+背景：`probes/reaxys_dielectric_queue_first_cut.csv`（week12 落盘、随 week12 包分发）**16/19 行带非空
+Reaxys 数值**，逐行标 `reaxys_crosscheck_only` / `restricted_crosscheck_only`。week16 独立审读登记过：
+「Reaxys 值未进 `data/`、未进任何池」字面成立，但 `probes/` 下确实存着一份**带值**的交叉核对记录。
+
+**裁决口径（本轮确立并沿用）**：
+
+1. **Reaxys 派生数值不得进入 `data/`**，不得进入任何池、不得进入任何特征表——红线不变。
+2. `probes/reaxys_dielectric_queue_first_cut.csv` 作为**交叉核对证据**保留在版本库，**逐字不改**；
+   其披露边界写死在文件自身的 `provenance_tag` / `access` 两列（`reaxys_crosscheck_only` /
+   `restricted_crosscheck_only`），新增的任何 Reaxys 侧清单**沿用同一对标签**，不另立口径。
+3. **对外分发**（仓库整包或交付包）时，Reaxys 派生清单**整文件排除**，或按 `access` 列脱敏后再分发；
+   版本库内部保留原样以便复核。W17 交付包按此执行（见 week17 包的 `week17_summary.json.restricted_contract`）。
+4. 本次解除阻塞的是**执行口径**：W17-2 可以开工，但**逐条手动查询、禁止批量爬虫**照旧，
+   restricted 值只作 crosscheck。
+
+### 28.3 顺手项：`export_results_common.write_json` 的 CRLF→LF 修复（不阻塞任何臂，直接修）
+
+week16 独立审读第 2 条登记：`week16_summary.json` 与 `verification.json` 是 **CRLF**，而同包其余 29 件
+复制产物与 `SHA256SUMS` 均纯 LF；根因是 `probes/export_results_common.py::write_json` 里的
+`Path.write_text` 未传 `newline="\n"`，week15 包同病（沿袭，非单轮引入）。
+
+**本轮修法**：给 `write_json` 的 `Path.write_text` 补上 `newline="\n"`。按项目纪律
+**只对下一版导出器生效**——week15/week16 已落盘包**不回改**（已落盘读数逐字保留）。
+该修复只影响此后新写出的 JSON 的行尾，不改变任何既有 digest 口径。
+
+### 28.4 W17-1：v0.4 名册补丁（succinonitrile + GVL 双行）与 GVL 冲突裁决
+
+**产物**：`data/dielectric_v04.csv`（248 行 = v0.3 的 246 行 + 2 行新条目）、
+`data/processed/dielectric_v04_roster_additions.csv`（逐行全字段）、
+`data/processed/dielectric_v04_provenance_patches.csv`（对既有行的**非保护字段**补丁）、
+`probes/dielectric_v04_summary.json`、`scripts/build_dielectric_v04.py`、
+`scripts/verify_dielectric_v04.py`（8 档全 PASS）、`tests/test_dielectric_v04.py`（10 passed）、
+`reports/dielectric_v04.md`。v0.3 冻结件 digest **逐位不变**
+（`ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`）。
+
+**(a) succinonitrile 名册缺口**（AL Round 4 的唯一 `roster_gap` 行）：观测层早有 **17 行 / 17 个温度**
+（333.15–373.15 K，`10.1021/je300958c`），缺的只是名册一行。v0.4 存**最低温观测腿**（333.15 K，ε 56.09），
+**未生成任何新数值**。整个温区在 v0.3 的 extended 窗之上，v0.4 因此**显式声明**新带
+`high_temperature`（333.15–373.15 K）——**不悄悄放宽** v0.3 的带定义。无房间窗观测 → `model_ready = false`。
+
+**(b) GVL 冲突裁决**（v1.x 第一优先缺口）：**36.9（Segato 等 2021, Inorg. Chim. Acta 522, 120372, SI，
+第一手测量）vs 36.1（iScience 2026 Table 3，开放获取综述表；v0.3 既有行）**。
+按**冲突不平均**纪律：两腿**各自成行**，不做平均；两腿都**无温度**，新腿 `model_ready = false`。
+**主值按源质量定 = 36.9**（第一手 SI 测量强于综述表转述）；该裁决理由即本节。
+DOI 由本轮经 Crossref 独立核到（队列原行无 DOI）。既有腿的 `model_ready` 是**保护字段**，
+v0.4 只在其 `conflict_status` / `notes` 两个非保护格上补写冲突标记，**不静默改写**其 `true`——
+该不一致**登记不修**，留给将来的 v0.5 决定。
+
+**(c) 附带发现（登记，不回改）**：`probes/reaxys_dielectric_queue_first_cut.csv` 把 GVL 的 InChIKey
+标成 `JYVATQXCHBTGRN-UHFFFAOYSA-N`，而 RDKit 与冻结 v0.3 行都是 `GAEKPEKOJKCEMS-UHFFFAOYSA-N`。
+v0.4 用正确的键；队列文件逐字保留。
+
+### 28.5 W17-6：Li⁺ 配位块转正（v3 两枪合并复测）与 shots 记账
+
+**产物**：`probes/dielectric_coordination_block_v3.py`、`probes/dielectric_coordination_block_prereg_v3.json`、
+`probes/dielectric_coordination_block_v3_summary.json`、
+`probes/artifacts/dielectric_coordination_block_v3_{folds,repeats,predictions}.csv`、
+`tests/test_dielectric_coordination_block_v3.py`（19 passed）、`reports/dielectric_coordination_block_v3.md`。
+v1 / v2 的预注册与判决文件**逐字未改**（v1 的 `dead` 永不改写）。
+
+**判决**：`pass_merged_blocks`。主记分牌（457 行 / 97 化合物 / **276** 个（化合物, T）对，
+口径照 §22.3 钉死不动）上：
+
+| 臂 | 分组 Morgan+Physical R² | 对基线 ΔR² |
+| --- | ---: | ---: |
+| baseline（本轮原地重跑） | 0.4091179943351143 | 0.0000000000000000（`abs_delta = 0.0`，容差 1e-9） |
+| plus_lever4 | 0.4649564468823552 | +0.0558384525472409 |
+| plus_lever8 | 0.4531768105508106 | +0.044058816215696295 |
+| **plus_both（合并枪）** | **0.4766400383507876** | **+0.0675220440156733** |
+
+- **合并非加和（照实报，朴素相加被拒）**：两单枪 Δ 的朴素相加 = **+0.0998972687629372**，
+  实测合并枪比它**低 0.0323752247472639**。即 **不许把 +0.0558 与 +0.0441 相加外推**
+  ——这是 W17-6「两枪合并戒律（AB-3）」的实测落锤。合并枪相对**最强单枪**（lever 4）的
+  **增量** = +0.011683591468432397，正向重复 **9/10**。
+- **安慰剂**：`placebo_r2 = -0.030386269127939357`；三条规则（地板上界 / 同管线真实标签臂 /
+  管线内打乱对照，容差一律 0.02）全过，`collapsed = true`。**v1 的 `dead` 逐字保留**、
+  v2 的 `pass_under_amended_placebo_clause` 保留。
+
+**(a) shots 记账（多重比较纪律；§22.5 / §23.4 口径下的增量登记）**
+
+预注册 `probes/dielectric_coordination_block_prereg_v3.json` 的 `shots_policy` 明写：
+「每一次对主记分牌的打分尝试都计入，含失败者；本合并枪计 1」，并要求由**集成者**登记进
+`reports/decisions_log.md` 的 shots 台账节（即本节）。探针本身**不修改**本文件，读数由集成者照抄。
+
+| 通道 | 本枪前累计 shots | 本枪 | 本枪后累计 |
+| --- | ---: | ---: | ---: |
+| 杠杆 4 | 1 | 0（本轮只做合并，不单独重打） | 1 |
+| 杠杆 8 | 2（v1 `dead` + v2） | 0 | 2 |
+| **杠杆 4 + 杠杆 8 合并** | 0 | **1** | **1** |
+| **两枪程序小计** | 3 | **1** | **4** |
+
+**沿用 §23.4 主记分牌台账的读法**：§23.4 表里的「杠杆小计 = 10」是 **Week 14 那一刻**的读数，
+**该表不改写（只许追加）**；本周新增的这一枪把**主记分牌累计尝试数**推到 **11**（= 10 + 1）。
+其中越线（Δ ≥ 过门线 +0.0200）者 **3 枪**（杠杆 4、杠杆 8、本合并枪），全部落在
+**同一 ε 特征块族**内。按 §22.5 规则「打 20 枪中 1 枪不是发现」——**11 枪里 3 枪越线且同源**，
+故本合并枪**不构成关于 lever 4 / lever 8 之外的新发现**；它买到的唯一信息是
+**两块可共存、且合并效应非加和**。
+
+**(b) 诚实边界（不许省略）**
+
+1. `plus_both` 与两单枪**共用同一折号、同一打乱标签向量**，**不是独立样本**；
+2. 合并枪 Δ +0.0675220440156733 相对**基线**过门，但相对**最强单枪**只有
+   +0.011683591468432397，**预注册未为这 0.0117 单独立门**，因此
+   **不得表述为「杠杆 8 是白送的」**，也不得把它当作已证增量；
+3. 覆盖限制照旧：配位块五列（`li_binding_energy_ev` / `li_binding_distance_a` / `q_max_h` /
+   `q_min_hetero` / `esp_imbalance`）的覆盖与缺口见 `reports/dielectric_coordination_block_v3.md`；
+4. 本轮 `xtb_executed_here = false`——**未新跑任何量子化学**，沿用既有几何派生特征；
+5. 本轮 `run_telemetry`：7 个臂、每臂 50 折、6 jobs、620.44 s。
+
+### 28.6 W17-4 加维度①·密度 ρ(T)：density_v01 建成，ε 名册覆盖 73.17%，176 行运动黏度**全部**可解冻
+
+**产物**：`probes/build_density_v01.py`、`probes/build_density_v01_prereg.json`、
+`probes/density_v01_summary.json`、`scripts/verify_density_v01.py`（全 PASS）、
+`tests/test_build_density_v01.py`（**34 passed**）、`reports/density_v01.md`、
+`data/density_v01.csv`（**182,154 行**，sha256
+`47f920f773054ccd8789ac5679e3da5ca8ec732f8f6e79ba1f824cf68b2556ff`）、
+`data/processed/density_raw.csv`（182,802 行，**故意不入库**，见 28.10）。
+
+- **判据 A（目录层）**：`*` = 11,923 记录、`"Density, kg/m3"` = 4,697 记录，逐位复现；
+  47 页抓全（pageSize=100、**pageNumBase=0**），DOI 唯一、无缺口、无失败页。
+- **判据 B（数值层）**：命名密度总行 570,950；多组分 388,148 另册；**纯物质入表 182,154**；
+  单位拒绝 0 / 温度拒绝 216 / 数值拒绝 432（**逐类记账，不静默丢**）。**唯一键 2,178**。
+- **判据 C（解冻门）**：本地 **176 行运动黏度**在 |ΔT| ≤ 1e-3 K 容差下 **176/176 精确命中密度**
+  （5 个键：BTANRVKWQNVYAZ / GSNUFIFRDBKVIE / VQKFNUFAXTZWDK / WYJOVVXUZNRJQY / YLQBMQCUIZJEEH）。
+  **即：W17-3 的 η = κ·ρ 反解不存在未命中行，176 行全部可解冻。**
+- **判据 D（诚实）**：目录层的 `size` 是**记录数**（ThermoML 文档数），不是行数；
+  「Mass density, kg/m3」与「Critical density, kg/m3」是同一条检索下的两类记录
+  （4,673 / 33），本表只取前者。**行口径不可比，照 F1 纪律不给行数对比。**
+- **覆盖率**：对 ε v0.3 名册 **246 目标 → 密度命中 180 → 73.17%**（杠杆 4 先例：95/97 才许谈使用；
+  73.17% 未达该先例量级，故密度**作为换算因子已可用**，作为 ε 模型新特征须另行过覆盖闸）。
+- **两种用途不混用**（预注册写死）：对 ε 线是**候选特征**（需过覆盖闸），对黏度线是**换算因子**（已可用）。
+
+### 28.7 W17-5 加维度②·液相窗口 MP/BP/FP 转正为**漏斗硬门**：314 键，blocked 77（24.52%）
+
+**产物**：`probes/build_liquid_window_features.py`、`probes/liquid_window_gate_prereg.json`
+（sha256 `1b2dba9e93db8f7a7e13a67c851d61e7f25dd85ff27ef102237546f69109f6de`）、
+`probes/liquid_window_gate_summary.json`、`scripts/verify_liquid_window_gate.py`（**41/41 PASS**）、
+`tests/test_liquid_window_gate.py`（**19 passed**）、`reports/liquid_window_gate.md`、
+`data/processed/liquid_window_features.csv`（314 行）与 `liquid_window_gate_report.csv`（314 行）。
+
+- **门**：`T_low = -20 °C`、`T_high = 60 °C`；`blocked` 若 `mp > T_low` **或** `bp < T_high`；
+  两者已知且都不触发 → `pass`；否则 `unknown`。
+- **读数**：**blocked 77 / pass 126 / unknown 111**（共 314）。
+  触发率 **24.52%**（只算 blocked）；把 unknown 一并算作保守触发则 **59.87%**。
+  blocked 原因分解：`mp_above_T_low` **56** + `bp_below_T_high` **21**。
+- **量级对照**：适用域 SMARTS 门在本仓另一 POPULATION 上的行级触发率 33.66%
+  （`probes/applicability_domain_summary.json`，6,150 行留出行）；**同一 314 键**上重算的 SMARTS
+  口径为 28.34%（225/314 落在域内）→ 两口径**同数量级**（比值 1.78×），异常已查、无异常。
+- **筛选价值实例（已实测）**：**EC（`KMTRUDSVKNLOMY-UHFFFAOYSA-N`）被拦下**，理由 `mp_above_T_low`，
+  mp = **36.4 °C** ⇒ 25 °C 不是液体。这正是海选要拦的情形，也是「Reaxys 把 EC 熔点标成 25 °C」的纠错锚。
+- **诚实边界**：门判的是**纯组分**；共溶剂中的固态/易挥发组分仍可能有用（配方工程在下游）。
+  **unknown 既不是放行也不是淘汰**，两种触发率都照报。数值层是**编汇级**
+  （`source_kind = compilation`、`quality_layer = filter_only`），只用于筛排，**不是可一手引用的核心值**。
+
+### 28.8 W17-7 加维度④·ε–η Walden 耦合与 DN 第五通道覆盖审计：DN **不过门**，运动黏度待解冻
+
+**产物**：`probes/walden_dn_channel.py`、`probes/walden_dn_channel_prereg.json`
+（sha256 `90652b8a…7fbb`）、`probes/walden_dn_channel_summary.json`、
+`scripts/verify_walden_dn_channel.py`（**12/12 PASS**）、`tests/test_walden_dn_channel.py`（**23 passed**）、
+`reports/walden_dn_channel.md`、`data/processed/walden_coupling_pairs.csv`
+（**1,219 行 / 76 键**，sha256 `df2a0fe9…c8cc3`）、`data/processed/dn_coverage_audit.csv`
+（1,043 行，sha256 `3a80daa9…7dab6`）。
+
+- **联表复算（照 F1 纪律，孔口径分开报）**：**8,359 行 / 1,043 键** ——
+  ε 2,065 + ThermoML-η 2,549 + Schrödinger 开放 3,582 + PubChem 液相窗口 163；**全部命中预注册期望**。
+- **Walden 对**：1,219 对（纯 525 / 混 694；`publishable_core` 1,129 / `filter_only` 90）；
+  **同温度才配对、不跨温度隙配对**；**不平均**（69 个格子单侧多值，照实登记）。
+- **DN（Gutmann 给体数）**：**可采信覆盖 0 / 1,043 → 0.00%**，门是 30%。**不过门 ⇒ 不进特征表**。
+  依据：DN 测的是探针分子（SbCl5）的化学，只有实验值带一手 DOI 才可采信
+  （`reports/solvating_power_descriptor_mapping.md` §2.2）；GSDS Zenodo 里 6,950 条
+  DonorNum 条目全是打分任务产物、**独立数据集 0 条**；ACS Nano SI 里 21 处 donor number 提法**一条数值都没读**。
+- **运动黏度冻结（本臂落盘时）**：214 行运动黏度被排除出联表（ThermoML 176 + 其他 38），
+  `kinematic_thaw.thawed = false`，原因写死在摘要里 = `data/density_v01.csv` 当时**不在盘上**。
+  **W17-3 落地后此点即被取代**（见 §28.11）：176 行在 1e-3 K 内 176/176 命中密度，口径可由
+  「族级」升为「行级」——**升级与否由 W17-3 的预注册决定，本臂不自行改写**。
+- **无模型、无 R²**：`models_fitted = 0`、`r2_reported = false`、`network_calls = 0`、`run_mode = offline`。
+- **重读修正（2026-09-26，收口轮）**：`kinematic_thaw` 是**活读数**——预注册 `kinematic_thaw.thawed_rule`
+  写明「thawed = data/density_v01.csv is present」。W17-4 的密度表落盘后，同一个臂不重跑也已在
+  摘要下次重建时得 `thawed = true` / `thaw_dependency_present = true`（旧值 false 只在密度表缺席时保留，
+  故干净克隆之外恒为 true）。同时把 `decision.kinematic_viscosity` 的**硬编码**改为随 `kinematic_thaw.thawed`
+  动态，否则同一份摘要会自相矛盾（读数说已解冻、判决说未解冻）。**这不是放宽判据**：配对规则、温度对齐、
+  DN 判决、四条边界一条没动，动的是「前置条件是否满足」这一个事实位；本臂仍只吐**族级**读数，
+  行级换算归 W17-3（见 §28.11）。报告尾部措辞随之分岔，`reports/walden_dn_channel.md` 与
+  `probes/walden_dn_channel_summary.json` 已按重读后的 state 重落盘（`tests/test_walden_dn_channel.py` 的
+  两条断言钉同步改为解冻后的字面量，仍为 **23 passed**；旧摘要 sha256 不保留旧值，本仓库以现盘为准）。
+
+### 28.9 四通道覆盖板（W17 新增；用户点名的 HOMO/LUMO 现状对账）
+
+**产物**：`probes/four_channel_coverage.py`、`probes/four_channel_coverage_summary.json`、
+`data/processed/four_channel_coverage.csv`（29 行）、`reports/four_channel_coverage.md`、
+`tests/test_four_channel_coverage.py`（**9 passed**）。**板子只重读已落盘工件并断字面量钉，不算模型。**
+
+| 通道 | 口径 | 读数 | 门 | 判定 |
+| --- | --- | ---: | ---: | --- |
+| **ε（介电）** | 主记分牌分组 Moran+Physical R² | **0.4091179943351143**（457 行 / 97 化合物 = **276** 对） | —— | 天花板是信息缺口（缺 Kirkwood g 维） |
+| ε 适用域 | SMARTS/结构门触发率 | **0.33658536585365856** | —— | 分选带可用 |
+| **η（黏度）** | group_key R² / MAE | **0.7481271437772365** / **0.17477197208762** | MAE < 0.15 | ❌ 红（只许族级结论） |
+| **HOMO** | MAE（eV） | **0.19050925839013938** | ≤ 0.2 eV | ✅ **过** |
+| **LUMO** | MAE（eV） | **0.13855083976437643** | ≤ 0.2 eV | ✅ **过** |
+| IP | MAE（eV） | **0.2010970559642009** | ≤ 0.2 eV | ❌ 未过（维持粗筛） |
+| EA | MAE（eV） | **0.23415453202842548** | ≤ 0.2 eV | ❌ 未过（维持粗筛） |
+| **redox 氧化** | MAE（V） | **0.2905180517963865** | < 0.15 V | ❌ 红 |
+| redox 还原 | MAE（V） | **0.4096241620366996** | < 0.15 V | ❌ 红 |
+| redox 富特征留出 | 氧化 / 还原 | **0.2174014393126818** / **0.33169277465193164** | < 0.15 V | ❌ 红（瓶颈 = **392** 条标签，非模型容量） |
+| 泄漏参照 | `random_row` R² | **0.7385332681453336** | —— | **仅泄漏参照，不进任何判决** |
+
+**结论（照 W17-0 立项口径）**：**HOMO/LUMO 两门已过，本轮维持现状、不投精度**
+（与手册 W17-8「IP/EA 精度不修」一致）。**四大核心数据的现状 = ε 有信息缺口天花板、
+η 只许族级、HOMO/LUMO 已过门、redox 红且瓶颈在标签量。**
+
+### 28.10 仓库侧护栏重生（手册新附录 C 第 1–3 条）+ CI 扩充 + `.gitignore` 反忽略
+
+**(a) 护栏重生（本周必做，手册明文）**：v2 周融合版重组了手册块序，旧快照锚点
+`## 附录 J-补记三` 已不存在。照手册**新附录 C** 逐条执行：
+
+1. `probes/manual_appendix_reconciliation.py`：`DEFAULT_MANUAL` 由旧手册改指
+   `执行手册_探针与周计划_v2周融合版.md`；`MANUAL_FIXTURE_SECTION` 改为新位置标题
+   `#### 两条介电腿闭死与 G1+ 第五轮爬取（2026-09-25）｜原附录 J-补记三`（v2 第 594 行，唯一命中）；
+   `--write-manual-fixture` 重生 `tests/fixtures/manual_appendix_j_snapshot.md`（220,187 B → 248,118 B）。
+   `tests/test_manual_appendix_reconciliation.py` **26 passed**
+   （此前因旧手册路径缺失而有 2 项 skip，现在两项均实跑；项数与附录 C 预告一致）。
+2. `probes/unimol_probe_spec_prereg.json` 指向快照的 **29 条 `source_line` 全部重钉**
+   （逐条以「旧快照该行文本在新快照中的唯一命中」定线；唯一例外 AD-3 那条：
+   v2 同时改了标题层级 `###`→`#####`，故按正文内容重定位到 **1786**）。规格正文里所有
+   「快照行 N / 行 N」引用数字同批改写。`probes/verify_unimol_probe_spec.py --check` **34/34**
+   （其 `KPI_HYPERPARAMETER_SOURCE_LINE` 与测试的 `KPI_SOURCE_LINE` / `CLAIM_11_LINES` 同步重钉）。
+   **规格字节因此变更**：sha256 `40ba1d6f…` → `2562a851…`，报告头已同步；
+   报告旧「验收实测」一节记录的**重钉前**读数 `40ba1d6f…` **逐字保留、不回改**（只许追加纪律）。
+3. `tests/test_week15_reporting_accuracy.py` 的 `MANUAL_APPENDIX_HEADING` 随之改指 v2 的
+   `#### Week 15 数据层周 ……｜原附录 AC`，并把 `_section()` 的「停在下一个 `## `」改为
+   **按锚点自身层级停在同级或更高级标题**（v2 把这些附录降为 `####` 子节）。**8 passed**。
+
+**(b) CI 扩充**：`.github/workflows/ci.yml` 新增 4 步 —— `scripts/verify_dielectric_v04.py`、
+`scripts/verify_liquid_window_gate.py --check`、`scripts/verify_walden_dn_channel.py --check`、
+`probes/verify_unimol_probe_spec.py --check`。**入 CI 前逐个跑过「干净克隆模拟」**
+（只复制 `git ls-files --cached --others --exclude-standard` 的文件，即未来提交的树，888 件 / 240.8 MB），
+四者全部 exit 0。**`scripts/verify_density_v01.py` 故意不入 CI**：它的数值层要么需要
+`data/raw/thermoml_density/`（54 MB，被忽略），要么需要已提交的 `data/processed/density_raw.csv`
+（**故意不提交**），属 tier-2（本机缓存）verifier——干净克隆上它按设计抛出
+`ValueLayerUnavailable`，理由是**如实报「缺缓存」而不是静默通过**。
+
+**(c) `.gitignore` 反忽略（7 条）**：`data/processed/` 下被本仓消费者（verifier / 测试 / 导出器）
+在干净克隆上读取的新表必须反忽略 —— `dielectric_v04_roster_additions.csv`、
+`dielectric_v04_provenance_patches.csv`、`four_channel_coverage.csv`、`liquid_window_features.csv`、
+`liquid_window_gate_report.csv`、`walden_coupling_pairs.csv`、`dn_coverage_audit.csv`。
+**`data/processed/density_raw.csv` 保持忽略**（54 MB、可离线重算的中间层，先例 =
+`probes/artifacts/dielectric_alpha_prior_predictions.csv` ~14 MB 同样故意不入库）；
+该决定已写进 `.gitignore` 注释，且**不因它未入库而改动任何判据**。
+
+### 28.11 W17-3 加维度③·黏度 v0.2：运动黏度由**族级**升到**行级**（176/176 全部解冻）
+
+**预注册**：`probes/build_viscosity_v02_prereg.json` sha256 `0934dcf0e48e27dee57baaf667cb8d679f7a4b03ec67e2df53ab25b4a81aa6ed`，
+`status = locked_before_run`（2026-09-26T13:30:32Z）。跑前锁定，跑后未改一字。
+
+**三种口径分开报（判据 D，口径诚实）**：
+
+| 层 | 计数 | 说明 |
+| --- | ---: | --- |
+| 在线目录层 | **1,743 记录** | `Viscosity, Pa*s` 1,690（17 页）+ `Kinematic viscosity, m2/s` 70（1 页） |
+| 数值层（raw） | **268,247 观测行 / 1,547 键** | sha256 `848153226153487bf1c6c09e3310867ea22916cd373e19139a882fa118fac901`；81 MB，**故意不入库** |
+| 主表 | **42,941 行 / 1,228 键** | sha256 `907f5368ff6d4d6c15fa26c8c2b57e8bbc8c7ac7a7b3db06ec2c689b283bf3a5` = Pa*s 直测 42,855 + 运动黏度反解 86 |
+
+- **记录数 ≠ 观测行数 ≠ InChIKey 数，三者不许相除**（`row_comparison_allowed = false`，`violations = 0`）。
+  在线 `size` 只到"检索命中的 ThermoML 文档数"，**在线行数记 `unknown`、不估**（JSON API 只暴露记录级元数据，
+  跑前侦察实测整页 `nValue`/`PropertyValue` 出现 0 次）。
+- 多组分 223,605 行只 **deferred**，不拆角色、不摊派。
+
+**判据 C（解冻）——本周真正升维的一步**：本地 176 行运动黏度在 **|ΔT| ≤ 1e-3 K** 内
+**176/176 精确命中**密度行（`exact_rows = 176`、`nearest_rows = 176`），`η = κ·ρ` 反解
+**176 行全部成功**；其中**纯组分 86 行入主表**，多组分 90 行只进另册
+（`pooled_rows = 86` / `deferred_multi_component_rows = 90`）。逐行 provenance 落在
+`data/viscosity_v02.csv` 的 `density_*` 列。**这一步取代 §28.8 落盘时的族级读数
+——动的是事实位，判据一条没动。**
+
+**判据 E（行级对账）**：本地 2,549 行 Pa*s **2549/2549 命中、0 未命中**，只标 `source_priority`，
+**不合并、不平均**（`averaging_applied = false`）。
+
+**泄漏护栏**：`GroupKFold(5)` by `inchikey`，5 折 `group_overlap` 全 0（`max_group_overlap = 0`）；
+`random_row`（`KFold(shuffle=True)`，seed 20260926）泄漏比例 **0.997904** —— 再次证明按行切分不可用，
+该数字**仅作诊断**。
+
+**验证**：`scripts/verify_viscosity_v02.py --check` **16/16 PASS**；`tests/test_build_viscosity_v02.py`
+本机 **36 passed**（CI-sim 33 passed + 3 skipped，缺 81 MB 数值层时按设计跳过、判据未放宽）。
+`scripts/verify_viscosity_v02.py --check` **不入 CI**：它的数值层要么需要被忽略的
+`data/processed/viscosity_v02_raw.csv`（81 MB），要么需要 `data/raw/thermoml_viscosity_pa_s/`，
+属 tier-2（本机缓存）verifier。
+
+### 28.12 W17-RX Reaxys 四大核心数据交叉核验：ε/η 有可用数值，**HOMO/LUMO 与 redox 只有文献、0 条数值**
+
+**会话**：作者**已登录**的 Edge 会话（profile `Default`，头像 `QP` 在位、无登录墙），
+表面 `https://www.reaxys.com/#/search/quick/query`，**逐条手动** quick search（一物质一查），
+**9 次查询 / 5 个物质 / 80 行观测**，`batch_crawling = false`。
+「复制 profile 另开实例」这条路线**被否**：运行中的 Edge 独占 `Default/Network/Cookies`，
+`CreateFileW` 返回 error 32（sharing violation）——所以只能挂到作者本人的会话上。
+
+**合规**：`restricted_crosscheck_only`；`values_written_under_data = false`、
+`values_entered_any_pool = false`、`values_entered_any_split = false`、`averaging_performed = false`。
+
+**四通道判决**（用户点名的四大核心数据，逐条对账）：
+
+| 通道 | 判决 | 观测行 | 数值行 | 关键理由 |
+| --- | --- | ---: | ---: | --- |
+| 介电常数 ε | `usable_numeric` | 31 | **24** | Reaxys 有 `eps` 数值列 + 温度列，EC 给 7 个静态点、PC 给 ε(T) 序列 |
+| 黏度 η | `usable_numeric` | 32 | **25** | Dynamic / Kinematic Viscosity 都出数，PC / DMC 有 η(T) 序列 |
+| **HOMO/LUMO** | `reference_only` | 9 | **0** | 只以属性关键词（Electronic energy levels, Molecular orbitals / DFT）或"只有 Reference 一列的 Ionization Potential 表"存在 |
+| **氧化还原电位** | `reference_only` | 1 | **0** | Electrochemical Behaviour / Characteristics 只给 `cyclovoltammetry`、`potential diagram` 之类的描述 + 引文，**从不出伏特数** |
+
+- ε/η 的坑也一并登记：区间被存成 `min - max` 字符串（值与温度两列都是）；频率标注的 ε（`2E+06 Hz`）
+  与静态 ε 并排且**无标志区分**；η 的**单位跨行不一致**（poise / stokes / mPa*s 混用）；
+  GVL 的黏度数只存在于 Comment 自由文本里（结构化字段抓不到）；温度以 `59.99/69.99/74.99` 到达。
+- **对 P4 的含义**：redox 是项目 **392 条标签**瓶颈所在，Reaxys **不解这个瓶颈**；
+  HOMO/LUMO 同理——**Reaxys 一条数值都补不上**，本项目的 HOMO/LUMO 数值仍只来自
+  本地 `data/raw/batt/Batt-P30K.h5`（29,519 个分子的 wB97X-V/def2-TZVPPD/SMD(ε=18.5) 计算值）。
+
+**队列键审计**：`queued = 14`、`matched = 14`、`mismatched = 0`。
+
+**三条教训（含归因）**：
+
+1. `A_gvl_inchikey` = **`not_reproduced`**：**错在我们**。`JYVATQXCHBTGRN-UHFFFAOYSA-N`
+   返回 **0 Substances / 0 Documents**，Reaxys 从不签发这个键；正键 `GAEKPEKOJKCEMS-UHFFFAOYSA-N`
+   返回 **4 Substances**（含 CAS 108-29-2）。坏键坐在 `probes/reaxys_dielectric_queue_first_cut.csv`
+   的键列里，而 W17-2 补货队列与 `probes/reaxys_v1x_stocking_queue.csv` **本来就带对键**。
+   → **Reaxys 侧无需更正**，把正键钉进上表即可。
+2. `B_ec_temperature_label` = **`reproduced`**：EC 的 `eps = 89.78` 出现两次，一次温度列空、
+   一次标 **25 °C**；而 EC 熔点 **36.4 °C**（Reaxys 与 Schroeder 2014 两处一致）。25 °C 在熔点之下，
+   纯液体测量物理上不可能 ⇒ **缺陷在温度标签，不在 89.78 这个值**。
+   → **Reaxys 的温度标签一律先过液相窗口闸门**，不许面值直取。
+3. `C_ec_8978_as_melting_point` = **`not_reproduced`**：**「Reaxys 把 89.78 当熔点」不成立**，
+   撤回该说法。
+
+**独立复核**：集成者在**同一会话**上手工复跑四条承重结论，**全部复现**：
+`JYVATQXCHBTGRN-…` → 0 Substances / 0 Documents；`GAEKPEKOJKCEMS-…` → 4 Substances（CAS 108-29-2、RN 80420）；
+`IEJIGPNLZYLLBP-…` → 1 Substance（CAS 616-38-6、RN 635821）；DMC 的 **Quantum Chemical Calculations**
+表只有 `Calculated Properties | Method | Location | Reference` 四列 —— **无任何 HOMO/LUMO 数值列**，
+由此把 `homo_lumo = reference_only` 从"一手之词"升级为**两方独立复核的事实**。
+
+**裁决 B 的执行**：`reaxys_core_four_crosscheck.csv / _summary.json / .py`、
+`reports/reaxys_core_four_crosscheck.md`、`tests/test_reaxys_core_four_crosscheck.py`
+以及 `probes/reaxys_thin_family_backfill_queue.csv` **整文件排除出交付包**，
+本仓库内部逐字保留以便复核；`week17_summary.json.restricted_contract` 逐件给出路径、digest
+与"是否带 Reaxys 值"（后者把"计划"与"值清单"分开，读者能分辨）。
+
+**收口补刀（自纠）**：独立复核事实里原本写着 Reaxys 物质记录带的分子量
+（GVL `MW 100.117`、DMC `MW 90.0788`）。这与本包自称的"**本包内不含任何 Reaxys 数值**"
+**自相矛盾**——分子量正是 Reaxys 记录的**物性值**。已删除两处 MW，只留 CAS / Reaxys RN / InChIKey
+这类**标识符**（标识符用来指认物质，不是被保护的物性数据），并在源码旁写明"不许再把 MW 加回来"。
+
+### 28.13 Week 17 交付包收口修补：导出器三处语法缺陷、README 边界与口径、两处测试钉
+
+**（a）导出器三处语法缺陷（都在写文件时被字面量吃掉了转义/括号）**：
+
+1. `probes/export_week17_results.py` 内嵌 README 里两处出现**字面 `\n` 后跟空格再接引号**
+   （黏度数值层说明、三种基数说明），Python 解析直接 `SyntaxError: unexpected character after
+   line continuation character` ⇒ 已改回真正的隐式字符串拼接。
+2. `summary["lanes"]` 字典被一行**多余的 `},`** 提前闭合，导致 `restricted_contract` 相对
+   函数体缩进溢出（`IndentationError`）⇒ 删除该行，`lanes` 现在在最后一个臂之后正确闭合。
+
+修后 `ast.parse` 通过、`ruff check` 干净。**教训**：本仓的文本产物一律走
+`node:fs` + `utf8` 直写，不经会"补转义"的中间层。
+
+**（b）README（交付包门面）三处对齐**：
+
+- 液相窗口闸门的两个承重数字补全精度：`0.24522292993630573`（blocked 触发率）、
+  `0.5987261146496815`（把 unknown 计作触发的保守率），此前的 `24.52%`/`59.87%` 保留为可读写法。
+- `°C` 前统一改为**不换行空格**（`25 °C` 只是起点），单位不拆行。
+- 新增 **「## 边界（不许外推）」** 段：把 `random_row` 参照 `0.7385332681453336` 明确写成
+  **泄漏诊断、不是成绩、不是基线**；重申 `0.5332`/`0.5454` 只在各自池定义下成立、
+  永不与 v1.0 头条 `0.364` 混用；并登记 W17-2 `reaxys_queries_executed = 0`。
+
+**（c）两处测试钉（错在测试，不在被测物）**：
+
+- `tests/test_export_week17_results.py` 原钉 `dataset_version == 0.4`（**浮点**）。
+  本仓`dataset_version` **一律是字符串**（`"0.2"`、`"0.3"`、`"0.3.1"`、`"0.4"`）——
+  浮点钉会在下一次补丁级版本（`"0.4.1"`）上直接失效。已改为钉字符串 `"0.4"`。
+- `README_SHA256` 字面量钉在 README 定稿后同步更新为
+  `10513977b79143ba5eb68f936c2f14a6c9e46141c3cd8d515a517ff4b54f1f99`；
+  `"25 °C"` 针恢复为不换行空格写法（该针同样在写入时被吃掉了）。
+
+**（d）结果**：`tests/test_export_week17_results.py` **28 passed**；
+正式导出 `成果输出/week17` 报 **`verification_passed = true`**（4 个 verifier 实跑：
+`verify_dielectric_v04.py` 8/8、`verify_liquid_window_gate.py --check` 41/41、
+`verify_walden_dn_channel.py --check`、`verify_unimol_probe_spec.py --check`），
+交付包 **66 件工件**、**不含任何 Reaxys 数值**。
+
+### 28.14 外部 HOMO/LUMO 数据源可行性核查（作者建议 OMat24）：**OMat24 不对口，OMol25 对口但被门禁挡住**
+
+**动因**：作者建议「HOMO LUMO 可以去试试 OMat24 数据集」，要求在 Week 17 收口前把
+HOMO/LUMO 的**外部**取数余地查清楚。本节是**负结果**，逐条留证以便日后不再重复试。
+
+**（a）OMat24：标签里没有轨道量，口径就不对口。**
+
+- `facebook/OMat24`（`OMAT24`，license cc-by-4.0，arXiv 2410.12771）数据集卡原文：
+  标签是 **total energy (eV) / forces (eV/Å) / stress (eV/Å³)**，载体是 ASE-DB 兼容的
+  **lmdb**，内容是**周期性无机晶体**的单点与弛豫（train 合计 **100,824,585** 个结构，
+  子集名 `rattled-*` / `aimd-from-PBE-*` / `rattled-relax`）。
+- ⇒ **没有 HOMO、LUMO、gap、IP、EA 任何一项**。OMat24 是无机材料势函数数据集，
+  与我们的有机溶剂分子（碳酸酯 / 内酯 / 腈）既不同物态也不同标签集，**不可用作 HOMO/LUMO 来源**。
+
+**（b）OMol25：方法上正是对口的那一个（含 electrolytes），但官方仓库要授权。**
+
+- **对口的证据**：`colabfit/OMol25_neutral_validation` 卡原文称 OMol25「spans biomolecules,
+  metal complexes, **electrolytes**, and community datasets」，理论水平 **ωB97M-V/def2-TZVPD**，
+  元素含 **Li / Na / K / Mg / Ca**（27,697 个中性构型）。
+- **门禁**：`facebook/OMol25` 在镜像上取 README 返回 **HTTP 401**（gated），
+  本机直连 huggingface.co **整个不可达**（`无法连接到远程服务器`）；ModelScope 上
+  `facebook/OMol25` 返回 **404**（无该仓库）。⇒ **无授权即拿不到官方结构与标签**。
+- **公开镜像逐个查过，都缺关键的一半**：
+
+  | 镜像 | 实际内容 | 缺什么 |
+  | --- | --- | --- |
+  | `ameya98/OMol25-Index` | `neutral_val.h5` 27,697 构型**带** `homo_energies` 与 `homo_lumo_gaps` | **无结构、无 SMILES**（只有 `compositions` 分子式 + `element_list`/`element_mask`，`data_ids` 只是来源标签 `orbnet_denali`/`spice`/`ani2x`/`geom_orca6`） |
+  | `colabfit/OMol25_*` | 4 个仓库的 README 均写 Properties included = **energy, atomic forces** | 无轨道量、无结构 |
+  | `28ii/OpenMetalAI-OMol25` | `metadata_part1.parquet` **1,903,325 行 / 9 列**：`config_id, formula, metals, energy, formation_energy, multiplicity, nsites, nelements, has_forces` | 无轨道量、无 SMILES |
+  | `StructureCloud/OMol25` | 只有 `composition_*.csv.gz`（分子式统计 + 直方图/统计 json） | 无轨道量、无结构 |
+
+- **实测读到的轨道量**（`neutral_val.h5`，本会话真读）：`homo_energies` **27,697/27,697 全部有值**，
+  区间 **−14.315991401672363 … −2.3857309818267822**；`homo_lumo_gaps` 同样全有值，
+  区间 **0.05104856193065643 … 14.796545028686523**。**数值是真的，但没有结构能把它们指认到具体分子**
+  （分子式 + 元素掩码分辨不了同分异构体，而我们的溶剂里异构体正是常客）
+  ⇒ **无法与本仓名册（InChIKey / SMILES）对齐，一个字也不能入库。**
+
+**（c）即便拿到官方结构，口径也必须先声明**：OMol25 是 **ωB97M-V/def2-TZVPD**，
+本项目现用 HOMO/LUMO 标签来自 `data/raw/batt/Batt-P30K.h5` 的
+**wB97X-V/def2-TZVPPD/SMD(ε=18.5)**（DOI 10.1021/acsnano.6c06255）。
+**泛函不同（ωB97M-V vs wB97X-V）、基组不同（def2-TZVPD vs def2-TZVPPD）、无/有隐式溶剂化不同**
+⇒ 两套标签**不是同一把尺子**，接进来必须先做重叠分子的系统偏移标定，
+**不许直接混池**（先例：本仓对 ε 的多来源腿一律分列、不平均）。
+
+**（d）解锁条件与下一步**：需要 `facebook/OMol25` 的 HF 访问授权（接受条款 + token）。
+拿到后建议立一条**预注册**的 HOMO/LUMO 外源臂：官方结构 → RDKit 规范 SMILES/InChIKey →
+与现名册求交 → 在重叠子集上标定 OMol25 与 Batt-P30K 的系统偏移 → 再谈是否并池。
+**在此之前，本项目的 HOMO/LUMO 数值仍只来自 Batt-P30K（29,519 个分子的计算值），
+现状读数不变：HOMO MAE 0.19050925839013938 / LUMO MAE 0.13855083976437643（门 0.2 eV，两门都过）。**
+
+### 28.15 作者追加的两条线索核完：**THEMol 有 SMILES 但没有 HOMO/LUMO；火山 QC 客户端是「自算」那条路**
+
+作者随后给出 THEMol（数据集 + 代码）与火山引擎量子化学 SaaS 客户端 `volcengine-qcclient`，
+要求继续为 HOMO/LUMO 找出路。两条都**逐字段核过**（不是看名字猜），结论分开放。
+
+**（a）THEMol：结构能对齐，但属性里没有轨道量。**
+
+- 仓库 `ByteDance-Seed/THEMol`（HF **非 gated**，`gated=false`，downloads 11,831，lastModified 2026-05-15；
+  论文 arXiv 2605.14973；**代码 Apache-2.0 / 数据 CC BY-NC 4.0**）。
+- 规模与化学空间（官方 README）：>**3,000,000,000** 次 DFT 计算、5 个子集、
+  分子**最多 50 个重原子**、元素 **H, C, N, O, S, F, Cl, Br, Si, B, P, I**；
+  原文明确其化学空间覆盖 drug discovery、**electrolytes**、ionic liquids。
+- 子集与理论水平：Hessian 3,102,537（B3LYP-D3(BJ)/DZVP）、Hessian Relax 4,811,722（281,123,880 步，同水平）、
+  TorsionScan 4,192,791（2,436,985 分子 / 93,994,576 约束）、TorsionScan Relax 4,914,677（2,990,685,868 步）、
+  MBIS 3,082,151（**PBE0/def2-TZVPD**，I 原子用 DZVP）。
+- **比 OMol25 公开镜像强的一点**：每个子集的 CSV 索引带 `uuid` / `mapped_nonisomeric_smiles` /
+  `mapped_isomeric_smiles` / `h5_file` ⇒ **有 SMILES，能直接与本仓名册（InChIKey/SMILES）对齐**；
+  HDF5 按 `uuid` 分组，组内也自带两个 SMILES 字段。
+- **但属性里没有 HOMO/LUMO**（三处独立核对、互相印证）：① HF 数据集卡的 Data Fields；
+  ② 仓库 `moleculedataset/README.md`（官方格式定义）；③ 官方示例 `examples/read_hessian.py` 与
+  `examples/read_mbis.py` 实际读取的字段。实际字段只有：`atomic_numbers`、`coords`、`hessian`（Hessian 子集）；
+  `step k/{energy, coords, forces}`（弛豫）；`constraint k/{...}`（扭转）；
+  `mbis_info/{atomic_volumes, atomic_charge, atomic_dipole, atomic_quadrupole}` + `parameters`（MBIS）。
+  **零轨道量、零 gap、零 IP/EA。**
+- **对我们真正的用处不在 HOMO/LUMO**：MBIS 的**原子偶极/四极 → 分子多极矩**，是 ε 的经典相关描述符族，
+  而主记分牌的天花板被登记为「**信息缺口**」—— 这是本仓目前**没有**的一类描述符；Hessian 则给二阶导数/振动信息。
+- **代价与合规（先由作者裁，本轮未动任何数据）**：体量极大（Hessian 单文件 ≈ **4.75 GB × 50 ≈ 240 GB**，
+  MBIS ≈ 3.5 GB × 8，CSV 索引各 ≈ **1.45–1.47 GB**）；**数据许可 CC BY-NC 4.0（非商用）**，
+  必须按本仓 `source_license` / `redistribution_status` 口径登记，**可否入库/再分发不是本节能定的**。
+
+**（b）`volcengine-qcclient` 0.2.5：这是「自算」那条路，而且能直接产出 HOMO/LUMO。**
+
+- 可达性：PyPI 直连可用（`pypi.org/pypi/volcengine-qcclient/json`），wheel
+  `volcengine_qcclient-0.2.5-py3-none-any.whl` **73,192 B**；本会话已下载并解包逐文件读过源码。
+- 定位：把量子化学任务提交到**火山引擎 quantum chemistry 服务**（驱动 **GPU4PySCF**），
+  也可本地跑（`python -m volcengine_qcclient.drivers.sp_driver config.json`）。
+  任务型别：`sp` / `opt` / `pysisyphus` / `pygsm`；输出为 HDF5 / tar.gz。
+- `sp` 的 `task_config` 关键位（源码 `drivers/sp_validation.py` 的 `default_config`）：
+  - `method_expert = {'xc': 'b3lyp', 'nlc': False, 'disp': False}` → **泛函可换**
+    （PySCF 的 ωB97X-V / ωB97M-V 属 NLC 泛函，对应 `nlc: True`）；
+  - `basis_expert = {'default': 'def2-tzvpp'}` → **基组可换**（如 def2-TZVPPD）；
+  - `with_solvent` + `solvent = {'method': 'iefpcm'|'C-PCM'|'DDCOSMO'|'SMD', 'eps': …, 'solvent': …}`
+    → **隐式溶剂化，且 ε 可指定**；
+  - **`save_mo`**、`with_multipoles`、`with_polarizability`、`with_tddft`、`with_thermo`、`with_hess`。
+- **HOMO/LUMO 确实能拿到**：客户端源码 `pyscf/scf/hf.py` 的 `SCF._return` 明确映射
+  `scf.mo_energy → mo_energy`、`scf.mo_occ → mo_occ`，开 `save_mo` 即可取分子轨道能级
+  ⇒ HOMO = 占据轨道的最高能级、LUMO = 空轨道的最低能级。
+- **路线意义**：这是**用同一把尺子给「我们自己的名册」补 HOMO/LUMO** 的办法 —— 自选 xc / 基组 / 隐式溶剂 ε，
+  可与 Batt-P30K 的 **wB97X-V/def2-TZVPPD/SMD(ε=18.5)** 口径**对齐或有意做对照**，
+  从根上绕开 §28.14 里跨数据集「泛函 / 基组 / 溶剂化三重不同」的混池问题。
+- **阻塞项（照实登记）**：需要火山引擎账号凭据（`configure` 或环境变量），本会话**没有**；费用与配额未知。
+  ⇒ **本会话未提交任何任务、未消耗任何额度、未产生任何数值。**
+
+**（c）本轮结论**：Week 17 的 HOMO/LUMO 现状**一字未改** —— 数值仍只来自
+`data/raw/batt/Batt-P30K.h5`（29,519 个分子的计算值），**HOMO MAE 0.19050925839013938 /
+LUMO MAE 0.13855083976437643**（门 0.2 eV，两门都过）。**建议的下一步（须作者批，且须预注册）**：
+1. **自算臂（首选）**：小样本试点（6 个冠军 + 20 个名册分子）跑 `sp + save_mo`，先从 IEF-PCM 起步、
+   再试 SMD(ε=18.5)，与 Batt-P30K 重叠分子做**系统偏移标定**，再决定是否全名册铺开；
+2. **THEMol 只做 MBIS 多极描述符**的可行性评估（**不为 HOMO/LUMO**），且先解决
+   **CC BY-NC 非商用许可**与 240 GB 体量这两个前提。
+
+### 28.16 四大核心数据整理成一张跨通道注册表（W17-11）：**四核心两种口径全齐 7 / 51（表键口径 53）；Kirkwood r = 0.6464482483155134 且只作描述**
+
+作者要求「把数据整理好、优化模型关系」。四个核心通道此前各落各表、各用各的键，本臂把它们汇成一张
+**派生注册表**，并把通道两两交集算成**关系矩阵**；**不拟合任何模型、不产 MAE/R2、不引用主记分牌**
+（`models_fitted = 0` / `r2_reported = false`）。
+
+**（a）产物与规模。**
+
+- 表：`data/processed/four_core_key_registry.csv`（**31,949 行 / 30 列**，键 = InChIKey，一行一键，
+  含 `has_*` 旗标、`n_core_channels`、`channels_present`）；
+- 伴生：`probes/four_core_registry_summary.json`、`reports/four_core_registry.md`；
+- 预注册：`probes/four_core_registry_prereg.json`（`locked_before_run`，判据 A–F 跑前冻结）；
+- 生成 / 复核：`probes/build_four_core_registry.py`、`probes/build_four_core_registry.py --check`、
+  `scripts/verify_four_core_registry.py --check`（16 项检查，含用**另一条代码路径**从源表重算通道键数、
+  四通道三种口径与 Kirkwood 相关，且和式公式与中心化公式互为对照）。
+
+**（b）通道键数**（口径写死在预注册里：`nearest_to_target_T` 三级并列规则 /
+`first_non_empty_in_file_order`，**不做平均**）：
+
+| 通道 | 源表 | 键数（取值列口径） | 源表去重键数 |
+| --- | --- | --- | --- |
+| ε 介电常数 | `data/dielectric_v04.csv` | **247** | 247 |
+| η 黏度 | `data/viscosity_v02.csv` | **1,228** | 1,228 |
+| orbitals（HOMO/LUMO/IP/EA/偶极） | `data/processed/redox_merged.csv` | **29,868** | 29,868 |
+| redox 自由能标签 | `data/processed/redox_merged.csv` | **392** | 29,868（两子通道共用一张表） |
+| ρ 密度 | `data/density_v01.csv` | **2,178** | 2,178 |
+| 液相窗口 | `data/processed/liquid_window_features.csv` | **218** | **314** |
+
+**（c）通道两两交集（键数）**：ε×η **143**、ε×orbitals **84**、ε×redox **10**、ε×ρ **180**、
+ε×液相窗口 **181**、η×orbitals **118**、η×redox **10**、η×ρ **1,179**、η×液相窗口 **156**、
+orbitals×redox **392**、orbitals×ρ **192**、orbitals×液相窗口 **75**、redox×ρ **13**、
+redox×液相窗口 **8**、ρ×液相窗口 **184**。
+
+**（d）本轮发现的真问题（口径对不上，已两种并列登记）**：液相窗口表有 **314 行**，其中 **96 行**
+的 mp/bp/闪点/密度**四列全空**、四个 `has_*` 全 false（`quality_layer = filter_only`，是过了筛选但
+没取到数的候选）。所以「314 键」是**表键口径**；本表 `has_liquid_window` 只认「四列里至少有一个有限数值」
+= **218 键**。上一轮登记的 246 / 202 / 89 / 246 与 53 **都是表键口径** —— 两种口径现已**并列写进
+summary 与报告**（表键口径：ε 246 / η 202 / orbitals 89 / ρ 246；取值列口径：181 / 156 / 75 / 184），
+避免同一件事被引用成两个数。**这 96 个空壳键不是无关化合物**：其中 **65** 个有 ε、**46** 个有 η、**14** 个有 orbitals、**2** 个有 redox 标签、**62** 个有 ρ（empty_keys_overlap_with_channels，已进 summary 与报告）—— 液相窗口的 ilter_only 人口与核心名册**高度重叠**。
+
+**（e）四通道全齐的三种口径**：预注册口径（ε+η+orbitals+redox 标签）**7**；
+把 redox 换成液相窗口（有效数据）**51**；同一换法用表键口径 **53**（与上一轮登记一致）。
+
+**（f）描述性关系（只作描述、非判决）**：在「ε 与 DFT 偶极都有、且 ε > 0」的 **79** 键上，
+Kirkwood `K(ε) = (ε − 1)(2ε + 1)/(9ε)` 与 **DFT 偶极平方**的 Pearson = **0.6464482483155134**
+（独立核验用和式公式重算得 `0.6464482483155133`，差 1e-16；与上一轮临时脚本登记的
+`0.6464482483164224` 差 1e-12，两轮互为印证）。附带读数：与偶极（非平方）**0.5934413462534026**；
+log10 版 n = **77**、r = **0.11065312624151812**（2 个因非正跳过）。**单位**：源表 `dipole` 是
+`atomic_units (e·bohr)`，表里同时给 `dipole_D = dipole_au × 2.541746473`；Pearson 对常数缩放不变。
+
+**（g）判据自校验（全 PASS）**：A 五个源表 sha256 与字节数逐位一致（`e046a383…`、`907f5368…`、
+`5b0731db…`、`47f920f7…`、`a2738678…`）；B 列名与预注册逐字一致、31,949 行 = 六通道键并集、一键一行；
+C 每通道 `has_* = true` 的键数 = 该通道按键值列算出的键数；D `models_fitted = 0` / `r2_reported = false`
+/ 主记分牌 0 次；E 描述性关系带 n 与角色标注；F 三件产物全 LF、无 CR。口径守卫：报告里没有性能断言
+用词，且带齐「描述性 / 非判决 / `descriptive_only_never_a_verdict`」标注。
+
+**（h）「优化模型关系」的可行性实测（本臂的对外结论）**：想在 **η** 模型里加密度特征**不成立** ——
+`data/viscosity_v02.csv` 42,941 行里只有 **86 行**配到了同/近温度密度（密度配对是 W17-3 的局部动作，
+不是全表的列）；**ε** 与 orbitals 的可对齐键只有 **84**（≈ 名册 247 的 34%）。⇒
+**跨通道加特征目前受覆盖限制**，真正密的只有 η×ρ（**键级** 96%，但**行级**不行）与
+orbitals×redox（392，按构造）；这也是四通道板把 η 与 redox 标红的同一件事。
+
+**（i）边界**：注册表是**派生视图**，源表才是事实；温度归约到 298.15 K 只是**选行规则**，
+不代表该键只有这一个温度；`redox_label` 只有 **392** 条（仍是全仓最紧瓶颈，四个外部数据源与 Reaxys
+都补不上）；**不含任何 Reaxys 数值**。**本臂不产新杠杆。**
+
+**（j）入库与投递**：W17-11 七件已进 Week 17 交付包（**73 件**，`verification_passed = true`），
+`scripts/verify_four_core_registry.py --check` 已接入 CI；`data/processed/four_core_key_registry.csv`
+按既有条款（有仓内消费者才登记）在 `.gitignore` 反忽略。
+### 28.17 轨道第二源（PubChemQC B3LYP/6-31G*//PM6, CC BY 4.0；W17-12）：**ε 名册覆盖 210/247 = 85.0%（iMolS 只有 41.7%）；HOMO 跨水平映射 slope 1.0133 / 截距 −2.8354 eV / 样本外 MAE 0.177 eV / r 0.972 → 可用；LUMO 的 r 0.735 < 0.80 → 诚实降级 reference_only**
+
+作者要求「继续拿取各类数据……统一完成 Week 17 内容数据扩充」。本臂给轨道通道加**第二源**，并把它能不能用**量化**下来。主源不变（仍是 `data/raw/batt/Batt-P30K.h5`）。
+
+**（a）产物与规模。**
+
+- 图层：`data/processed/orbital_second_source_layer.csv`（**912 行 / 35 列**，sha256 `ba55897a296181267cc0673cbf2d4d98d17b3e5de8280958b7896556e053abfe`）；
+- 预注册：`probes/orbital_second_source_prereg.json`（`locked_before_run`，判据 A–H 跑前冻结，sha256 `162361c973c97d5be8b9ce68b4f5b7761813a2c6b09202e11d53dafe245326ed`）；
+- 抓取器：`probes/harvest_pubchemqc_orbital.py`（原始层 `data/raw/pubchemqc_w17/`，该目录按既有惯例被忽略）；
+- 生成器：`probes/build_orbital_second_source.py`（`--check` 逐字节重算）；
+- 校验器：`scripts/verify_orbital_second_source.py --check`（**24/24 PASS**，无需原始层即可跑，已接入 CI；`--check-raw` 从原始层逐字节重算 **26/26 PASS**）；
+- 图件：`probes/artifacts/orbital_second_source_{calibration,coverage,landscape}.png` + `probes/plot_orbital_second_source.py`；
+- 报告：`reports/orbital_second_source.md`；测试：`tests/test_build_orbital_second_source.py`（**17 passed**）。
+
+**（b）源选择：三个候选的裁决。**
+
+| 候选 | HOMO/LUMO | 结构标识 | 许可 | ε 名册覆盖 | 裁决 |
+| --- | --- | --- | --- | --- | --- |
+| **PubChemQC B3LYP/6-31G*//PM6**（`molssiai-hub/pubchemqc-b3lyp`，revision `15c15ae6…`，镜像 `hf-mirror.com`） | 有（α/β + 全轨道数组） | `pubchem-inchi` / SMILES / CID | **CC BY 4.0** | **210/247** | **采纳为第二源** |
+| iMolS（shiyanjia） | 有（单点 M06-2X/ma-def2-TZVP） | **仅 SMILES，无 InChIKey** | `robots.txt` 全站 Disallow；**无任何再分发条款**；原始文件下载需登录 | 103/247 | **否决** |
+| Reaxys | 实测 **0 条数值** | 有 | 商业库 | — | 只作文献指路器 |
+
+**否决 iMolS 的硬证据**（不是印象）：本仓轨道集 29,519 个分子在 iMolS 全库 6,736 条里只命中 **245 个 = 0.83%**；在线检索是 name/alias/CAS 的模糊全文匹配、**不是结构检索**（用本仓 InChIKey 当 keyword 返回 0 条）；原始文件端点 `GET /api/moleculeFileNoCache?chemid=…` 匿名返回 `no permission`；`LICENSE-DATA.md` 要求的 `source_license` / `redistribution_status` **无从填写**。⇒ 只能离线参考，**不得进 `data/` 交付层**。它的一个正面发现是：全库当前计算口径**统一**（Program 全为 Gaussian 16、单点全为 M06-2X/ma-def2-TZVP 气相、优化 PBE0-D3BJ/6-31+G(d,p) 气相），即此前担心的「社区众源水平混杂」在实测中不成立。
+
+**（c）单位定案：数据集卡片的 `hartree` 标注是文档缺陷，实测是 eV。** 四条独立证据：①`orbital-energies[0][homos[0]]` 与标量字段 `energy-alpha-homo` **数值完全相等**（**240/240** 条，相对误差 ≤ 1e-9）；②`gap == lumo − homo` 对 **240/240** 条成立；③数量级荒谬（cid 1 的 −4.6096「hartree」等于 −125 eV，中性闭壳有机分子的**价层** HOMO 不可能这么深）；④**物理锚点**：η 名册里合法地含**氦**（ThermoML 气相黏度），其记录 HOMO **−17.681958 eV** / LUMO **+30.471309 eV** / gap **48.153267 eV**——闭壳惰性气体没有低 lying 空轨道，这个量级只有 eV 讲得通。故单位判据整体定为 eV。`unit_check` 列**分级**：`verified_eV_audited` 表示该行自己的 CID 真的进了分层审计（**20 行**），`dataset_level_eV` 表示单位只在数据集层面确立、未对该行逐条复核（**892 行**）。审计从 40 条扩到 **240 条 / 12 层**：`cid_span_checked = [1, 233866]`、`240/240 passed`、`valence_window_discriminates_units = true`、`card_declares_unit_for_scalar_fields = false`。⇒ 该图层的量级**与 Batt 只差能级基准，不差单位**。
+
+**（d）抓取方法（有界 + 可核验）。** 分片 `000000001-000253696.json` 是 4,348,924,286 B 的顶层 JSON 数组，按 `cid` 升序、每条 13–50 kB。因 `cid` 是每条记录**首字段**且分片内单调，用「插值搜索 + 有界 HTTP Range」定向取数：5 点结构探针给出 `cid` 窗口 `[1, 253696]`（0.00→1，0.25→63,246，0.50→128,319，0.75→195,354，0.9999→253,670+）。目标 = ε 名册全部 247 键 + η 名册随机 300 键 + 关键名册轨道池随机 200 键（seed `20260927`）+ 23 个常见溶剂按名取 CID + 分片头部 12 MB 广度扫描；**706 键中 619 键解析成功**。痕迹全部入库：`http_requests = 1246`、`http_bytes_read = 352,262,591`、`located_record_count = 347`、`head_record_count = 608`、`elapsed_seconds = 660.8`。命中判定**不看名字**，只看 `pubchem-inchi` 经 RDKit 转出的 InChIKey 是否逐字等于目标键 ⇒ **结构错配 0 条**，1 条 InChI 不可解析（S 价态超限）。CID→键解析有一个坑已记录：PUG-REST 的 listkey POST 必须是**逗号分隔单参数**（`inchikey=a,b,c`），写成重复参数只会保留第一个键（复现：重复参数形式只回 water，逗号形式回 7 条）。
+
+**（e）覆盖（判定 C：ε ≥ 40、η 样本 ≥ 100 —— 均通过）。**
+
+| 目标集 | 命中 | 命中率 |
+| --- | --- | --- |
+| ε 名册（247 键） | **210** | **85.02%** |
+| η 名册随机样本（300 键） | **139** | **46.33%** |
+| 关键名册轨道池随机样本（200 键） | **12** | **6.0%** |
+| 关键名册 | 348 / 31,949 | — |
+| 与 Batt-P30K 配对（校准锚点） | **111** | — |
+
+**三种口径不许混用**：η 全名册 **1,228 键**里命中 **240**，而上表第二行是**预注册 300 键随机样本**里的 **139**；分母不同，不得相除或互换。
+
+角色分布：`paired_anchor` **111** / `calibrated_estimate` **801** / `uncalibrated_reference` **0**。这条补充直接缓解 §28.16(i) 记录的瓶颈——此前「ε 与 orbitals 可对齐键只有 **84**（≈名册 34%）」。
+
+**（f）跨水平标定（判定 D：n ≥ 60 通过，n = 111；2 折样本外）。**
+
+| 通道 | slope | intercept | Pearson r | 样本外 MAE | 判定 E 结论 |
+| --- | --- | --- | --- | --- | --- |
+| **HOMO** | **1.0132507837193052** | **−2.8354161402050426 eV** | **0.9717477841107552** | **0.17662467232470583 eV** | **`usable_with_flag`** |
+| LUMO | 0.2588045572302973 | +1.3888951334640842 eV | 0.7349044734023142 | 0.24935401611452185 eV | **`reference_only`** |
+
+能级偏移（Batt − PubChemQC，n = 111）：HOMO 均值 **−2.9297346756756757 eV**（σ 0.2212，几乎常量）、LUMO 均值 **+1.0941013063063063 eV**（σ 0.9314，散布大）。这正是 LUMO 标定失败的原因。判定 E 的两条门限是「样本外 MAE ≤ 0.35 eV **且** r ≥ 0.80」：LUMO 的 MAE 其实过关（0.249），但 **r = 0.735 < 0.80** 触发降级 ⇒ **`calib_lumo_eV` 列全空**，下游**不得**把 PubChemQC 的 LUMO 当 Batt 级使用。HOMO 的映射 ≈ 刚性平移 −2.84 eV 加 1.3% 斜率，样本外 MAE 0.177 eV 已与主记分牌 HOMO 门限（0.2 eV）同量级。
+
+**（g）与四大核心数据的关系。** HOMO/LUMO 是本臂直接目标（ε 名册覆盖从近乎空缺补到 85%）；ε、η 是间接收益（特征可得性上升）；`dipole_debye` 列顺带补了偶极，可用于 Kirkwood 侧描述性关系；**氧化还原电位本臂不供数**。
+
+**（h）边界（必须随数字引用）。** ①能级**不可直接混用**：只有 `role = calibrated_estimate` 且 `calibration_id = linear_2fold_v1` 的 `calib_homo_eV` 允许与 Batt 并列；`homo_eV`/`lumo_eV` 是**原始 PubChemQC 值**，只作描述与相对趋势。②本臂**不为 LUMO 提供可用的 Batt 级估计**。③分片 0 只覆盖 PubChem CIDs ≤ 253,696，更高 CID 的电解质（如 EMC = CID 522,046）取不到，295 条 miss 含此类。④η 名册是 300 键随机样本（命中 139）、关键名册轨道池是 200 键随机样本（命中 12），ε 名册是全覆盖。⑨**配对锚点不是 Batt 池的随机样本**：111 个配对里 **12** 个来自预注册随机抽样、**101** 个是恰好落在 Batt 池里的定向名册分子、**10** 个来自低 CID 头部扫描（CID 中位数 8,452、最大 206,000）；映射代表电解质类分子，**不得**引作 Batt 池总体能级映射。⑤PubChemQC 是气相 B3LYP/6-31G*//PM6、Batt 是 SMD(ε=18.5)，二者的差里**既有泛函/基组差也有溶剂化差**，本臂的线性映射把二者**合并**处理，不做分离归因。⑥判定 F：`four_core_key_registry.csv` 的 `HOMO_eV`/`LUMO_eV` **一个字节未改**（校验器逐行比对，容差 5e-7 对应图层 6 位小数存储）。⑦判定 G：本层不含任何 Reaxys 派生数值。⑧**本臂不产新杠杆**，不改主记分牌 0.4091179943351143。
+
+**（i）入库与投递。** 图层已在 `.gitignore` 反忽略（第 181 行，`git status` 显示 `??`，与既有条款一致：只有仓内消费者才登记）；`scripts/verify_orbital_second_source.py --check` 已接入 CI；PubChemQC 的 **CC BY 4.0 署名**（NAKATA Maho 等，DOI `10.1021/acs.jcim.3c00899`，分发方 `molssiai-hub/pubchemqc-b3lyp` revision `15c15ae6a80c7ed84ee45e966390564e71e2e0bf`）已写入 `LICENSE-DATA.md`，并明确**原始分片不再分发**、只分发带完整 provenance 列的派生行。
+
+### 28.18 Reaxys 薄族补货队列实查（10 物质 / 21 次查询；W17-13）：**ε 与 η 有数值、轨道通道只有电离能、氧化还原的 5 个数值全在 `Comment` 列 ⇒ W17-RX 的「0 条数值」按通道收窄**
+
+W17-2 交付的是**队列**，并把 `reaxys_queries_executed = 0` 写在明面上。本臂把队列**头部 10 个物质**在作者已登录的 Reaxys 会话上真正走完，把「Reaxys 到底有什么」从推测变成测量。
+
+**（a）产物与规模。**
+
+- 事实表：`probes/reaxys_thin_family_query_facts.csv`（**10 行 / 19 列**，sha256 `f57e865fc1f63ff69c566c6335ac667fbd106a1192c7677f6b65ab61cc33f847`）；
+- 摘要：`probes/reaxys_thin_family_query_summary.json`（sha256 `2a8b44cf78262b8ddda49020e3f442ad1b6a676e58b4c4e07a1bc4f0e37daa40`）；
+- 生成器：`probes/reaxys_thin_family_query.py`（`--check` 逐字节重算）；报告：`reports/reaxys_thin_family_query.md`；测试：`tests/test_reaxys_thin_family_query.py`（**12 passed**）；
+- 原始证据：`data/raw/reaxys_w17b/`（22 件 / 1,425,151 B，被 `data/raw/*` 忽略；仓库内**原样保留**）。
+
+**（b）方法与纪律。** 走作者**已登录**的 Reaxys 标签页（Codex 浏览器通道接管；未复制 profile、未重新登录、未无头爬取）；**21 次查询 / 预算 25**，另有 1 次点击被会话过期弹窗吞掉、未产生结果故不计入。一次一张物质卡，类目表**展开到 Reaxys 自报的行数**而非只读默认 7 行（只读默认行会把乙酸 ε 从 31 条读成 6 条）。键**全部**取自队列的 `candidate_inchikey` 列，生成器**硬断言**这一点。
+
+**（c）「valued」与「point」分开计。** Reaxys 把**区间**和**点值**写进同一个 value 列（乙酸有 `6.17 - 6.8`、`2.46 - 2.79`）。故每通道同时报 `rows` / `valued`（value 列非空，含区间）/ `point`（整格可解析为单个浮点）；原始层 `observations_summary.json` 的 `*_numeric` 含义是 **valued**，生成器按该口径断言，绝不混用。
+
+**（d）逐通道结果（290 行观测）。**
+
+| 通道 | 定义 | rows | valued | point | reference-only | 有数值的物质 |
+| --- | --- | --- | --- | --- | --- | --- |
+| ε | Dielectric Constant ＋ Static Dielectric Constant | 78 | 66 | **59** | 12 | **5 / 10** |
+| η | Dynamic Viscosity ＋ Kinematic Viscosity | 169 | 162 | **143** | 7 | **10 / 10** |
+| 轨道 | Ionization Potential ＋ Calculated Properties | 24 | 13 | **10** | 11 | **2 / 10** |
+| 氧化还原 | Electrochemical Characteristics | 19 | 5 | **5** | 14 | **2 / 10** |
+
+四个质子型离子液体（HEAL / HEL / TEL / TEAA）在卡上**没有 ε 类目**——这是 Reaxys 的缺口。轨道通道的点值**全是电离能**（乙酸 10.32-10.38 / 10.35 / 10.6-10.7 / 10.66 / 10.7 / 10.72 / 11.15 eV；丁酸 10.17 / 10.24 / 10.22 eV），**电离能不是轨道能级**，不写进轨道通道；`Quantum Chemical Calculations` 出现 6 次、**0 数值**。氧化还原的 5 个点值（三氟乙酸 −1.2 V；戊酸 −1.35 / −1.08 / −1.40 / −1.44 V）**全部**来自 `Comment` 列。
+
+**（e）对 W17-RX 的收窄（不是推翻）。** 原结论「HOMO/LUMO 与氧化还原在 Reaxys 只有文献引用、0 条数值」是在**五个碳酸酯/腈类溶剂**上测的。扩到 10 个薄族物质后：**仍然成立**的部分——本集合里没有任何 HOMO/LUMO/gap 列，QCC 全为 reference-only；**必须收窄**的部分——氧化还原通道确有数值，只是**不在数值列里**。**P4 的 392 条标签瓶颈没有被缓解**（多 5 个数、2 个物质，无一在数值列）。
+
+**（f）边界（必须随数字引用）。** ①10 个物质是 124 行队列的头部，不是队列本身。②PC 的 `Use` 类目在卡面封顶在 141 行中的 107 行，余 34 行在该界面无翻页控件、未从其它界面绕行。③**Reaxys 自带的单位噪声原样保留、未修**（PC `24.997 P` / `0.253 P`、丁酸 `58 P`、乙酸 `0.0001176 P` 都像把 cP 记进 P 列）。④`T_K` 是摄氏值的确定性换算，区间保持区间，**未取中值、未平均、未补 298.15 K**。⑤四个质子型离子液体里 HEL / TEL / TEAA 显示 `Retrieve CAS RN` 故 `cas` 列为空（HEAL 有 `54300-24-2`）。⑥氧化还原**只统计 `Electrochemical Characteristics`**，`Electrochemical Behaviour`（酸解离、极谱类）被有意排除。
+
+**（g）入库与投递（裁决 B 的执行）。** 按 §28.2 的裁决 B，本臂 **`probes/reaxys_thin_family_query.py` / `_summary.json` / `reports/reaxys_thin_family_query.md` 整文件不进 Week 17 交付包**（`RESTRICTED_EXCLUDED` 标 `carries_reaxys_values = True`），事实表（只有计数、无数值）与测试件标 `False` 一并不进包；数值**不进 `data/`、不进任何池、不进任何特征表**。本臂 `models_fitted = 0`、不报 R²、不碰主记分牌 0.4091179943351143。原始页证据留在被忽略的 `data/raw/reaxys_w17b/`，仓库内原样保留作核对证据。
+
+---
+
+### 28.19 THEMol / GFN2-xTB 第三轨道源（W17-14）：**几何能拿到、能级不能直接混用 —— 166/166 出数、0 失败；HOMO/LUMO/gap 三通道映射 MAE 与 r 全部未过门 ⇒ 整层 `reference_only`**
+
+作者点名 THEMol，并要求 HOMO/LUMO 必须收。W17-12 已用 PubChemQC（B3LYP/6-31G*//PM6）建了第二轨道源；本臂再换一条**不同泛函、不同程序**的独立源：THEMol 的 H5 Hessian 池 → **GFN2-xTB 单点**（把 agent Peirce 2026-09-26 的六分子 POC 固化并扩样板）。
+
+**（a）先核字段，再谈能否出能级。** THEMol 五个子集的 HDF5 组里只有 `atomic_numbers` / `coords` / `hessian` / `step k` / `constraint k` / `mbis_info` 六类，**没有轨道能级、没有 gap、没有 IP/EA**。故「用 THEMol 出 HOMO/LUMO」只有一条路：**拿它的几何自己算**。
+
+**（b）采集链路（`probes/themol_hessian_orbitals.py`）。** ① `HttpRangeFile`：对远端 `.h5`（4.79 GB）走 HTTP Range，**只取该 uuid 组的原子数与坐标（≈2.9 MB/分子）、0 字节 .h5 落盘**；② 写 XYZ → 走本仓 `electrolyte_ml.xtb_runner`（`OMP_NUM_THREADS=1` 钉死、私有 scratch 目录），**GFN2-xTB `--sp`**；③ 解析 `# Occupation  Energy/Eh  Energy/eV` 表的 eV 列。支持 `--shard/--nshards`、`--roster`、`--rebuild-index`。
+
+**（c）规模与命中（口径不得混用）。** THEMol Hessian 池 **2,695,304**；本仓关键名册命中 **5,117 / 31,949 = 16.0%**；ε 名册 **142 / 247 = 57.5%**；η 名册 **242 / 1,228 = 19.7%**；W17-12 标定锚 **72 / 111 = 64.9%**。目标集 = ε 名册 ∪ W17-12 的 111 个 `paired_anchor`，去重 **166** 个。出数 **166 / 166**、**0 失败**、returncode 全 0；四分片 **51 / 42 / 41 / 32**；网络总量 **142,150,508 B**；xTB 累计 **1,408 s**；`xtb_version = 6.7.1pre`。
+
+**（d）跨能级标定（74 锚，2 折样本外；门限逐字继承 W17-12 的「MAE ≤ 0.35 eV 且 r ≥ 0.80」，不是看结果才定的）。**
+
+| 通道 | slope | intercept | Pearson r | 样本外 MAE | 最大误差 | 判定 |
+| --- | --- | --- | --- | --- | --- | --- |
+| HOMO | 1.0389102752198223 | 1.4879804327425656 eV | **0.8557447540814086** | **0.353095083458508 eV** | 1.4162325481656097 eV | ❌ `reference_only` |
+| LUMO | 0.0903748834229043 | 1.9336417639360564 eV | 0.5295614175613801 | 0.33112379444503637 eV | 1.0902 eV | ❌ `reference_only` |
+| gap | 0.11635116670254111 | 10.749742707994933 eV | 0.3072262053474138 | 0.7775085413700225 eV | 2.3835 eV | ❌ `reference_only` |
+
+三条必须一起读：① HOMO 的 r 0.856 **过门**，但 MAE 0.3531 **超门 0.0031 eV**（且最大单点误差 1.42 eV，尾部厚）；② LUMO 的 slope 只有 0.09（拟合近乎水平线）⇒ GFN2 虚轨道与 DFT LUMO 连**排序**都不成立；③ gap 是**平移不变**通道，「整体差一个常数」的借口在此不成立，r 0.307 说明是**尺度**问题。对照同批锚的 PubChemQC：HOMO r 0.972 / MAE 0.177、gap r 0.777 —— **同一把尺子上 B3LYP 打得过 GFN2**。结论：三通道全降级，**`calib_homo_eV` / `calib_lumo_eV` / `calibration_id` 三列整列为空**，`roles` 里 `calibrated_estimate = 0`。
+
+**（e）能级偏移（GFN2 − 参照）。** GFN2−Batt：HOMO 均值 **−1.0595081063325675 eV**（σ 0.47965125344904863）、LUMO 均值 **−7.01262702330219 eV**（σ 2.4788995492462123）、gap 均值 **−5.953118916969621 eV**（σ 2.50806478948423）；GFN2−PubChemQC：HOMO 均值 **−4.019911894409938 eV**（n = 161）。HOMO 偏移**规整可平移**，LUMO 偏移**离散不可平移**，与 (d) 互证。
+
+**（f）角色与自检。** 角色：`paired_anchor` **74** / `uncalibrated_reference` **92** / `calibrated_estimate` **0**；结构自检 **166/166 `inchikey_match`**（逐行由该行自身 SMILES 重算比对）；单位自检 **8/8 pass、最大残差 4.49e-05 eV**（独立重跑、同读 Eh 与 eV 两列）；三方对照 **72 / 2 / 89 / 3**。
+
+**（g）两个真 bug，被独立验证器抓到、已修。** ① 图层初版把能级四舍五入到 6 位 ⇒ 派生列 ≠ 两源列之差，验证器 **457 项失败** ⇒ 改**全精度存储**；② `name` 初版取采集标签而非核心名册名 ⇒ 改为优先取核心名册名（`registry_row['name']`）、缺失时回退采集标签。
+
+**（h）入库与许可切分。** 图层 `data/processed/themol_orbital_layer.csv`（**166 行 × 34 列**，sha256 **6e05f02e755c57ab09d73a784687b2c1deb757f80e43c5746358f1f7a5ecde80**）已接入 `.gitignore`（`!data/processed/themol_orbital_layer.csv`）与 CI（`verify_themol_orbital_layer.py --check`）。**`LICENSE-DATA.md` 新增「许可切分」节**：这是本仓**唯一不是 CC BY 4.0** 的数据文件 —— THEMol 数据为 **CC BY-NC 4.0**，**不可商用、不可改标**。原始证据（索引、名册、4 分片、单位审计）留在被忽略的 `data/raw/themol/`（本机保留）。本臂 `models_fitted = 0`、不报 R²、不碰主记分牌 0.4091179943351143。
+
+**（i）结论与下一步。** W17-14 是**被证据钉死的负结果**：THEMol 值得用，但用在**几何**（coords / Hessian / MBIS 多极）上，不是用在能级上；**要真出 Batt 级 HOMO/LUMO 必须换引擎**（本机无 PySCF ⇒ GPU4PySCF 或火山引擎 `volcengine-qcclient`，后者已在 §28.15 逐字段核过），需作者批额度 + 预注册。不建议把 GFN2 的 LUMO/gap 以任何形式并入轨道通道。
+
+---
+
+### 28.20 Reaxys 薄族第二批（W17-15）：**队列第 11–25 行 `candidate_inchikey` 15 行全空、无法键化 ⇒ 改走仍带逐字键的第 59/60/62/67 行；4/30 查询、ε 与 η 有数、轨道与氧化还原仍 0 数**
+
+**（a）首要发现（阻塞点）。** 被点名的队列第 **11–25 行**15 条**全是 `springer_materials_title_index` 名称型线索、`candidate_inchikey` 逐行为空**，在「键必须逐字取自队列」的纪律下**无法键化**。故改走**仍带逐字键、且 W17-13 未走过**的第 **59 / 60 / 62 / 67** 行：GVL / EC / EMC / 亚硫酸二乙酯（队列带键 14 行、W17-13 走 10、本批补最后 4）。
+
+**（b）产物。** `probes/reaxys_thin_family_query_b2.py`、`probes/reaxys_thin_family_query_b2_facts.csv`（**4 行 × 19 列**，sha256 **8c87bd6cc3941ce7951f93f82ac92dfc8fc72bfd5b2c285cbd4edd00d28484a5**）、`..._summary.json`、`tests/test_reaxys_thin_family_query_b2.py`（**13 passed**）、`data/raw/reaxys_w17c/`（**10 件 / 93,103 B**，`observations.csv` 54 行）。队列 sha256 `350b40f3b81de4d40b96f79557056711a69cebf593e99b2c4fa92516e3e5a426`；`card_key_matches_queue_key = True`、`keys_not_from_the_queue = 0`。走作者**已登录**的 Reaxys 标签（Codex 浏览器通道接管 Edge；未复制 profile、未重新登录、未无头爬取），一次一张物质卡。
+
+**（c）逐通道（rows / valued / point）。** ε **19 / 17 / 16**（四个物质全中；仅 EMC 静态 ε 为区间 `2.45 - 2.984`，valued 非 point）；η **22 / 21 / 21**；电离能（`Quantum Chemical Calculations` 块）**12 / 0 / 0**；氧化还原 **1 / 0 / 0**。查询 **4 / 30**。
+
+**（d）两条新发现。** ① **η 的 21 个点值里有 11 个只在 `Comment` 列**（GVL 4/4、EC 7/17 行），**只读数值列的下游会只见 10/21** —— 第一批只在氧化还原上踩到 `Comment` 坑，本批 **η 也踩**；② `Quantum Chemical Calculations` 标签与第一批 `Other Data > Calculated Properties` 是**同一物、标签不同**（亚硫酸二乙酯卡无 `Other Data` 页 ⇒ 其轨道通道只有 1 行 reference-only 电离能，是**证据使然、非漏采**）。
+
+**（e）对 W17-RX 的收窄（不是推翻）与瓶颈。** 「HOMO/LUMO 与氧化还原在 Reaxys 只有文献引用、0 条数值」在本批**仍成立**：本集合无任何 HOMO/LUMO/gap 列，`Calculated Properties` 全 reference-only；氧化还原仅 +1 行且 `Comment` 只写 `potential diagram`、无数值。**P4 的 392 条标签瓶颈未进一步缓解。** 按裁决 B（§28.2）**整文件不进 Week 17 交付包**（`RESTRICTED_EXCLUDED` 标 `carries_reaxys_values = True`），值不进 `data/`、不进任何池/特征表；本臂 `models_fitted = 0`、不报 R²、`data` 追踪件零改动。
+

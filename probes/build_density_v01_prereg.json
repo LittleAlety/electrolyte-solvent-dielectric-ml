@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "task": "build_density_v01",
+  "title": "W17-4 加维度①·密度 rho(T)：从 NIST/TRC ThermoML 建 density_v01 纯组分密度表",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-26T12:47:44Z",
+  "locked_by": "子智能体 probe 臂 W17-4（本轮执行者）",
+  "rationale": [
+    "本仓的运动黏度只剩 κ(T)（运动黏度，m2/s），缺 ρ(T) 就无法反解 η = κ·ρ；同时密度本身是「液相窗口 / 体积能量密度」筛选维度。",
+    "数据源沿用 Week 16 已验证的 NIST/TRC ThermoML 入口：/ThermoML-API/objects 这个 JSON 检索 API（同一 UA、同一节流、同一套分页/缓存/--check 骨架），检索词换成本臂的密度属性名。",
+    "本臂只建新表、只做测量与计数：不拟合模型、不产 R2/MAE、不改任何既有文件、不把任何值写进六件冻结件。"
+  ],
+  "api": {
+    "endpoint": "https://trc.nist.gov/ThermoML-API/objects",
+    "method": "GET",
+    "params": [
+      "query",
+      "pageSize",
+      "pageNum"
+    ],
+    "user_agent": "electrolyte-ml/0.0.0 (+https://trc.nist.gov/ThermoML/)",
+    "throttle_seconds": 0.25,
+    "request_budget_limit": 20000,
+    "page_size": 100,
+    "page_num_base": 0,
+    "first_page_num": 0,
+    "pagination_note": "pageNum 是 0 基的：窗口为 [pageNum*pageSize, (pageNum+1)*pageSize)，返回条数 min(pageSize, size - pageNum*pageSize)。Week 16 的 T1 探针已实测锁死该语义，本臂沿用。",
+    "pagination_offset_is_pre_run_recon": true,
+    "raw_cache_dir": "data/external/thermoml_api/density_kg_m3/",
+    "raw_cache_is_gitignored": true,
+    "raw_cache_note": "每页一个 JSON（page-NNNN.json）+ 一个 .url 取数凭据（page-NNNN.json.url）。该目录被 .gitignore 的 data/external/thermoml_api/ 规则忽略。",
+    "direct_connection_note": "本机环境变量 HTTPS_PROXY/HTTP_PROXY 指向一个已失效的本地端口（跑前侦察实测：10809/10808 均 connect timeout），而 NIST TRC 可直连（侦察实测 HTTP 200）。故探针显式用 ProxyHandler({}) 走直连 opener，不继承环境代理。"
+  },
+  "queries": {
+    "total_records": {
+      "id": "total_records",
+      "query": "*",
+      "page_size": 1,
+      "page_num": 0,
+      "role": "全库记录数分母（口径：记录数）"
+    },
+    "slices": [
+      {
+        "id": "density_kg_m3",
+        "query": "\"Density, kg/m3\"",
+        "page_num_start": 0,
+        "page_num_stop_exclusive": "ceil(size / pageSize)",
+        "role": "密度短语切片（本臂主切片）"
+      }
+    ],
+    "all_queries": [
+      "*",
+      "\"Density, kg/m3\""
+    ]
+  },
+  "frozen_expectations": {
+    "total_records_size": 11923,
+    "density_slice_size": 4697,
+    "density_slice_pages": 47,
+    "mass_density_phrase_size": 4685,
+    "critical_density_phrase_size": 33,
+    "local_kinematic_rows": 176,
+    "local_kinematic_keys": 5,
+    "dielectric_v03_keys": 246,
+    "identity_map_keys": 314,
+    "frozen_before_run": true,
+    "frozen_basis": "跑前侦察实测（见 recon_evidence）。探针运行时逐位重算，任何不一致由判据 A 暴露，绝不回填。"
+  },
+  "recon_evidence": {
+    "measured_before_freeze": true,
+    "sizes_seen_in_recon": {
+      "*": 11923,
+      "\"Density, kg/m3\"": 4697,
+      "\"Mass density, kg/m3\"": 4685,
+      "\"Critical density, kg/m3\"": 33
+    },
+    "phrase_vs_structured_finding": "检索词走的是短语索引：4697 这条切片里，结构化 ePropName 恰为 Mass density, kg/m3 的有 4685 条记录，恰为 Critical density, kg/m3 的有 33 条记录（两者有交集，故 4685+33 > 4697）。也就是说「在线指纹」只是记录数，真正要的 ρ(T) 必须按 ePropName 逐块筛。",
+    "api_carries_no_measured_values": "跑前侦察实测：/ThermoML-API/objects 的 JSON 只带 Citation / Compound / PureOrMixtureData 的定义（Component、Property、Variable、Constraint）与 data_summary 计数，不含 NumValues 数值行——整页 100 条记录里 \"nValue\" 出现 0 次、\"PropertyValue\" 出现 0 次，而 \"NumValues\" 只出现在 tml_elements 名称表里。实测单对象端点 /ThermoML-API/objects/{id} 与 ?full=true 同样无数值。故本臂把 JSON API 当作「目录层」，把数值层显式改挂到同源的 ThermoML XML（见 value_source）。",
+    "pagination_sample": {
+      "note": "pageSize=100 时 page-0000.json 实测 10825814 B，page-0001.json 实测 10181109 B（约 2.7 s/页）；47 页量级 ~500 MB 原始缓存。",
+      "page0_bytes": 10825814
+    },
+    "direct_connection_probe": {
+      "env_proxy_ports": [
+        10809,
+        10808
+      ],
+      "env_proxy_result": "connect timeout（两个端口都无监听）",
+      "direct_result": "HTTP 200，size=4697"
+    }
+  },
+  "value_source": {
+    "reason": "JSON 检索 API 无实测数值（见 recon_evidence.api_carries_no_measured_values），故 ρ(T) 的数值层只能取权威的 ThermoML XML（与 JSON API 同一 NIST/TRC 源、同一 DOI 主键）。",
+    "url_template": "https://trc.nist.gov/ThermoML/{doi}.xml",
+    "doi_encoding": "DOI 中的 / 保留，其余按 RFC3986 百分号编码（与 scripts/fetch_thermoml.py 同口径）。",
+    "selected_records_rule": "只对「目录层判定含纯组分 Mass density, kg/m3 数据点」的目录记录下载 XML；其余目录记录不下载（只进目录计数）。",
+    "selected_records_field": "任一 PureOrMixtureData 块 Component 数为 1 且该块 Property 的 ePropName 恰为 Mass density, kg/m3；或 data_summary.pure.VolumetricProp.Mass density, kg/m3.data_points > 0。",
+    "cache_dir": "data/raw/thermoml_density/",
+    "cache_is_gitignored": true,
+    "cache_note": "每个 DOI 一个 XML（<sanitized-doi>.xml）+ 一个 .url 取数凭据。data/raw/* 与 *.xml 均被 .gitignore 忽略。断点续传：已缓存且 .url 匹配的 DOI 不再联网。",
+    "concurrency_workers": 8,
+    "per_request_politeness_seconds": 0.05,
+    "retries_per_file": 2,
+    "failure_policy": "单文件失败重试 2 次（共 3 次尝试）；仍失败者计入 summary 的 xml_download_failures 清单，不静默丢弃。"
+  },
+  "extraction_rules": {
+    "parser": "electrolyte_ml.thermoml.parse_thermoml_file（仓库既有 stdlib 解析器），与 probes/thermoml_viscosity_coverage_probe.py 同源。",
+    "accepted_property_names": [
+      "Mass density, kg/m3",
+      "Density, kg/m3"
+    ],
+    "accepted_property_names_note": "大小写与首尾空白归一后比较。刻意排除 Critical density, kg/m3（临界密度，不是 ρ(T)）、Amount density, mol/m3（数密度）、Excess molar volume。",
+    "pure_filter": "component_count == 1（纯组分）。多组分（component_count > 1）密度行单独计数，不进主表。",
+    "unit_normalization_table": {
+      "kg/m3": 1,
+      "g/cm3": 1000,
+      "g/mL": 1000,
+      "g/ml": 1000,
+      "kg/L": 1000,
+      "kg/l": 1000,
+      "kg/dm3": 1000,
+      "g/L": 1,
+      "g/l": 1
+    },
+    "unit_rule": "只接受上表内的单位；表外单位一律拒绝该行并计入 unit_rejected，绝不做未经登记的换算。",
+    "temperature_rule": "温度取解析器的 temperature_value（K）；必须有限且 100 < T_K < 1000，否则计入 row_rejected。",
+    "density_rule": "归一后的 ρ 必须有限且 1 < rho_kg_m3 < 5000，否则计入 row_rejected。",
+    "no_extrapolation": "不插值、不外推、不合成任何观测；每一行都必须来自 XML 里一个真实 NumValues 行。",
+    "smiles_rule": "ThermoML 只带 InChI/InChIKey；主表 smiles 由 InChI 用 RDKit 还原（rdkit.Chem.MolToSmiles(MolFromInchi(inchi))），还原失败留空并计入 smiles_unresolved。"
+  },
+  "pairing_rules": {
+    "target": "data/processed/viscosity_observations_thermoml.csv 中 property_name == 'Kinematic viscosity, m2/s' 的行（本臂核实为 176 行）。",
+    "key": "inchikey（InChIKey 全键，不做骨架/名称匹配）。",
+    "primary_exact": "密度行 T_K 与该运动黏度行 T_K 在 1e-3 K 内相等（同一化合物、同一温度）。",
+    "secondary_nearest": "同一 inchikey 下取 |ΔT| 最小的密度行，且 |ΔT| ≤ 1.0 K；并列时取 T_K 较小者。绝不外推（1.0 K 之外的密度不参与）。",
+    "reported": "两个口径都报：exact 行数与 nearest(≤1.0 K) 行数；nearest 口径即「解冻行数」。"
+  },
+  "coverage_rules": {
+    "unit": "compound（唯一 InChIKey）",
+    "vs_dielectric_v03": "集合 = data/dielectric_v03.csv 的 inchikey 列（本臂核实 246 键）。",
+    "vs_identity_map": "集合 = data/reference/identity_map.csv 的 inchikey 列（本臂核实 314 键）。",
+    "vs_local_kinematic": "集合 = 本地 176 行运动黏度行的 inchikey（本臂核实 5 键）。",
+    "reported_fields": [
+      "intersection",
+      "target_size",
+      "density_size",
+      "intersection_size",
+      "covered_fraction",
+      "missing_keys"
+    ]
+  },
+  "pre_registered_criteria": {
+    "A_catalog_integrity_and_pagination": {
+      "id": "A",
+      "statement": "在线目录层逐位复现：* 的 size 记录数 11923、\"Density, kg/m3\" 的 size 记录数 4697 都与预注册一致；且本切片按 pageSize=100、从 pageNum=0 起分页抓全到 4697 条（抓到的记录数 == size、页数 == 47、DOI 无重复、无失败页）。允许违反数 = 0。",
+      "machine_readable": {
+        "expected_sizes": {
+          "*": 11923,
+          "\"Density, kg/m3\"": 4697
+        },
+        "expected_pages": 47,
+        "require_pagination_complete": true,
+        "require_unique_dois": true,
+        "require_page_num_base_zero": true,
+        "require_zero_failed_pages": true
+      },
+      "allowed_violations": 0,
+      "threshold": "two_sizes_match AND records_collected == size AND pages == 47 AND unique_dois == 4697 AND page_num_base == 0 AND failed_pages == 0"
+    },
+    "B_value_extraction_integrity": {
+      "id": "B",
+      "statement": "数值层自洽：density_v01.csv 的每一行都必须 component_count==1、property_name 属于 accepted_property_names、单位在换算表内、T_K/ρ 落在注册区间内；被拒绝的行必须在 ledger 里逐类计数（多组分行、表外单位、越界数值、解析失败），拒绝 + 接受 == XML 里命中 accepted_property_names 的全部行。允许违反数 = 0。",
+      "machine_readable": {
+        "accepted_unit_count": 9,
+        "require_rejection_ledger": true,
+        "require_finite_values": true,
+        "require_ledger_sums": true
+      },
+      "allowed_violations": 0,
+      "threshold": "every_pure_row_valid AND rejected_classes_accounted AND accepted + rejected_bad == total_named_density_rows"
+    },
+    "C_unfreeze_metric": {
+      "id": "C",
+      "statement": "解冻指标逐行可复算：把本地 176 行运动黏度逐行与密度表按 inchikey + 温度配对，报 exact 行数与 nearest(|ΔT|≤1.0 K) 行数。该数字必须等于同一份 density_v01.csv 的离线重算值，且配对的每一行都要能回指到一条真实密度观测（source_doi + thermoml_file + source_row_index）。允许违反数 = 0（针对「报数与重算一致」，不预设具体条数）。",
+      "machine_readable": {
+        "local_kinematic_rows": 176,
+        "temperature_tolerance_k": 1,
+        "exact_tolerance_k": 0.001,
+        "require_per_row_traceability": true,
+        "no_extrapolation": true
+      },
+      "allowed_violations": 0,
+      "threshold": "reported_counts == recomputed_counts AND every_paired_row_has_source_triple"
+    },
+    "D_basis_honesty": {
+      "id": "D",
+      "statement": "口径诚实性：在线目录层一律以「记录数」为单位并标注；在线数据行数记 unknown（JSON API 不含数值行，理由写明）；短语命中与结构化 ePropName 命中分开报；density_v01.csv 的行是 XML 观测行，与在线记录数是两套口径，禁止相除当覆盖率。允许违反数 = 0。",
+      "machine_readable": {
+        "size_unit": "record",
+        "online_row_count": "unknown",
+        "value_basis": "thermoml_xml_observation_row",
+        "must_report_phrase_vs_structured": true,
+        "row_comparison_allowed": false
+      },
+      "allowed_violations": 0,
+      "threshold": "all_honesty_fields_present AND online_row_count_is_unknown AND phrase_and_structured_counts_both_reported AND record_and_row_bases_not_divided"
+    }
+  },
+  "forbidden": [
+    "不许用在线 size（记录数）冒充数据行数，也不许把 4697 条记录与本地/新建 CSV 的行数相减或相除后当覆盖率。",
+    "不许把短语命中（\"Density, kg/m3\" 出现在摘要或别的属性名里）当成结构化 Mass density, kg/m3 命中；两者必须分别计数、分别报。",
+    "不许把 Critical density, kg/m3 或 Amount density, mol/m3 当液体质量密度混进主表。",
+    "不许做任何插值/外推/温度换算来凑配对；1.0 K 之外的密度不得参与 nearest 配对。",
+    "不许拟合任何模型、不许训练/评分/调参、不产任何 R2 或 MAE。",
+    "不许回填、放宽本预注册的任何阈值；跑完后不得修改本文件。",
+    "不许改六件冻结件（data/dielectric_v03.csv、data/processed/dielectric_observations_v11plus.csv、data/viscosity_v01.csv、probes/l3_stage1_pilot_pool.csv、probes/l3_backvalidation_prereg.json、probes/dielectric_r2_levers_prereg.json）或 data/ 下任何既有文件。",
+    "不许改 .gitignore（需要纳入版本库的新文件名由执行者在回报里列给负责人）。",
+    "不许把 XML 下载失败当成「该记录没有密度数据」：失败必须进 failures 清单。",
+    "不许在报告或摘要里出现未加「记录」限定语的 4697 / 11923 断言式措辞。"
+  ],
+  "wording_guard": {
+    "bare_number_tokens": [
+      "4697",
+      "11923"
+    ],
+    "required_qualifier_any_of": [
+      "记录",
+      "records"
+    ],
+    "forbidden_row_units": [
+      "行",
+      "rows"
+    ],
+    "adjacency_window_chars": 6,
+    "prose_scope": [
+      "reports/density_v01.md"
+    ],
+    "prose_rule": "报告里任何含 bare_number_tokens 的文本行，必须同时含 required_qualifier_any_of 之一；且这些数字不得与 forbidden_row_units 相邻（窗口 adjacency_window_chars 字符内）。",
+    "json_scope": [
+      "probes/density_v01_summary.json"
+    ],
+    "json_rule": "summary 的 JSON 文本里禁止把 bare_number_tokens 与 forbidden_row_units 相邻（窗口 adjacency_window_chars 字符内）。",
+    "enforced_by": [
+      "探针自身：render_report 之后立刻跑守卫，不通过就 raise，拒绝写出失真的措辞。",
+      "tests/test_build_density_v01.py：独立复跑同一个守卫。"
+    ]
+  },
+  "write_set": {
+    "new": [
+      "probes/build_density_v01_prereg.json",
+      "probes/build_density_v01.py",
+      "probes/density_v01_summary.json",
+      "data/density_v01.csv",
+      "data/processed/density_raw.csv",
+      "scripts/verify_density_v01.py",
+      "tests/test_build_density_v01.py",
+      "reports/density_v01.md",
+      "data/external/thermoml_api/density_kg_m3/（目录层原始响应缓存，被 .gitignore 忽略）",
+      "data/raw/thermoml_density/（数值层 XML 缓存，被 .gitignore 忽略）"
+    ],
+    "modified": [],
+    "modified_note": "本臂不修改任何既有文件，也不改 .gitignore。",
+    "untouched": [
+      "六件冻结件 digest 不变",
+      "data/raw/thermoml/ 既有 242 个 XML 一个不动（新缓存另起 data/raw/thermoml_density/）",
+      "data/processed/viscosity_observations_thermoml.csv 只读引用，不写"
+    ],
+    "gitignore_request": [
+      "data/processed/density_raw.csv（现行 .gitignore 的 data/processed/* 规则会忽略它，需加 ! 反选才能入库）"
+    ]
+  },
+  "reproducibility": {
+    "first_run": ".venv\\Scripts\\python.exe probes/build_density_v01.py --resolve-online",
+    "incremental": ".venv\\Scripts\\python.exe probes/build_density_v01.py",
+    "offline_check": ".venv\\Scripts\\python.exe probes/build_density_v01.py --check",
+    "verifier": ".venv\\Scripts\\python.exe scripts/verify_density_v01.py --check",
+    "check_tiers": [
+      "tier 1（任何机器，零网络）：判据 A 拿已提交 summary 里的实测 size 记录数与预注册比对；再断言 report == render_report(summary)、density_v01.csv/summary 的字面量一致。",
+      "tier 2（本机有 data/external/thermoml_api/density_kg_m3/ 与 data/raw/thermoml_density/ 原始缓存时）：从原始字节重算目录层与数值层，要求与已提交 summary 的 dataset 一节逐字段一致，把清单钉死在原始响应上。"
+    ],
+    "clean_clone_note": "目录层原始响应与数值层 XML 都不在版本库里；干净克隆上判据 A/B/C 走 tier 1：目录层用已提交 summary，数值层用已提交 data/density_v01.csv + data/processed/density_raw.csv。"
+  }
+}

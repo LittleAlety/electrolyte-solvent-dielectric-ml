@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "task": "build_four_core_registry",
+  "title": "W17-11 四大核心数据整理：按 InChIKey 的跨通道注册表 + 通道关系矩阵（不拟合任何模型）",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-26T14:40:00Z",
+  "locked_by": "本轮执行者（作者要求：把数据整理好、优化模型关系）",
+  "rationale": [
+    "作者要求把四大核心数据（黏度 / 介电常数 / HOMO-LUMO / 氧化还原电位）整理好，并优化模型之间的关系。",
+    "现状是四个通道各落各的表、各用各的键：ε 在 data/dielectric_v04.csv，η 在 data/viscosity_v02.csv，HOMO/LUMO/IP/EA/dipole 与 redox 自由能同在 data/processed/redox_merged.csv，ρ 在 data/density_v01.csv，液相窗口在 data/processed/liquid_window_features.csv。",
+    "谁和谁能接上、能接上多少，此前只散落在各臂的报告里；本臂把它们汇成一张按 InChIKey 的注册表，并把通道两两交集算成一个可引用的关系矩阵。"
+  ],
+  "inputs": [
+    {
+      "channel": "dielectric",
+      "path": "data/dielectric_v04.csv",
+      "sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c",
+      "bytes": 134460
+    },
+    {
+      "channel": "viscosity",
+      "path": "data/viscosity_v02.csv",
+      "sha256": "907f5368ff6d4d6c15fa26c8c2b57e8bbc8c7ac7a7b3db06ec2c689b283bf3a5",
+      "bytes": 11501156
+    },
+    {
+      "channel": "orbitals_and_redox",
+      "path": "data/processed/redox_merged.csv",
+      "sha256": "5b0731db9f1af784e6dc672212bcfe5d2fa68219a2832dafac6063dff9062b65",
+      "bytes": 7967704
+    },
+    {
+      "channel": "density",
+      "path": "data/density_v01.csv",
+      "sha256": "47f920f773054ccd8789ac5679e3da5ca8ec732f8f6e79ba1f824cf68b2556ff",
+      "bytes": 29601928
+    },
+    {
+      "channel": "liquid_window",
+      "path": "data/processed/liquid_window_features.csv",
+      "sha256": "a27386787f4c81981fd2489e12139518c29619a13fd9da92a18b28f10ff94fb2",
+      "bytes": 175951
+    }
+  ],
+  "channel_value_contract": {
+    "dielectric": {
+      "key": "inchikey",
+      "value": "dielectric",
+      "unit": "dimensionless",
+      "temperature": "T_K",
+      "reduction": "nearest_to_target_T"
+    },
+    "viscosity": {
+      "key": "inchikey",
+      "value": "viscosity_Pa_s",
+      "unit": "Pa*s",
+      "temperature": "T_K",
+      "reduction": "nearest_to_target_T"
+    },
+    "orbitals": {
+      "key": "inchikey",
+      "value": "HOMO,LUMO,IP,EA,dipole",
+      "unit": "eV,eV,eV,eV,atomic_units(e*bohr)",
+      "temperature": null,
+      "reduction": "first_non_empty_in_file_order"
+    },
+    "redox": {
+      "key": "inchikey",
+      "value": "oxidation_free_energy,reduction_free_energy",
+      "unit": "eV",
+      "temperature": null,
+      "reduction": "first_non_empty_in_file_order"
+    },
+    "density": {
+      "key": "inchikey",
+      "value": "density_kg_m3",
+      "unit": "kg/m3",
+      "temperature": "T_K",
+      "reduction": "nearest_to_target_T"
+    },
+    "liquid_window": {
+      "key": "inchikey",
+      "value": "mp_C,bp_C,flash_point_C,density_g_cm3",
+      "unit": "degC,degC,degC,g/cm3",
+      "temperature": null,
+      "reduction": "first_non_empty_in_file_order"
+    }
+  },
+  "reduction_rules": {
+    "target_temperature_k": 298.15,
+    "nearest_to_target_T": [
+      "在键内取 |T_K - 298.15| 最小的那一行。",
+      "并列时取 T_K 更小的一行（规则跑前定死，不事后挑）。",
+      "仍然并列时取源文件里先出现的那一行（文件序确定，不依赖字典序）。"
+    ],
+    "first_non_empty_in_file_order": "按源文件行序取第一个非空值；不做平均、不做除单位换算以外的加工。",
+    "no_averaging": true,
+    "one_row_per_key_per_channel": true
+  },
+  "unit_conversions": {
+    "dipole_au_to_debye_factor": 2.541746473,
+    "dipole_note": "redox_merged.csv 的 dipole 单位是 atomic_units (e*bohr)（见 probes/p4_redox_summary.json 的 units 块）。本表同时存 dipole_au 与 dipole_D，后者 = 前者 x 2.541746473，因子写进预注册与表头旁注。"
+  },
+  "registry_schema": [
+    "inchikey",
+    "smiles",
+    "name",
+    "has_dielectric",
+    "dielectric",
+    "dielectric_T_K",
+    "has_viscosity",
+    "viscosity_Pa_s",
+    "viscosity_T_K",
+    "has_orbitals",
+    "HOMO_eV",
+    "LUMO_eV",
+    "gap_eV",
+    "IP_eV",
+    "EA_eV",
+    "dipole_au",
+    "dipole_D",
+    "has_redox_label",
+    "oxidation_free_energy_eV",
+    "reduction_free_energy_eV",
+    "has_density",
+    "density_kg_m3",
+    "density_T_K",
+    "has_liquid_window",
+    "mp_C",
+    "bp_C",
+    "flash_point_C",
+    "ambient_density_g_cm3",
+    "n_core_channels",
+    "channels_present"
+  ],
+  "core_channels": [
+    "dielectric",
+    "viscosity",
+    "orbitals",
+    "redox_label"
+  ],
+  "pre_registered_criteria": {
+    "A_inputs_pinned": "五个输入文件的 sha256 与预注册逐位一致；不一致直接 FAIL，不许继续。",
+    "B_schema_and_keys": "注册表列名与 registry_schema 逐字一致；行数 = 各通道键的并集大小；每个键只出现一次。",
+    "C_per_channel_counts": "每通道 has_* 为真的键数 = 该通道源表里出现的去重键数（口径自校验）。",
+    "D_no_model_no_scoreboard": "models_fitted = 0、r2_reported = false、main_scoreboard_attempts = 0；本臂不拟合任何模型、不把任何 R2 当增益引用。",
+    "E_descriptive_relation": "ε 与 dipole 的重叠键上报 Kirkwood-Frohlich 描述性统计（n、Pearson r），并明确标注为描述性、非模型、非判决。",
+    "F_lf_only": "所有新产出的文本一律 LF。"
+  },
+  "descriptive_relation_definition": {
+    "name": "kirkwood_frohlich_dipole_probe",
+    "definition": "K(eps) = (eps - 1) * (2 * eps + 1) / (9 * eps)，与 dipole_D^2 求 Pearson 相关。",
+    "role": "descriptive_only_never_a_verdict",
+    "why": "Kirkwood-Frohlich 关系里 eps 由偶极平方驱动；主记分牌的天花板被登记为「缺 Kirkwood g 维」的信息缺口，所以先量清我们手上到底有多少键同时有 eps 与 DFT 偶极，以及这个关系有多强。",
+    "note": "样本量小（ε 名册只有 247 键），该相关系数不许当作模型性能、不许当作杠杆证据。"
+  },
+  "forbidden": [
+    "不拟合任何模型、不产 MAE/R2。",
+    "不改任何既有表、不写进六件冻结件。",
+    "不把 redox 自由能另换成伏特去和别的表比（上游 redox_free_ener.py 的约定照抄，不新造换算）。",
+    "不删除、不合并源表的任何行（本表是派生视图，源表才是事实）。"
+  ],
+  "wording_guard": "本表是「注册表 / 关系矩阵」，不是新数据源；任何引用都必须同时说清它派生于哪几张源表。",
+  "write_set": [
+    "data/processed/four_core_key_registry.csv",
+    "probes/four_core_registry_summary.json",
+    "reports/four_core_registry.md"
+  ],
+  "reproducibility": {
+    "run": ".venv/Scripts/python.exe probes/build_four_core_registry.py",
+    "check": ".venv/Scripts/python.exe probes/build_four_core_registry.py --check",
+    "deterministic": "同一批输入字节 ⇒ 同一批输出字节（summary 的 generated_at_utc 是唯一易变位，--check 时按 stable_view 剥掉）。"
+  }
+}

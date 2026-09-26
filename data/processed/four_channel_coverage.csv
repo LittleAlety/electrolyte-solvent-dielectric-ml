@@ -1,0 +1,30 @@
+channel,category,metric,value,unit,source,gate_threshold,gate_status,note
+dielectric,model,main_scoreboard_grouped_r2,0.4091179943351143,R2,probes/dielectric_coverage_paired_benchmark_summary.json,,quoted,frozen main scoreboard; never mixed with the v1.0 headline 0.364
+dielectric,model,random_row_leak_reference_r2,0.7385332681453336,R2,reports/decisions_log.md,,reference_only,row-level leak reference; never enters a verdict
+dielectric,data,scoreboard_rows,457,rows,probes/artifacts/dielectric_coverage_paired_benchmark_predictions.csv,,scored,
+dielectric,data,scoreboard_compounds,97,compounds,probes/artifacts/dielectric_coverage_paired_benchmark_predictions.csv,,scored,
+dielectric,data,scoreboard_distinct_compound_temperature_pairs,276,pairs,probes/artifacts/dielectric_coverage_paired_benchmark_predictions.csv,,scored,"the honest sample size to quote is 276, not 457"
+dielectric,gate,applicability_domain_trigger_rate,0.33658536585365856,fraction,probes/applicability_domain_summary.json,"SMARTS [O,S,N;!H0]",armed,"hbond-donor SMARTS applicability domain, 33.66 percent"
+viscosity,data,viscosity_v01_rows,3582,rows,probes/viscosity_baseline_summary.json,,shipped,
+viscosity,data,viscosity_v01_keys,957,InChIKeys,probes/viscosity_baseline_summary.json,,shipped,
+viscosity,model,group_key_r2,0.7481271437772365,R2,probes/viscosity_baseline_summary.json,mae<=0.15 log10(cP),red,group-key split is the honest one; random_row passes and group_key fails
+viscosity,model,group_key_mae_log10_cP,0.17477197208762,log10(cP),probes/viscosity_baseline_summary.json,0.15,red,family-level conclusion only until the kinematic rows are thawed
+homo_lumo,model,HOMO_fold_mean_mae,0.19050925839013938,eV,models/homo_lumo_baselines.json,0.2,green,structure-only features; DFT-derived columns are forbidden inputs
+homo_lumo,model,LUMO_fold_mean_mae,0.13855083976437643,eV,models/homo_lumo_baselines.json,0.2,green,structure-only features; DFT-derived columns are forbidden inputs
+homo_lumo,model,IP_fold_mean_mae,0.2010970559642009,eV,models/homo_lumo_baselines.json,0.2,red,structure-only features; DFT-derived columns are forbidden inputs
+homo_lumo,model,EA_fold_mean_mae,0.23415453202842548,eV,models/homo_lumo_baselines.json,0.2,red,structure-only features; DFT-derived columns are forbidden inputs
+homo_lumo,model,targets_passed,2/4,targets,models/homo_lumo_baselines.json,4/4,red,HOMO and LUMO pass; IP misses by 1.1 meV and EA by 34 meV
+redox,data,rx392_labelled_rows,392,rows,probes/p4_redox_summary.json,,shipped,
+redox,model,oxidation_free_energy_mae,0.2905180517963865,eV,probes/p4_redox_summary.json,0.15,red,
+redox,model,reduction_free_energy_mae,0.4096241620366996,eV,probes/p4_redox_summary.json,0.15,red,
+redox,model,enriched_holdout_oxidation_mae,0.2174014393126818,eV,probes/p4_redox_v2_summary.json,0.15,red,"held-out 78 rows; the bottleneck is the 392 labels, not model capacity"
+redox,model,enriched_holdout_reduction_mae,0.33169277465193164,eV,probes/p4_redox_v2_summary.json,0.15,red,
+liquid_window,data,coverage_keys,314,InChIKeys,probes/liquid_window_gate_summary.json,,shipped,
+liquid_window,gate,trigger_rate_blocked_only,0.24522292993630573,fraction,probes/liquid_window_gate_summary.json,mp>-20C or bp<60C,armed,a hard gate that runs before the epsilon screen
+liquid_window,gate,trigger_rate_blocked_plus_unknown,0.5987261146496815,fraction,probes/liquid_window_gate_summary.json,conservative,armed,unknown is neither a pass nor an evict; both readings are reported
+liquid_window,gate,ec_melting_point_verdict,blocked,verdict,probes/liquid_window_gate_summary.json,mp>-20C,blocked,EC mp 36.4 C: the solid-at-room-temperature case the gate exists to catch
+walden,data,epsilon_eta_pair_rows,1219,rows,probes/walden_dn_channel_summary.json,,derived,"derived pairs, not measurements"
+walden,data,epsilon_eta_pair_keys,76,InChIKeys,probes/walden_dn_channel_summary.json,,derived,
+dn,gate,admissible_coverage_fraction,0.0,fraction,probes/walden_dn_channel_summary.json,0.30,red,"DN is experimental-only; below threshold, so it does not enter the feature table"
+density,data,summary_present,True,bool,probes/density_v01_summary.json,,shipped,
+li_coordination,model,merged_shot_summary_present,True,bool,probes/dielectric_coordination_block_v3_summary.json,,shipped,

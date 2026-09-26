@@ -1,0 +1,31 @@
+{
+  "arm": "W17-14",
+  "title": "THEMol Hessian geometry + GFN2-xTB single point as a third orbital source",
+  "date": "2026-09-27",
+  "question": "Can ByteDance-Seed/THEMol, whose card advertises electrolytes and ionic liquids, supply HOMO/LUMO for this repository's rosters?",
+  "known_before_running": [
+    "THEMol stores no orbital quantity: the HDF5 groups carry atomic_numbers, coords and hessian only.",
+    "THEMol covers 5,117 of the 31,949 four-core registry keys on canonical SMILES; 142 of 247 epsilon-roster keys and 242 of 1,228 viscosity-roster keys.",
+    "A six-molecule proof of concept on 2026-09-26 (agent Peirce) showed the range-read plus xTB chain runs end to end and that absolute GFN2-xTB levels do not sit on the Batt-P30K scale."
+  ],
+  "hypotheses": [
+    "H_gfn2_to_batt_homo: a 2-fold out-of-sample linear map from GFN2-xTB HOMO to Batt-P30K HOMO is usable.",
+    "H_gfn2_to_batt_lumo: the same map for LUMO is usable.",
+    "H_gfn2_to_batt_gap: the same map for the gap is usable."
+  ],
+  "thresholds": {
+    "inherited_from": "probes/orbital_second_source_prereg.json",
+    "mae_limit_eV": 0.35,
+    "r_limit": 0.8,
+    "min_paired_n": 40,
+    "why_inherited": "The W17-12 second-source arm fixed 0.35 eV / 0.80 / 60 pairs before any number in this arm existed. Reusing the sibling arm's gates verbatim keeps the two levels of theory comparable on one yardstick, and no threshold here was chosen after seeing this arm's results. Only min_paired_n is lowered, from 60 to 40, because 74 paired anchors exist in total and 60 would leave no headroom for the fold split to be meaningful; this change was made before the harvest finished and is recorded here rather than in the summary."
+  },
+  "decision_rule": "A channel is usable_with_flag only if the out-of-sample MAE is at most 0.35 eV AND the in-sample Pearson r is at least 0.80. Otherwise it is reference_only and its calibrated column stays empty.",
+  "declared_not_doing": [
+    "No DFT is run. GFN2-xTB is a semi-empirical tight-binding Hamiltonian; the repository has no PySCF and Windows has no official wheel. This arm therefore tests the cheapest available level, not a DFT level.",
+    "No raw THEMol HDF5 shard is downloaded. Geometry is read through HTTP range requests against hf-mirror.com; no .h5 byte is written to disk.",
+    "No THEMol-derived value enters data/processed/ other than through data/processed/themol_orbital_layer.csv, and that table is additive: Batt-P30K and PubChemQC columns are never rewritten.",
+    "The THEMol licence is CC BY-NC 4.0. The harvest table is non-commercial and stays under data/raw/."
+  ],
+  "falsification": "If the LUMO or gap map fails, the honest reading is that GFN2-xTB virtual orbitals are not transferable to this level, and the layer must be published as reference_only rather than as a usable source."
+}

@@ -1,0 +1,502 @@
+{
+  "schema_version": 1,
+  "task": "build_four_core_registry",
+  "title": "W17-11 四大核心数据整理：按 InChIKey 的跨通道注册表 + 通道关系矩阵（不拟合任何模型）",
+  "generated_at_utc": "2026-09-26T15:36:30Z",
+  "status": "generated",
+  "prereg": {
+    "path": "probes/four_core_registry_prereg.json",
+    "sha256": "c54bbb96890dec44b6462d6b7d7e7e2c46fcf9e72d69bdde46342faa8feb1099",
+    "status": "locked_before_run",
+    "locked_at_utc": "2026-09-26T14:40:00Z"
+  },
+  "inputs": [
+    {
+      "channel": "dielectric",
+      "path": "data/dielectric_v04.csv",
+      "bytes": 134460,
+      "sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c",
+      "pinned_sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c",
+      "pinned_bytes": 134460,
+      "sha256_matches": true,
+      "bytes_matches": true,
+      "rows": 248,
+      "keys": 247
+    },
+    {
+      "channel": "viscosity",
+      "path": "data/viscosity_v02.csv",
+      "bytes": 11501156,
+      "sha256": "907f5368ff6d4d6c15fa26c8c2b57e8bbc8c7ac7a7b3db06ec2c689b283bf3a5",
+      "pinned_sha256": "907f5368ff6d4d6c15fa26c8c2b57e8bbc8c7ac7a7b3db06ec2c689b283bf3a5",
+      "pinned_bytes": 11501156,
+      "sha256_matches": true,
+      "bytes_matches": true,
+      "rows": 42941,
+      "keys": 1228
+    },
+    {
+      "channel": "orbitals_and_redox",
+      "path": "data/processed/redox_merged.csv",
+      "bytes": 7967704,
+      "sha256": "5b0731db9f1af784e6dc672212bcfe5d2fa68219a2832dafac6063dff9062b65",
+      "pinned_sha256": "5b0731db9f1af784e6dc672212bcfe5d2fa68219a2832dafac6063dff9062b65",
+      "pinned_bytes": 7967704,
+      "sha256_matches": true,
+      "bytes_matches": true,
+      "rows": 29911,
+      "keys": 29868
+    },
+    {
+      "channel": "density",
+      "path": "data/density_v01.csv",
+      "bytes": 29601928,
+      "sha256": "47f920f773054ccd8789ac5679e3da5ca8ec732f8f6e79ba1f824cf68b2556ff",
+      "pinned_sha256": "47f920f773054ccd8789ac5679e3da5ca8ec732f8f6e79ba1f824cf68b2556ff",
+      "pinned_bytes": 29601928,
+      "sha256_matches": true,
+      "bytes_matches": true,
+      "rows": 182154,
+      "keys": 2178
+    },
+    {
+      "channel": "liquid_window",
+      "path": "data/processed/liquid_window_features.csv",
+      "bytes": 175951,
+      "sha256": "a27386787f4c81981fd2489e12139518c29619a13fd9da92a18b28f10ff94fb2",
+      "pinned_sha256": "a27386787f4c81981fd2489e12139518c29619a13fd9da92a18b28f10ff94fb2",
+      "pinned_bytes": 175951,
+      "sha256_matches": true,
+      "bytes_matches": true,
+      "rows": 314,
+      "keys": 314
+    }
+  ],
+  "registry": {
+    "path": "data/processed/four_core_key_registry.csv",
+    "n_rows": 31949,
+    "n_columns": 30,
+    "columns": [
+      "inchikey",
+      "smiles",
+      "name",
+      "has_dielectric",
+      "dielectric",
+      "dielectric_T_K",
+      "has_viscosity",
+      "viscosity_Pa_s",
+      "viscosity_T_K",
+      "has_orbitals",
+      "HOMO_eV",
+      "LUMO_eV",
+      "gap_eV",
+      "IP_eV",
+      "EA_eV",
+      "dipole_au",
+      "dipole_D",
+      "has_redox_label",
+      "oxidation_free_energy_eV",
+      "reduction_free_energy_eV",
+      "has_density",
+      "density_kg_m3",
+      "density_T_K",
+      "has_liquid_window",
+      "mp_C",
+      "bp_C",
+      "flash_point_C",
+      "ambient_density_g_cm3",
+      "n_core_channels",
+      "channels_present"
+    ],
+    "one_row_per_key": true,
+    "n_core_channels_histogram": {
+      "0": 898,
+      "1": 30433,
+      "2": 559,
+      "3": 52,
+      "4": 7
+    }
+  },
+  "channel_counts": {
+    "dielectric": {
+      "label": "介电常数 eps",
+      "source_table": "data/dielectric_v04.csv",
+      "value_columns": [
+        "dielectric"
+      ],
+      "unit": "dimensionless",
+      "reduction": "nearest_to_target_T",
+      "keys": 247,
+      "source_table_keys": 247
+    },
+    "viscosity": {
+      "label": "黏度 eta",
+      "source_table": "data/viscosity_v02.csv",
+      "value_columns": [
+        "viscosity_Pa_s"
+      ],
+      "unit": "Pa*s",
+      "reduction": "nearest_to_target_T",
+      "keys": 1228,
+      "source_table_keys": 1228
+    },
+    "orbitals": {
+      "label": "HOMO/LUMO/IP/EA/偶极",
+      "source_table": "data/processed/redox_merged.csv",
+      "value_columns": [
+        "HOMO",
+        "LUMO",
+        "IP",
+        "EA",
+        "dipole"
+      ],
+      "unit": "eV,eV,eV,eV,atomic_units(e*bohr)",
+      "reduction": "first_non_empty_in_file_order",
+      "keys": 29868,
+      "source_table_keys": 29868
+    },
+    "redox_label": {
+      "label": "氧化还原自由能（RX-392 标签）",
+      "source_table": "data/processed/redox_merged.csv",
+      "value_columns": [
+        "oxidation_free_energy",
+        "reduction_free_energy"
+      ],
+      "unit": "eV",
+      "reduction": "first_non_empty_in_file_order",
+      "keys": 392,
+      "source_table_keys": 29868
+    },
+    "density": {
+      "label": "密度 rho",
+      "source_table": "data/density_v01.csv",
+      "value_columns": [
+        "density_kg_m3"
+      ],
+      "unit": "kg/m3",
+      "reduction": "nearest_to_target_T",
+      "keys": 2178,
+      "source_table_keys": 2178
+    },
+    "liquid_window": {
+      "label": "液相窗口（mp/bp/闪点/密度）",
+      "source_table": "data/processed/liquid_window_features.csv",
+      "value_columns": [
+        "mp_C",
+        "bp_C",
+        "flash_point_C",
+        "density_g_cm3"
+      ],
+      "unit": "degC,degC,degC,g/cm3",
+      "reduction": "first_non_empty_in_file_order",
+      "keys": 218,
+      "source_table_keys": 314
+    }
+  },
+  "core_channels": [
+    "dielectric",
+    "viscosity",
+    "orbitals",
+    "redox_label"
+  ],
+  "core_all_present": 7,
+  "coverage_quartets": {
+    "prereg_core_four": {
+      "channels": [
+        "dielectric",
+        "viscosity",
+        "orbitals",
+        "redox_label"
+      ],
+      "keys": 7
+    },
+    "with_liquid_window_data": {
+      "channels": [
+        "dielectric",
+        "viscosity",
+        "orbitals",
+        "liquid_window"
+      ],
+      "keys": 51
+    },
+    "with_liquid_window_table_keys": {
+      "channels": [
+        "dielectric",
+        "viscosity",
+        "orbitals",
+        "liquid_window(表键口径)"
+      ],
+      "keys": 53
+    }
+  },
+  "liquid_window_reconciliation": {
+    "source_table": "data/processed/liquid_window_features.csv",
+    "table_rows": 314,
+    "table_keys": 314,
+    "keys_with_any_numeric": 218,
+    "keys_with_all_four_columns_empty": 96,
+    "empty_keys": [
+      "ALYCOCULEAWWJO-UHFFFAOYSA-N",
+      "APPOKADJQUIAHP-UHFFFAOYSA-N",
+      "BOGRNZQRTNVZCZ-AATRIKPKSA-N",
+      "BTNXBLUGMAMSSH-UHFFFAOYSA-N",
+      "BWEKDYGHDCHWEN-UHFFFAOYSA-N",
+      "CUNYTRQQXKCRTJ-UHFFFAOYSA-N",
+      "CWIFAKBLLXGZIC-UHFFFAOYSA-N",
+      "CYFFKUDZLZREEX-WNQIDUERSA-M",
+      "CZIUVCSYOGFUPH-UHFFFAOYSA-M",
+      "FOTXAJDDGPYIFU-UHFFFAOYSA-N",
+      "FRZPYEHDSAQGAS-UHFFFAOYSA-M",
+      "FSXANJBLYFVXEU-UHFFFAOYSA-N",
+      "FYIRUPZTYPILDH-UHFFFAOYSA-N",
+      "GOYDNIKZWGIXJT-UHFFFAOYSA-N",
+      "GRCIJNHHTXBJAK-UHFFFAOYSA-N",
+      "GRYUVYIMDGRRLN-UHFFFAOYSA-N",
+      "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "GWQYPLXGJIXMMV-UHFFFAOYSA-M",
+      "GXZCAMSPWNHTAE-UHFFFAOYSA-N",
+      "HCBRSIIGBBDDCD-UHFFFAOYSA-N",
+      "HDGQICNBXPAKLR-UHFFFAOYSA-N",
+      "HEBKCHPVOIAQTA-NGQZWQHPSA-N",
+      "HLLCNVLEVVFTJB-UHFFFAOYSA-N",
+      "HQWOEDCLDNFWEV-UHFFFAOYSA-M",
+      "HZKDSQCZNUUQIF-UHFFFAOYSA-M",
+      "ICIVTHOGIQHZRY-UHFFFAOYSA-N",
+      "IEFUHGXOQSVRDQ-UHFFFAOYSA-N",
+      "IIRFCWANHMSDCG-UHFFFAOYSA-N",
+      "INDFXCHYORWHLQ-UHFFFAOYSA-N",
+      "IVCMUVGRRDWTDK-UHFFFAOYSA-M",
+      "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "JBTWLSYIZRCDFO-UHFFFAOYSA-N",
+      "JCQGIZYNVAZYOH-UHFFFAOYSA-M",
+      "JMXOUHNHEFFQIW-UHFFFAOYSA-M",
+      "JSRLURSZEMLAFO-UHFFFAOYSA-N",
+      "JWFPQAXAGSAKRF-UHFFFAOYSA-N",
+      "JYPJLAPMBJKRDG-UHFFFAOYSA-M",
+      "KGPPDNUWZNWPSI-UHFFFAOYSA-N",
+      "KLTUZFZUYLXTFF-UHFFFAOYSA-N",
+      "KNGDDPFNUUIHKR-UHFFFAOYSA-N",
+      "KXGRFVJWZGSJBS-UHFFFAOYSA-M",
+      "LBHLGZNUPKUZJC-UHFFFAOYSA-N",
+      "LECQXINNQGHJBM-UHFFFAOYSA-N",
+      "LLEVMYXEJUDBTA-UHFFFAOYSA-N",
+      "LPSXSORODABQKT-FIRGSJFUSA-N",
+      "LRESCJAINPKJTO-UHFFFAOYSA-N",
+      "LSBXQLQATZTAPE-UHFFFAOYSA-N",
+      "LTMWUXUUPSUBPP-UHFFFAOYSA-N",
+      "LZJIBRSVPKKOSI-UHFFFAOYSA-O",
+      "MEMNKNZDROKJHP-UHFFFAOYSA-M",
+      "MFXLOVLEQJRXFP-UHFFFAOYSA-N",
+      "MKHFCTXNDRMIDR-UHFFFAOYSA-N",
+      "NEQXUPRFDXNNTA-UHFFFAOYSA-N",
+      "NEZRFXZYPAIZAD-UHFFFAOYSA-N",
+      "NKKMVIVFRUYPLQ-NSCUHMNNSA-N",
+      "NVJBFARDFTXOTO-UHFFFAOYSA-N",
+      "OEPRBXUJOQLYID-UHFFFAOYSA-N",
+      "OIWSIWZBQPTDKI-UHFFFAOYSA-N",
+      "OOKUTCYPKPJYFV-UHFFFAOYSA-N",
+      "OOWFYDWAMOKVSF-UHFFFAOYSA-N",
+      "OVAFCUDNRWHPRW-UHFFFAOYSA-N",
+      "OXFBEEDAZHXDHB-UHFFFAOYSA-M",
+      "QBELEDRHMPMKHP-UHFFFAOYSA-N",
+      "QJPJQTDYNZXKQF-UHFFFAOYSA-N",
+      "QRCRANRUHQKZME-UHFFFAOYSA-N",
+      "RCJMVGJKROQDCB-UHFFFAOYSA-N",
+      "RJQQOKKINHMXIM-UHFFFAOYSA-N",
+      "SBLRHMKNNHXPHG-UHFFFAOYSA-N",
+      "SDJHPPZKZZWAKF-UHFFFAOYSA-N",
+      "SFPQFQUXAJOWNF-UHFFFAOYSA-N",
+      "SHQSVMDWKBRBGB-UHFFFAOYSA-N",
+      "SIXHYMZEOJSYQH-UHFFFAOYSA-M",
+      "STCBHSHARMAIOM-UHFFFAOYSA-N",
+      "SZKKNEOUHLFYNA-UHFFFAOYSA-N",
+      "UCCKRVYTJPMHRO-UHFFFAOYSA-N",
+      "UODQEMVTULZGKO-UHFFFAOYSA-N",
+      "UPCXAARSWVHVLY-UHFFFAOYSA-N",
+      "VASPYXGQVWPGAB-UHFFFAOYSA-M",
+      "VAYTZRYEBVHVLE-UHFFFAOYSA-N",
+      "VCAIYEJBOWHUGP-UHFFFAOYSA-N",
+      "VFTFKUDGYRBSAL-UHFFFAOYSA-N",
+      "VRFOKYHDLYBVAL-UHFFFAOYSA-M",
+      "VVLAIYIMMFWRFW-UHFFFAOYSA-N",
+      "WQONPSCCEXUXTQ-UHFFFAOYSA-N",
+      "WZJDNKTZWIOOJE-UHFFFAOYSA-M",
+      "WZLFPVPRZGTCKP-UHFFFAOYSA-N",
+      "XDJYSDBSJWNTQT-UHFFFAOYSA-N",
+      "XIYUIMLQTKODPS-UHFFFAOYSA-M",
+      "XQQZRZQVBFHBHL-UHFFFAOYSA-N",
+      "XREPTGNZZKNFQZ-UHFFFAOYSA-M",
+      "YPWSSSRXUOQNMQ-UHFFFAOYSA-N",
+      "ZPTRYWVRCNOTAS-UHFFFAOYSA-M",
+      "ZQDPJFUHLCOCRG-AATRIKPKSA-N",
+      "ZQDPJFUHLCOCRG-WAYWQWQTSA-N",
+      "ZTOMUSMDRMJOTH-UHFFFAOYSA-N",
+      "ZUHZGEOKBKGPSW-UHFFFAOYSA-N"
+    ],
+    "empty_keys_overlap_with_channels": {
+      "dielectric": 65,
+      "viscosity": 46,
+      "orbitals": 14,
+      "redox_label": 2,
+      "density": 62
+    },
+    "why": "这 96 行是过筛但没取到数的候选（quality_layer = filter_only）：mp/bp/闪点/密度四列全空、四个 has_* 全 false。按表键口径与按取值列口径会得到两组交集，本 summary 两种都登记，避免同一件事被引用成两个数。",
+    "intersections_with_table_keys": {
+      "dielectric": 246,
+      "viscosity": 202,
+      "orbitals": 89,
+      "redox_label": 10,
+      "density": 246
+    },
+    "quartet_with_table_keys": 53
+  },
+  "channel_intersections": {
+    "dielectric&viscosity": 143,
+    "dielectric&orbitals": 84,
+    "dielectric&redox_label": 10,
+    "dielectric&density": 180,
+    "dielectric&liquid_window": 181,
+    "viscosity&orbitals": 118,
+    "viscosity&redox_label": 10,
+    "viscosity&density": 1179,
+    "viscosity&liquid_window": 156,
+    "orbitals&redox_label": 392,
+    "orbitals&density": 192,
+    "orbitals&liquid_window": 75,
+    "redox_label&density": 13,
+    "redox_label&liquid_window": 8,
+    "density&liquid_window": 184
+  },
+  "descriptive_relation": {
+    "name": "kirkwood_frohlich_dipole_probe",
+    "role": "descriptive_only_never_a_verdict",
+    "formula": "K(eps) = (eps - 1) * (2 * eps + 1) / (9 * eps)",
+    "key_set": "registry 里 has_dielectric = true 且 dipole 非空且 eps > 0 的键",
+    "n_pairs": 79,
+    "n_dielectric_keys": 247,
+    "n_orbitals_keys": 29868,
+    "n_orbitals_with_dipole": 29519,
+    "dipole_unit_in_source": "atomic_units (e*bohr)",
+    "dipole_au_to_debye_factor": 2.541746473,
+    "pearson_kirkwood_vs_dipole_sq": 0.6464482483155134,
+    "pearson_kirkwood_vs_dipole": 0.5934413462534026,
+    "log10": {
+      "n_pairs": 77,
+      "n_skipped_nonpositive": 2,
+      "pearson_log10_kirkwood_vs_log10_dipole_sq": 0.11065312624151812
+    }
+  },
+  "criterion_a_inputs": {
+    "passed": true,
+    "n_inputs": 5,
+    "n_sha256_mismatch": 0,
+    "n_bytes_mismatch": 0,
+    "rule": "sha256 与字节数逐位一致才继续；不一致直接 FAIL。"
+  },
+  "criterion_b_schema": {
+    "passed": true,
+    "columns_match_prereg": true,
+    "n_columns": 30,
+    "n_rows": 31949,
+    "n_union_keys": 31949,
+    "one_row_per_key": true,
+    "rule": "列名与预注册 registry_schema 逐字一致；行数 = 六通道键并集；一键一行。"
+  },
+  "criterion_c_per_channel": {
+    "passed": true,
+    "readings": [
+      {
+        "channel": "dielectric",
+        "has_column": "has_dielectric",
+        "registry_has_true": 247,
+        "contract_keys": 247,
+        "source_table_keys": 247,
+        "matches": true,
+        "nearest_temperature_fallbacks": 0
+      },
+      {
+        "channel": "viscosity",
+        "has_column": "has_viscosity",
+        "registry_has_true": 1228,
+        "contract_keys": 1228,
+        "source_table_keys": 1228,
+        "matches": true,
+        "nearest_temperature_fallbacks": 0
+      },
+      {
+        "channel": "orbitals",
+        "has_column": "has_orbitals",
+        "registry_has_true": 29868,
+        "contract_keys": 29868,
+        "source_table_keys": 29868,
+        "matches": true,
+        "nearest_temperature_fallbacks": 0
+      },
+      {
+        "channel": "redox_label",
+        "has_column": "has_redox_label",
+        "registry_has_true": 392,
+        "contract_keys": 392,
+        "source_table_keys": 29868,
+        "matches": true,
+        "nearest_temperature_fallbacks": 0
+      },
+      {
+        "channel": "density",
+        "has_column": "has_density",
+        "registry_has_true": 2178,
+        "contract_keys": 2178,
+        "source_table_keys": 2178,
+        "matches": true,
+        "nearest_temperature_fallbacks": 0
+      },
+      {
+        "channel": "liquid_window",
+        "has_column": "has_liquid_window",
+        "registry_has_true": 218,
+        "contract_keys": 218,
+        "source_table_keys": 314,
+        "matches": true,
+        "nearest_temperature_fallbacks": 0
+      }
+    ],
+    "reading_note": "orbitals 与 redox_label 共用 data/processed/redox_merged.csv，所以「该通道源表里出现的去重键数」对这两个子通道都等于整表键数；要能把两者分开，判据 C 只能按各自的取值列定义键集（即某个取值列里至少有一个有限数值），source_table_keys 一并列出以供对照。"
+  },
+  "criterion_d_no_model": {
+    "passed": true,
+    "models_fitted": 0,
+    "r2_reported": false,
+    "mae_reported": false,
+    "main_scoreboard_attempts": 0,
+    "note": "本臂只做连接与计数：不拟合任何模型、不上报任何 R2 或 MAE、不引用主记分牌。"
+  },
+  "criterion_e_descriptive": {
+    "passed": true,
+    "role": "descriptive_only_never_a_verdict",
+    "n_pairs": 79,
+    "note": "相关系数只用来说明规模与形态；不是模型性能、不是判决、不许当杠杆证据。"
+  },
+  "boundaries": [
+    "本表是派生视图：源表才是事实；源表一改，本表与两份伴生件都要重跑。",
+    "归约口径写死在预注册里（nearest_to_target_T 的三级并列规则 / first_non_empty_in_file_order），不做平均、不跨温度外推。",
+    "温度归约到 298.15 K 只是选行规则，不代表该键只有这一个温度；要温度曲线请回源表。",
+    "redox_label 通道只有 RX-392 的 392 条标签，是全仓最紧的瓶颈；四个外部数据源与 Reaxys 都没能补上它。",
+    "不含任何 Reaxys 数值；外部数据源（OMat24 / OMol25 / THEMol / 火山 QC）的核查结论见手册附录 AI-2b / AI-2c。",
+    "描述性关系只说明规模与形态，不是模型性能、不是判决、不许当杠杆证据。"
+  ],
+  "reproducibility": {
+    "run": ".venv/Scripts/python.exe probes/build_four_core_registry.py",
+    "check": ".venv/Scripts/python.exe probes/build_four_core_registry.py --check",
+    "verifier": ".venv/Scripts/python.exe scripts/verify_four_core_registry.py --check",
+    "deterministic": "同一批输入字节 => 同一批输出字节；summary 的 generated_at_utc 是唯一易变位，--check 按 stable_view 剥掉。"
+  },
+  "criterion_f_lf": {
+    "passed": true,
+    "policy": "三件产物都以 newline=LF 写出（write_text_lf / write_json_lf / write_csv_lf 显式指定）；report 走 render_report 的同一条路径。"
+  },
+  "wording_guard": {
+    "passed": true,
+    "violations": []
+  },
+  "verdict": "PASS"
+}
