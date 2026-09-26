@@ -51,6 +51,7 @@ import hashlib
 import io
 import json
 import os
+import random
 import re
 import shutil
 import sys
@@ -175,6 +176,57 @@ def iter_roster_targets(
     return targets, counters
 
 
+PACING_SECONDS = 0.12
+READ_TIMEOUT_SECONDS = 25.0
+CONNECT_TIMEOUT_SECONDS = 10.0
+BACKOFF_CAP_SECONDS = 10.0
+HTTP_RETRY_ATTEMPTS = 4
+
+
+def _retrying_get(
+    session: Any,
+    url: str,
+    *,
+    headers: dict[str, str],
+    timeout: float,
+    attempts: int = HTTP_RETRY_ATTEMPTS,
+) -> Any:
+    """GET with exponential backoff.
+
+    The public mirror throttles bursts with HTTP 429 and occasionally drops a
+    connection mid-window; a shard that gives up on the first 429 loses every
+    molecule in that HDF5 file (observed: 413 of 419 targets in one shard).
+    Backoff doubles from 1 s with a little jitter, is capped at 30 s, and an
+    explicit Retry-After header wins when the mirror sends one.
+    """
+
+    import requests
+
+    last: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            response = session.get(url, headers=headers, timeout=(CONNECT_TIMEOUT_SECONDS, timeout))
+            if response.status_code == 429 or response.status_code >= 500:
+                raise requests.HTTPError(f"HTTP {response.status_code}", response=response)
+            response.raise_for_status()
+            return response
+        except requests.RequestException as error:
+            last = error
+            response = getattr(error, 'response', None)
+            retry_after = response.headers.get('Retry-After') if response is not None else None
+            try:
+                delay = float(retry_after) if retry_after else 0.0
+            except (TypeError, ValueError):
+                delay = 0.0
+            if delay <= 0.0:
+                delay = min(2.0 ** attempt, BACKOFF_CAP_SECONDS) + random.random()
+            if attempt == attempts - 1:
+                break
+            time.sleep(delay)
+    assert last is not None
+    raise last
+
+
 class HttpRangeFile(io.RawIOBase):
     """A seekable, read-only file view over HTTP range requests.
 
@@ -184,7 +236,7 @@ class HttpRangeFile(io.RawIOBase):
     rather than the shard size.
     """
 
-    def __init__(self, url: str, session: Any, timeout: float = 60.0) -> None:
+    def __init__(self, url: str, session: Any, timeout: float = READ_TIMEOUT_SECONDS) -> None:
         self.url = url
         self._session = session
         self._timeout = timeout
@@ -192,7 +244,7 @@ class HttpRangeFile(io.RawIOBase):
         self._pos = 0
         self._fetches = 0
         self.fetched_bytes = 0
-        probe = session.get(url, headers={"Range": "bytes=0-0"}, timeout=timeout)
+        probe = _retrying_get(session, url, headers={"Range": "bytes=0-0"}, timeout=timeout)
         content_range = probe.headers.get("Content-Range")
         if content_range:
             self.size = int(content_range.split("/")[-1])
@@ -232,12 +284,12 @@ class HttpRangeFile(io.RawIOBase):
         key = (start, end)
         payload = self._cache.get(key)
         if payload is None:
-            response = self._session.get(
+            response = _retrying_get(
+                self._session,
                 self.url,
                 headers={"Range": f"bytes={start}-{end}"},
                 timeout=self._timeout,
             )
-            response.raise_for_status()
             payload = response.content
             self._cache[key] = payload
             self._fetches += 1
@@ -352,6 +404,7 @@ def harvest(
                 handle.flush()
                 continue
             for target in grouped[h5_name]:
+                time.sleep(PACING_SECONDS)
                 record: dict[str, Any] = {
                     key: target[key]
                     for key in (

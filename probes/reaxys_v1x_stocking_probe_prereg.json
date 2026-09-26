@@ -1,0 +1,72 @@
+{
+  "schema_version": "reaxys_v1x_stocking_probe_roster/v1",
+  "lane": "W17-16",
+  "week": "week17",
+  "title": "Reaxys v1.x stocking-queue probe roster -- the P1+P2 tier, split into what the W17 thin-family lanes already walked and what is still unprobed",
+  "created": "2026-09-27",
+  "purpose": "the Week 17 plan names the Reaxys stocking queue (P1 = 2 / P2 = 22 / P3 = 143) as the compound-expansion channel for the thin families; this roster locks the next probe set before any query is run, and recomputes the already-walked split from the probe artefacts instead of trusting the queue's own stale flag",
+  "scope": {
+    "tiers_included": ["P1", "P2"],
+    "tiers_excluded": ["P3"],
+    "expected_rows": 24,
+    "why_p3_excluded": "P3 is 143 rows and is a family-heuristic tail, not a usability claim; it is left for a later batch so this roster stays reviewable by hand"
+  },
+  "inputs": {
+    "queue": {
+      "path": "probes/reaxys_v1x_stocking_queue.csv",
+      "sha256": "a4ecdab027187475b4d32aefc87dbce9e3821b656562013e6ec7e796c34e33d3",
+      "row_count": 167,
+      "key_column": "inchikey"
+    },
+    "prior_probe_artefacts": [
+      {"path": "probes/reaxys_thin_family_query_facts.csv", "sha256": "f57e865fc1f63ff69c566c6335ac667fbd106a1192c7677f6b65ab61cc33f847"},
+      {"path": "probes/reaxys_thin_family_query_b2_facts.csv", "sha256": "8c87bd6cc3941ce7951f93f82ac92dfc8fc72bfd5b2c285cbd4edd00d28484a5"},
+      {"path": "probes/reaxys_core_four_crosscheck.csv", "sha256": "89154dee65198e2082ec8b7c3a36a2ca6e4d06d2ec9415010275a20e63248593"},
+      {"path": "probes/reaxys_dielectric_queue_first_cut.csv", "sha256": "1bfb3bd5220a9ff82e083850754594270b3f39db666bec929b9ad50dea8d3f78"}
+    ]
+  },
+  "rules": {
+    "already_probed": "a queue row is already_probed when its InChIKey appears in the *inchikey* column of any prior probe artefact listed above, or when the queue itself carries probed_in_this_round = yes.  The two rules are unioned on purpose: the CSV artefacts are key-asserted, while the Week 13 v1.x probe half was transcribed by name and is therefore only reachable through the queue flag.",
+    "probe_status_values": ["probe_target", "already_probed"],
+    "probe_order": "probe_target rows first, ordered by tier (P1 before P2) then by queue_rank; already_probed rows last, also by queue_rank.  Rows flagged aromatic_non_electrolyte_suspect sink to the tail of their tier -- they are still in the roster, never silently dropped.",
+    "aromatic_non_electrolyte_suspect": "family_tag == fluorinated AND the SMILES carries an aromatic carbon (lowercase c).  The Week 17 plan warns that the fluorinated substring rule drags non-electrolyte aromatics (fluorotoluenes, fluorobenzene, difluorobenzene, benzotrifluoride) into P2; the flag marks them for manual review rather than pretending they are electrolyte solvents."
+  },
+  "channel_definitions": {
+    "epsilon": "Dielectric Constant + Static Dielectric Constant",
+    "eta": "Dynamic Viscosity + Kinematic Viscosity",
+    "orbital": "Ionization Potential + Calculated Properties (Reaxys labels this block Quantum Chemical Calculations on some cards)",
+    "redox": "Electrochemical Characteristics only; Electrochemical Behaviour is deliberately excluded",
+    "comment_rule": "the Reaxys Comment column carries values on some cards (11 of 21 eta points in W17-15); the Comment column must be read as well and its provenance recorded"
+  },
+  "counting_semantics": {
+    "rows": "category rows Reaxys reports (every category table expanded to the row count Reaxys itself prints)",
+    "valued": "the value cell is populated; a Reaxys range counts as valued",
+    "point": "the whole value cell parses as a single float",
+    "never_conflated": "rows / valued / point are three separate tallies and are never added, subtracted or substituted for one another",
+    "units": "Reaxys reports its own units and they are preserved, not repaired; T_K is a deterministic conversion of the Celsius column, ranges stay ranges, nothing is averaged and nothing is imputed to 298.15 K"
+  },
+  "compliance": {
+    "ruling": "reports/decisions_log.md section 28.2 (the author's ruling B)",
+    "values_enter_data": false,
+    "values_enter_any_pool": false,
+    "values_enter_any_feature_table": false,
+    "key_rule": "every substance key is taken verbatim from the queue's inchikey column; hand-typed keys are banned",
+    "raw_evidence_dir": "data/raw/reaxys_w17d (git-ignored, kept verbatim on this machine)",
+    "browser": "the author's already signed-in Reaxys session, one substance card at a time; no profile copy, no fresh login, no headless scraping, no bulk export"
+  },
+  "budget": {"max_queries": 30, "one_card_at_a_time": true, "blocked_attempts_are_not_queries": true},
+  "non_interference": {
+    "models_fitted": 0,
+    "r2_reported": false,
+    "main_scoreboard_touched": false,
+    "frozen_digests_touched": false,
+    "data_tracked_files_written": []
+  },
+  "acceptance": [
+    "the roster CSV has exactly the P1+P2 rows of the queue, with no row invented and none dropped",
+    "every roster key appears verbatim in the queue's inchikey column (keys_not_from_the_queue == 0)",
+    "probe_status is recomputed from the prior artefacts, not copied from the queue flag",
+    "the roster is a plan: it runs no query and carries no Reaxys value"
+  ]
+}
+

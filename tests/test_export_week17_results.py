@@ -62,7 +62,7 @@ VISCOSITY_MAE_GATE = 0.15
 DN_AUDIT_SHA256 = "3a80daa9f74c423bfcd6d2cbd3f6c54a6ffe2516daab0c3147e33d92adf7dab6"
 
 # A mutant that rewrites one narrative number must move this line as well.
-README_SHA256 = "3aeb9c45c3ea8be5ac021168647b676c8aa59306a857c22d6237801ecc3279c7"
+README_SHA256 = "c4562e0ee3f3e515ffae1a2885a5f91668317d3132778dcc8b453c25c977b59f"
 README_NARRATIVE_NUMBERS = (
     "0.4091179943351143",
     "0.7481271437772365",
@@ -136,6 +136,20 @@ README_NARRATIVE_NUMBERS = (
     "1/0/0",
     "11/21",
     "10/21",
+    # W17-16 .. W17-19 -- the late arms.
+    "98/70/53",
+    "144/130/90",
+    "70/30/30",
+    "27/0/0",
+    "35,579/35,579",
+    "15,388 B",
+    "1×10⁻⁴ eV",
+    "5,117",
+    "4,668",
+    "0.8549",
+    "0.3036",
+    "0.6141",
+    "0.4343",
 )
 
 
@@ -656,7 +670,7 @@ def test_the_restricted_contract_withholds_every_reaxys_list(
 
     shipped = {destination for _, destination in ARTIFACTS}
     excluded = contract["repo_internal_only"]
-    assert len(excluded) == len(RESTRICTED_EXCLUDED) == 15
+    assert len(excluded) == len(RESTRICTED_EXCLUDED) == 25
     for entry in excluded:
         assert (REPOSITORY_ROOT / entry["path"]).is_file(), entry["path"]
         assert len(entry["sha256"]) == 64, entry["path"]

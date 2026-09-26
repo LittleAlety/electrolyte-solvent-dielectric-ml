@@ -29,11 +29,21 @@ from an upstream dataset that requires attribution, so the credit lives here.
   energies with explicit provenance are shipped, and every derived row keeps
   the `source_dataset`, `source_level` and `source_license` columns intact.
 
-## Licence carve-out: one file is CC BY-NC 4.0, not CC BY 4.0
+## Licence carve-out: the THEMol-derived files are CC BY-NC 4.0, not CC BY 4.0
 
 Every other file under `data/**` and `probes/**` is CC BY 4.0 as stated above.
-**`data/processed/themol_orbital_layer.csv` is the single exception** and it is
-**not** CC BY 4.0.
+The files below are the exceptions and they are **not** CC BY 4.0. They are the
+only place in the repository where a CC BY-NC 4.0 derivative is tracked:
+
+- `data/processed/themol_orbital_layer.csv` (arm W17-14)
+- `data/processed/themol_orbital_layer_expanded.csv` (arm W17-17)
+- `probes/themol_eps_reproduction_facts.csv` and the frozen chain-B copies
+  under `probes/themol_eps_reproduction_inputs/` (the independent reproduction)
+- both `reports/themol_*.md` that quote per-molecule GFN2 numbers from them
+
+Nothing else inherits the restriction: the raw expansion harvest lives under
+`data/raw/themol/expand/`, which `.gitignore` covers, and is never
+redistributed.
 
 - **THEMol** - `data/processed/themol_orbital_layer.csv` (Week 17, arm W17-14).
   The upstream dataset is ByteDance-Seed/THEMol (arXiv 2605.14973), whose code is

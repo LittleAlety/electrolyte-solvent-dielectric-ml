@@ -46,7 +46,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=core; epsilon=wording_only; leads=1
 - ε 线索：wording_only（无数值）；证据类型 汇编转述
 - OA：green，可达=false；线索来源 https://zenodo.org/record/7801393
-- 本地非介电痕迹：data/external/SolvFunc-87.csv:name;data/processed/al_round1_longlist.csv:name;data/processed/four_core_key_registry.csv:key;data/processed/redox_merged.csv:key
+- 本地非介电痕迹：data/external/SolvFunc-87.csv:name;data/processed/al_round1_longlist.csv:name;data/processed/four_core_key_registry.csv:key;data/processed/redox_merged.csv:key;data/processed/themol_orbital_layer_expanded.csv:key
 
 ### P3 · 2,2,2-trifluoroethanol（仅线索）
 
@@ -55,7 +55,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=off; epsilon=wording_only; leads=3
 - ε 线索：wording_only（无数值）；证据类型 汇编转述
 - OA：bronze;green，可达=true；线索来源 https://edoc.unibas.ch/48169/1/No%2037%20Hankache_JPhysChemA_2012_116_8159.pdf
-- 本地非介电痕迹：data/density_v01.csv:key;data/external/chew_2024_viscosity_supp_2.csv:name;data/processed/dn_coverage_audit.csv:key;data/processed/eta_epsilon_joint_observations.csv:key;data/processed/four_core_key_registry.csv:key;data/processed/landolt_boernstein_2015_pure_liquid_queue.csv:name;data/processed/orbital_second_source_layer.csv:key;data/processed/viscosity_baseline_predictions.csv:key;data/processed/viscosity_raw.csv:key;data/restricted/springer_materials/interactive_pure_dielectric_catalog.json:name;data/viscosity_v01.csv:key;data/viscosity_v02.csv:key
+- 本地非介电痕迹：data/density_v01.csv:key;data/external/chew_2024_viscosity_supp_2.csv:name;data/processed/dn_coverage_audit.csv:key;data/processed/eta_epsilon_joint_observations.csv:key;data/processed/four_core_key_registry.csv:key;data/processed/landolt_boernstein_2015_pure_liquid_queue.csv:name;data/processed/orbital_second_source_layer.csv:key;data/processed/themol_orbital_layer_expanded.csv:key;data/processed/viscosity_baseline_predictions.csv:key;data/processed/viscosity_raw.csv:key;data/restricted/springer_materials/interactive_pure_dielectric_catalog.json:name;data/viscosity_v01.csv:key;data/viscosity_v02.csv:key
 - 受限痕迹：命中 data/restricted/ 下的文件。本清单只记路径、不取任何值；该物质应走受限交叉核对通道判定，而不是靠新取数解决。
 
 ### P3 · decafluoropentane（放弃）
@@ -74,7 +74,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=off; epsilon=wording_only; leads=2
 - ε 线索：wording_only（无数值）；证据类型 第一手测量
 - OA：green;hybrid，可达=true；线索来源 https://doi.org/10.1002/anie.202416091
-- 本地非介电痕迹：data/density_v01.csv:key;data/processed/four_core_key_registry.csv:key
+- 本地非介电痕迹：data/density_v01.csv:key;data/processed/four_core_key_registry.csv:key;data/processed/themol_orbital_layer_expanded.csv:key
 
 ### P3 · methoxy-nonafluorobutane（放弃）
 

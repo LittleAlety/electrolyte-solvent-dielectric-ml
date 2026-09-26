@@ -1,0 +1,110 @@
+{
+  "arm": "W17-17",
+  "title": "THEMol/GFN2-xTB registry-wide orbital expansion: 166 -> 5,117 molecules, with the cross-level calibration re-fit on thousands of pairs instead of 74 anchors",
+  "status": "locked_before_run",
+  "created_utc": "2026-09-27",
+  "question": "W17-14 could only compare GFN2-xTB against the wB97X-V/def2-TZVPPD/SMD(18.5) reference on 74 paired anchors, which is why its three channels stayed `reference_only`. THEMol covers 5,117 of the repository's 31,949 key-registry molecules. Does running the whole covered set (a) give reference-only HOMO/LUMO to 421 molecules that have none, and (b) change the cross-level verdict once the calibration pair count grows by ~60x?",
+  "why_now": "The author asked for the HOMO/LUMO channel to be collected for real, pointed at THEMol, and asked for the THEMol work to be parallelised across several agents. W17-14 answered 'THEMol is a geometry source, not an orbital source' on 74 anchors; that answer is only as strong as its sample.",
+  "inputs": {
+    "target_roster": {
+      "path": "probes/themol_registry_expansion_roster.csv",
+      "sha256": "71277d2c2607dfc5efb31654e2bb668a2618ef6e830073c4aea7fcb48d0136d6",
+      "bytes": 956973,
+      "rows": 5117
+    },
+    "target_roster_summary": {
+      "path": "probes/themol_registry_expansion_roster_summary.json",
+      "sha256": "a2af482993d062274f8bc47ef30a22e140ce80e3950cbd0a4cc7aef860ef33fd"
+    },
+    "themol_index": {
+      "path": "data/raw/themol/themol_registry_index.csv",
+      "sha256": "7843767705f5746cc8ce6bb48f657a0f02eda333269f6fa844678649c7eaf120",
+      "note": "rows are exactly the registry keys present in the THEMol Hessian pool"
+    },
+    "registry": {
+      "path": "data/processed/four_core_key_registry.csv",
+      "sha256": "e42885eb43779b7a4d472da88fefe018fe94150ff5b6fba86b3ed9bc83dc8bee"
+    },
+    "dielectric_roster": {
+      "path": "data/dielectric_v04.csv",
+      "sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c"
+    },
+    "prior_arm": {
+      "path": "probes/themol_orbital_layer_summary.json",
+      "note": "W17-14: 166 molecules harvested (142 eps + 72 anchors, overlapping), verdict reference_only on all three channels, gates MAE <= 0.35 eV and r >= 0.80"
+    }
+  },
+  "source": {
+    "dataset_id": "ByteDance-Seed/THEMol",
+    "subset": "Hessian (hessian_0.h5 .. hessian_46.h5)",
+    "mirror": "https://hf-mirror.com",
+    "license": "CC BY-NC 4.0 (data) / Apache-2.0 (code); derived values are non-commercial",
+    "what_themol_stores": "atomic_numbers, coords, hessian only - no eigenvalue, no gap, no IP/EA; the orbital numbers in this arm are computed here, not read from the dataset"
+  },
+  "engine": {
+    "program": "xtb",
+    "version": "6.7.1pre",
+    "method": "GFN2-xTB",
+    "job": "--sp (single point on the THEMol DFT geometry, gas phase)",
+    "runner": "electrolyte_ml.xtb_runner (OMP_NUM_THREADS pinned to 1, private scratch directory per molecule)",
+    "geometry_provenance": "per-row geometry_sha256 of the exact XYZ handed to xTB"
+  },
+  "target_counts": {
+    "roster_rows": 5117,
+    "rows_by_tier": {
+      "no_reference_orbital": 421,
+      "flagship_dielectric": 54,
+      "named_core_channel": 68,
+      "calibration_bulk": 4574
+    },
+    "registry_channel_hits": {
+      "has_orbitals": 4696,
+      "has_density": 507,
+      "has_viscosity": 246,
+      "has_dielectric": 142,
+      "has_liquid_window": 141,
+      "has_redox_label": 38
+    },
+    "counters": {
+      "registry_rows": 31949,
+      "unparsable_smiles": 2,
+      "not_in_themol": 26830,
+      "duplicate_canonical": 0,
+      "matched": 5117
+    }
+  },
+  "run_plan": {
+    "shards": 14,
+    "sharding_rule": "whole hessian_N.h5 containers dealt round-robin, so no two shards ever open the same HDF5 file",
+    "raw_outputs": "data/raw/themol/expand/shard_<i>.csv (git-ignored, non-commercial)",
+    "delivery_layer": "data/processed/themol_orbital_layer_expanded.csv",
+    "expected_wall_clock_minutes": 45,
+    "network_model": "~175 KB/s per HTTP range stream measured on hf-mirror; ~0.86 MB of geometry per molecule; aggregate scales with stream count"
+  },
+  "judgements": {
+    "A_harvest_integrity": "every delivered row has a non-empty geometry_sha256, returncode 0, finite homo_eV/lumo_eV and gap == lumo - homo to 1e-9; otherwise the row is reported as failed, never silently dropped",
+    "B_structure": "per-row InChIKey recomputed from the row's own SMILES must equal the roster InChIKey (same rule as W17-14)",
+    "C_unit": "the eV column of the '# Occupation Energy/Eh Energy/eV' table is the source; an independent re-parse of the stored xTB output must reproduce every delivered number",
+    "D_cross_level_gate": "inherited verbatim from probes/orbital_second_source_prereg.json: a channel is `calibrated` only if out-of-sample MAE <= 0.35 eV AND r >= 0.80; otherwise it is `reference_only`",
+    "E_calibration_protocol": "same 2-fold out-of-sample protocol as W17-14 (split by canonical SMILES hash, fixed seed), now applied to every pair that has both a GFN2 number and a Batt wB97X-V number",
+    "F_no_regression_of_prior_arms": "data/processed/themol_orbital_layer.csv and four_core_key_registry.csv bytes must not change; the expanded layer is a new additive file"
+  },
+  "deliverables": {
+    "roster_builder": "probes/build_themol_registry_expansion_roster.py",
+    "expanded_layer_builder": "probes/build_themol_orbital_layer_expanded.py",
+    "verifier": "scripts/verify_themol_orbital_layer_expanded.py",
+    "tests": "tests/test_themol_registry_expansion.py",
+    "report": "reports/themol_orbital_layer_expanded.md",
+    "figures": [
+      "probes/artifacts/themol_expansion_coverage.png",
+      "probes/artifacts/themol_expansion_calibration.png"
+    ]
+  },
+  "compliance": {
+    "raw_layer_gitignored": "data/raw/** is ignored; the CC BY-NC geometry derivative never enters a tracked path",
+    "tracked_values": "only the delivery layer and its summaries, each row carrying source_dataset / source_level / source_license",
+    "non_commercial": true
+  },
+  "is_a_plan_not_a_measurement": true,
+  "queries_executed": 0
+}

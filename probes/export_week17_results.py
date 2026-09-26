@@ -130,6 +130,16 @@ RESTRICTED_EXCLUDED = (
     ("probes/reaxys_thin_family_query_b2_summary.json", True),
     ("probes/reaxys_thin_family_query_b2_facts.csv", False),
     ("tests/test_reaxys_thin_family_query_b2.py", False),
+    ("probes/reaxys_v1x_stocking_query.py", True),
+    ("probes/reaxys_v1x_stocking_query_summary.json", True),
+    ("probes/reaxys_v1x_stocking_query_facts.csv", False),
+    ("reports/reaxys_v1x_stocking_query.md", True),
+    ("tests/test_reaxys_v1x_stocking_query.py", False),
+    ("probes/reaxys_v1x_stocking_query_round2.py", True),
+    ("probes/reaxys_v1x_stocking_query_round2_summary.json", True),
+    ("probes/reaxys_v1x_stocking_query_round2_facts.csv", False),
+    ("reports/reaxys_v1x_stocking_query_round2.md", True),
+    ("tests/test_reaxys_v1x_stocking_query_round2.py", False),
 )
 
 README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密度 / 液相窗口 / 配位块 / Walden / DN）
@@ -140,7 +150,7 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
 （182,154 行）、`data/viscosity_v02.csv`（42,941 行）；六件冻结件 digest **6/6 INTACT**。
 生成脚本: `probes/export_week17_results.py`
 
-## 头条（十五句话，都不许外推）
+## 头条（十九句话，都不许外推）
 
 1. **四大核心数据的现状到此一眼可查**（四通道覆盖板，`four_channel_coverage.csv`，29 行）：
    **ε** 主记分牌 `0.4091179943351143`（457 行 / 97 化合物 = **276** 对），天花板是**信息缺口**
@@ -246,7 +256,35 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
     `Calculated Properties`），与第一批记的 `Other Data > Calculated Properties` 是同一物、标签不同。
     **轨道通道仍无任何 HOMO/LUMO**，氧化还原仍 **0 个点值** ⇒ **P4 的 392 条标签瓶颈未被缓解**。
     按裁决 B 整文件不进本交付包，数值不进 `data/`、不进任何池或特征表；本臂 `models_fitted = 0`。
-
+16. **Reaxys 库存队列 P1+P2 实查：氧化还原的 392 条瓶颈不是「没有数据」，而是「数据不在数值列里」**
+    （W17-16，**19** 物质 / **21** 次查询 / 预算 30）：P2 层 22 行里 3 行早前车道已读 ⇒ 未读集 **19** 个，
+    逐通道（条数 / 有数值 / 点值）：ε **98/70/53**、η **144/130/90**、轨道 **70/30/30**、氧化还原 **27/0/0**。
+    **两条新发现**：① `Electrochemical Characteristics` **整个分类没有数值列**——27 行里 **13** 行的电位只写在
+    `Comment` 字符串里（`-2.57 V` / `2.24 V` / `> 3.2 V`），只读数值列的下游会看到 **0** 个氧化还原值；
+    ② 队列自带的 `probed_in_this_round` 列**已过期**：3 行标 `no` 而早前车道已读过，**该列不能用来筛目标集**。
+    轨道通道结论不变：**Reaxys 仍不提供可用的 HOMO/LUMO 数字**。按裁决 B 数值不进本包、不进 `data/`。
+    第二轮（W17-20）把预算跑到 **30/30**、再实查 **7** 个物质（专挑芳环/卤代芳烃，因为它们的卡片氧化还原行最密）：
+    氧化还原的**证据面**从 **27** 行扩到 **121** 行，但**有数值 / 点值仍是 0/0**——
+    也就是说 P4 的 **392** 条标签瓶颈**在数值层面一条都没有缓解**（121 行里 58 行把电压写在 `Comment` 串里）。
+17. 17. **THEMol 全量扩展：HOMO 通道翻过门，LUMO/gap 仍旧不可用**（W17-17）：把「关键名册 ∩ THEMol」
+    的全部 **5,117** 个分子冻结成名册（`probes/themol_registry_expansion_roster.csv`，运行前锁 digest），
+    同一 GFN2-xTB 单点链路跑到 **5,117 个（100.0%，`run_status = complete`）**，其中 **291 个分子此前没有任何轨道数值**、
+    ε 名册命中 **142/247**。跨水平标定样本从 W17-14 的 **74 个锚**涨到 **4,668 对**：
+    **HOMO r 0.8549、样本外 MAE 0.3036 eV ⇒ 两个门都过（`usable_with_flag`）**——W17-14 当时就是差 **0.0031 eV** 没过；
+    但 **LUMO（r 0.6141，MAE 0.3495 eV，slope 0.1497）与 gap（r 0.4343，MAE 0.5910 eV）仍是 `reference_only`**，
+    「半经验紧束缚的虚轨道不可用」被更大的样本重新确认。能级偏移 GFN2−Batt：HOMO **-1.2052 eV**（σ 0.4046，可平移）、
+    LUMO **-7.5377 eV**（σ 1.9654，离散不可平移）。**Batt 与 PubChemQC 两列一个字节未改**，本臂 `models_fitted = 0`。
+18. **OMat24 已核：不是分子、也没有任何轨道量 ⇒ 否决**（W17-18）：仓库 `facebook/OMAT24` 本体只有 5 个文件
+    （15,388 B），真实数据托管在 HF 之外；实测解析 `val/rattled-300-subsampled` 的 **35,579** 条记录，
+    20 个候选轨道 key（`homo`/`lumo`/`gap`/`bandgap`/`eigenvalues`/…）命中 **0**，
+    `pbc` 全 `True`（**35,579/35,579**，非周期 0 条），元素前排是 Li/Tl/La/Y/Hg ⇒ 周期性无机晶体数据集。
+    结构检索同样不可行（12 个标识 key 全 0 命中；5 个 ε 溶剂的分子式 5/5 无命中）。
+    许可本身没有问题（**CC BY 4.0**）——**否决与许可无关**。
+19. **W17-14 的 ε 子集在第二条独立代码路径上复现：逐位相同**（W17-19）：把 agent 手写链路的 **51** 个可比分子
+    与官方层逐 InChIKey 对齐，ΔHOMO 最大 **1×10⁻⁴ eV**、ΔLUMO **1×10⁻⁴**、Δgap **2×10⁻⁴**
+    （141 个通道里 108 个 Δ=0），**`themol_uuid` 一致率 100%（51/51）** ⇒ 同一构象、同一几何。
+    同时纠正一处记录：那条链路的文件名写着 `eps142`，实际只有 **51** 个唯一分子（三个分片是同一批的重复跑），
+    **W17-14 官方层才是权威列**。
 ## 本周目录
 
 | 臂 | 内容 | 落点 |
@@ -265,6 +303,10 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
 | W17-13 | Reaxys 薄族补货队列实查（10 物质，**只核对，不入数据**） | probes/reaxys_thin_family_query_facts.csv（**不进本包**） |
 | W17-14 | THEMol/GFN2-xTB 第三轨道源（几何可读、能级不可混用；**负结果**） | data/processed/themol_orbital_layer.csv |
 | W17-15 | Reaxys 薄族第二批实查（4 物质，**只核对，不入数据**） | probes/reaxys_thin_family_query_b2_facts.csv（**不进本包**） |
+| W17-16 | Reaxys 库存队列 P1+P2 实查（19 物质，**只核对，不入数据**） | probes/reaxys_v1x_stocking_query_facts.csv（**不进本包**） |
+| W17-17 | THEMol/GFN2-xTB 全量轨道扩展（5,117 目标；跨水平标定重估） | data/processed/themol_orbital_layer_expanded.csv |
+| W17-18 | OMat24 可行性审计（**否决**：无轨道量、非分子） | probes/omat24_feasibility_facts.json |
+| W17-19 | W17-14 ε 子集在第二条代码路径上的独立复现 | probes/themol_eps_reproduction_facts.csv |
 
 ## 复跑方式
 
@@ -277,6 +319,8 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
 .\\.venv\\Scripts\\python.exe scripts\\verify_four_core_registry.py --check
 .\\.venv\\Scripts\\python.exe scripts\\verify_orbital_second_source.py --check
 .\\.venv\\Scripts\\python.exe scripts\\verify_themol_orbital_layer.py --check
+.\\.venv\\Scripts\\python.exe scripts\\verify_themol_orbital_layer_expanded.py --check
+.\\.venv\\Scripts\\python.exe scripts\\verify_reaxys_v1x_stocking_probe_roster.py --check
 ```
 
 `scripts/verify_density_v01.py --check` 与 `scripts/verify_viscosity_v02.py --check` **都不在** CI 里：
@@ -532,6 +576,61 @@ ARTIFACTS = (
         "probes/artifacts/themol_orbital_layer_coverage.png",
         "themol_orbital_layer_coverage.png",
     ),
+    # W17-16 -- the Reaxys stocking-queue probe roster (a plan: no Reaxys value).
+    ("probes/build_reaxys_v1x_stocking_probe_roster.py", "build_reaxys_v1x_stocking_probe_roster.py"),
+    ("probes/reaxys_v1x_stocking_probe_roster.csv", "reaxys_v1x_stocking_probe_roster.csv"),
+    ("probes/reaxys_v1x_stocking_probe_roster_summary.json", "reaxys_v1x_stocking_probe_roster_summary.json"),
+    ("probes/reaxys_v1x_stocking_probe_prereg.json", "reaxys_v1x_stocking_probe_prereg.json"),
+    ("scripts/verify_reaxys_v1x_stocking_probe_roster.py", "verify_reaxys_v1x_stocking_probe_roster.py"),
+    ("reports/reaxys_v1x_stocking_probe_roster.md", "reaxys_v1x_stocking_probe_roster.md"),
+    ("tests/test_reaxys_v1x_stocking_probe_roster.py", "test_reaxys_v1x_stocking_probe_roster.py"),
+    # W17-17 -- THEMol/GFN2-xTB registry-wide orbital expansion.
+    ("probes/build_themol_registry_expansion_roster.py", "build_themol_registry_expansion_roster.py"),
+    ("probes/themol_registry_expansion_roster.csv", "themol_registry_expansion_roster.csv"),
+    ("probes/themol_registry_expansion_roster_summary.json", "themol_registry_expansion_roster_summary.json"),
+    ("probes/themol_registry_expansion_prereg.json", "themol_registry_expansion_prereg.json"),
+    ("probes/build_themol_orbital_layer_expanded.py", "build_themol_orbital_layer_expanded.py"),
+    ("probes/themol_orbital_layer_expanded_summary.json", "themol_orbital_layer_expanded_summary.json"),
+    ("data/processed/themol_orbital_layer_expanded.csv", "data/processed/themol_orbital_layer_expanded.csv"),
+    ("scripts/verify_themol_orbital_layer_expanded.py", "verify_themol_orbital_layer_expanded.py"),
+    ("probes/plot_themol_registry_expansion.py", "plot_themol_registry_expansion.py"),
+    ("probes/artifacts/themol_expansion_coverage.png", "themol_expansion_coverage.png"),
+    ("probes/artifacts/themol_expansion_calibration.png", "themol_expansion_calibration.png"),
+    ("reports/themol_orbital_layer_expanded.md", "themol_orbital_layer_expanded.md"),
+    ("tests/test_themol_registry_expansion.py", "test_themol_registry_expansion.py"),
+    ("probes/themol_expand_unit_recheck.py", "themol_expand_unit_recheck.py"),
+    # What THEMol actually contains, keyed off the H5 bytes: the DFT orbital
+    # energies we want are not in the dataset, MBIS atomic populations are.
+    ("probes/themol_property_inventory.py", "themol_property_inventory.py"),
+    ("probes/themol_property_inventory.json", "themol_property_inventory.json"),
+    ("reports/themol_property_inventory.md", "themol_property_inventory.md"),
+    ("tests/test_themol_property_inventory.py", "test_themol_property_inventory.py"),
+    ("tests/test_themol_expand_unit_recheck.py", "test_themol_expand_unit_recheck.py"),
+    # W17-17 addenda: the adversarial audit of this arm and the visual report.
+    ("probes/audit_themol_expanded_layer.py", "audit_themol_expanded_layer.py"),
+    ("probes/themol_expanded_layer_audit.json", "themol_expanded_layer_audit.json"),
+    ("reports/themol_expanded_layer_audit.md", "themol_expanded_layer_audit.md"),
+    ("tests/test_themol_expanded_layer_audit.py", "test_themol_expanded_layer_audit.py"),
+    ("probes/plot_week17_channels.py", "plot_week17_channels.py"),
+    ("reports/week17_visual_report.md", "week17_visual_report.md"),
+    ("tests/test_plot_week17_channels.py", "test_plot_week17_channels.py"),
+    ("probes/artifacts/w17_channels_gate_board.png", "w17_channels_gate_board.png"),
+    ("probes/artifacts/w17_channels_label_inventory.png", "w17_channels_label_inventory.png"),
+    ("probes/artifacts/w17_reaxys_round_tally.png", "w17_reaxys_round_tally.png"),
+    ("probes/artifacts/w17_themol_calibration_parity.png", "w17_themol_calibration_parity.png"),
+    ("probes/artifacts/w17_themol_level_offsets.png", "w17_themol_level_offsets.png"),
+    ("probes/artifacts/w17_themol_tier_delivery.png", "w17_themol_tier_delivery.png"),
+    # The independent reproduction of the W17-14 eps subset on a second code path.
+    ("probes/themol_eps_reproduction.py", "themol_eps_reproduction.py"),
+    ("probes/themol_eps_reproduction_facts.csv", "themol_eps_reproduction_facts.csv"),
+    ("probes/themol_eps_reproduction_summary.json", "themol_eps_reproduction_summary.json"),
+    ("reports/themol_eps_reproduction.md", "themol_eps_reproduction.md"),
+    ("tests/test_themol_eps_reproduction.py", "test_themol_eps_reproduction.py"),
+    # The OMat24 verdict: no orbital quantity, not molecular. A rejection with evidence.
+    ("probes/omat24_feasibility_audit.py", "omat24_feasibility_audit.py"),
+    ("probes/omat24_feasibility_facts.json", "omat24_feasibility_facts.json"),
+    ("reports/omat24_feasibility.md", "omat24_feasibility.md"),
+    ("tests/test_omat24_feasibility.py", "test_omat24_feasibility.py"),
     (".gitignore", ".gitignore"),
     (".github/workflows/ci.yml", "ci.yml"),
     ("probes/export_results_common.py", "export_results_common.py"),
@@ -553,6 +652,8 @@ VERIFIERS = (
     "scripts/verify_four_core_registry.py --check",
     "scripts/verify_orbital_second_source.py --check",
     "scripts/verify_themol_orbital_layer.py --check",
+    "scripts/verify_themol_orbital_layer_expanded.py --check",
+    "scripts/verify_reaxys_v1x_stocking_probe_roster.py --check",
     (
         "-m pytest tests/test_dielectric_v04.py tests/test_reaxys_thin_family_backfill.py "
         "tests/test_build_density_v01.py tests/test_build_viscosity_v02.py "
@@ -564,7 +665,13 @@ VERIFIERS = (
         "tests/test_unimol_probe_spec.py tests/test_week15_reporting_accuracy.py "
         "tests/test_reaxys_core_four_crosscheck.py "
         "tests/test_reaxys_thin_family_query.py tests/test_reaxys_thin_family_query_b2.py "
+        "tests/test_reaxys_v1x_stocking_query.py tests/test_reaxys_v1x_stocking_probe_roster.py "
         "tests/test_themol_orbital_layer.py tests/test_export_week16_results.py "
+        "tests/test_themol_registry_expansion.py tests/test_themol_eps_reproduction.py "
+        "tests/test_omat24_feasibility.py "
+        "tests/test_themol_expand_unit_recheck.py tests/test_themol_property_inventory.py "
+        "tests/test_themol_expanded_layer_audit.py "
+        "tests/test_plot_week17_channels.py tests/test_reaxys_v1x_stocking_query_round2.py "
         "tests/test_repo_hygiene.py -q -p no:cacheprovider"
     ),
 )
@@ -590,6 +697,24 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
     viscosity = read_json(REPOSITORY_ROOT / "probes" / "viscosity_v02_summary.json")
     reaxys = read_json(
         REPOSITORY_ROOT / "probes" / "reaxys_core_four_crosscheck_summary.json"
+    )
+    # The late week-17 arms: the Reaxys stocking queue, the THEMol registry-wide
+    # expansion, the OMat24 verdict and the independent reproduction.
+    stocking_roster = read_json(
+        REPOSITORY_ROOT / "probes" / "reaxys_v1x_stocking_probe_roster_summary.json"
+    )
+    stocking_query = read_json(
+        REPOSITORY_ROOT / "probes" / "reaxys_v1x_stocking_query_summary.json"
+    )
+    stocking_round2 = read_json(
+        REPOSITORY_ROOT / "probes" / "reaxys_v1x_stocking_query_round2_summary.json"
+    )
+    themol_expanded = read_json(
+        REPOSITORY_ROOT / "probes" / "themol_orbital_layer_expanded_summary.json"
+    )
+    omat24 = read_json(REPOSITORY_ROOT / "probes" / "omat24_feasibility_facts.json")
+    eps_repro = read_json(
+        REPOSITORY_ROOT / "probes" / "themol_eps_reproduction_summary.json"
     )
 
     frozen = _frozen_red_lines()
@@ -988,6 +1113,107 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                 }
                 for relative, carries_values in RESTRICTED_EXCLUDED
             ],
+        },
+        "late_arms": {
+            "W17-16_reaxys_stocking_queue": {
+                "roster": {
+                    "path": "probes/reaxys_v1x_stocking_probe_roster.csv",
+                    "sha256": _sha256(REPOSITORY_ROOT / "probes/reaxys_v1x_stocking_probe_roster.csv"),
+                    "rows": (stocking_roster.get("roster") or {}).get("rows"),
+                    "probe_target": (stocking_roster.get("counts") or {}).get("probe_target"),
+                    "already_probed": (stocking_roster.get("counts") or {}).get("already_probed"),
+                    "aromatic_non_electrolyte_suspects": (stocking_roster.get("counts") or {}).get(
+                        "aromatic_non_electrolyte_suspect"
+                    ),
+                    "queries_executed": stocking_roster.get("queries_executed"),
+                    "is_a_plan_not_a_measurement": stocking_roster.get("is_a_plan_not_a_measurement"),
+                },
+                "reader": {
+                    "path": "probes/reaxys_v1x_stocking_query_facts.csv",
+                    "sha256": _sha256(REPOSITORY_ROOT / "probes/reaxys_v1x_stocking_query_facts.csv"),
+                    "substances_queried": stocking_query.get("substances_queried"),
+                    "channel_tally": stocking_query.get("channel_tally"),
+                },
+                "carries_reaxys_values": False,
+                "values_ship_in_this_bundle": False,
+                "finding": (
+                    "the Electrochemical Characteristics category has no numeric column at "
+                    "all: 13 of its 27 rows carry the potential only inside the Comment "
+                    "string, so a downstream reader of the value column sees zero redox "
+                    "numbers; and the probed_in_this_round column shipped with the queue is "
+                    "stale, with three rows marked no although earlier lanes had read them"
+                ),
+            },
+            "W17-20_reaxys_stocking_round2": {
+                "reader": {
+                    "path": "probes/reaxys_v1x_stocking_query_round2_facts.csv",
+                    "sha256": _sha256(
+                        REPOSITORY_ROOT / "probes" / "reaxys_v1x_stocking_query_round2_facts.csv"
+                    ),
+                    "substances_queried": stocking_round2.get("substances_queried"),
+                    "channel_tally": stocking_round2.get("channel_tally"),
+                    "cumulative_queries": (stocking_round2.get("session") or {}).get(
+                        "cumulative_queries"
+                    ),
+                    "redox_comment_audit": stocking_round2.get("redox_comment_audit"),
+                },
+                "carries_reaxys_values": False,
+                "values_ship_in_this_bundle": False,
+                "finding": (
+                    "the second round spends the rest of the query budget (30/30) on seven "
+                    "aromatic and halogenated substances picked because their cards are "
+                    "redox-row dense; it grows the redox evidence surface from 27 to 121 rows "
+                    "while the count of usable numeric redox labels stays at zero, because the "
+                    "Electrochemical Characteristics category still has no numeric column"
+                ),
+            },
+            "W17-17_themol_registry_expansion": {
+                "layer": {
+                    "path": "data/processed/themol_orbital_layer_expanded.csv",
+                    "sha256": _sha256(
+                        REPOSITORY_ROOT / "data/processed/themol_orbital_layer_expanded.csv"
+                    ),
+                },
+                "run_status": themol_expanded.get("run_status"),
+                "delivered_rows": themol_expanded.get("delivered_rows"),
+                "roster_rows": themol_expanded.get("roster_rows"),
+                "rows_by_tier": themol_expanded.get("rows_by_tier"),
+                "calibration": {
+                    channel: {
+                        "status": payload.get("status"),
+                        "n": payload.get("n"),
+                        "pearson_r_in_sample": payload.get("pearson_r_in_sample"),
+                        "pearson_r_out_of_sample": payload.get("pearson_r_out_of_sample"),
+                        "status_basis": payload.get("status_basis"),
+                        "mae_out_of_sample_eV": payload.get("mae_out_of_sample_eV"),
+                    }
+                    for channel, payload in themol_expanded.get("calibration", {}).items()
+                },
+                "coverage": themol_expanded.get("coverage"),
+                "level_offsets_gfn2_minus_batt": themol_expanded.get(
+                    "level_offsets_gfn2_minus_batt"
+                ),
+                "models_fitted": themol_expanded.get("models_fitted"),
+            },
+            "W17-18_omat24_feasibility": {
+                "verdict": omat24.get("verdict"),
+                "verdict_reason": omat24.get("verdict_reason"),
+                "reason": (
+                    "periodic inorganic crystals with energy / forces / stress labels only "
+                    "and no orbital quantity; not usable for solvent HOMO/LUMO"
+                ),
+                "license": (omat24.get("q5_license") or {}).get("card_license_field"),
+            },
+            "W17-19_eps_reproduction": {
+                "matched_keys": (eps_repro.get("match") or {}).get("matched"),
+                "chain_b_unique_keys": (eps_repro.get("match") or {}).get("chain_b_keys"),
+                "max_abs_delta_eV": eps_repro.get("max_abs_delta_eV"),
+                "uuid_agreement_rate": (eps_repro.get("uuid") or {}).get("match_rate"),
+                "note": (
+                    "the second code path reproduces the W17-14 layer; the chain that "
+                    "shipped as eps142 actually carries 51 unique molecules"
+                ),
+            },
         },
         "frozen_red_lines": frozen,
         "frozen_red_lines_all_intact": all(entry["intact"] for entry in frozen.values()),

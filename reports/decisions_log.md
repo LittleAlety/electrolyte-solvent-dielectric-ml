@@ -4852,3 +4852,116 @@ W17 的 13 个新数据表（顶层 `data/density_v01.csv`、`data/viscosity_v02
 
 **数字钉（勿混用）**：al_round4 普查 **111 ＋ 21 = 132**；修复对照 **148 / 77 / 71 / 0**；`drift_since_repair.added_since_repair = 11`；`local_trace` 在修复窗口内 **无翻转**，在 live 侧**已翻转**（`yes` 18 → 20）。
 
+## 28.22 Reaxys 库存队列 P1+P2 实查：值藏在 `Comment` 列，而队列自己的 probed 标记已过期
+
+W17-2 立项时把「扩物质」的渠道写成 **Reaxys 库存队列**（`probes/reaxys_v1x_stocking_queue.csv`，167 行，逐行带 `inchikey`）。
+本臂先把它冻成**计划**（`probes/reaxys_v1x_stocking_probe_roster.csv`：**24** 行 = P1+P2，去重后 **18** 个待查、
+**6** 个前序车道已查、**6** 个「芳香非电解液疑似」沉到同层队尾但**不删**），再在作者已登录的 Edge 会话上**逐物质**实查。
+
+**（a）队列自带的标记不可信。** `probed_in_this_round` 只标了 **3** 行 `yes`，而前序车道（W17-13 薄族第一批 10 键、W17-15 第二批 4 键）
+实际已走过 **14** 个键。两处并集后，P2 层 22 行里**只有 19 行**从未被任何车道读过——**19 才是正确规模**，
+简报里写的 20 是 off-by-one。**结论：任何用 `probed_in_this_round` 筛目标集的逻辑都会重复劳动或漏查。**
+
+**（b）实查规模与三口径。** **19** 个物质 / **21** 次查询 / 预算 30（一次氟苯手工试跑 + 一次沙箱报错重跑，无卡片被读两次）。
+逐通道（rows / valued / point，**三口径不混用**）：ε **98/70/53**、η **144/130/90**、轨道（IP＋量化计算）**70/30/30**、
+氧化还原 **27/0/0**。证据是 19 份卡片 JSON、66 张分类表、340 行。
+
+**（c）两条真正有用的发现。**
+① **`Electrochemical Characteristics` 整个分类没有数值列**：27 行里 **13** 行的电位只写在 `Comment` 字符串里
+（`-2.57 V` / `2.24 V` / `> 3.2 V`）。**只读数值列的下游会看到 0 个氧化还原值**——P4 的 **392** 条标签瓶颈不是「没有数据」，
+而是「数据不在你以为的那一列」。前两批只在氧化还原上零星踩过 Comment 坑，本批首次把该分类整体钉死。
+② 附带的子串陷阱：乙醚卡上 `Bulk Viscosity - 1` 紧邻 `Dynamic Viscosity - 29`，用 `/viscosity/` 匹配会把 Bulk 混进 η；
+**通道定义只认 Dynamic + Kinematic**。
+轨道通道结论不变：**Reaxys 仍不提供可用的 HOMO/LUMO 数字**（70 行里 30 行是有数值的 IP，26 行 `Calculated Properties` 全是文字标签）。
+
+**（d）合规。** 裁决 B 照旧：数值只落在 `probes/` 与被忽略的 `data/raw/reaxys_w17d/`，不进 `data/`、不进任何池或特征表、不进交付包；
+`models_fitted = 0`；未批量爬取。机构 SSO 被本机失效代理挡住时，为 `whu.edu.cn` 加了一条**临时**代理绕过，
+取数结束后**已还原并逐字核对**。
+
+**数字钉（勿混用）**：P1+P2 名册 **24** 行 / 待查 **18** / 已查 **6** / 疑似 **6**；
+实际实查 **19** 物质 / **21** 次查询 / 预算 **30**；ε **98/70/53**、η **144/130/90**、轨道 **70/30/30**、氧化还原 **27/0/0（13 行只在 Comment）**。
+
+## 28.23 THEMol 全量扩展：HOMO 通道翻门，LUMO/gap 仍是 `reference_only`
+
+W17-14 的负结论只站在 **74 个配对锚**上，而它自己算出「关键名册 ∩ THEMol = 5,117」。本臂把这 5,117 **冻结成名册**
+（`probes/themol_registry_expansion_roster.csv`，运行前锁 digest `71277d2c…36d6`）后跑满同一链路：交付 **5,117 / 5,117（100.0%）**，
+`run_status = complete`。分层：无参考轨道 421、旗舰 ε 54、其他核心通道 68、标定主体 4,574。
+
+**（a）工程上的两个坑，都记在案。** ① 镜像**限流**：10 路并发触发 HTTP 429，第一版没有退避，一个分片 419 个目标里 413 个失败；
+处置是给 `probes/themol_hessian_orbitals.py` 加**指数退避重试**（4 次、1→10 s、jitter、尊重 `Retry-After`）、
+拆连接/读取超时（10 s / 25 s）、每分子 0.12 s 节流，并做**断点续跑**（续跑只跑没拿到数值的键，重跑行按「有数值优先」去重）。
+② 镜像还会**黑洞**（连接活着、不返回、CPU 0）；收紧超时前一次静默 55 分钟，收紧后同样窗口 4 分钟跳过。
+这两条是本臂 `run_status = complete` 的原因，**不是数据质量问题**；名册与预注册都已冻结，剩下的键随时接着跑。
+
+**（b）标定样本 74 → 4,668，结论随之变化，变化要如实说。**
+HOMO：r **0.8549**、样本外 MAE **0.3036 eV** ⇒ **两个门都过（`usable_with_flag`）**，而 W17-14 当时是 r 0.8557 / MAE 0.3531，
+**差 0.0031 eV 没过**。但最大单点误差仍有 **1.7121 eV** ⇒ 它只配一个**带旗标的换算**，不配当标签。
+LUMO：r 0.6141 / MAE 0.3495 eV ⇒ **仍是 `reference_only`**；gap：r 0.4343 / MAE 0.5910 eV ⇒ 同样。
+**「半经验紧束缚的虚轨道与 DFT 虚轨道不在一个刻度上」被更大的样本重新确认**——这条负结论比 W17-14 硬。
+
+**（c）数据侧的真实收获。** 交付层里 **291 个分子此前没有任何轨道数值**（registry 的 `has_orbitals = false` 且 PubChemQC 也没有），
+ε 名册命中 **142/247**。**Batt-P30K 与 PubChemQC 两列一个字节未改**，`four_core_key_registry.csv` 未被触碰，
+本臂 `models_fitted = 0`。许可：THEMol **CC BY-NC 4.0**，原始开采表留在被忽略的 `data/raw/themol/expand/`，交付层登记进 `LICENSE-DATA.md` 的许可切分。
+
+**数字钉（勿混用）**：名册 **5,117**；交付 **5,117（100.0%）**；标定对 **4,668**；
+HOMO r **0.8549** / MAE **0.3036 eV** / `usable_with_flag`；LUMO r 0.6141 / MAE 0.3495 eV / `reference_only`；
+gap r 0.4343 / MAE 0.5910 eV / `reference_only`；首次拿到轨道数 **291**。
+
+## 28.24 OMat24 否决：不是分子、也没有轨道量（与许可无关）
+
+作者点名「HOMO LUMO 可以去试试 OMat24」。审计结果：HF 仓库 `facebook/OMAT24` 本体只有 **5 个文件 / 15,388 B**，
+真实数据托管在 HF 之外（`.tar.gz` 里的 ASE-LMDB）。实测解析 `val/rattled-300-subsampled` 的 **35,579** 条记录：
+**20 个候选轨道 key（`homo`/`lumo`/`gap`/`bandgap`/`eigenvalues`/`mo_energy`/`dos`/`fermi`/`ip`/`ea`…）命中 0**；
+`pbc` 全 `True`（**35,579/35,579**，非周期 0 条），元素前排是 Li/Tl/La/Y/Hg ⇒ **周期性无机晶体数据集**。
+结构检索同样不可行（12 个标识 key 全 0 命中；把 5 个 ε 溶剂的 SMILES 化成分子式去撞 `composition_reduced`，**5/5 无命中**）。
+许可本身没问题（`cc-by-4.0`，可再分发）⇒ **否决与许可无关，是数据形态问题**。同类的 iMolS 否决见 §28.17。
+
+## 28.25 W17-14 的 ε 子集复现：第二条代码路径逐位相同；并纠正 `eps142` 其实只有 51 个分子
+
+今晚有两条独立链路都对「ε 名册 ∩ THEMol」做了 GFN2 单点：官方臂 W17-14（`probes/themol_hessian_orbitals.py` → 交付层 166 行）
+与一条 agent 手写链路（临时脚本，产物在 `%TEMP%`）。把两者逐 InChIKey 对齐：**matched 51**、only-in-official **115**、only-in-hand **0**；
+ΔHOMO 最大 **0.0002 eV**、ΔLUMO 同量级、Δgap 2×10⁻⁴（141 个通道里 108 个 Δ=0）；
+**`themol_uuid` 一致率 100%（51/51）** ⇒ 比的是同一构象、同一几何。**结论：官方层可信，直接用它。**
+
+同时纠正一处记录：那条手写链路的文件名写着 `eps142`，三个分片其实是**同一批分子的重复跑**，
+去重后只有 **51** 个唯一分子（`shard0` 与 `shard2` 键集完全相同、`shard1` 是其超集），
+**142 个目标从未落盘**。凡引用这条链路的地方都不许再写 142。
+
+**数字钉（勿混用）**：复现 matched **51** / only-in-official 115 / only-in-hand 0；最大绝对偏差 **0.0002 eV**；uuid 一致率 **100%**。
+
+## 28.26 W17-17 收口 ＋ 对抗审计两轮：9 条发现里 7 条关闭、1 条部分关闭、1 条明确不修
+
+第 17 周这条主臂跑满：**5,117 / 5,117，`run_status = complete`**，`failed_rows = 0`。主轮 10 路并发被**单分子级 429** 打掉 271 个键，
+用 `retry_roster.csv`（268 行，sha `66cbc774…`）恢复 261 个、`retry2_roster.csv`（40 行，sha `73d3e5fd…`）把剩下 40 个全部补齐。
+跨水平标定样本最终 **4,668 对**——**不是 5,117**：只有同时带 Batt 参考值的分子才进配对。
+**凡对外引用「166 → 5,117」的地方，都必须带上这条限制语。**
+
+独立审计两轮（`reports/themol_expanded_layer_audit.md`，第二轮在修复后重跑）共 9 条发现：
+
+| # | 发现 | 判定 |
+| --- | --- | --- |
+| F1 | 判闸用**样本内** r | **closed**：构建器与验证器都改成只用样本外统计（`status_basis = out_of_sample_mae_and_out_of_sample_r`） |
+| F2 | off-roster / 重复计数分支是**不可达死代码** | **closed**：重排后两条路径都可达，实测 collisions 302 / upgrades 117 |
+| F3 | 5,117 名册口径 | **closed**：counters 与 tiers 逐字段复现 |
+| F4 | 验证器是否真独立 | **closed**：AST 仅 stdlib+rdkit，不 import 生成器 |
+| F5 | `structure_check` 只证明「名册 SMILES ↔ 名册键」自洽 | **open（明确不修）** |
+| F6 | 单位证据只有 8 个分子、且属于 **W17-14** | **partially_closed**：新增本层自己的 24 行抽样复核（ΔHOMO = ΔLUMO = **0.0 eV**），但只覆盖 **0.47%**，预注册判据 C 只满足「精神」不满足「every row」 |
+| F7 | `models_fitted = 0` 与「文里有拟合」读起来矛盾 | **closed**：加 `models_fitted_note` |
+| F8 | 预注册要求的报告当时不存在 | **closed**：已生成，含第 7 节收尾补记 |
+| F9 | ruff F841 | **closed**：不可复现，`ruff check` 全绿 |
+
+**审计方自己点名的三条残留风险（照抄，不美化）**：
+
+1. **F1 在本快照上「数据不可证伪」**——三通道 r_in 与 r_oos 只差 ~1e-4，换不换口径结论都一样，
+   所以「已改走 r_oos」只能靠**读代码**与那条**行为测试**（喂 r_in=0.0/r_oos=1.0 ⇒ usable；r_in=0.99/r_oos=−0.96 ⇒ reference_only）证实，
+   真实数据永远不会报警。
+2. **同仓两套口径并存**——共享的 `probes/build_themol_orbital_layer.py` 仍以**样本内 r** 判 **W17-14 自己**的 status，
+   W17-17 是局部重判修好的。这属于本轮范围外，**建议单开一条臂统一口径**。
+3. **F6 的几何 digest 用同族代码**（与开采流程同一个 `write_xyz`），这一环并不独立；且 0.47% 的覆盖**外推到 5,117 行有外推风险**。
+
+**同一轮的两条旁证臂**：
+
+- `reports/themol_property_inventory.md`：逐字节实测 THEMol 的 H5 —— 13 个键里**没有任何 eigenvalue / gap / HOMO / LUMO / IP / EA**，
+  只有 DFT 几何、Hessian、轨迹能量与 **MBIS 原子布居** ⇒ **本仓所有 THEMol 轨道数都是我们自己跑 GFN2-xTB 算的**，必须走跨水平标定。
+- `reports/reaxys_v1x_stocking_query_round2.md`（W17-20）：把 Reaxys 预算跑满 **30/30**、再查 7 个物质，
+  氧化还原**证据面**从 27 行扩到 **121** 行，但**可用数值标签仍然是 0**——392 条瓶颈在数值层面一条未缓解。
