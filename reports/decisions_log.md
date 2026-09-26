@@ -4099,3 +4099,11 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 - **发现 3（Minor，登记不修，外部依赖风险）**：`pageNum` 0 基这条**只在本项目一侧被断言**。在线 API 无版本号、无 schema 快照，若 NIST 改成 1 基，预注册里的 `FIRST_PAGE_NUM = 0` 会**静默失配** —— 届时靠的是**判据 A**（`records_collected == size_records`）**兜底**，而不是版本号。
 - **负命题（审读者无法独立复核，照实写「不可复核」）**：① 首跑 **19 次在线请求不可回放**（无网络审计日志），只能靠已落盘的 38 个响应缓存文件与 summary 里的请求账本**间接支持**；② 「**本轮零 Reaxys 访问**」同样无审计日志，只能靠新增/改动文件里 `reaxys` 零命中与「`成果输出/` 无新增 Reaxys 物」间接支持。
 - **手册纪律（真缺陷换来的，见手册附录 AF-10）**：本轮先把 Week 16 计划段（AA-5）的交付对照**插进手册快照区内**，立刻打断 9 条 `source_line` pin（`manual_citations_verbatim` 变红，9 条引用 2 条失败）。**处置**：整块回退，改为**只从文件末尾追加**（手册附录 AF-9），并新增纪律「**快照区内不许插行，只许末尾追加；确需插行必须同批更新所有 pin 并重跑 `verify_unimol_probe_spec.py --check`**」。这条与 27.7 同源 —— 都是**本地看不见、CI 才看得见**的缺陷。
+
+### 27.12 复核补刀：`probes/identity_smiles_drawing_decision.py` 的同类执行位缺陷（提交后才显现）
+
+- **怎么发现的**：把工作树封成提交 `4e0bf0a` 之后，按项目纪律**从干净提交重导** week16 包（使 `worktree_dirty = false`、`artifacts_commit` 可引），重导时导出器的 verifier 块**变红**：`tests/test_repo_hygiene.py::test_executable_bit_agrees_with_the_shebang` 报 `probes/identity_smiles_drawing_decision.py` 索引模式 **100644** 而文件带 shebang（ruff **EXE001**）；Week 15 导出器随之连带 2 条红（`test_export_ships_every_artifact_readme_manifest_and_verification`、`test_the_verifier_block_actually_ran_and_passed`）。
+- **为什么提交前全绿**：`tests/test_repo_hygiene.py` 读的是**索引模式**，而该文件在提交前是 untracked（`??`），根本不在索引里；一提交即进索引 100644，于是**同一棵树从「全绿」变「红」**。这是 27.7 的同族缺陷，并证明「提交前跑一次全量回归绿」**不足以**覆盖这一类 —— 必须**在提交之后、针对同一提交再跑一次**（或至少在重导交付包时重跑 verifier 块）。
+- **修复**：`git update-index --chmod=+x probes/identity_smiles_drawing_decision.py`，**索引模式** 100644 → **100755**，**文件内容一字未动**（blob `a8d33d2d3dd669f84beb1329a6f3a07f1b050f8e`）；修后 `tests/test_repo_hygiene.py` **4 passed**。
+- **全仓审计**：对索引逐条扫「带 shebang 的 .py」，**只有这 1 件**是 100644；其余 4 件（`al_round3_oa_triage.py`、`al_round4_new_compound_backfill.py`、`g1plus_ecw308_extract.py`、`kpi_funnel_cross_run.py`）已是 100755。
+- **训练方向**：执行位这条红线的**判据在索引、不在工作树**；本仓在 Windows 上 `core.fileMode = false`，唯一可移植的修法是 `git update-index --chmod=+x` —— **新增带 shebang 的探针必须同批设好可执行位**。

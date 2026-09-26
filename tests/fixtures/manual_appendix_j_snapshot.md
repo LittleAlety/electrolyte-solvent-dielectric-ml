@@ -1974,3 +1974,10 @@ R² 对评分池敏感（同模型：97 池 0.409 / 236 冻结池 0.364 / 1594 �
 - **发现 2（Minor，登记不修）**：`probes/export_week16_results.py` 的 `EXEC_BIT_REPAIR_NOTE` 里那段 digest 是**短写**（`c65982fc…c800815`），短写无法自动核对，只作人类可读提示；机器核对改由 `exec_bit_repair` 的实测字段与 `tests/test_repo_hygiene.py` 承担。
 - **发现 3（Minor，登记不修，外部依赖风险）**：`pageNum` 0 基这条**只在本项目一侧被断言**。在线 API 无版本号、无 schema 快照，若 NIST 改成 1 基，预注册里的 `FIRST_PAGE_NUM = 0` 会**静默失配** —— 届时靠的是**判据 A**（`records_collected == size`）**兜底**，而不是版本号。
 - **负命题（审读者无法独立复核，照实写「不可复核」）**：① 首跑 **19 次在线请求不可回放**（无网络审计日志），只能靠已落盘的 38 个响应缓存文件与 summary 里的请求账本**间接支持**；② 「**本轮零 Reaxys 访问**」同样无审计日志，只能靠新增/改动文件里 `reaxys` 零命中与「`成果输出/` 无新增 Reaxys 物」间接支持。
+
+### AF-12 提交后才显现的同类缺陷：又一处「带 shebang 却没有可执行位」（同一轮；发现于干净重导）
+
+- **怎么撞上的**：把工作树封成提交 `4e0bf0a` 之后，按项目纪律**从干净提交重导** week16 包（让 `worktree_dirty = false`、`artifacts_commit` 可引），重导时导出器的 verifier 块**变红**：`tests/test_repo_hygiene.py::test_executable_bit_agrees_with_the_shebang` 报 `probes/identity_smiles_drawing_decision.py` 的**索引模式是 100644** 而文件带 shebang（ruff **EXE001**，posix runner 上必红）；Week 15 导出器随之连带 2 条红。
+- **为什么提交前全绿**：那条测试读的是**索引模式**，而这个文件在提交前是 untracked（`??`），根本不在索引里 —— **一提交就进索引 100644**，于是同一棵树从「全绿」翻成「红」。它与 AF-10/§27.7 是**同族缺陷**：本地看不见、CI 才看得见。
+- **修复**：`git update-index --chmod=+x probes/identity_smiles_drawing_decision.py`，索引模式 100644 → **100755**，**文件内容一字未动**（blob `a8d33d2d3dd669f84beb1329a6f3a07f1b050f8e`）；修后 `tests/test_repo_hygiene.py` **4 passed**。全仓审计（索引里逐条扫「带 shebang 的 .py」）**只有这 1 件**是 100644。
+- **新纪律（与 AF-10 并列）**：**「提交前全量回归绿」不足以覆盖索引类缺陷** —— 判定执行位、文件模式、被跟踪性这类事实的，是**提交后的索引**。故本项目的收口顺序固定为：① 提交 → ② **针对该提交从干净工作树重导交付包并重跑 verifier 块** → ③ 重导若红，立刻补一个修复提交并把教训登记（本节即第 ①-③ 步的产物）。新增**带 shebang 的探针，必须同批设好可执行位**。
