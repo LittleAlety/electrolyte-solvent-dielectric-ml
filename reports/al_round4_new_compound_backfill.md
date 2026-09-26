@@ -37,7 +37,7 @@
 | P3 | perfluorohexane | ZJIJAJXFLBMLCK-UHFFFAOYSA-N | none | 无ε线索 | yes | no | gold | 放弃 | 10.1088/1742-6596/2685/1/012064 |
 | P3 | tripropylene glycol | LEQCJROTXBYLEU-UHFFFAOYSA-N | none | 无ε线索 | yes | no | bronze | 仅线索 | 10.1063/1.4740236 |
 
-真新化合物有两种分解，两种都写在这里：按本地痕迹 —— 本地完全没有任何痕迹 2 个（decafluoropentane、hexafluoroisopropanol），本地只在非介电表里出现过 5 个（1,2-dimethoxypropane、2,2,2-trifluoroethanol、methoxy-nonafluorobutane、perfluorohexane、tripropylene glycol）；按 ε 证据 —— 无ε线索 3、汇编转述 3、第一手测量 1。痕迹只统计已声明的策展数据树（data/external/、data/processed/、data/raw/、data/reference/、data/restricted/）与 data/ 顶层策展表；data/interim/ 这个周内 scratch 区，以及任何以“_”开头的私有命名文件，都按声明排除。
+真新化合物有两种分解，两种都写在这里：按本地痕迹 —— 本地完全没有任何痕迹 2 个（decafluoropentane、hexafluoroisopropanol），本地只在非介电表里出现过 5 个（1,2-dimethoxypropane、2,2,2-trifluoroethanol、methoxy-nonafluorobutane、perfluorohexane、tripropylene glycol）；按 ε 证据 —— 无ε线索 3、汇编转述 3、第一手测量 1。痕迹只统计被 git 跟踪且落在已声明策展数据树（data/external/、data/processed/、data/raw/、data/reference/、data/restricted/）与 data/ 顶层策展表内的文件；data/interim/ 这个周内 scratch 区、任何以“_”开头的私有命名文件、以及一切未入库文件都按默认拒绝处理；唯一例外是本地专属的 data/restricted/ 受限镜像（单独计数、命中即 local_trace_restricted=yes）。
 
 ### P1 · 1,2-dimethoxypropane（人读）
 
@@ -46,7 +46,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=core; epsilon=wording_only; leads=1
 - ε 线索：wording_only（无数值）；证据类型 汇编转述
 - OA：green，可达=false；线索来源 https://zenodo.org/record/7801393
-- 本地非介电痕迹：data/external/SolvFunc-87.csv:name;data/processed/al_round1_longlist.csv:name;data/processed/l3_homo_lumo_cv_predictions.csv:key;data/processed/redox_merged.csv:key
+- 本地非介电痕迹：data/external/SolvFunc-87.csv:name;data/processed/al_round1_longlist.csv:name;data/processed/redox_merged.csv:key
 
 ### P3 · 2,2,2-trifluoroethanol（仅线索）
 
@@ -83,7 +83,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=core; epsilon=wording_only; noise_veto=geophysics_dnapl|pool_boiling_heat_transfer; leads=2
 - ε 线索：wording_only（无数值）；证据类型 汇编转述
 - OA：bronze;gold，可达=false；线索来源 https://www.mdpi.com/2076-3417/14/2/495/pdf?version=1704460575
-- 本地非介电痕迹：data/processed/l3_homo_lumo_cv_predictions.csv:key;data/processed/redox_merged.csv:key
+- 本地非介电痕迹：data/processed/redox_merged.csv:key
 
 ### P3 · perfluorohexane（放弃）
 
@@ -172,10 +172,10 @@
 ## 10. shots 与口径
 
 - shots = 1：本轮只按预注册规则跑了一次，没有事后手调。
-- 本地痕迹扫描口径：只接受已声明的策展数据树（data/external/、data/processed/、data/raw/、data/reference/、data/restricted/）与 data/ 顶层的策展表；data/interim/ 这一周内 scratch 区按声明排除——临时转储、计时探针、一次性重跑都不是项目知识，让它们进来会让证据链取决于某个副任务当天下午恰好写了什么。
+- 本地痕迹扫描口径：候选 = git 跟踪的文件（git ls-files）∩ 已声明的策展数据树（data/external/、data/processed/、data/raw/、data/reference/、data/restricted/）与 data/ 顶层策展表；data/interim/ 这一周内 scratch 区、basename 以“_”开头的私有文件、以及一切未入库文件都不进证据链——临时转储、未提交的下载缓存都不是项目知识，让它们进来会让清单在别人 clone 出来的仓库里无法逐字节复现。
 - 第二条 scratch 规则：basename 以“_”开头的文件一律不进证据链（仓库里现存的该类文件都是 g1plus 的请求日志）。这条不是临时补丁——本轮真正踩到的就是一个名为 _lever8_paper_text.txt 的转储被递归扫描当成项目知识，名字约定能拦住它落在任何目录的变体。
 - 默认拒绝：data/ 下既不属于已声明策展树、也不是顶层策展表的路径一律不进扫描，所以将来新增的 scratch 目录天然被排除，无需再改代码。
-- 其他 scratch 路径已确认：data/ 下唯一的 scratch 区就是 data/interim/；data/external/g1plus/、data/raw/、data/restricted/ 以及 data/processed/ 下未入库的探针输出都是策展缓存/产物，按同一规则留在扫描范围内。
-- gitignore 状态不是判据：data/ 下若干策展路径因体积或再分发条款被 ignore（尤其 data/restricted/、data/external/g1plus/），它们仍在扫描范围内；排除一律按已声明的 scratch 规则执行。
+- 其他 scratch/cache 路径：data/ 下唯一的 scratch 区仍是 data/interim/；data/external/g1plus/、data/raw/ 以及 data/processed/ 下未入库的探针输出虽然名义上是策展缓存/产物，但 git 没有跟踪它们，因此一律不进证据链——这正是本次修复的对象。
+- 唯一例外是 data/restricted/：它是故意不进版本库的本地受限交叉核对镜像。该目录下的文件可以作痕迹，但必须在 trace_scan_census 里单独计数，并标注它「本机专属、不在干净 clone 内」；命中它的行照旧 local_trace_restricted=yes。
 - 优先级规则在跑之前就已写死在 derive_priority() 里，事后不放宽；noise veto 的线索永不因家族归属而升级。
 - 复现：.venv\Scripts\python.exe probes\al_round4_new_compound_backfill.py

@@ -132,9 +132,10 @@ week11–week14 交付包未被触碰；本轮全部产物为新增文件。
 - 报送口径守卫：test_week15_reporting_accuracy.py（断言 §24 与附录 AC 不再出现被证伪的句子）
 - 附录对账快照：manual_appendix_j_snapshot.md
 - AL Round 4 重算：al_round4_backfill_list_v0.csv / al_round4_new_compound_backfill_summary.json
-  （**导出时按生成器重算**：清单的 `local_trace_files` 是**磁盘状态的函数**，本包落盘那天又有两个
-  `data/processed/eta_epsilon_joint_*.csv` 到位，故此处计数是「导出当时的盘面读数」，
-  不是「Week 15 提交所对应的数字」。扫描语义问题原样登记、**未擅自改**。）
+  （**导出时按生成器重算**：Week 16 修复轮已把 `local_trace_files` 的扫描源改为 `git ls-files`
+  跟踪清单 ∩ 声明策展根，加上唯一声明的 `data/restricted/` 本地例外；未入库的下载缓存不再进入。
+  summary 的 `trace_scan_census` 逐项登记「跟踪候选数 / 受限本地专属数 / 合计 / 路径列表 sha256」。
+  此处计数仍是**导出当天的盘面读数**，且受限镜像本机专属、不在干净 clone 内。）
 
 ## 三条纪律增补（=手册附录 AC 口径）
 
@@ -164,8 +165,10 @@ week11–week14 交付包未被触碰；本轮全部产物为新增文件。
 - **T4：元素性质值表是本仓另择**（Pauling / NIST ASD），论文若用别的数据源，AvgX/AvgI/AvgA 会系统性偏移。
 - **T5：名次不能跨臂比较**（hybrid 臂 2,061 列 vs 知识臂 10 列）；**任何树都没分裂过的列**贡献恰为 0，
   它的名次是并列位次里由固定列序决定的位置，**不是测量值**（2,061 列里 **1,880 列**从未被任何树使用）。
-- **AL Round 4 的 `local_trace_files` 是磁盘状态的函数**，不是版本库内容的函数：它会把未入库的下载缓存
-  当作「项目知识痕迹」。本轮按生成器重算（114 → 128）；导出当天又有两张 ηε 联表（`data/processed/eta_epsilon_joint_*.csv`）落地，故按生成器二次重算为 **146**，机器字段以导出的 summary 为准。扫描语义问题登记为待办、**不擅自改**。
+- **AL Round 4 的 `local_trace_files` 已改为只认版本库跟踪的文件**（`git ls-files` ∩ 声明策展根），
+  未入库的下载缓存（如 `data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json`）**不再**被
+  当作「项目知识痕迹」。唯一例外是故意本地-only 的 `data/restricted/` 受限交叉核对镜像：它单独计数、
+  命中即 `local_trace_restricted=yes`，且**不在任何干净 clone 内**，本包不假装它可复现。
 - **random_row 只作泄漏参照**（R² = 0.7385332681453336），**从不进入任何判决**。
 """
 
@@ -657,12 +660,16 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                 "this export, not a number that belongs to the Week 15 commit"
             ),
             "known_fragility": (
-                "local_trace_files is a function of the disk, not of the version-control "
-                "contents: it counts git-ignored download caches as project knowledge, so the "
-                "list cannot be reproduced byte for byte in a fresh clone, and it drifts every "
-                "time a new file lands under data/. The correct fix is to filter through "
-                "git ls-files; the scan semantics are left as landed and the issue is "
-                "registered as a to-do rather than changed here."
+                "fixed in the Week 16 repair round. local_trace_files now comes from "
+                "git ls-files (tracked files only) instead of a recursive walk of the "
+                "disk, so an uncommitted download cache such as "
+                "data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json can no "
+                "longer be quoted as project knowledge and the list reproduces in a clean "
+                "clone. One declared exception remains: the local-only data/restricted/ "
+                "cross-check mirror is in no clone, so trace_scan_census counts it apart "
+                "and the rows it touches keep local_trace_restricted=yes. The distinct-file "
+                "count is still a reading of the disk at export time, but the only disk-only "
+                "contribution left is that declared mirror."
             ),
         },
         "frozen_red_lines": {

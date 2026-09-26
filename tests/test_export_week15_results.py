@@ -421,6 +421,12 @@ def test_al_round_4_recompute_matches_its_generator_and_its_list(
     )
     assert "git ls-files" in recompute["known_fragility"]
     assert "disk" in recompute["known_fragility"]
+    # the Week 16 repair: the correct fix is adopted and the restricted exception is
+    # registered, instead of the defect being left in place as a to-do
+    assert "fixed in the Week 16 repair round" in recompute["known_fragility"]
+    assert "data/restricted/" in recompute["known_fragility"]
+    assert "to-do" not in recompute["known_fragility"]
+    assert "left as landed" not in recompute["known_fragility"]
 
 
 def test_the_pool_definition_caveat_forbids_the_headline_comparison(

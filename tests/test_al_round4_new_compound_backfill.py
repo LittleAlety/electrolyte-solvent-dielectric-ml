@@ -17,6 +17,7 @@ never carry a number.
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -55,12 +56,15 @@ from probes.al_round4_new_compound_backfill import (
     derive_action,
     derive_priority,
     gap_top_families,
+    git_tracked_files,
     load_local_panel,
     local_trace_scan,
     parse_triplets,
     read_csv,
     sha256_file,
     trace_scan_allowed,
+    trace_scan_candidates,
+    trace_scan_census,
     verify_invariants,
 )
 
@@ -719,17 +723,31 @@ def test_scratch_name_convention_is_excluded_from_every_tree() -> None:
     assert trace_scan_allowed("data/external/g1plus/pubchem/cid_query_manifest.json") is True
 
 
-def test_untracked_curated_caches_stay_in_scope() -> None:
-    """Scratch is a declared rule, not a git-ignore status."""
+def test_untracked_curated_caches_cannot_carry_a_trace() -> None:
+    """Tracking, not ignore status, decides what may carry evidence.
 
+    data/external/g1plus/ and data/raw/ really are curated caches, but they are
+    committed nowhere, so nothing under them may contribute a trace token.  The scope
+    predicate alone still admits these paths, and that is deliberate: the scope rules
+    say *where* a file may live, and the tracking rule is a second, independent gate
+    applied on top of them.
+    """
+
+    tracked = set(git_tracked_files())
     for path in (
         "data/external/g1plus/tier3/ue2014_chapter.txt",
         "data/external/g1plus/pubchem/cid7303.view.json",
-        "data/restricted/springer_materials/v02_crosscheck.csv",
+        "data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json",
         "data/processed/l3_homo_lumo_cv_predictions.csv",
         "data/raw/thermoml/something.xml",
     ):
         assert trace_scan_allowed(path) is True, path
+        assert path not in tracked, path
+    assert trace_scan_allowed("data/restricted/springer_materials/v02_crosscheck.csv") is True
+    assert "data/restricted/springer_materials/v02_crosscheck.csv" not in tracked
+    census = trace_scan_census()
+    assert census["tracked_candidates"] > 0
+    assert census["restricted_local_only_candidates"] > 0
 
 
 def test_scratch_prefixes_are_disjoint_from_the_curated_roots() -> None:
@@ -791,21 +809,93 @@ def test_published_traces_only_come_from_curated_roots(list_rows) -> None:
             )
 
 
+def test_every_non_restricted_published_trace_is_git_tracked(list_rows) -> None:
+    """Positive machine proof of the fix: no untracked path may be published.
+
+    The defect this guards was one specific file -- an ignored PubChem cache at
+    data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json -- being quoted
+    as a trace token for propylene carbonate.  Every published path outside the
+    declared restricted mirror must therefore appear in git ls-files.
+    """
+
+    tracked = set(git_tracked_files())
+    for row in list_rows:
+        for entry in [item for item in row["local_trace_files"].split(";") if item]:
+            path = entry.rsplit(":", 1)[0]
+            if path.startswith("data/restricted/"):
+                continue
+            assert path in tracked, (row["compound_name"], path)
+    published = LIST_PATH.read_text(encoding="utf-8")
+    assert "pubchem/kpi_shortlist_identity" not in published
+
+
+def test_an_untracked_file_in_a_curated_root_cannot_contribute() -> None:
+    """The guard file is created and removed here, and nothing is ever git-added.
+
+    A file written straight into data/reference/ is invisible to git ls-files, so the
+    scanner must not see it.  The scope predicate alone would admit it, which is the
+    point: without the tracking gate this is the defect reproduced.
+    """
+
+    key = "ZZZZZZZZZZZZZZ-UHFFFAOYSA-N"
+    name = "untrackedcuratedprobe"
+    probe = REPOSITORY_ROOT / "data" / "reference" / "al4_untracked_guard_probe.csv"
+    try:
+        probe.write_text(key + "\n" + name + "\n", encoding="utf-8")
+        relative = probe.relative_to(REPOSITORY_ROOT).as_posix()
+        assert trace_scan_allowed(relative) is True  # scope alone would admit it
+        assert relative not in set(git_tracked_files())
+        hits = local_trace_scan({key: name})
+        paths = {path for values in hits.values() for path, _kind in values}
+        assert relative not in paths
+        assert hits.get(key, []) == []
+    finally:
+        probe.unlink(missing_ok=True)
+    assert not probe.exists()
+
+
 def test_summary_declares_the_trace_scan_scope(summary) -> None:
     scope = summary["trace_scan_scope"]
     assert "data/interim/" in scope["excluded_scratch_prefixes"]
     assert [str(root) for root in scope["curated_roots"]] == list(TRACE_ROOTS)
     assert "data/restricted/" in scope["curated_roots"]
-    assert scope["gitignore_status_is_not_the_rule"]
+    assert scope["restricted_exception_root"] == "data/restricted/"
+    assert "git ls-files" in scope["tracked_files_are_the_rule"]
+    assert "108-32-7.json" in scope["untracked_files_are_excluded"]
+    assert scope["restricted_exception_is_not_reproducible"]
     assert scope["excluded_scratch_name_prefixes"] == [SCRATCH_NAME_PREFIX]
     assert scope["default_deny"]
     assert scope["scratch_trees_confirmed"]
+    # the falsified claim must be gone for good
+    assert not any("gitignore" in key for key in scope)
 
 
-def test_report_states_the_scratch_exclusion() -> None:
+def test_summary_publishes_a_machine_readable_trace_census(summary) -> None:
+    census = summary["trace_scan_census"]
+    assert census["tracked_candidates"] == sum(census["tracked_by_root"].values())
+    assert census["restricted_local_only_candidates"] == sum(
+        census["restricted_local_only_by_root"].values()
+    )
+    assert census["total_candidates"] == (
+        census["tracked_candidates"] + census["restricted_local_only_candidates"]
+    )
+    assert "data/restricted/" in census["restricted_local_only_by_root"]
+    assert "108-32-7.json" in census["untracked_files_are_excluded"]
+    assert "git ls-files" in census["rule"]
+    # the census must describe exactly the universe the scanner walks
+    live = trace_scan_candidates()
+    assert census["total_candidates"] == len(live)
+    assert census["path_list_sha256"] == hashlib.sha256(
+        "\n".join(sorted(live)).encode("utf-8")
+    ).hexdigest()
+
+
+def test_report_states_the_tracked_only_scope() -> None:
     report = REPORT_PATH.read_text(encoding="utf-8")
     assert "data/interim/" in report
     assert "scratch" in report
-    assert "gitignore" in report
+    assert "git ls-files" in report
+    assert "未入库" in report
+    assert "data/restricted/" in report
     assert SCRATCH_NAME_PREFIX + "lever8" in report or "_lever8_paper_text.txt" in report
     assert "默认拒绝" in report

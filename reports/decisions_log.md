@@ -4003,3 +4003,99 @@ Reaxys 的净增益是 **4 条 / 2 个物质 / 3 篇一手文献**，4 条全部
 - **登记不修 1 条**：**M-4**（15 条 CAS 行落的是无立体层 InChIKey，故与其它表的交集是**立体盲的**，例 `4437-70-1` 解析为平面母体、其 synonym 另挂 CAS `65941-76-6`）。本轮无实害，留作 v1.x 复权时的**已知限制**。
 - **审读者无法独立复核的 2 项（负命题，照实登记为「不可复核」，不写成已证实）**：① 「本轮零 Reaxys 访问」没有网络审计日志，只能间接支持（新增/改动文件中 `reaxys` 零命中、`成果输出/` 无新增 Reaxys 物）；② 首跑 15 次 PubChem 取数过程不可回放，但**取值**已被逐行活库重查证实（15/15 MATCH）。
 
+## §27 Week 16 余项收口轮：在线黏度切片核查（F1）、追踪源改「只认版本库跟踪文件」（F2）、身份层画法差异机器裁决（F3）＋ 一处执行位修复（2026-09-26）
+
+本节接在 §26 之后，清偿前三节登记的四项待办：**F1** = T1 的在线黏度切片核查（`reports/thermoml_viscosity_coverage.md:75` 明写「要下总体结论，必须另做在线黏度切片核查（本探针不做，且不联网）」，并在 `reports/decisions_log.md:3807` 记为边界）；**F2** = `local_trace_files` 改「只认版本库跟踪文件」（登记于 `:3801` 与 `:3902`，原文「正解 `git ls-files` 未被采纳」）；**F3** = T3 那 5 条同一 InChIKey 下的画法差异机器裁决（登记于 `:3807`）。§26 的两条臂（D8 / U）在本轮**只复核对账**（27.2、27.3），数字全部从盘上重读，未改写一个字。本轮**不动笔（不写论文）**、不拟合任何模型、不产任何 R²、不碰冻结件。
+
+### 27.1 三条臂、一处修复与写集
+
+- **臂 F1（在线黏度切片）**：`probes/thermoml_viscosity_online_slice.py`（46886 B，`94e48eddca2d…19d0ec`）＋ 预注册 `probes/thermoml_viscosity_online_slice_prereg.json`（11683 B，`f62ad8eca0be…feb4389`，`locked_at_utc = 2026-09-26T10:17:13Z`，`status = locked_before_run`）＋ summary `probes/thermoml_viscosity_online_slice_summary.json`（145619 B，`04c74759c2b1…0ef8f48`）＋ 报告 `reports/thermoml_viscosity_online_slice.md`（6033 B，`1323dc078eda…cb916cc6`）＋ 测试 `tests/test_thermoml_viscosity_online_slice.py`（23605 B，`e1846b3c1bf4…419e1b36f`）。
+- **臂 F2（追踪源改版）**：`probes/al_round4_new_compound_backfill.py`（90500 B，`b980393cf601…20d250c78`）、重算产物 `probes/al_round4_backfill_list_v0.csv`（34232 B，`ab37af1d7b25…0ee4b884a`）与 `probes/al_round4_new_compound_backfill_summary.json`（15951 B，`4961f921331b…e38b5a96d5`）、报告 `reports/al_round4_new_compound_backfill.md`（15287 B，`3acdbd0d6724…387f7dcd9`）、测试 `tests/test_al_round4_new_compound_backfill.py`（34457 B，`0fff05726d69…010264611`）；连带改 Week 15 导出器 `probes/export_week15_results.py`（39739 B，`b8f88ed0c022…61d4cb1bd`）与其测试 `tests/test_export_week15_results.py`（21376 B，`c17120a82246…49ef7081`）。
+- **臂 F3（画法差异裁决）**：`probes/identity_smiles_drawing_decision.py`（21216 B，`4ca36d76c70c…db694f24`）＋ summary `probes/identity_smiles_drawing_decision_summary.json`（11011 B，`3f0fc364f4b0…cb2fc99a`）＋ 报告 `reports/identity_smiles_drawing_decision.md`（4589 B，`1c1b05071866…d68f7e562e`）＋ 测试 `tests/test_identity_smiles_drawing_decision.py`（6274 B，`acecff5a5c29…bc10f7d3f`）。
+- **执行位修复（不是新臂）**：`probes/kpi_funnel_cross_run.py` 的索引模式 `100644 → 100755`，**文件内容一字未动**（见 27.7）。
+- **披露（既有产物改动）**：F1 另改 `.gitignore` **+7 行**（忽略 `data/external/thermoml_api/`，即 `/ThermoML-API/objects` 的原始响应缓存；`7805 B`，`d2a148b01018…058d82f85`）；F2 的三个重算产物与 Week 15 导出器改动见 27.5。**除此之外没有其它既有产物被改写。**
+
+### 27.2 D8 复核（数字从盘上重读，未改写）
+
+- `probes/kpi_funnel_cross_run.py` 仍为 **48856 B / `c65982fcb927d130502207b9678297258f18d057e77ddbbe211179057c800815`**，与 §26.1 登记逐位一致。
+- 判据 A **0/29 违反**、判据 B **29/29**（SMILES→RDKit **14** ＋ CAS→PubChem **15**）；判据 C 交集：Batt-P30K **13**、314 键名册 **2**、冻结 ε v0.3 **2**、v1.x 观测表 v11plus **1**。
+- 本仓漏斗 **S0 29519 → S1 29519（零剔除）→ S2 22249 → S3 11709 → S4（缺口，不跑）**；S3 的元素白名单仍是导出值 `["C","N","O"]`、`status = derived_not_declared`，只能读作**下界**。
+- `pools.comparability` 仍为 `pool_different`（**不许比绝对计数**）；`model_fitting.fitted_any_model = false`、`r2_reported = false`；7 条 `forbidden` 逐条 `false`；`run_telemetry = {run_mode: offline, network_calls: 0}`。
+- 离线 `--check` 复跑：`OK 29 行身份 29/29，判据A 通过，判据B 达成，Batt-P30K 交集 13`，退出码 0。
+
+### 27.3 U 规格复核
+
+- `probes/unimol_probe_spec_prereg.json` 仍为 **41443 B / `40ba1d6f2c89e0339541d8674782d3b80dd91c8a77b12c229fd8cf4cbd132857`**；`probes/verify_unimol_probe_spec.py --check` → **checks=34 passed=34 skipped=0 failed=0**（退出码 0）；`tests/test_unimol_probe_spec.py` **22 passed**。
+- 本轮**不训练、不下载权重、不建环境**：`torch` / `unimol` / `lmdb` 仍未安装，规格里一律写「待建」，不假装已有环境。
+
+### 27.4 F1：在线黏度切片核查——判据 A/B/C 全 PASS，并把「记录 ≠ 行」钉进契约
+
+- **预注册先行**：三条判据（A 在线切片规模 / B 本地 ⊆ 在线 / C 单位诚实）与阈值在 `2026-09-26T10:17:13Z` 冻结，跑后**未回填、未放宽**。
+- **判据 A（规模自称一致）PASS**：在线全库 `*` = **11923** 条记录；`"Viscosity, Pa*s"` = **1690** 条记录（17 页抓全）；`"Kinematic viscosity, m2/s"` = **70** 条记录（1 页）；三数与预注册逐位一致，违反 **0**，且逐切片 `records_collected == size_records`、DOI 唯一。
+- **判据 B（本地 ⊆ 在线）PASS**：本地 29 个含黏度 XML 的 DOI **29/29 命中**在线黏度切片并集（并集 **1743** 条记录），`misses = []`、`n_phrase_only = 0`。
+- **判据 C（单位诚实）PASS**：在线 `size` 的单位是**记录数**（`size_unit = record`）；**在线行数记 `unknown`** —— JSON API 只暴露记录数，记录内的 `data_summary` 是 NIST 侧另一种计数单位（`data_points`），**不用它顶替行数、也不做任何估计**，故按行口径的覆盖率**不可比、不给数**（本地 2725 行只作对照）。记录口径覆盖率 = **29 / 1690 = 1.7159763313609466%**（`0.017159763313609466`）。
+- **分页口径已实测锁死并写进预注册与代码常量**：API 的 `pageNum` 是 **0 基**的（窗口 `[pageNum*pageSize, (pageNum+1)*pageSize)`）；**从 `pageNum=1` 起分页会永久漏掉最前 100 条**，由 `FIRST_PAGE_NUM = 0` 固化。
+- **phrase 索引 ≠ 结构化属性**：检索词走全文 phrase 索引，命中不代表记录里真有同名结构化属性；本探针逐记录读 `content.PureOrMixtureData[*].Property[*].Property-MethodID.PropertyGroup.<Group>.ePropName` 并分开计数 —— `"Viscosity, Pa*s"` 切片结构化命中 **1690**、仅 phrase 命中 **0**。
+- **请求预算如实记账**：**19 次请求** / **151,791,416 B**（预算 60）；原始响应缓存落在被 `.gitignore` 忽略的 `data/external/thermoml_api/`（**不随包分发**），干净 clone 上 `--check` **零网络**复现（`run_mode = incremental`，`--check` 在空缓存目录亦退 0）。
+- **边界（照实登记，不许省略）**：「本地 ⊆ 在线」只说明本地 29 个文件都在在线黏度切片里，**不说明「在线 = 本地」** —— 本地是为介电检索组建的**筛选缓存**，不是 NIST 全库；切片只取两个黏度属性名，其它黏度写法不计入。本探针**只测量**：不拟合模型、不产 R²/MAE、不把任何值写进 `data/` 冻结表。
+
+### 27.5 F2：`local_trace_files` 改为「只认版本库跟踪文件」——上届三处登记的待办已清偿
+
+- **新语义（已落地，没有退路实现）**：候选集 = `git -C <repo> ls-files -z` 的输出 ∩ 已声明 curated 根；`git ls-files` 失败即 `RuntimeError`，**没有**退回扫盘的等价实现。唯一显式例外是**本机专属、不在干净 clone 内**的 `data/restricted/`（单独计数，命中行仍标 `local_trace_restricted=yes`）。`trace_scan_scope` 里那条错误的 `gitignore_status_is_not_the_rule` 文案已删，新措辞是 `tracked_files_are_the_rule` ＋ `untracked_files_are_excluded`。
+- **机器可读普查（`trace_scan_census`）**：`tracked_candidates = 98`（`data/` 7 ＋ `data/external/` 5 ＋ `data/processed/` 82 ＋ `data/reference/` 4）＋ `restricted_local_only_candidates = 21`（全在 `data/restricted/`）= `total_candidates = 119`；`path_list_sha256 = e154aca9db063ab1e65c8a08572d701660159506e7f086ef8de4b79391201ec9`。
+- **读数（本节给出两个可复算口径，均与 HEAD 前状态比）**：**token 口径**（把每行 `local_trace_files` 按 `,`/`;` 拆开、`path:field` 原样去重）**156 → 83**，消失 **73**、新增 **0**；**文件口径**（剥掉 `:field` 后缀再按路径去重）**148 → 77**，消失 **71**、新增 **0**。消失项全在 `data/external/**`（token 口径 71 / 文件口径 69）与 `data/processed/**`（两个口径都是 2），**没有一个是 `data/` 根下的 curated 表**。前几轮 §24.7 / §25.6 登记的 114 → 128 → 146 沿用各自口径，本节**不追改、也不拿它们相减**。
+- **被点名的受害 token 已消失**：`data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json:key`（未入库的 PubChem 下载缓存）**再也不可能**被当成「项目知识痕迹」引用。
+- **语义未被偷换（本节最该看的一行）**：21 行清单里**只有 `local_trace_files` 一列发生变化**（21 行中 15 行被触及）；`local_trace` 的值**无一行翻转**（yes 18 / no 2 / na 1）；`by_row_kind` 仍是 gap_family 1 / local_duplicate_reconciliation 12 / new_compound 7 / roster_gap 1；优先级仍是 P1 1 / P3 20。即：**改的是「痕迹从哪来」，不是「谁有痕迹」**。
+- **新增 5 条守护测试**（含「curated 根下未跟踪文件不得贡献 trace」与「每个非受限 token 必须出现在 `git_tracked_files()` 里」）；`known_fragility` 文案从「正解未被采纳」改为「已采纳 ＋ 例外登记」，`tests/test_export_week15_results.py:422` 起的断言一并同步。
+- **测试连带**：`tests/test_al_round4_new_compound_backfill.py` **83 passed**、`tests/test_export_week15_results.py` **24 passed**（Week 15 导出器的 verifier 块已恢复全绿，其成因见 27.7）。
+
+### 27.6 F3：5 条画法差异的机器裁决——**建议不改写**，裁决权归作者
+
+- **差异分类**：314 行身份层里 **15** 条 SMILES 与来源不同 = **stereo_only 10** ＋ **structural 5**（`smiles_match = 299`）。
+- **身份全部无误**：5 条 structural 全部 `identity_check = roundtrip_match`、`pubchem_inchikey == inchikey`；门 A（身份同一）**5/5 PASS**。
+- **本地串是复制来的，不是撰写来的**：5/5 每条都是某个**声明来源文件里的逐字节子串**（门 B PASS）；落点 **4 条在冻结红线 `data/dielectric_v03.csv`、1 条在 `data/processed/ilthermo_new_compounds.csv`、0 条由身份层撰写**（门 C：冻结名册仍逐字携带 4/4 PASS）。身份层的契约是 `row[smiles] = str(target[smiles])` 的逐字复制（生成器 `probes/pubchem_identity_layer.py`，`41690bde836a…d9b1f9`）。
+- **画法不是装饰性的**：5 条键里 **4 条**（`LBHLGZNUPKUZJC` / `OHLUUHNLEMFGTQ` / `OOKUTCYPKPJYFV` / `ZHNUHDYFZUAESO`）携带**几何派生特征**（`data/processed/dielectric_physical_features_v03.csv`），就地改写 SMILES 会**静默移动它们的物性特征**，除非同步重生特征表（门 E PASS）。
+- **这些差异正是标准 InChI 有意归一化的类别**（盐 vs 电中性、酰胺 vs 亚胺酸，外加一处环支链顺序），本地串**没有丢「键仍然保留」的信息**。
+- **建议与门槛**：`status = recommended_no_rewrite_awaiting_human_confirmation`、`no_data_change_made = true`；若作者决定改写，必须走**版本化迁移**（出新冻结表 ＋ 在同一次变更里重生特征表 ＋ 重跑身份层 ＋ 更新台账 pin），**不得就地改字**。本探针只提供机械取证记录，**不代替作者裁决**。
+
+### 27.7 执行位修复：`probes/kpi_funnel_cross_run.py` 的索引模式 100644 → 100755
+
+- **症状**：上一版提交把该脚本以索引模式 **100644** 落库，而它带 shebang → 触发 `tests/test_repo_hygiene.py` 的 **EXE001**，并使 **Week 15 导出器的 verifier 块连带变红**（导出器的自检把该测试文件算在内）。
+- **处置**：`git update-index --chmod=+x probes/kpi_funnel_cross_run.py` → 索引模式 **100755**。**文件内容一字未动**：`git ls-tree HEAD` 的 blob 与索引 blob 同为 **`52966dd5382189f5b48625bc99ea368e91daeee8`**，工作区 sha256 仍为 **`c65982fcb927d130502207b9678297258f18d057e77ddbbe211179057c800815`**（与 §26.1 一致）。
+- **要记住的原因**：Windows 上本仓 `core.fileMode = false`，所以修执行位**只能**走 `git update-index --chmod=+x`，改文件系统权限位无效。
+- **修后**：`tests/test_repo_hygiene.py` **4 passed**；`tests/test_export_week15_results.py` **24 passed**。
+
+### 27.8 测试与验证（本轮实跑）
+
+- `pytest tests/test_thermoml_viscosity_online_slice.py tests/test_identity_smiles_drawing_decision.py tests/test_kpi_funnel_cross_run.py tests/test_al_round4_new_compound_backfill.py tests/test_export_week15_results.py tests/test_repo_hygiene.py -q -p no:cacheprovider` → **189 passed**（46.57 s）。逐文件收集数：F1 **39** / F3 **13** / D8 **26** / AL4 **83** / Week 15 导出 **24** / repo hygiene **4**。
+- 四条 `--check` 全部退出码 0：`kpi_funnel_cross_run.py --check`（`OK 29 行身份 29/29，判据A 通过，判据B 达成，Batt-P30K 交集 13`）、`verify_unimol_probe_spec.py --check`（**34/34**）、`thermoml_viscosity_online_slice.py --check`（`判据 A PASS，判据 B 29/29，判据 C PASS；数据来源 raw_api_cache`）、`identity_smiles_drawing_decision.py --check`（OK）。另跑 `tests/test_unimol_probe_spec.py` **22 passed**、`tests/test_manual_appendix_reconciliation.py` **26 passed**。
+- `scripts/verify_dielectric_v03.py` → `passed: true`、**7/7**、`row_count 246`、`addition_count 36`、`output_sha256 = ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`。
+- `ruff check scripts src probes tests notebooks` → **All checks passed!**（CI 只跑 `ruff check`，仓库不强制 `ruff format`，故未跑 format。）
+- 全部跑完后 `git status --porcelain` **与本轮开工时逐行相同**（测试不写工作区；pytest 一律带 `-p no:cacheprovider`）。
+
+### 27.9 训练方向（不许忘记）
+
+- **F1 / F2 / F3 都不训练、不产 R²**：F1 的 `limitations` 明写「只测量：不拟合模型、不产 R2/MAE、不把任何值写进 data/ 冻结表」；F3 的 `run_telemetry` 是 `models_fitted = 0`、`r2_reported = false`、`writes_under_data = 0`。F1 的原始响应缓存**不是数据**，只是出处。
+- **主记分牌口径隔离照旧**：`0.4091179943351143`（457 行 / 97 化合物）与 v1.0 headline `0.364` **不得混用**；`0.5332` / `0.5454` 只许带池定义引用。
+- **观测级建模一律 `GroupKFold by InChIKey`** 并断言 `group_overlap == 0`，`random_row` 只作泄漏参照、**从不进判决**（黏度线已交过学费：`random_row 0.064` vs `group_key 0.175`）。
+- **F2 的口径教训要带进建模**：「痕迹」必须由**版本库内容**决定，否则任何一份报告都不可逐字节复现 —— 这与「观测级表必须用分组切分」是同一条纪律的两种表现：**只认可复现的东西**。
+- **等待期纪律**：审稿意见回来前只跑已登记内容，**不开新主线**。
+
+### 27.10 红线复核（本节落盘时实测）
+
+- 六件冻结件 digest 逐位未变（**6/6 INTACT**）：`data/dielectric_v03.csv` `ff2142936e06…d35ccce4`、`probes/l3_stage1_pilot_pool.csv` `b838febbca4d…eb7c408b18`、`probes/l3_backvalidation_prereg.json` `77f61a83b82d…c6f0db98`、`data/processed/dielectric_observations_v11plus.csv` `159b928f800a…68a49af9`、`probes/dielectric_r2_levers_prereg.json` `ab3503c037f0…bc1bdaa`、`data/viscosity_v01.csv` `12dfa03f3428…c581c5b26`。
+- **短清单仍是 `cross_check_only` / `redistributable = false`**：`data/reference/kpi_15_14_shortlists.csv` 未进 `data/` 冻结表、未进任何池、未进任何交付包；身份表只装结构身份，**不含论文印刷 MP/BP/FP，也不含任何 Reaxys 值**。
+- **Reaxys 红线未触碰**：本轮**未使用 Reaxys**，受限值 `restricted_crosscheck_only` **未新增、未扩散**。这条是**负命题**，没有网络审计日志，只能靠「本轮新增/改动文件里 `reaxys` 零命中、交付包无新增 Reaxys 物」间接支持，**照实登记为「不可独立复核」**，不写成已证实。
+- **`data/restricted/` 的地位被写得更紧，而不是更松**：它在 F2 普查里只是**单独计数**的 21 个候选（`restricted_local_only_candidates`），并**被明确登记为「本机专属、不在干净 clone 内、不可复现」**；命中行仍标 `local_trace_restricted=yes`，且契约写明**只记路径、不带值**（`carries_values_from_restricted_sources = false`、`redistribution = not_permitted`）。
+- **F1 的在线缓存不进版本库**：`data/external/thermoml_api/` 被 `.gitignore` 忽略（+7 行）；随包分发的是 summary 里的 manifest 与出处账本，不是那 145 MiB 原始响应。
+- `reports/thermoml_viscosity_coverage.md:75` 与 `reports/decisions_log.md:3801` / `:3807` / `:3902` 登记的四项待办**全部清偿**，旧节原文**一个字未改**。
+
+### 27.11 独立对抗审读与修复（本轮；审读者 = 另一智能体，独立复算）
+
+- **审读方式（不许读结论）**：审读者只读磁盘与 git、**不读本节结论**：独立重算六件冻结件 digest（**6/6 INTACT**）；独立校验交付包 `SHA256SUMS`（**32 条逐条重算、0 不一致**）；独立比对包内 `README.md` 与导出器常量（**逐字节相同**）、包内产物清单与 `ARTIFACTS`（**相同**）；独立确认快照 fixture 的正文 = 手册 `## 附录 J-补记三` 起至 EOF（**逐字节相同**）；独立清点 `data/external/thermoml_api/`（**38 文件 / 151,793,252 B**，与包内 README 声明一致）与 `git check-ignore`（命中 `.gitignore:162`）；独立算 `probes/kpi_funnel_cross_run.py` 的内容 digest（`c65982fc…c800815`，与 AE 与本节 27.7 记载一致）与索引模式（`100755`）；独立复算 trace 双口径（文件口径 **148 → 77**、消失 **71**、新增 **0**）。
+- **发现 1（Important，已修）：常量自证 —— 两条断言自己证明自己。** `tests/test_export_week16_results.py` 里 `test_the_round_fits_no_model_and_touches_no_scoreboard` 原写 `summary[...] == MAIN_SCOREBOARD`、`test_summary_pins_every_frozen_red_line` 原**从模块常量取期望值**。**后果**：把 `MAIN_SCOREBOARD` 或任一冻结 digest 改错，**测试依旧全绿** —— 守卫等于没有（这类断言在本仓 `tests/test_export_week15_results.py` 里也有，属**同族已知弱点**，登记供后续统一加固）。**修法**：测试里把六个 digest 与两个基准数（`0.4091179943351143`、`0.7385332681453336`）写成**字面量**，并**额外**断言「字面量 == 模块常量」，**两边都钉死**。
+- **变异测试（红 / 还原，均为实跑）**：① 把 README 的 `148 → 77` 改成 `148 → 78` → `test_the_readme_explains_the_week15_drift_it_ships` **变红**（`AssertionError: assert '148 → 77' in ...`；**1 failed / 3 passed**，其余 17 条未选）；② 把模块里 `data/dielectric_v03.csv` 的 digest 改动一个字符 → `test_summary_pins_every_frozen_red_line` **变红**（**1 failed**，断言点正是新加的字面量等值行）。两处均**逐字节还原**（还原后与原文件 `==` 为真），随后 `tests/test_export_week16_results.py` **21 passed**、`ruff check` 绿。
+- **发现 2（Minor，登记不修）**：`probes/export_week16_results.py` 的 `EXEC_BIT_REPAIR_NOTE` 里那段 digest 是**短写**（`c65982fc…c800815`），短写无法自动核对，只作人类可读提示；机器核对改由 `exec_bit_repair` 的实测字段与 `tests/test_repo_hygiene.py` 承担。
+- **发现 3（Minor，登记不修，外部依赖风险）**：`pageNum` 0 基这条**只在本项目一侧被断言**。在线 API 无版本号、无 schema 快照，若 NIST 改成 1 基，预注册里的 `FIRST_PAGE_NUM = 0` 会**静默失配** —— 届时靠的是**判据 A**（`records_collected == size_records`）**兜底**，而不是版本号。
+- **负命题（审读者无法独立复核，照实写「不可复核」）**：① 首跑 **19 次在线请求不可回放**（无网络审计日志），只能靠已落盘的 38 个响应缓存文件与 summary 里的请求账本**间接支持**；② 「**本轮零 Reaxys 访问**」同样无审计日志，只能靠新增/改动文件里 `reaxys` 零命中与「`成果输出/` 无新增 Reaxys 物」间接支持。
+- **手册纪律（真缺陷换来的，见手册附录 AF-10）**：本轮先把 Week 16 计划段（AA-5）的交付对照**插进手册快照区内**，立刻打断 9 条 `source_line` pin（`manual_citations_verbatim` 变红，9 条引用 2 条失败）。**处置**：整块回退，改为**只从文件末尾追加**（手册附录 AF-9），并新增纪律「**快照区内不许插行，只许末尾追加；确需插行必须同批更新所有 pin 并重跑 `verify_unimol_probe_spec.py --check`**」。这条与 27.7 同源 —— 都是**本地看不见、CI 才看得见**的缺陷。

@@ -1857,3 +1857,120 @@ R² 对评分池敏感（同模型：97 池 0.409 / 236 冻结池 0.364 / 1594 �
 - **第二轮复核（只核修复，独立实测）**：请求的 7 项**全部通过、0 Critical**。新增 1 条 Minor（**M-a**：AE-4 把 `.pkl/.sdf` 的**目录归属**写错，聚合数 23/9 对但归属错 → 已按实测改写为 「`.pkl` 23 = `.venv` 11 + `.venv-chemprop` 12、`.sdf` 9 = `.venv` 4 + `.venv-chemprop` 5」）与 1 条 Important（**I-a**：审读窗口内台账被本轮写入，文件是**移动靶** → 流程登记：提交前以**冻结副本**复算全部 pin；审读者自己的全量跑为 **2435 passed / 817.64 s**，与本节 783.65 s 的差异只是机器负载）。
 
 > **纪律价值**：这轮审读打红的全是**「口径/措辞/自证强度」**，没有一条是数值造假 —— 但其中 I-1 是**真缺陷**（弱断言使摘要钉永久失效），若不复核就会带着「钉住了」的错觉进 v2.0。教训：**凡「我钉住了 X」的断言，都必须让 X 变化时该断言真的变红**（本例即变异测试要打到钉本身）。
+
+---
+
+## 附录 AF：Week 16「余项收口轮」—— 在线黏度切片、追踪源改版、身份画法裁决（2026-09-26）
+
+> 命名说明：紧随附录 AE 之后取 **AF**。本附录同样**不动笔（不写论文）**、**不拟合任何模型、不产任何 R²**、不碰冻结件。范围 = 附录 **AD-7** 与 **§26** 登记为「未做 / 待办」的四笔欠账的清偿，外加一处「提交之后才看得见」的执行位缺陷。机读台账见 `reports/decisions_log.md` **§27**，交付包在 `成果输出/week16/`。**AE 原文不回改**，清偿只在本附录声明。
+
+### AF-0 本轮为什么不产 R²（先把话说死）
+
+四条臂里没有一条拟合模型：D8 是规则级联、F1 只数在线记录条数、F2 改清单的扫描源、F3 只读两张已存在的表。冻结主记分牌 **0.4091179943351143**（457 行 / 97 化合物，GroupKFold by InChIKey，50 折）本轮**读取次数 = 0**，`main_scoreboard_touched = false`；`shots` 记 `main_scoreboard_attempts = 0`、`models_fitted = 0`。`random_row` 的 R² = 0.7385332681453336 依旧**只作泄漏参照**，从不进任何判决。
+
+### AF-1 四条臂与验收（本附录落盘时实测）
+
+| 臂 | 任务 | 交付（新增） | 验收 |
+|---|---|---|---|
+| F1 | 在线 ThermoML 黏度切片核查（清偿 Week 15 T1 登记的「本轮未做」） | `probes/thermoml_viscosity_online_slice.py` ＋ 预注册 `_prereg.json` ＋ `_summary.json` ＋ 报告 ＋ 测试（5 件） | 判据 A/B/C **全 PASS、违反 0**；**39 passed**；`--check` 绿（`--resolve-online` 与空缓存目录两种情形均退 0）；ruff 绿 |
+| F2 | AL Round 4 **追踪源改版**：`git ls-files` ∩ 声明策展根 | `probes/al_round4_new_compound_backfill.py` ＋ 清单 CSV ＋ `_summary.json` ＋ 报告 ＋ `probes/export_week15_results.py`（连带更新）＋ 两个测试（7 件） | 清单 21 行**按生成器重生**；**107 passed**；`known_fragility` 文案由「正解未被采纳」改为「已采纳 ＋ 例外登记」 |
+| F3 | 身份层**画法差异**机械取证（裁决权归作者） | `probes/identity_smiles_drawing_decision.py` ＋ `_summary.json` ＋ 报告 ＋ 测试（4 件） | 五门（A 身份同一 / B 只复制不撰写 / C 冻结件仍携带 / D 零写盘 / E 画法喂几何）**全过**；**13 passed**；`--check` 绿 |
+| 修复 | `probes/kpi_funnel_cross_run.py` 的**索引执行位** | 100644 → 100755（**文件内容一字未动**） | `tests/test_repo_hygiene.py` **4 passed**；Week 15 导出器 verifier 块由红转绿 |
+| 收纳 | **Week 16 交付包**（本附录的落盘处） | `probes/export_week16_results.py` ＋ 其测试 ＋ `成果输出/week16/`（29 件产物） | 导出器 verifier 块 **6/6 退 0**；**20 passed**；`SHA256SUMS` 自校验通过 |
+
+> **披露（根因，不是笔误）**：上一版提交以索引模式 100644 落库一个带 shebang 的探针；Windows 上 `core.fileMode = false`，于是「本地可执行」与「版本库记录可执行」脱钩，**只有 CI 才看得见** EXE001。修法是 `git update-index --chmod=+x`，不是改内容：内容 digest 保持 `c65982fcb927…c800815`。
+
+### AF-2 D8 交集的机器读数（复述；完整表见 AE-2）
+
+- 判据 A 自洽：**0 / 29** 违反；判据 B 身份：**29 / 29** 出 InChIKey（14 行 SMILES→RDKit、15 行 CAS→PubChem，未解析为空）。
+- 判据 C 交集：Batt-P30K **13** / 314 键名册 **2** / 冻结 ε v0.3 **2** / v1.x 观测表 **1**；29 行去重后仍是 **29** 个 InChIKey。
+- 本仓漏斗：**S0 29,519 → S1 29,519（本级剔除 0）→ S2 22,249 → S3 11,709 → S4 登记为缺口不跑**。S3 用的是**导出白名单**（C/N/O 三种，标 `derived_not_declared`），**只能当下界读**。
+- 两池**不同池**（本仓 Batt-P30K 29,519 vs KPI 的 QM9 133,885，本地无 QM9）：`comparability = pool_different` —— **只许比比例与规则，不许比绝对计数**，也不许把比例差异单方面归因于漏斗。
+
+### AF-3 F1 在线黏度切片：怎么问、坑在哪、能给什么数
+
+**先冻结再跑**：预注册 `2026-09-26T10:17:13Z` 锁定（`status = locked_before_run`，sha256 `f62ad8eca0be…feb4389`），判据与阈值跑后**未回填、未放宽**。
+
+| 检索词 | 在线 `size`（记录数） | 已抓记录数 | 页数 | 结构化 `ePropName` 命中 | 仅 phrase 命中 |
+|---|---|---|---|---|---|
+| `*`（全库） | 11,923 | — | — | — | — |
+| `"Viscosity, Pa*s"` | 1,690 | 1,690 | 17 | 1,690 | **0** |
+| `"Kinematic viscosity, m2/s"` | 70 | 70 | 1 | 70 | **0** |
+
+- **覆盖率只能按记录口径给**：本地含黏度的 **29** 个 XML 文件 / 在线 Viscosity Pa\*s 切片 **1,690** 条记录 = **1.7160%**。**在线行数 = `unknown`**：JSON API 只暴露记录数，记录内的 `data_summary` 是另一种计数单位，**不许顶替行数、不许估计**，故**按行口径的覆盖率不给数**（本地 2,725 行与在线记录数**不可比**）。
+- **本地 ⊆ 在线**：29 / 29 命中在线黏度切片并集（**1,743** 条记录），未命中 **0**。这只说明「本地都在线上」，**不说明「线上 = 本地」**：本地是为介电检索组建的**筛选缓存**，不是 NIST 全库。
+- **分页坑（已写死成常量）**：API 的 `pageNum` 是 **0 基**的，窗口 `[pageNum × pageSize, (pageNum+1) × pageSize)`。从 `pageNum = 1` 起翻会**永久漏掉最前 100 条**；本轮两个切片都从 `pageNum = 0` 抓全，逐切片 `records_collected == size` 且 DOI 唯一。
+- **代价**：请求 **19 / 60**（预算内），传输 **151,791,416 B**；原始响应缓存 `data/external/thermoml_api/`（38 文件）**被 `.gitignore` 忽略、不随包分发**，干净克隆上 `--check` 退用已提交的清单，**零网络**复现。
+
+### AF-4 F2 追踪源改版：「项目知识痕迹」只认版本库里的文件
+
+- **新语义**：候选集 = `git ls-files`（**git 跟踪的文件**）∩ 声明策展根；`git ls-files` 失败即**抛错**，**没有**退回扫盘的等价实现。
+- 机读 `trace_scan_census`：`tracked_candidates = 98` ＋ `restricted_local_only_candidates = 21` = **119**，附 `path_list_sha256 = e154aca9db06…1201ec9`（排序后换行拼接的路径并集）。
+- **修复前后实测**（由 `probes/export_week16_results.py` 在导出当天从 `85cb059` 那份清单重数，**不是抄的**）：去重 trace 文件 **148 → 77**，消失 **71** ＝ `data/external/` **69** ＋ `data/processed/` **2**，**新增 0**（**文件口径**）。§27.5 另给 **token 口径**（`path:field` 原样去重）**156 → 83**、消失 **73**、新增 **0**；**两个口径不许相减**，也不许拿去和上几轮登记的 114 / 128 / 146 相减。
+- **受害 token 消失**：被 ignore 的下载缓存 `data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json` 不再能被当作「项目知识」引用。
+- **无翻转**：21 行里只有 `local_trace_files` 一列变化；`local_trace` 仍是 yes **18** / no **2** / na **1**，`by_row_kind` 仍是 1 / 12 / 7 / 1，优先级仍是 P1 **1** / P3 **20**。
+- **唯一例外（显式登记）**：`data/restricted/` 是刻意**本机-only** 的受限交叉核对镜像，**不在任何干净 clone 内**，命中行继续 `local_trace_restricted = yes` 并**单独计数** —— 绝不假装它可复现。
+- **顺带解释 Week 15 包里的 114 → 128 → 146**：那不是三个口径，而是同一个**错误**口径（扫盘的函数）在同一张盘上被反复读数；换源后同一张清单稳定读作 **77**。Week 15 包**不回改**，漂移在 `成果输出/week16/README.md` 里一次性解释并封存。
+
+### AF-5 F3 身份画法差异：15 条差异的机械取证（建议不改写）
+
+- 314 行身份表里 SMILES 有差异的键 **15** 个 = **仅立体层假警报 10** ＋ **结构层 5**（另有 299 条逐字相同）。
+- 5 条结构差异**全部** `identity_check = roundtrip_match`，且 `pubchem_inchikey == inchikey` —— **身份同一，画法不同**：`charge_separation_salt_vs_neutral` ×2（FSXANJBLYFVXEU、OOKUTCYPKPJYFV）、`tautomer_amide_vs_imidic_acid` ×2（OHLUUHNLEMFGTQ、ZHNUHDYFZUAESO）、`amide_imide_plus_ring_branch_order` ×1（LBHLGZNUPKUZJC）。
+- **本地串 5/5 是复制不是撰写**：4 条落在**冻结件** `data/dielectric_v03.csv` 内、1 条落在派生表 `data/processed/ilthermo_new_compounds.csv` 内，**0 条由身份层自己撰写**。
+- **4 条携带几何派生特征**（LBHLGZNUPKUZJC / OHLUUHNLEMFGTQ / OOKUTCYPKPJYFV / ZHNUHDYFZUAESO，见 `data/processed/dielectric_physical_features_v03.csv`）—— 故**画法不是装饰**：就地改写会**静默移动**这些键的物性特征，除非同步重生特征表。
+- 五门全过，结论登记为 **`recommended_no_rewrite_awaiting_human_confirmation`**：**裁决权归作者**，探针只给机械记录；本轮 `no_data_change_made = true`，**没有写过任何 `data/` 文件**。若作者决定改写，须走**版本化迁移**（出新冻结表 ＋ 同批重生特征表 ＋ 重跑身份层 ＋ 更新台账 pin），**不是就地改字**。
+- **已知限制照实登记**：① 身份同一**不等于**描述符同一（四对差异落在电荷分离或互变异构选择上，可能移动 RDKit 与几何描述符）；② FSXANJBLYFVXEU 还带着**另一笔**已登记的 CID 冲突（本地 ILThermo 表记 60196376、PubChem 记 57351531），本探针不碰。
+
+### AF-6 纪律价值：为什么仍要登记这一轮「没有新 R²」的机械轮
+
+1. **把登记项清偿掉，而不是攒着**：F1 是 Week 15 T1 亲手写下的「本轮未做」，F2 是 Week 15 亲手写下的「正解未被采纳、登记为待办」。这类欠账**不还就会腐化**——读者将无法分辨「我们决定不做」与「我们忘了做」。
+2. **把口径坑写成常量，而不是写成段子**：`pageNum` 0 基、`size` 是记录数不是行数、`git ls-files` 才是痕迹的真源 —— 三条都已**固化进预注册与代码**，下次不能再凭记忆重踩一遍。
+3. **把「提交之后才看得见」的缺陷记档**：执行位 100644 / 100755 在 Windows 上完全不可见，却能让 CI 变红。记档的价值不在这一行修复，而在**下次提交前会想到查索引模式**。
+4. **「不做」也是读数**：D8 的 S4 判 `gap`、F3 建议「不改写」、F1 的行口径判「不可比」—— 这三条都是**明确的不做**，而它们在台账里与正面读数**同等醒目**。
+
+### AF-7 边界（不许省略）
+
+- **在线 `size` 是记录（文档）数，不是数据行数**；**在线行数 = `unknown`**，行口径**不可比**，不许用记录内 `data_summary` 顶替、不许估计。
+- 本地 `data/raw/thermoml/` 是筛选缓存、**不是** NIST 全库；29 个含黏度文件是**严格子集不是全集**。
+- `data/external/thermoml_api/` 与 `data/external/g1plus/` 均被 `.gitignore` 忽略、**不随包分发**。
+- `local_trace_files` 的唯一例外 `data/restricted/` **不在干净 clone 内**，标准库口径下**不可复现**，故单独计数、绝不假装成版本库内容。
+- `random_row` 只作**泄漏参照**（R² = 0.7385332681453336），**从不进入任何判决**；观测级建模一旦启动，**必须** `GroupKFold by InChIKey` 且断言 `group_overlap == 0`（黏度线已交过学费：random_row 0.064 vs group_key 0.175）。
+- **口径隔离**：主记分牌 0.4091179943351143（457 行 / 97 化合物）与 v1.0 headline 0.364（236 冻结池）**不得混用**；`0.5332` / `0.5454` 只许带池定义引用。
+- **短清单** `data/reference/kpi_15_14_shortlists.csv` 仍是 `cross_check_only` / `redistributable = false`：只作交叉核对，**不进任何池、不进任何特征**。身份表只装**结构身份**，不含论文印刷 MP/BP/FP、不含任何 Reaxys 值。
+- **受限数据零扩散**：Reaxys 值**未进 `data/`、未进任何池**；Schrödinger 受限 **858** 条未被绕取。
+
+### AF-8 冻结红线复核（本附录落盘时实测）
+
+- 六件 digest **逐位未变**（`intact = true` × 6）：`data/dielectric_v03.csv` `ff2142936e…35ccce4`、`probes/l3_stage1_pilot_pool.csv` `b838febbca4d…408b18`、`probes/l3_backvalidation_prereg.json` `77f61a83b82d…f0db98`、`data/processed/dielectric_observations_v11plus.csv` `159b928f800a…a49af9`、`probes/dielectric_r2_levers_prereg.json` `ab3503c037f0…c1bdaa`、`data/viscosity_v01.csv` `12dfa03f3428…1c5b26`。
+- 预注册**不回填、不放宽**；`locked_at_utc` 与 mtime 不一致者按实况照实留档。
+- **改动的既有产物**（照实列全）：F2 一组（`probes/al_round4_new_compound_backfill.py`、`probes/al_round4_backfill_list_v0.csv`、`probes/al_round4_new_compound_backfill_summary.json`、`reports/al_round4_new_compound_backfill.md`、`tests/test_al_round4_new_compound_backfill.py`）、连带更新（`probes/export_week15_results.py`、`tests/test_export_week15_results.py`）、`.gitignore`（＋`data/external/thermoml_api/`）、`reports/decisions_log.md`（§27）、`tests/fixtures/manual_appendix_j_snapshot.md`（从本手册重生）；其余为**新增文件**。
+- 交付包：`成果输出/week16/`（29 件产物 ＋ `README.md` ＋ `week16_summary.json` ＋ `verification.json` ＋ `SHA256SUMS`），verifier 块 **6/6 退 0**。
+
+### AF-9 AA-5 计划段对照（2026-09-26；**故意不写进 AA-5 表内**）
+
+**为什么不写在 AA-5 那一行下面**：手册快照是「`## 附录 J-补记三` 起、到文件末尾」的一整块，其行号被 9 条 pin 逐条引用（`probes/unimol_probe_spec_prereg.json` 的 `source_line`）。本轮实测：在 AA-5（手册第 2146 行附近）插入 2 行，快照内 1693 / 1762 两行随即位移，`verify_unimol_probe_spec.py --check` 的 `manual_citations_verbatim` 立刻变红（9 条引用 2 条失败）。**故本附录只从文件末尾追加，不向快照区内插行**；这条纪律已记入 AF-10。
+
+对照（**上表原文不回改**）：
+
+| AA-5 计划行 | 实况 | 落在哪 |
+|---|---|---|
+| 一 ηε-joint schema 预注册 | 已由 **Week 15** 的 ηε 联表线完成（观测级联表） | 附录 **AD-4**、`reports/decisions_log.md` §24 |
+| 二 PubChem 液态窗口批量收割 | 未按此形态执行；实际做的是 **KPI 29 行的身份解析**（14 行 RDKit ＋ 15 行 PubChem） | 附录 **AE-2**、§26.3 |
+| 三 首建合并（ε ∪ η ∪ Schrödinger 子集） | 未按此形态执行；ε 观测表与黏度表已各自建成 | 附录 AD-4、T1 线 |
+| 四 Reaxys 裁决会话（η 冲突 ~20 ＋ PubChem 抽查 ~10） | **未开始**（本轮零 Reaxys 访问） | 仍待办 |
+| 五 KPI 15+14 清单抠取 ＋ 漏斗交叉试跑 | **已交付** | 附录 **AE-2**、§26.3、AF-2 |
+| 缓冲 Uni-Mol 探针规格定稿 | **已交付**（只定规格，不跑模型） | 附录 **AE-4**、§26.5 |
+| — | **计划外**：F1 / F2 / F3 三笔欠账清偿 ＋ 执行位修复 ＋ Week 16 交付包 | 本附录 **AF-1** ~ **AF-8**、§27 |
+
+### AF-10 本轮新增的一条操作纪律（用真缺陷换来的）
+
+**「手册快照区内不许插行，只许从末尾追加」。** `tests/fixtures/manual_appendix_j_snapshot.md` 是手册从 `## 附录 J-补记三` 到 EOF 的**摘录**，而 `probes/unimol_probe_spec_prereg.json` 里的 `source_line` 是按**快照内行号**钉死的。任何在快照区内（即手册第 633 行之后）的**插入**都会同时位移其后所有行的编号，把 pin 从「钉住」变成「指错」，而 `--check` 会**立刻**变红（本轮实测：`manual_citations_verbatim`，9 条引用 2 条失败）。**写作纪律**：往手册里加内容，一律**追加到文件末尾**；确需插行时，必须**同批更新所有 pin 并重跑 `verify_unimol_probe_spec.py --check`**。这条与 AF-6 第 3 条同源 —— 都是「本地看不见、CI 才看得见」的缺陷。
+
+### AF-11 独立对抗审读与修复（同一轮；审读者 = 另一智能体，独立复算）
+
+- **审读方式（不许读结论）**：审读者只读磁盘与 git、**不读本节结论**：独立重算六件冻结件 digest（**6/6 INTACT**）；独立校验交付包 `SHA256SUMS`（**32 条逐条重算、0 不一致**）；独立比对包内 `README.md` 与导出器常量（**逐字节相同**）、包内产物清单与 `ARTIFACTS`（**相同**）；独立确认快照 fixture 的正文 = 手册 `## 附录 J-补记三` 起至 EOF（**逐字节相同**）；独立清点 `data/external/thermoml_api/`（**38 文件 / 151,793,252 B**，与包内 README 声明一致）与 `git check-ignore`（命中 `.gitignore:162`）；独立算 `probes/kpi_funnel_cross_run.py` 的内容 digest（`c65982fc…c800815`，与 AE 记载一致）与索引模式（`100755`）；独立复算 trace 双口径（文件口径 **148 → 77**、消失 **71**、新增 **0**）。
+- **发现 1（Important，已修）：常量自证 —— 两条断言自己证明自己。** `test_the_round_fits_no_model_and_touches_no_scoreboard` 原写 `summary[...] == MAIN_SCOREBOARD`、`test_summary_pins_every_frozen_red_line` 原**从模块常量取期望值**。**后果**：把 `MAIN_SCOREBOARD` 或任一冻结 digest 改错，**测试依旧全绿** —— 守卫等于没有。**修法**：测试里把六个 digest 与两个基准数（`0.4091179943351143`、`0.7385332681453336`）写成**字面量**，并**额外**断言「字面量 == 模块常量」，**两边都钉死**。
+- **变异测试（红 / 还原，均为实跑）**：① 把 README 的 `148 → 77` 改成 `148 → 78` → `test_the_readme_explains_the_week15_drift_it_ships` **变红**（`AssertionError: assert '148 → 77' in ...`；**1 failed / 3 passed**，其余 17 条未选）；② 把模块里 `data/dielectric_v03.csv` 的 digest 改动一个字符 → `test_summary_pins_every_frozen_red_line` **变红**（**1 failed**，断言点正是新加的字面量等值行）。两处均**逐字节还原**（还原后与原文件 `==` 为真），随后 `tests/test_export_week16_results.py` **21 passed**、`ruff check` 绿。
+- **发现 2（Minor，登记不修）**：`probes/export_week16_results.py` 的 `EXEC_BIT_REPAIR_NOTE` 里那段 digest 是**短写**（`c65982fc…c800815`），短写无法自动核对，只作人类可读提示；机器核对改由 `exec_bit_repair` 的实测字段与 `tests/test_repo_hygiene.py` 承担。
+- **发现 3（Minor，登记不修，外部依赖风险）**：`pageNum` 0 基这条**只在本项目一侧被断言**。在线 API 无版本号、无 schema 快照，若 NIST 改成 1 基，预注册里的 `FIRST_PAGE_NUM = 0` 会**静默失配** —— 届时靠的是**判据 A**（`records_collected == size`）**兜底**，而不是版本号。
+- **负命题（审读者无法独立复核，照实写「不可复核」）**：① 首跑 **19 次在线请求不可回放**（无网络审计日志），只能靠已落盘的 38 个响应缓存文件与 summary 里的请求账本**间接支持**；② 「**本轮零 Reaxys 访问**」同样无审计日志，只能靠新增/改动文件里 `reaxys` 零命中与「`成果输出/` 无新增 Reaxys 物」间接支持。

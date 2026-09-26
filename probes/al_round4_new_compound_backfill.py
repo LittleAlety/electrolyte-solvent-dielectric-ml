@@ -31,6 +31,7 @@ import csv
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
@@ -190,9 +191,13 @@ GAP_FIELDS = (
 # The trace evidence chain only accepts the curated data trees.  data/interim/ is
 # the week-scoped scratch area -- ad-hoc text extracts, timing probes, throwaway
 # reruns -- and a compound that merely appears in one of those says nothing about
-# what the project actually knows.  Note that git-ignore status is deliberately
-# NOT the rule: several curated paths under data/ are ignored for size or
-# redistribution reasons (data/restricted/ in particular) and stay in scope.
+# what the project actually knows.
+#
+# Version-control tracking IS the rule.  A trace may only come from a file that
+# git ls-files reports, because the published list has to be reproducible in a clean
+# clone and an uncommitted download cache is a local accident, not project knowledge.
+# One declared exception exists -- the local-only restricted mirror declared below --
+# and it is counted separately rather than pretended away.
 TRACE_ROOTS = (
     "data/external/",
     "data/processed/",
@@ -228,7 +233,20 @@ TRACE_EXTENSIONS = {".csv", ".tsv", ".json", ".txt", ".md"}
 # project may not redistribute.  Only the path is ever recorded: no value from a
 # restricted file enters this probe's output, and such a trace never promotes a
 # compound into a dataset.
+#
+# data/restricted/ is the single declared exception to the tracked-only rule.  It is a
+# local-only cross-check mirror that .gitignore deliberately keeps out of the
+# repository and that the published list has used since the first round.  Files there
+# may contribute a trace, but the census counts them separately and every row they
+# touch keeps local_trace_restricted=yes.
 RESTRICTED_PREFIX = "data/restricted/"
+RESTRICTED_LOCAL_ONLY_ROOT = RESTRICTED_PREFIX
+RESTRICTED_LOCAL_ONLY_CAVEAT = (
+    "data/restricted/ is local-only by design and is NOT part of a clean clone "
+    "（本机专属、不在干净 clone 内）: a row that only cites restricted files cannot be "
+    "reproduced from a fresh checkout, so it is flagged local_trace_restricted=yes and "
+    "counted apart"
+)
 
 
 # A one-compound family is degenerate for coverage purposes (water is a single
@@ -607,13 +625,16 @@ def derive_action(
 
 
 def trace_scan_allowed(relative_path: str) -> bool:
-    """True when a data/ path may contribute to the trace evidence chain.
+    """True when a data/ path sits inside a declared trace scope.
 
     A path is in scope when it sits in a declared curated root, or when it is a
     curated top-level table directly under data/.  The scratch rules run first -- the
     declared scratch prefixes and the underscore basename convention -- so an excluded
     tree can never be re-admitted by the root test, and an ad-hoc dump keeps failing
     even when it is dropped into a curated tree.
+
+    Scope is necessary but not sufficient.  A candidate must also be tracked by git,
+    or sit under the declared local-only restricted mirror; see trace_scan_census().
     """
 
     if relative_path.startswith(SCRATCH_PREFIXES):
@@ -625,19 +646,145 @@ def trace_scan_allowed(relative_path: str) -> bool:
     return relative_path.startswith(TRACE_ROOTS)
 
 
-def local_trace_scan(targets: Mapping[str, str]) -> dict[str, list[tuple[str, str]]]:
+def _is_trace_candidate(relative_path: str) -> bool:
+    """Scope plus the extension and panel/lead exclusions."""
+
+    if Path(relative_path).suffix.lower() not in TRACE_EXTENSIONS:
+        return False
+    if relative_path in LOCAL_PANEL_FILES or relative_path in LEAD_FILES:
+        return False
+    return trace_scan_allowed(relative_path)
+
+
+def git_tracked_files() -> list[str]:
+    """Every path git tracks, slash-separated and relative to the repo root.
+
+    git ls-files -z is the authority: the output is NUL-separated and always uses
+    forward slashes, so neither shell quoting nor Windows path translation can corrupt
+    it.  Failure is fatal on purpose -- falling back to a disk walk would silently
+    restore the defect this rule exists to remove.
+    """
+
+    result = subprocess.run(
+        ["git", "-C", str(REPOSITORY_ROOT), "ls-files", "-z"],
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            "git ls-files failed in " + str(REPOSITORY_ROOT) + ": "
+            + result.stderr.decode("utf-8", "replace").strip()
+        )
+    return [item for item in result.stdout.decode("utf-8").split("\0") if item]
+
+
+def restricted_local_only_files() -> list[str]:
+    """Files under the declared restricted mirror, repo-relative and slash-separated.
+
+    The mirror is deliberately untracked, so git ls-files never reports it.  It is the
+    single declared exception to the tracked-only rule and the census counts it apart
+    from everything else.
+    """
+
+    root = REPOSITORY_ROOT / RESTRICTED_LOCAL_ONLY_ROOT
+    if not root.is_dir():
+        return []
+    return sorted(
+        path.relative_to(REPOSITORY_ROOT).as_posix()
+        for path in root.rglob("*")
+        if path.is_file()
+    )
+
+
+def _trace_root_bucket(relative_path: str) -> str:
+    for root in TRACE_ROOTS:
+        if relative_path.startswith(root):
+            return root
+    return "data/"
+
+
+def trace_scan_candidates() -> list[str]:
+    """The declared trace universe: tracked curated files plus the restricted mirror."""
+
+    tracked = [path for path in git_tracked_files() if _is_trace_candidate(path)]
+    restricted = [
+        path for path in restricted_local_only_files() if _is_trace_candidate(path)
+    ]
+    return sorted(set(tracked) | set(restricted))
+
+
+def trace_scan_census() -> dict[str, Any]:
+    """A machine-readable census of the trace universe.
+
+    It turns the old "the list is a function of the disk" coupling into a quantity that
+    is visible and comparable.  path_list_sha256 is the digest of the sorted,
+    newline-joined candidate list, so a run that disagrees about which files count is
+    detectable at a glance, and by_root attributes the drift to a source instead of
+    leaving it as an unexplained jump.  The restricted mirror is counted on its own
+    line because it is local-only and is not reproducible in a clean clone.
+    """
+
+    tracked = sorted(path for path in git_tracked_files() if _is_trace_candidate(path))
+    restricted = sorted(
+        path for path in restricted_local_only_files() if _is_trace_candidate(path)
+    )
+    tracked_counts: dict[str, int] = {}
+    for path in tracked:
+        bucket = _trace_root_bucket(path)
+        tracked_counts[bucket] = tracked_counts.get(bucket, 0) + 1
+    restricted_counts: dict[str, int] = {}
+    for path in restricted:
+        bucket = _trace_root_bucket(path)
+        restricted_counts[bucket] = restricted_counts.get(bucket, 0) + 1
+    universe = sorted(set(tracked) | set(restricted))
+    return {
+        "rule": (
+            "a trace requires a file that git tracks (git ls-files) and that sits in a "
+            "declared curated root; the sole exception is the local-only "
+            "data/restricted/ mirror, which is counted separately and keeps "
+            "local_trace_restricted=yes"
+        ),
+        "tracked_candidates": len(tracked),
+        "restricted_local_only_candidates": len(restricted),
+        "total_candidates": len(universe),
+        "tracked_by_root": dict(sorted(tracked_counts.items())),
+        "restricted_local_only_by_root": dict(sorted(restricted_counts.items())),
+        "path_list_sha256": hashlib.sha256(
+            "\n".join(universe).encode("utf-8")
+        ).hexdigest(),
+        "path_list_sha256_rule": (
+            "sha256 of the newline-joined, sorted union of tracked candidates and "
+            "restricted local-only candidates (repo-relative, forward slashes, no "
+            "trailing newline)"
+        ),
+        "restricted_local_only_caveat": RESTRICTED_LOCAL_ONLY_CAVEAT,
+        "untracked_files_are_excluded": (
+            "any curated-root file that git does not track contributes nothing, so an "
+            "uncommitted download cache such as "
+            "data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json can "
+            "never be quoted as project knowledge in a clean clone"
+        ),
+    }
+
+
+def local_trace_scan(
+    targets: Mapping[str, str], candidates: Sequence[str] | None = None
+) -> dict[str, list[tuple[str, str]]]:
     """Find local non-panel traces of each target InChIKey.
 
-    A trace means the key (or the compound display name) appears in some other
-    curated local data file.  It documents that the compound is known to the
-    project but has never been observed dielectrically, which is a different
-    statement from "the project has never heard of it".
+    A trace means the key (or the compound display name) appears in another file of
+    the declared trace universe -- a git-tracked curated file, or the local-only
+    restricted mirror.  It documents that the compound is known to the project but has
+    never been observed dielectrically, which is a different statement from "the
+    project has never heard of it".
 
-    Two declared scratch rules apply: everything under data/interim/ (the
-    week-scoped area) and any basename beginning with an underscore (private by
-    convention) are excluded.  An ad-hoc paper-text dump or a throwaway rerun is
-    not project knowledge, and letting one in would make the evidence chain depend
-    on whatever a side task happened to write down that afternoon.
+    The universe comes from trace_scan_candidates().  The previous implementation
+    walked data/ on disk, which made the published list a function of whatever caches
+    happened to be lying around; now an untracked file contributes nothing, so the
+    list reproduces in a clean clone apart from the declared restricted exception.  The
+    underscore and scratch rules still apply on top.
+
+    candidates is injectable for tests; None means the declared universe.
     """
 
     keys = {key: key.encode("ascii", "ignore") for key in targets if key}
@@ -647,13 +794,10 @@ def local_trace_scan(targets: Mapping[str, str]) -> dict[str, list[tuple[str, st
         if name and len(name) >= 6
     }
     hits: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    for file_path in sorted((REPOSITORY_ROOT / "data").rglob("*")):
-        if not file_path.is_file() or file_path.suffix.lower() not in TRACE_EXTENSIONS:
-            continue
-        relative = file_path.relative_to(REPOSITORY_ROOT).as_posix()
-        if not trace_scan_allowed(relative):
-            continue
-        if relative in LOCAL_PANEL_FILES or relative in LEAD_FILES:
+    selected = trace_scan_candidates() if candidates is None else sorted(set(candidates))
+    for relative in selected:
+        file_path = REPOSITORY_ROOT / relative
+        if not file_path.is_file():
             continue
         try:
             blob = file_path.read_bytes()
@@ -1382,10 +1526,11 @@ def render_report(
         + "、".join(
             kind + " " + str(count) for kind, count in sorted(evidence_counts.items())
         )
-        + "。痕迹只统计已声明的策展数据树（"
+        + "。痕迹只统计被 git 跟踪且落在已声明策展数据树（"
         + "、".join(TRACE_ROOTS)
-        + "）与 data/ 顶层策展表；data/interim/ 这个周内 scratch 区，以及任何以“_”开头的"
-        "私有命名文件，都按声明排除。"
+        + "）与 data/ 顶层策展表内的文件；data/interim/ 这个周内 scratch 区、任何以“_”"
+        "开头的私有命名文件、以及一切未入库文件都按默认拒绝处理；唯一例外是本地专属的 "
+        "data/restricted/ 受限镜像（单独计数、命中即 local_trace_restricted=yes）。"
     )
     lines.append("")
     for row in new_rows:
@@ -1548,11 +1693,12 @@ def render_report(
     lines.append("")
     lines.append("- shots = 1：本轮只按预注册规则跑了一次，没有事后手调。")
     lines.append(
-        "- 本地痕迹扫描口径：只接受已声明的策展数据树（"
+        "- 本地痕迹扫描口径：候选 = git 跟踪的文件（git ls-files）∩ 已声明的策展数据树"
+        "（"
         + "、".join(TRACE_ROOTS)
-        + "）与 data/ 顶层的策展表；data/interim/ 这一周内 scratch 区按声明排除——"
-        "临时转储、计时探针、一次性重跑都不是项目知识，让它们进来会让证据链取决于"
-        "某个副任务当天下午恰好写了什么。"
+        + "）与 data/ 顶层策展表；data/interim/ 这一周内 scratch 区、basename 以“_”开头"
+        "的私有文件、以及一切未入库文件都不进证据链——临时转储、未提交的下载缓存"
+        "都不是项目知识，让它们进来会让清单在别人 clone 出来的仓库里无法逐字节复现。"
     )
     lines.append(
         "- 第二条 scratch 规则：basename 以“_”开头的文件一律不进证据链（仓库里现存的"
@@ -1565,14 +1711,15 @@ def render_report(
         "所以将来新增的 scratch 目录天然被排除，无需再改代码。"
     )
     lines.append(
-        "- 其他 scratch 路径已确认：data/ 下唯一的 scratch 区就是 data/interim/；"
-        "data/external/g1plus/、data/raw/、data/restricted/ 以及 data/processed/ 下未入库的"
-        "探针输出都是策展缓存/产物，按同一规则留在扫描范围内。"
+        "- 其他 scratch/cache 路径：data/ 下唯一的 scratch 区仍是 data/interim/；"
+        "data/external/g1plus/、data/raw/ 以及 data/processed/ 下未入库的探针输出虽然"
+        "名义上是策展缓存/产物，但 git 没有跟踪它们，因此一律不进证据链——这正是本次"
+        "修复的对象。"
     )
     lines.append(
-        "- gitignore 状态不是判据：data/ 下若干策展路径因体积或再分发条款被 ignore"
-        "（尤其 data/restricted/、data/external/g1plus/），它们仍在扫描范围内；"
-        "排除一律按已声明的 scratch 规则执行。"
+        "- 唯一例外是 data/restricted/：它是故意不进版本库的本地受限交叉核对镜像。"
+        "该目录下的文件可以作痕迹，但必须在 trace_scan_census 里单独计数，并标注它"
+        "「本机专属、不在干净 clone 内」；命中它的行照旧 local_trace_restricted=yes。"
     )
     lines.append(
         "- 优先级规则在跑之前就已写死在 derive_priority() 里，事后不放宽；"
@@ -1850,32 +1997,51 @@ def build_summary(
         },
         "trace_scan_scope": {
             "rule": (
-                "a local trace is only accepted from the curated data trees; the week-scoped "
-                "scratch area and any underscore-prefixed private basename are excluded, "
-                "because a compound appearing in an ad-hoc dump or a throwaway rerun says "
-                "nothing about what the project actually knows"
+                "a local trace requires a file that git tracks (git ls-files) and that "
+                "sits in a declared curated root; the week-scoped scratch area and any "
+                "underscore-prefixed private basename are excluded, because a compound "
+                "appearing in an ad-hoc dump or a throwaway rerun says nothing about "
+                "what the project actually knows"
+            ),
+            "tracked_files_are_the_rule": (
+                "the candidate list is the intersection of git ls-files and the declared "
+                "curated roots, so the published list is a function of the "
+                "version-control contents and reproduces in a clean clone; ignore status "
+                "is never consulted"
+            ),
+            "untracked_files_are_excluded": (
+                "any curated-root file that git does not track contributes nothing, so an "
+                "uncommitted download cache such as "
+                "data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json can "
+                "never be quoted as a trace token in a clean clone"
             ),
             "curated_roots": list(TRACE_ROOTS),
+            "restricted_exception_root": RESTRICTED_LOCAL_ONLY_ROOT,
+            "restricted_exception_rule": (
+                "data/restricted/ is a local-only cross-check mirror kept out of the "
+                "repository on purpose; its files may contribute a trace, but the census "
+                "counts them apart and every row they touch keeps "
+                "local_trace_restricted=yes"
+            ),
+            "restricted_exception_is_not_reproducible": RESTRICTED_LOCAL_ONLY_CAVEAT,
             "excluded_scratch_prefixes": list(SCRATCH_PREFIXES),
             "excluded_scratch_name_prefixes": [SCRATCH_NAME_PREFIX],
             "default_deny": (
-                "anything under data/ that is neither a declared curated root nor a curated "
-                "one-level table is rejected, so a new scratch tree is excluded by default"
+                "anything under data/ that is neither a declared curated root nor a "
+                "curated one-level table is rejected, so a new scratch tree is excluded "
+                "by default"
             ),
             "scratch_trees_confirmed": [
                 "data/interim/ is the only scratch tree under data/",
                 (
-                    "the other git-ignored trees (data/external/g1plus/, data/raw/, "
-                    "data/restricted/ and the ignored probe outputs under data/processed/) "
-                    "are curated caches and stay in scope"
+                    "the other git-ignored trees (data/external/g1plus/, data/raw/ and "
+                    "the ignored probe outputs under data/processed/) are download "
+                    "caches: git tracks nothing there, so they cannot contribute, and "
+                    "data/restricted/ contributes only through the declared exception"
                 ),
             ],
-            "gitignore_status_is_not_the_rule": (
-                "several curated paths under data/ are git-ignored for size or redistribution "
-                "reasons and stay in scope, data/restricted/ and data/external/g1plus/ in "
-                "particular; the exclusion is by declared scratch rule, never by ignore status"
-            ),
         },
+        "trace_scan_census": trace_scan_census(),
         "restricted_values_contract": {
             "route": "local_path_names_only",
             "carries_values_from_restricted_sources": False,

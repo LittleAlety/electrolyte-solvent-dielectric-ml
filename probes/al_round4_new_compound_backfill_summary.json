@@ -1,7 +1,7 @@
 {
   "schema_version": "al_round4_new_compound_backfill_summary@1",
   "task": "al_round4_new_compound_backfill",
-  "generated_at": "2026-09-26T09:20:55Z",
+  "generated_at": "2026-09-26T10:22:35Z",
   "run_mode": "offline_local_only",
   "shots": 1,
   "network_calls": 0,
@@ -322,7 +322,9 @@
     "declared_before_execution": true
   },
   "trace_scan_scope": {
-    "rule": "a local trace is only accepted from the curated data trees; the week-scoped scratch area and any underscore-prefixed private basename are excluded, because a compound appearing in an ad-hoc dump or a throwaway rerun says nothing about what the project actually knows",
+    "rule": "a local trace requires a file that git tracks (git ls-files) and that sits in a declared curated root; the week-scoped scratch area and any underscore-prefixed private basename are excluded, because a compound appearing in an ad-hoc dump or a throwaway rerun says nothing about what the project actually knows",
+    "tracked_files_are_the_rule": "the candidate list is the intersection of git ls-files and the declared curated roots, so the published list is a function of the version-control contents and reproduces in a clean clone; ignore status is never consulted",
+    "untracked_files_are_excluded": "any curated-root file that git does not track contributes nothing, so an uncommitted download cache such as data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json can never be quoted as a trace token in a clean clone",
     "curated_roots": [
       "data/external/",
       "data/processed/",
@@ -330,6 +332,9 @@
       "data/reference/",
       "data/restricted/"
     ],
+    "restricted_exception_root": "data/restricted/",
+    "restricted_exception_rule": "data/restricted/ is a local-only cross-check mirror kept out of the repository on purpose; its files may contribute a trace, but the census counts them apart and every row they touch keeps local_trace_restricted=yes",
+    "restricted_exception_is_not_reproducible": "data/restricted/ is local-only by design and is NOT part of a clean clone （本机专属、不在干净 clone 内）: a row that only cites restricted files cannot be reproduced from a fresh checkout, so it is flagged local_trace_restricted=yes and counted apart",
     "excluded_scratch_prefixes": [
       "data/interim/"
     ],
@@ -339,9 +344,27 @@
     "default_deny": "anything under data/ that is neither a declared curated root nor a curated one-level table is rejected, so a new scratch tree is excluded by default",
     "scratch_trees_confirmed": [
       "data/interim/ is the only scratch tree under data/",
-      "the other git-ignored trees (data/external/g1plus/, data/raw/, data/restricted/ and the ignored probe outputs under data/processed/) are curated caches and stay in scope"
-    ],
-    "gitignore_status_is_not_the_rule": "several curated paths under data/ are git-ignored for size or redistribution reasons and stay in scope, data/restricted/ and data/external/g1plus/ in particular; the exclusion is by declared scratch rule, never by ignore status"
+      "the other git-ignored trees (data/external/g1plus/, data/raw/ and the ignored probe outputs under data/processed/) are download caches: git tracks nothing there, so they cannot contribute, and data/restricted/ contributes only through the declared exception"
+    ]
+  },
+  "trace_scan_census": {
+    "rule": "a trace requires a file that git tracks (git ls-files) and that sits in a declared curated root; the sole exception is the local-only data/restricted/ mirror, which is counted separately and keeps local_trace_restricted=yes",
+    "tracked_candidates": 98,
+    "restricted_local_only_candidates": 21,
+    "total_candidates": 119,
+    "tracked_by_root": {
+      "data/": 7,
+      "data/external/": 5,
+      "data/processed/": 82,
+      "data/reference/": 4
+    },
+    "restricted_local_only_by_root": {
+      "data/restricted/": 21
+    },
+    "path_list_sha256": "e154aca9db063ab1e65c8a08572d701660159506e7f086ef8de4b79391201ec9",
+    "path_list_sha256_rule": "sha256 of the newline-joined, sorted union of tracked candidates and restricted local-only candidates (repo-relative, forward slashes, no trailing newline)",
+    "restricted_local_only_caveat": "data/restricted/ is local-only by design and is NOT part of a clean clone （本机专属、不在干净 clone 内）: a row that only cites restricted files cannot be reproduced from a fresh checkout, so it is flagged local_trace_restricted=yes and counted apart",
+    "untracked_files_are_excluded": "any curated-root file that git does not track contributes nothing, so an uncommitted download cache such as data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json can never be quoted as project knowledge in a clean clone"
   },
   "restricted_values_contract": {
     "route": "local_path_names_only",
