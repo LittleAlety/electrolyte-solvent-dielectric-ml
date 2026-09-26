@@ -19,6 +19,7 @@ from probes.export_week16_results import (
     EXEC_BIT_REPAIR_NOTE,
     FROZEN_RED_LINES,
     MAIN_SCOREBOARD,
+    POST_REPAIR_LIST_COMMIT,
     PRE_REPAIR_LIST_COMMIT,
     PRE_REPAIR_RECORDED_FILES,
     RANDOM_ROW_LEAK_REFERENCE_R2,
@@ -60,7 +61,7 @@ FROZEN_LEAK_REFERENCE_R2 = 0.7385332681453336
 # 21 tests passing).  The README bytes are therefore pinned by a literal digest --
 # a deliberate edit has to move this line -- and the numbers the prose must carry
 # are asserted as literals of their own.
-README_SHA256 = "dd221baa0de3df4a0e24e5ed86aaf32cede1751843bcd45017fd7d8fd5f59823"
+README_SHA256 = "e6c8f30e3b74756e9a6623e515142a8b48c84cf0615f2031876fb3cf8d52c9bc"
 README_NARRATIVE_NUMBERS = (
     "11,923",
     "**1,690**",
@@ -70,8 +71,8 @@ README_NARRATIVE_NUMBERS = (
     "34/34",
     "10 ＋ 结构层 5",
     "4 条携带几何派生特征",
-    "**119**",
-    "tracked_candidates = 98",
+    "**132**",
+    "tracked_candidates = 111",
 )
 
 
@@ -319,8 +320,8 @@ def test_the_trace_repair_lane_is_recomputed_from_git_and_matches(
     assert lane["trace_scan_census"] == generator["trace_scan_census"]
     census = lane["trace_file_census"]
     assert census == trace_file_census(REPOSITORY_ROOT)
-    assert census["distinct_local_trace_files"] == 77
-    assert census["local_trace"] == {"yes": 18, "no": 2, "na": 1}
+    assert census["distinct_local_trace_files"] == 88
+    assert census["local_trace"] == {"yes": 20, "no": 0, "na": 1}
 
     comparison = census["repair_comparison"]
     if comparison["available"] is not True:
@@ -337,64 +338,114 @@ def test_the_trace_repair_lane_is_recomputed_from_git_and_matches(
     assert comparison["disappeared_by_root"] == {"external": 69, "processed": 2}
     assert sum(comparison["disappeared_by_root"].values()) == comparison["disappeared"]
     assert comparison["local_trace_flipped"] is False
-    assert comparison["local_trace_after"] == census["local_trace"]
+    assert comparison["local_trace_after"] == {"yes": 18, "no": 2, "na": 1}
 
     counts = generator["trace_scan_census"]
-    assert counts["tracked_candidates"] == 98
+    assert counts["tracked_candidates"] == 111
     assert counts["restricted_local_only_candidates"] == 21
-    assert counts["tracked_candidates"] + counts["restricted_local_only_candidates"] == 119
-    assert counts["total_candidates"] == 119
+    assert counts["tracked_candidates"] + counts["restricted_local_only_candidates"] == 132
+    assert counts["total_candidates"] == 132
+    assert counts["tracked_by_root"] == {
+        "data/": 10,
+        "data/external/": 5,
+        "data/processed/": 92,
+        "data/reference/": 4,
+    }
     assert generator["list_stats"]["rows"] == 21
+
+    drift = census["drift_since_repair"]
+    assert drift["post_repair_commit"] == POST_REPAIR_LIST_COMMIT
+    assert drift["repair_distinct_files"] == 77
+    assert drift["current_distinct_files"] == 88
+    assert drift["added_since_repair"] == 11
+    assert drift["local_trace_flipped_since_repair"] is True
 
 
 def test_the_repair_comparison_recomputes_both_states_from_git() -> None:
     """Neither side of the before/after census is remembered; both are re-read from git.
 
     The parse is re-implemented here instead of calling the exporter's own helper, so
-    the shipped comparison is checked against an independent reading of the working
-    tree and of the pre-repair blob at PRE_REPAIR_LIST_COMMIT.
+    the shipped comparison is checked against an independent reading of the two
+    committed states the repair window is frozen to -- the Week 16 opening commit
+    (before) and the repair commit (after).  The working-tree list is read too, but
+    only to size the drift later weeks legitimately added after the repair.
     """
 
     list_path = "probes/al_round4_backfill_list_v0.csv"
+
+    def _blob(commit: str) -> str:
+        completed = subprocess.run(
+            ["git", "show", f"{commit}:{list_path}"],
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if completed.returncode != 0:
+            pytest.skip("the frozen repair commits are not reachable in this clone")
+        return completed.stdout
+
+    before_text = _blob(PRE_REPAIR_LIST_COMMIT)
+    after_text = _blob(POST_REPAIR_LIST_COMMIT)
     now_text = (REPOSITORY_ROOT / list_path).read_text(encoding="utf-8-sig")
-    completed = subprocess.run(
-        ["git", "show", f"{PRE_REPAIR_LIST_COMMIT}:{list_path}"],
-        cwd=REPOSITORY_ROOT,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if completed.returncode != 0:
-        pytest.skip("the pre-repair commit is not reachable in this clone")
-    before_text = completed.stdout
     before = _cited_trace_files(before_text)
+    after = _cited_trace_files(after_text)
     now = _cited_trace_files(now_text)
 
     disappeared_by_root: dict[str, int] = {}
-    for path in sorted(before - now):
+    for path in sorted(before - after):
         parts = path.split("/")
         if parts[0] == "data" and len(parts) > 2:
             disappeared_by_root[parts[1]] = disappeared_by_root.get(parts[1], 0) + 1
 
-    comparison = trace_file_census(REPOSITORY_ROOT)["repair_comparison"]
+    census = trace_file_census(REPOSITORY_ROOT)
+    comparison = census["repair_comparison"]
     assert comparison["available"] is True
     assert comparison["pre_repair_commit"] == PRE_REPAIR_LIST_COMMIT
+    assert comparison["post_repair_commit"] == POST_REPAIR_LIST_COMMIT
     assert comparison["pre_repair_distinct_files"] == len(before)
     assert len(before) == PRE_REPAIR_RECORDED_FILES
-    assert comparison["post_repair_distinct_files"] == len(now)
-    assert comparison["disappeared"] == len(before - now)
-    assert comparison["added"] == len(now - before) == 0
+    assert comparison["post_repair_distinct_files"] == len(after)
+    assert comparison["disappeared"] == len(before - after)
+    assert comparison["added"] == len(after - before) == 0
     assert comparison["disappeared_by_root"] == dict(sorted(disappeared_by_root.items()))
     assert sum(comparison["disappeared_by_root"].values()) == comparison["disappeared"]
 
     before_tally = _local_trace_tally(before_text)
-    after_tally = _local_trace_tally(now_text)
+    after_tally = _local_trace_tally(after_text)
     assert comparison["local_trace_before"] == before_tally
     assert comparison["local_trace_after"] == after_tally
     assert before_tally == after_tally
     assert comparison["local_trace_flipped"] is False
+
+    # The live list has since grown.  The drift is pinned apart so it can never be
+    # read back into the repair's own pair, and every gained file must be one git
+    # tracks -- the phantom citation the repair removed cannot re-enter live.
+    drift = census["drift_since_repair"]
+    assert drift["post_repair_commit"] == POST_REPAIR_LIST_COMMIT
+    assert drift["repair_distinct_files"] == len(after) == 77
+    assert drift["current_distinct_files"] == len(now)
+    assert drift["added_since_repair"] == len(now - after)
+    assert drift["added_since_repair_paths"] == sorted(now - after)
+    assert drift["local_trace_repair"] == after_tally
+    assert drift["local_trace_current"] == _local_trace_tally(now_text)
+    assert drift["local_trace_flipped_since_repair"] is True
+    tracked = {
+        item
+        for item in subprocess.run(
+            ["git", "ls-files", "-z"],
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        ).stdout.split("\0")
+        if item
+    }
+    assert now - after <= tracked
 
     # The token the defect was found through is gone from the working-tree list.
     assert not any(path.endswith("kpi_shortlist_identity/108-32-7.json") for path in now)

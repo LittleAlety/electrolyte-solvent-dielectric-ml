@@ -56,11 +56,15 @@ FROZEN_RED_LINES = {
 MAIN_SCOREBOARD = 0.4091179943351143
 RANDOM_ROW_LEAK_REFERENCE_R2 = 0.7385332681453336
 
-# The trace-file count the AL Round 4 list carried before the F2 repair.  The
-# before/after pair is re-derived from two committed states (the Week 16
-# opening commit 85cb059, and the worktree that ships this package) instead of
-# being restated, so the arithmetic cannot drift away from the list again.
+# The trace-file counts the AL Round 4 list carried around the F2 repair, and the
+# two committed states the comparison is re-derived from.  Both sides are read back
+# out of git -- the Week 16 opening commit 85cb059 (before) and the repair commit
+# 4e0bf0a (after) -- so the repair's own arithmetic cannot drift away from somebody's
+# restatement of it.  Later weeks legitimately add tracked curated files, which grows
+# the live list; that growth is reported apart in drift_since_repair so it can never
+# be read as part of the repair itself.
 PRE_REPAIR_LIST_COMMIT = "85cb0590284926f13a11be313c560ec20e885081"
+POST_REPAIR_LIST_COMMIT = "4e0bf0ab4ae7dc695ad81e56eaf00414dc0c0979"
 PRE_REPAIR_LIST_PATH = "probes/al_round4_backfill_list_v0.csv"
 PRE_REPAIR_RECORDED_FILES = 148
 
@@ -97,9 +101,9 @@ v1.0 已发布工件与 week11–week15 交付包未被触碰；本轮除三处*
 5. **F2（追踪源改版，采纳 `git ls-files` 正解）**：`local_trace_files` 的候选集改为「**git 跟踪的文件** ∩
    声明 curated 根」，唯一显式例外是本地-only 的 `data/restricted/`（单独计数、命中行继续 `local_trace_restricted = yes`）；
    **被 ignore 的下载缓存不再能冒充项目知识**——本轮真实受害 token（`data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json`）
-   已消失，去重 trace 文件 **148 → 77**（**文件口径**消失 **71** ＝ `data/external/` 69 ＋ `data/processed/` 2；**新增 0**；由导出器从 85cb059 那份清单重数，机器可复算）。`decisions_log.md` §27.5 另给 **token 口径** 156 → 83（消失 73、新增 0）——**两个口径不许相减**，也不许拿它们去和上几轮登记的 114 / 128 / 146 相减；新增机读 `trace_scan_census`
-   （`tracked_candidates = 98` ＋ `restricted_local_only_candidates = 21` = **119**，含 `path_list_sha256`），
-   使「128 → 146」这类漂移从此可归因。**21 行清单只有 `local_trace_files` 一列变化，无 `local_trace` 翻转。**
+   已消失，去重 trace 文件 **148 → 77**（**文件口径**消失 **71** ＝ `data/external/` 69 ＋ `data/processed/` 2；**新增 0**；由导出器从两份已提交状态 85cb059 → 4e0bf0a 重数，机器可复算，修复本身不随轮次漂移）。`decisions_log.md` §27.5 另给 **token 口径** 156 → 83（消失 73、新增 0）——**两个口径不许相减**，也不许拿它们去和上几轮登记的 114 / 128 / 146 相减；新增机读 `trace_scan_census`
+   （本轮导出时 `tracked_candidates = 111` ＋ `restricted_local_only_candidates = 21` = **132**，含 `path_list_sha256`；修复当时为 98 ＋ 21 = 119，差额 13 逐条列在 `drift_since_repair.added_since_repair_paths`），
+   使「128 → 146」这类漂移从此可归因。**21 行清单只有 `local_trace_files` 一列变化，无 `local_trace` 翻转**——该保证冻结在修复窗口内；此后 W17 落库的策展文件让 2 行由 `no` 翻到 `yes`（见 `drift_since_repair.local_trace_flipped_since_repair`），与修复无关。
 6. **F3（身份层画法差异：机械取证 + 不改写建议）**：15 条 SMILES 差异 = 立体层假警报 10 ＋ 结构层 5；
    5 条全部 `identity_check = roundtrip_match`、`pubchem_inchikey` 与 `inchikey` **逐字相同**；
    5 条本地串**全部是复制而非撰写**（4 条在**冻结件** `data/dielectric_v03.csv` 内、1 条在 ilthermo 派生表内、
@@ -315,13 +319,16 @@ def _trace_paths(rows: list[dict[str, str]]) -> set[str]:
 
 
 def trace_file_census(source_root: Path) -> dict[str, object]:
-    """Re-measure the shipped list, and the list as it stood before the repair.
+    """Re-measure the shipped list, and the repair's own before/after pair.
 
-    The pre-repair side is read out of git (the Week 16 opening commit) rather
-    than remembered, so the before/after numbers in the package are two
-    measurements of two committed states.  When that commit is not reachable
-    (a shallow clone, say) the comparison is registered as unavailable instead of
-    being filled in from the constant above.
+    The live side (rows / distinct_local_trace_files / local_trace) is read from the
+    working tree.  The repair comparison is a frozen pair of committed states --
+    git show at PRE_REPAIR_LIST_COMMIT (before) and at POST_REPAIR_LIST_COMMIT
+    (after) -- so "the repair removed 71 phantom citations and added none" stays a
+    statement about the repair itself and never about whatever later weeks appended.
+    Growth after the repair is reported apart in drift_since_repair.  When either
+    commit is not reachable (a shallow clone, say) the comparison degrades to
+    available=false with the recorded pre-repair count instead of being restated.
     """
 
     list_path = REPOSITORY_ROOT / "probes" / "al_round4_backfill_list_v0.csv"
@@ -332,29 +339,54 @@ def trace_file_census(source_root: Path) -> dict[str, object]:
     keys = ("yes", "no", "na")
 
     comparison: dict[str, object]
+    drift: dict[str, object]
     try:
-        raw = _git(
+        raw_before = _git(
             source_root, "show", PRE_REPAIR_LIST_COMMIT + ":" + PRE_REPAIR_LIST_PATH
         )
-        before_rows = list(csv.DictReader(io.StringIO(raw.lstrip("\ufeff"))))
+        raw_after = _git(
+            source_root, "show", POST_REPAIR_LIST_COMMIT + ":" + PRE_REPAIR_LIST_PATH
+        )
+        before_rows = list(csv.DictReader(io.StringIO(raw_before.lstrip("\ufeff"))))
+        after_rows = list(csv.DictReader(io.StringIO(raw_after.lstrip("\ufeff"))))
         before = _trace_paths(before_rows)
+        after = _trace_paths(after_rows)
         before_tally = Counter(row.get("local_trace") for row in before_rows)
+        after_tally = Counter(row.get("local_trace") for row in after_rows)
         by_root = Counter(
             path.split("/")[1]
-            for path in (before - now)
+            for path in (before - after)
             if path.startswith("data/") and path.count("/") > 1
         )
         comparison = {
             "available": True,
             "pre_repair_commit": PRE_REPAIR_LIST_COMMIT,
+            "post_repair_commit": POST_REPAIR_LIST_COMMIT,
             "pre_repair_distinct_files": len(before),
-            "post_repair_distinct_files": len(now),
-            "disappeared": len(before - now),
-            "added": len(now - before),
+            "post_repair_distinct_files": len(after),
+            "disappeared": len(before - after),
+            "added": len(after - before),
             "disappeared_by_root": dict(sorted(by_root.items())),
             "local_trace_before": {key: before_tally.get(key, 0) for key in keys},
-            "local_trace_after": {key: tally.get(key, 0) for key in keys},
-            "local_trace_flipped": before_tally != tally,
+            "local_trace_after": {key: after_tally.get(key, 0) for key in keys},
+            "local_trace_flipped": before_tally != after_tally,
+        }
+        added_since = sorted(now - after)
+        drift = {
+            "post_repair_commit": POST_REPAIR_LIST_COMMIT,
+            "repair_distinct_files": len(after),
+            "current_distinct_files": len(now),
+            "added_since_repair": len(added_since),
+            "added_since_repair_paths": added_since,
+            "local_trace_repair": {key: after_tally.get(key, 0) for key in keys},
+            "local_trace_current": {key: tally.get(key, 0) for key in keys},
+            "local_trace_flipped_since_repair": after_tally != tally,
+            "rule": (
+                "the repair comparison is frozen to two commits; this block is only "
+                "the live delta from the repair to the working-tree list, reported "
+                "apart so a later week's legitimate tracked-file growth is never "
+                "read as part of the repair"
+            ),
         }
     except RuntimeError as error:
         comparison = {
@@ -362,6 +394,7 @@ def trace_file_census(source_root: Path) -> dict[str, object]:
             "reason": str(error),
             "recorded_pre_repair_files": PRE_REPAIR_RECORDED_FILES,
         }
+        drift = {"available": False, "reason": str(error)}
 
     return {
         "list": "probes/al_round4_backfill_list_v0.csv",
@@ -373,6 +406,7 @@ def trace_file_census(source_root: Path) -> dict[str, object]:
             "the path:tier suffix stripped"
         ),
         "repair_comparison": comparison,
+        "drift_since_repair": drift,
     }
 
 def export_results(*, output_root: Path, overwrite: bool) -> dict:

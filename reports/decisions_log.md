@@ -4838,3 +4838,17 @@ W17-2 交付的是**队列**，并把 `reaxys_queries_executed = 0` 写在明面
 
 **（e）对 W17-RX 的收窄（不是推翻）与瓶颈。** 「HOMO/LUMO 与氧化还原在 Reaxys 只有文献引用、0 条数值」在本批**仍成立**：本集合无任何 HOMO/LUMO/gap 列，`Calculated Properties` 全 reference-only；氧化还原仅 +1 行且 `Comment` 只写 `potential diagram`、无数值。**P4 的 392 条标签瓶颈未进一步缓解。** 按裁决 B（§28.2）**整文件不进 Week 17 交付包**（`RESTRICTED_EXCLUDED` 标 `carries_reaxys_values = True`），值不进 `data/`、不进任何池/特征表；本臂 `models_fitted = 0`、不报 R²、`data` 追踪件零改动。
 
+---
+
+### 28.21 落库新数据把两处「台账」顶红：al_round4 痕迹普查重算（119 → 132）、W16 修复对照冻结到两端提交（148 → 77 / 新增 0 复原）
+
+W17 的 13 个新数据表（顶层 `data/density_v01.csv`、`data/viscosity_v02.csv`、`data/dielectric_v04.csv` ＋ 10 个 `data/processed/*.csv`）一旦由未跟踪变为**已跟踪**，`git ls-files` 口径的痕迹宇宙就从 **119 涨到 132**，两处守卫随即变红（本次由**提交后**才可见，属「提交后 CI 才看得见」的一类缺陷，与 §28.15 的 100644 同类）。
+
+**（a）al_round4 痕迹清单必须重算。** `local_trace_files` 的候选集是「git 跟踪 ∩ 声明策展根」的函数，新表逐一命中 AL-Round-4 线索，故清单与普查都得随宇宙重算。处置：重跑 `probes/al_round4_new_compound_backfill.py`，`trace_scan_census` 由 `98 ＋ 21 = 119` 变为 **`111 ＋ 21 = 132`**（`data/` 10 ＋ `data/external/` 5 ＋ `data/processed/` 92 ＋ `data/reference/` 4 ＝ 111，restricted 21），`path_list_sha256` 随之更新；清单仍是 **21 行**，优先级分布不变。**这是普查设计要它做的事**（「让 128 → 146 这类漂移可归因」），不是回改历史读数。
+
+**（b）W16 的修复对照被新数据误读，改为两端冻结。** `probes/export_week16_results.py` 的 `trace_file_census` 原先把「修复后」一端读成**工作区**，于是 W17 的新表被算成「修复新增了 11 个文件」，与 F2 的「**新增 0**」直接冲突。处置：**把对照两端都冻结到已提交状态** —— 前 `85cb059`（W16 开局）、后 `4e0bf0a`（W16 修复提交），于是修复自身的读数**逐字复原**为 **148 → 77、消失 71（`data/external/` 69 ＋ `data/processed/` 2）、新增 0、无 `local_trace` 翻转**；工作区相对修复的增量另开一块 `drift_since_repair`（`added_since_repair = 11`、`local_trace_flipped_since_repair = true`、`added_since_repair_paths` 逐条列名），并断言这些新增文件**全部由 git 跟踪** —— 保证被 F2 清掉的「幽灵引用」不会经由 live 侧回流。W16 README 的 `tracked_candidates` 由 98 改为 111、总数由 119 改为 132，README 字节 digest 相应移动（`README_SHA256` 同步）。
+
+**（c）结果。** 两处守卫恢复且**语义更强**（修复保证被冻结、漂移被单独记账并带「必须是已跟踪文件」的附加约束）；`week16` 与 `week17` 交付包重建后 `verification_passed` 均为 **true**，`week17` 包现含 THEMol 三件、PubChemQC 二源层、Reaxys b1/b2 事实件、四核心注册表等 **98 件**。
+
+**数字钉（勿混用）**：al_round4 普查 **111 ＋ 21 = 132**；修复对照 **148 / 77 / 71 / 0**；`drift_since_repair.added_since_repair = 11`；`local_trace` 在修复窗口内 **无翻转**，在 live 侧**已翻转**（`yes` 18 → 20）。
+

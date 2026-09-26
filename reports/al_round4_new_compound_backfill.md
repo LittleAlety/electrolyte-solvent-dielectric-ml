@@ -22,7 +22,7 @@
 | 优先级分布（全表） | P1=1, P3=20 |
 | 优先级分布（真新化合物） | P1=1, P3=6 |
 | 证据类型（真新化合物） | 无ε线索=3, 汇编转述=3, 第一手测量=1 |
-| 本地非介电痕迹（真新化合物） | no=2, yes=5 |
+| 本地非介电痕迹（真新化合物） | yes=7 |
 | Round 3 三连组错位行 | 0 |
 
 ## 3. 真新化合物（本地介电面板完全没有）
@@ -31,13 +31,13 @@
 |---|---|---|---|---|---|---|---|---|---|
 | P1 | 1,2-dimethoxypropane | LEEANUDEDHYDTG-UHFFFAOYSA-N | wording_only | 汇编转述 | yes | no | green | 人读 | 10.1021/acsenergylett.2c02003 |
 | P3 | 2,2,2-trifluoroethanol | RHQDFWAXVIIEBN-UHFFFAOYSA-N | wording_only | 汇编转述 | yes | yes | bronze;green | 仅线索 | 10.1021/jp302790j;10.1529/biophysj.106.098715;10.1073/pnas.182199699 |
-| P3 | decafluoropentane | RIQRGMUSBYGDBL-UHFFFAOYSA-N | none | 无ε线索 | no | no | gold;hybrid | 放弃 | 10.1088/1742-6596/2685/1/012064;10.1016/j.applthermaleng.2023.121803;10.3390/nano11123216 |
-| P3 | hexafluoroisopropanol | BYEAHWXPCBROCE-UHFFFAOYSA-N | wording_only | 第一手测量 | no | no | green;hybrid | 仅线索 | 10.1002/anie.202416091;10.1021/jp302790j |
+| P3 | decafluoropentane | RIQRGMUSBYGDBL-UHFFFAOYSA-N | none | 无ε线索 | yes | no | gold;hybrid | 放弃 | 10.1088/1742-6596/2685/1/012064;10.1016/j.applthermaleng.2023.121803;10.3390/nano11123216 |
+| P3 | hexafluoroisopropanol | BYEAHWXPCBROCE-UHFFFAOYSA-N | wording_only | 第一手测量 | yes | no | green;hybrid | 仅线索 | 10.1002/anie.202416091;10.1021/jp302790j |
 | P3 | methoxy-nonafluorobutane | OKIYQFLILPKULA-UHFFFAOYSA-N | wording_only | 汇编转述 | yes | no | bronze;gold | 放弃 | 10.3390/app14020495;10.1002/2014wr015291 |
 | P3 | perfluorohexane | ZJIJAJXFLBMLCK-UHFFFAOYSA-N | none | 无ε线索 | yes | no | gold | 放弃 | 10.1088/1742-6596/2685/1/012064 |
 | P3 | tripropylene glycol | LEQCJROTXBYLEU-UHFFFAOYSA-N | none | 无ε线索 | yes | no | bronze | 仅线索 | 10.1063/1.4740236 |
 
-真新化合物有两种分解，两种都写在这里：按本地痕迹 —— 本地完全没有任何痕迹 2 个（decafluoropentane、hexafluoroisopropanol），本地只在非介电表里出现过 5 个（1,2-dimethoxypropane、2,2,2-trifluoroethanol、methoxy-nonafluorobutane、perfluorohexane、tripropylene glycol）；按 ε 证据 —— 无ε线索 3、汇编转述 3、第一手测量 1。痕迹只统计被 git 跟踪且落在已声明策展数据树（data/external/、data/processed/、data/raw/、data/reference/、data/restricted/）与 data/ 顶层策展表内的文件；data/interim/ 这个周内 scratch 区、任何以“_”开头的私有命名文件、以及一切未入库文件都按默认拒绝处理；唯一例外是本地专属的 data/restricted/ 受限镜像（单独计数、命中即 local_trace_restricted=yes）。
+真新化合物有两种分解，两种都写在这里：按本地痕迹 —— 本地完全没有任何痕迹 0 个（无），本地只在非介电表里出现过 7 个（1,2-dimethoxypropane、2,2,2-trifluoroethanol、decafluoropentane、hexafluoroisopropanol、methoxy-nonafluorobutane、perfluorohexane、tripropylene glycol）；按 ε 证据 —— 无ε线索 3、汇编转述 3、第一手测量 1。痕迹只统计被 git 跟踪且落在已声明策展数据树（data/external/、data/processed/、data/raw/、data/reference/、data/restricted/）与 data/ 顶层策展表内的文件；data/interim/ 这个周内 scratch 区、任何以“_”开头的私有命名文件、以及一切未入库文件都按默认拒绝处理；唯一例外是本地专属的 data/restricted/ 受限镜像（单独计数、命中即 local_trace_restricted=yes）。
 
 ### P1 · 1,2-dimethoxypropane（人读）
 
@@ -46,7 +46,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=core; epsilon=wording_only; leads=1
 - ε 线索：wording_only（无数值）；证据类型 汇编转述
 - OA：green，可达=false；线索来源 https://zenodo.org/record/7801393
-- 本地非介电痕迹：data/external/SolvFunc-87.csv:name;data/processed/al_round1_longlist.csv:name;data/processed/redox_merged.csv:key
+- 本地非介电痕迹：data/external/SolvFunc-87.csv:name;data/processed/al_round1_longlist.csv:name;data/processed/four_core_key_registry.csv:key;data/processed/redox_merged.csv:key
 
 ### P3 · 2,2,2-trifluoroethanol（仅线索）
 
@@ -55,7 +55,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=off; epsilon=wording_only; leads=3
 - ε 线索：wording_only（无数值）；证据类型 汇编转述
 - OA：bronze;green，可达=true；线索来源 https://edoc.unibas.ch/48169/1/No%2037%20Hankache_JPhysChemA_2012_116_8159.pdf
-- 本地非介电痕迹：data/external/chew_2024_viscosity_supp_2.csv:name;data/processed/eta_epsilon_joint_observations.csv:key;data/processed/landolt_boernstein_2015_pure_liquid_queue.csv:name;data/processed/viscosity_baseline_predictions.csv:key;data/processed/viscosity_raw.csv:key;data/restricted/springer_materials/interactive_pure_dielectric_catalog.json:name;data/viscosity_v01.csv:key
+- 本地非介电痕迹：data/density_v01.csv:key;data/external/chew_2024_viscosity_supp_2.csv:name;data/processed/dn_coverage_audit.csv:key;data/processed/eta_epsilon_joint_observations.csv:key;data/processed/four_core_key_registry.csv:key;data/processed/landolt_boernstein_2015_pure_liquid_queue.csv:name;data/processed/orbital_second_source_layer.csv:key;data/processed/viscosity_baseline_predictions.csv:key;data/processed/viscosity_raw.csv:key;data/restricted/springer_materials/interactive_pure_dielectric_catalog.json:name;data/viscosity_v01.csv:key;data/viscosity_v02.csv:key
 - 受限痕迹：命中 data/restricted/ 下的文件。本清单只记路径、不取任何值；该物质应走受限交叉核对通道判定，而不是靠新取数解决。
 
 ### P3 · decafluoropentane（放弃）
@@ -65,7 +65,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=off; epsilon=none; noise_veto=pool_boiling_heat_transfer; leads=3
 - ε 线索：none（无数值）；证据类型 无ε线索
 - OA：gold;hybrid，可达=true；线索来源 https://doi.org/10.1088/1742-6596/2685/1/012064
-- 本地非介电痕迹：无
+- 本地非介电痕迹：data/density_v01.csv:key;data/processed/four_core_key_registry.csv:key
 
 ### P3 · hexafluoroisopropanol（仅线索）
 
@@ -74,7 +74,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=off; epsilon=wording_only; leads=2
 - ε 线索：wording_only（无数值）；证据类型 第一手测量
 - OA：green;hybrid，可达=true；线索来源 https://doi.org/10.1002/anie.202416091
-- 本地非介电痕迹：无
+- 本地非介电痕迹：data/density_v01.csv:key;data/processed/four_core_key_registry.csv:key
 
 ### P3 · methoxy-nonafluorobutane（放弃）
 
@@ -83,7 +83,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=core; epsilon=wording_only; noise_veto=geophysics_dnapl|pool_boiling_heat_transfer; leads=2
 - ε 线索：wording_only（无数值）；证据类型 汇编转述
 - OA：bronze;gold，可达=false；线索来源 https://www.mdpi.com/2076-3417/14/2/495/pdf?version=1704460575
-- 本地非介电痕迹：data/processed/redox_merged.csv:key
+- 本地非介电痕迹：data/density_v01.csv:key;data/processed/four_core_key_registry.csv:key;data/processed/redox_merged.csv:key
 
 ### P3 · perfluorohexane（放弃）
 
@@ -92,7 +92,7 @@
 - 判定：genuinely new to the panel: absent from both dielectric_v03.csv and dielectric_observations_v11plus.csv under an InChIKey join；round3_target=off; epsilon=none; noise_veto=pool_boiling_heat_transfer; leads=1
 - ε 线索：none（无数值）；证据类型 无ε线索
 - OA：gold，可达=true；线索来源 https://doi.org/10.1088/1742-6596/2685/1/012064
-- 本地非介电痕迹：data/processed/eta_epsilon_joint_observations.csv:key;data/processed/viscosity_raw.csv:key;data/viscosity_v01.csv:key
+- 本地非介电痕迹：data/density_v01.csv:key;data/processed/dn_coverage_audit.csv:key;data/processed/eta_epsilon_joint_observations.csv:key;data/processed/four_core_key_registry.csv:key;data/processed/viscosity_raw.csv:key;data/viscosity_v01.csv:key
 
 ### P3 · tripropylene glycol（仅线索）
 
