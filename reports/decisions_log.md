@@ -4965,3 +4965,21 @@ gap r 0.4343 / MAE 0.5910 eV / `reference_only`；首次拿到轨道数 **291**�
   只有 DFT 几何、Hessian、轨迹能量与 **MBIS 原子布居** ⇒ **本仓所有 THEMol 轨道数都是我们自己跑 GFN2-xTB 算的**，必须走跨水平标定。
 - `reports/reaxys_v1x_stocking_query_round2.md`（W17-20）：把 Reaxys 预算跑满 **30/30**、再查 7 个物质，
   氧化还原**证据面**从 27 行扩到 **121** 行，但**可用数值标签仍然是 0**——392 条瓶颈在数值层面一条未缓解。
+
+## 28.27 提交后重钉：W17-17 落库把 W16 痕迹普查推高一位（111→112 / 132→133；去重 trace 88→89）
+
+把 W17-17 的交付层 `data/processed/themol_orbital_layer_expanded.csv` 提交后重跑 `probes/al_round4_new_compound_backfill.py`，
+`trace_scan_census` 如 §28.21 预告的那样再次移动：`tracked_candidates` **111 → 112**（`data/processed/` 92 → 93）、
+`total_candidates` **132 → 133**、`path_list_sha256` 随之换新；`probes/al_round4_backfill_list_v0.csv` 有 **10 行**的
+`local_trace_files` 新引用该表（其余列、真新化合物 7 个、`by_row_kind` 四项计数一律未变），于是去重 trace 文件 **88 → 89**、
+`drift_since_repair.added_since_repair` **11 → 12**。受影响的两处字面量已同步：`probes/export_week16_results.py` 的 README 叙述
+（111 / 132 / 差额 13 → 112 / 133 / 差额 14，`README_SHA256` 随字节移动）与 `tests/test_export_week16_results.py` 的钉
+（88 / 111 / 132 / 92 / 11 → 89 / 112 / 133 / 93 / 12）。
+
+**修复窗口的对照不受影响**：`repair_comparison` 仍冻结在 `85cb059 → 4e0bf0a`，逐字保持 **148 → 77、消失 71、新增 0**——
+涨的只是「修复之后」的 live 增量。**另修一处同批次工程问题**：5 个本轮新增 JSON（`omat24_feasibility_facts`、
+`themol_expanded_layer_audit`、`themol_orbital_layer_expanded_summary`、`themol_property_inventory`、
+`themol_registry_expansion_roster_summary`）在工作区是 **CRLF**，与 `.gitattributes` 的 `eol=lf` 冲突、`test_repo_hygiene` 报警
+⇒ 已就地转 LF（索引里的 blob 本来就是 LF，字节内容不变，Digest 不动）。
+
+**数字钉（勿混用）**：tracked **112** ＋ restricted **21** = **133**；去重 trace **89**；`added_since_repair` **12**；修复对照仍 **148 → 77 / 71 / 0**。

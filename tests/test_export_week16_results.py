@@ -61,7 +61,7 @@ FROZEN_LEAK_REFERENCE_R2 = 0.7385332681453336
 # 21 tests passing).  The README bytes are therefore pinned by a literal digest --
 # a deliberate edit has to move this line -- and the numbers the prose must carry
 # are asserted as literals of their own.
-README_SHA256 = "e6c8f30e3b74756e9a6623e515142a8b48c84cf0615f2031876fb3cf8d52c9bc"
+README_SHA256 = "3843028c95e20eb454297ba4b2cd0a9f4e286691bc4203cab7d128a8adfa75fc"
 README_NARRATIVE_NUMBERS = (
     "11,923",
     "**1,690**",
@@ -71,8 +71,8 @@ README_NARRATIVE_NUMBERS = (
     "34/34",
     "10 ＋ 结构层 5",
     "4 条携带几何派生特征",
-    "**132**",
-    "tracked_candidates = 111",
+    "**133**",
+    "tracked_candidates = 112",
 )
 
 
@@ -320,7 +320,7 @@ def test_the_trace_repair_lane_is_recomputed_from_git_and_matches(
     assert lane["trace_scan_census"] == generator["trace_scan_census"]
     census = lane["trace_file_census"]
     assert census == trace_file_census(REPOSITORY_ROOT)
-    assert census["distinct_local_trace_files"] == 88
+    assert census["distinct_local_trace_files"] == 89
     assert census["local_trace"] == {"yes": 20, "no": 0, "na": 1}
 
     comparison = census["repair_comparison"]
@@ -341,14 +341,14 @@ def test_the_trace_repair_lane_is_recomputed_from_git_and_matches(
     assert comparison["local_trace_after"] == {"yes": 18, "no": 2, "na": 1}
 
     counts = generator["trace_scan_census"]
-    assert counts["tracked_candidates"] == 111
+    assert counts["tracked_candidates"] == 112
     assert counts["restricted_local_only_candidates"] == 21
-    assert counts["tracked_candidates"] + counts["restricted_local_only_candidates"] == 132
-    assert counts["total_candidates"] == 132
+    assert counts["tracked_candidates"] + counts["restricted_local_only_candidates"] == 133
+    assert counts["total_candidates"] == 133
     assert counts["tracked_by_root"] == {
         "data/": 10,
         "data/external/": 5,
-        "data/processed/": 92,
+        "data/processed/": 93,
         "data/reference/": 4,
     }
     assert generator["list_stats"]["rows"] == 21
@@ -356,8 +356,8 @@ def test_the_trace_repair_lane_is_recomputed_from_git_and_matches(
     drift = census["drift_since_repair"]
     assert drift["post_repair_commit"] == POST_REPAIR_LIST_COMMIT
     assert drift["repair_distinct_files"] == 77
-    assert drift["current_distinct_files"] == 88
-    assert drift["added_since_repair"] == 11
+    assert drift["current_distinct_files"] == 89
+    assert drift["added_since_repair"] == 12
     assert drift["local_trace_flipped_since_repair"] is True
 
 

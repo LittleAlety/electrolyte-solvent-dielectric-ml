@@ -102,7 +102,7 @@ v1.0 已发布工件与 week11–week15 交付包未被触碰；本轮除三处*
    声明 curated 根」，唯一显式例外是本地-only 的 `data/restricted/`（单独计数、命中行继续 `local_trace_restricted = yes`）；
    **被 ignore 的下载缓存不再能冒充项目知识**——本轮真实受害 token（`data/external/g1plus/pubchem/kpi_shortlist_identity/108-32-7.json`）
    已消失，去重 trace 文件 **148 → 77**（**文件口径**消失 **71** ＝ `data/external/` 69 ＋ `data/processed/` 2；**新增 0**；由导出器从两份已提交状态 85cb059 → 4e0bf0a 重数，机器可复算，修复本身不随轮次漂移）。`decisions_log.md` §27.5 另给 **token 口径** 156 → 83（消失 73、新增 0）——**两个口径不许相减**，也不许拿它们去和上几轮登记的 114 / 128 / 146 相减；新增机读 `trace_scan_census`
-   （本轮导出时 `tracked_candidates = 111` ＋ `restricted_local_only_candidates = 21` = **132**，含 `path_list_sha256`；修复当时为 98 ＋ 21 = 119，差额 13 逐条列在 `drift_since_repair.added_since_repair_paths`），
+   （本轮导出时 `tracked_candidates = 112` ＋ `restricted_local_only_candidates = 21` = **133**，含 `path_list_sha256`；修复当时为 98 ＋ 21 = 119，差额 14 逐条列在 `drift_since_repair.added_since_repair_paths`），
    使「128 → 146」这类漂移从此可归因。**21 行清单只有 `local_trace_files` 一列变化，无 `local_trace` 翻转**——该保证冻结在修复窗口内；此后 W17 落库的策展文件让 2 行由 `no` 翻到 `yes`（见 `drift_since_repair.local_trace_flipped_since_repair`），与修复无关。
 6. **F3（身份层画法差异：机械取证 + 不改写建议）**：15 条 SMILES 差异 = 立体层假警报 10 ＋ 结构层 5；
    5 条全部 `identity_check = roundtrip_match`、`pubchem_inchikey` 与 `inchikey` **逐字相同**；
