@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "task": "week14_lever8_coordination_block",
+  "title": "Lever 8: Li+-coordination feature block, motivated by ACS Energy Lett. 2025, 10, 4962 (10.1021/acsenergylett.5c02291)",
+  "locked_at_utc": "2026-09-26T03:05:00Z",
+  "status": "locked_before_run",
+  "lock_rule": "Criteria and kill lines frozen before the run. Never relaxed afterwards.",
+  "why": "The project's own ceiling analysis (appendix X, X-2) says the R2 is capped because a structure-only descriptor set cannot see the collective polarisation term: the Kirkwood g dimension, the association strength. Our blind-spot measurement has the same shape (associating liquids MAE 11.5 against 5.0 in domain). The review catalogues the solvating-power descriptors that proxy exactly that missing dimension and explicitly sorts them by whether they are computable from structure alone.",
+  "source_paper": {
+    "doi": "10.1021/acsenergylett.5c02291",
+    "venue": "ACS Energy Letters 2025, 10, 4962-4982",
+    "title": "Elucidating the Solvating Power of Solvents for Designing High-Performance Electrolytes in Lithium Batteries",
+    "local_copy": "C:/Users/Little Alety/Downloads/nz5c02291.pdf",
+    "what_it_is": "a taxonomy of quantitative solvating-power descriptors in three families: intrinsic solvent properties (dipole moment, dielectric constant, ESP), probe-solvent interaction strength (basicity, Gibbs free energy, binding energy, Li bond), and bulk electrolyte properties (diffusion coefficient, chemical shift, AGG percentage)",
+    "what_it_is_not": "it does not predict the static dielectric constant of a pure solvent. It is a feature catalogue, not a model, and not a data table for our target."
+  },
+  "the_one_sentence_verdict": "The review is usable as a feature-menu, not as a model. Of its descriptors exactly two families are both cheap for us to compute and target-aligned: the electrostatic-potential descriptors (family 1) and the Li+ binding energy (family 2). Everything else is either experimental (donor number, beta, NMR and Raman shifts, AGG percent) or needs an electrolyte, and so can only enter as a small hand-curated look-up table.",
+  "block_definition": {
+    "features": [
+      "li_binding_energy_ev (E(Li+ . solvent) - E(solvent) - E(Li+), same pinned xTB protocol and the same single-thread launcher)",
+      "li_binding_distance_a (shortest Li-O/N distance in the relaxed complex)",
+      "q_max_h (largest positive Mulliken charge on a hydrogen, the donor-acidity axis)",
+      "q_min_hetero (most negative Mulliken charge on O or N, the basicity axis)",
+      "esp_imbalance (q_max_h minus q_min_hetero, a one-number coordination asymmetry)"
+    ],
+    "why_these_and_not_donor_number": "donor number and beta are measured against a probe molecule, not computed; our roster has no such column and building one would be a hand-curated table of unknown coverage. Partial charges and the Li+ binding energy are computed by the same xTB binary we already pin, so the block is reproducible end to end and carries no licence-encumbered data.",
+    "cost": "one extra xTB relaxation per compound for the Li+ complex. Bounded: if the measured per-compound cost puts the full table out of reach, run a bounded pilot and register the remainder as pending rather than extrapolating."
+  },
+  "scoreboard": {
+    "rows_scored": 457,
+    "compounds_scored": 97,
+    "splitter": "GroupKFold by InChIKey",
+    "n_splits": 5,
+    "n_repeats": 10,
+    "seed": 42,
+    "min_test_rows_per_fold": 2,
+    "model": "XGBRegressor with the frozen v1.0 hyper-parameters",
+    "baseline_to_reproduce": 0.4091179943351143,
+    "tolerance": 1e-09,
+    "folds_frozen": true
+  },
+  "arms": [
+    "baseline (frozen v03 physical + Morgan, re-run in this script)",
+    "plus_coordination_block (the five new columns appended, no existing column touched)",
+    "placebo (the same block, target shuffled, must collapse)"
+  ],
+  "pass_criterion": "grouped R2 on the main scoreboard increases by at least +0.0200 against the baseline arm re-run in the same script",
+  "secondary_criterion": "the mae_gt60 stratum must not get worse, and the placebo arm must collapse (|delta R2| <= 0.0200)",
+  "kill_line": "delta R2 below +0.0050, or a placebo arm that does not collapse, or a lift that exists only in the MAE strata while total R2 falls -> dead, reported as dead",
+  "secondary_deliverable": "a descriptor-catalogue extraction: every descriptor named in the review mapped against the 13 columns of the frozen v03 physical block, marked computable-now / computable-with-extra-xTB / experimental-only, plus the structural design strategies the review names (methylation and fluorination of DME, DOL, DMC, EMC) as new-compound candidates for AL Round 4. This half is a literature-to-repo mapping, not a model change.",
+  "forbidden": [
+    "row-level random splits for any conclusion",
+    "letting test residuals steer which descriptors enter the block",
+    "silently shrinking the scored pool",
+    "changing the score mask, the compound set or the fold numbers",
+    "quoting a donor number or a chemical shift as if it were computed here",
+    "quoting 0.5332 or 0.5454 next to the v1.0 headline 0.364 without their pool definitions"
+  ],
+  "shots_policy": {
+    "rule": "attempts at the main scoreboard are counted in reports/decisions_log.md section 12",
+    "counted_so_far": 0
+  },
+  "frozen_red_lines_untouched": [
+    "data/dielectric_v03.csv digest ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "probes/l3_stage1_pilot_pool.csv digest b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "probes/l3_backvalidation_prereg.json digest 77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+    "data/processed/dielectric_observations_v11plus.csv digest 159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9"
+  ]
+}

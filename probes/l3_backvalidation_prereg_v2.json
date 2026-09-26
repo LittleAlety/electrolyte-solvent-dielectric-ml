@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task": "l3_backvalidation_prereg_v2",
+  "title": "L3 back-validation, dual-track redesign (appendix W D2). Pre-registered before any run.",
+  "locked_at_utc": "2026-09-26T02:10:00Z",
+  "status": "locked_before_run",
+  "lock_rule": "Criteria and kill lines frozen before the tracks ran. Never relaxed afterwards. This is a NEW file; probes/l3_backvalidation_prereg.json is a frozen red line and is not touched by it.",
+  "supersedes_nothing": "This is not a revision of the v1 pre-registration. The v1 file stays byte-identical. v2 governs a different question, asked because the stage-1 pilot answered the old one.",
+  "why_the_redesign": "The stage-1 pilot scored EC and PC against a truth of 90.5 and 64.9 and got 23.1 and 17.0, with recall@20 = 0. But EC and PC are out of the model's domain, so the pilot measured the wrong skill. Two separate questions were being asked at once and they need separate instruments: can the model rank the candidates it was actually built for (track A), and does anything stop it from quietly ranking the candidates it was not built for (track B).",
+  "locked_values_carried_forward_unchanged": {
+    "K": 20,
+    "C2_solvent_max_abs_delta_log10_epsilon": 0.10,
+    "C2_additive_max_abs_delta_ev": 0.15,
+    "C3_permutation_seed": 20260928,
+    "C3_max_champion_hits": 1,
+    "min_scored_per_list": 100,
+    "pass_expression": "C1 and C2_solvent and C2_additive and C3",
+    "note": "not one of these is touched by v2. v2 adds two tracks; it relaxes nothing."
+  },
+  "pool": {
+    "path": "probes/l3_stage1_pilot_pool.csv",
+    "rows": 236,
+    "sha256": "b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "scaling_disclosure_required": "the real funnel sees a 29.5k candidate pool. Recall on a 236-compound roster is systematically easier than recall on 29.5k. Every recall reading produced under this pre-registration must carry the pool size in the same sentence."
+  },
+  "track_a_in_domain_recall": {
+    "question": "with the candidates it is actually built for held out of the training side, does the model put them back near the top?",
+    "roster_rule": "from the 236 pool, take compounds whose name matches the glyme/ether family (glyme, dimethoxyethane, dioxane, tetrahydrofuran, methyltetrahydrofuran) or the nitrile family (acetonitrile, propionitrile, butyronitrile, valeronitrile, benzonitrile, succinonitrile, glutaronitrile, adiponitrile), exclude the two champions, and keep those with target epsilon >= 25. The roster is materialised at run time from that rule and its count and sha256 are pinned in the run summary.",
+    "holdout": "every roster compound is removed from the training side of every fold and scored by the pool-production model, exactly as amendment_3 clause (i)-(iii) does for the champions. No fold's training rows contain a roster compound.",
+    "metric": "recall@20 over the roster, on the 236-pool ranking",
+    "pass_criterion": "recall@20 >= 0.50",
+    "kill_line": "recall@20 < 0.25 -> the ranking channel is not usable even in domain, and that is the finding",
+    "reference_point": "the stage-1 pilot measured 0.00 on the two out-of-domain champions; that number is the reason this track exists, not the bar for it"
+  },
+  "track_b_out_of_domain_flag": {
+    "question": "when a candidate is out of domain, does anything stop it from being quietly ranked?",
+    "instrument": "the feature-envelope gate, pre-registered separately and already locked",
+    "instrument_prereg_path": "probes/dielectric_feature_envelope_gate_prereg.json",
+    "instrument_prereg_sha256": "2cca1f5802d21b28d997a609dc23765535f9eb59ecf532af17b1d2d246113480",
+    "nominated_candidates": ["EC", "PC"],
+    "routing_rule": "a flagged candidate is removed from the ranking channel and routed to measurement or a physical estimate. It may not appear in the top-20 list under any label.",
+    "pass_criterion": "both nominated candidates are flagged, and the flag rate over the in-domain track-A roster is at most 0.20",
+    "kill_line": "a nominated candidate is silently ranked (no flag) -> track B is dead; a flag rate above 0.50 over the in-domain roster is likewise a dead gate, because a gate that rings on everything is worth nothing",
+    "why_this_is_the_point": "in the stage-1 pilot not one existing gate fired on EC or PC. The structural SMARTS rules target associating liquids, and EC and PC carry no O-H. The model was quietly wrong with no flag. That is a worse failure than an error."
+  },
+  "interaction_rule": "the two tracks are scored independently. Track A does not rescue track B and track B does not excuse track A. A candidate may not be removed from track A's roster because track B flagged it.",
+  "reporting_rules": [
+    "both tracks are reported whether or not they pass",
+    "a track whose control is missing is not reported as passed",
+    "no reading from this pre-registration may be quoted without the pool size",
+    "no reading from this pre-registration is a statement that the L3 funnel works end to end; only the four-channel pass_expression decides that, and it is untouched"
+  ],
+  "forbidden": [
+    "editing probes/l3_backvalidation_prereg.json",
+    "widening the roster after seeing the recall",
+    "tuning the envelope gate's k or percentile after seeing whether EC and PC flag",
+    "using a candidate's own target value inside either track",
+    "reporting recall without the pool size",
+    "quoting a gain against the v1.0 headline 0.364 without its pool definition"
+  ],
+  "shots_policy": {
+    "rule": "attempts at either track are counted in reports/decisions_log.md section 12",
+    "counted_so_far": 0
+  }
+}

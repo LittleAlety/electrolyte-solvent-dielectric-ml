@@ -1,0 +1,745 @@
+{
+  "schema_version": 1,
+  "task": "week14_r2_levers",
+  "lever_id": "lever_7_bagging",
+  "title": "Lever 7: bagged XGBoost ensemble",
+  "generated_at_utc": "2026-09-26T03:58:06Z",
+  "prereg": {
+    "path": "probes/dielectric_r2_levers_prereg.json",
+    "sha256": "ab3503c037f05ac398b3c0c59d0e4845943d49fa5a5349fa46b8944f2bc1bdaa",
+    "status": "locked_before_run",
+    "locked_at_utc": "2026-09-26T01:45:40Z",
+    "lock_rule": "The criteria and the kill lines in this file were frozen before the levers were executed. They are never relaxed afterwards. Any lever that does not clear its criterion is reported as failed, not as a trend.",
+    "thresholds": {
+      "mean_tolerance": 0.005,
+      "std_shrink_required": 0.2,
+      "control_collapse_tolerance": 0.02
+    },
+    "locked_criteria": {
+      "pass_criterion": "mean grouped R2 must not fall by more than 0.0050, AND the standard deviation of the repeat-level R2 readings must shrink by at least 20 percent relative to the baseline arm",
+      "secondary_criterion": "no regression in MAE or in the mae_gt60 stratum beyond noise",
+      "kill_line": "mean R2 falls by more than 0.0050, or the standard deviation shrinks by less than 20 percent -> dead. A variance claim without a narrowed interval is not a result.",
+      "expected_delta": "about +0.01 on the mean; the real deliverable is the interval",
+      "cost": "half a day"
+    },
+    "control_arm_rule": "each lever carries a shuffled-label control on its own feature block: the same folds, the same model, the target permuted. A lever may only be called real if its control collapses (|delta R2| <= 0.02).",
+    "shots_policy": "every scored attempt at the main scoreboard is counted, including failed and abandoned ones. The count is written into reports/decisions_log.md section 12 and into each lever summary.",
+    "merge_rule": {
+      "rule": "only levers that cleared their own criterion may be combined. The merge arm is re-scored on the main scoreboard, and its delta is reported against the best single passing lever as well as against the baseline, so a merge that adds nothing is visible.",
+      "if_nothing_passes": "the merge arm is not run; the week reports three dead levers and keeps the 0.5454 reading untouched"
+    },
+    "forbidden": [
+      "row-level random splits for any conclusion",
+      "letting test residuals steer feature selection",
+      "silently shrinking the scored pool",
+      "changing the score mask, the compound set or the fold numbers",
+      "quoting a delta against a baseline that was not re-run in the same script",
+      "quoting 0.5332 or 0.5454 next to the v1.0 headline 0.364 without their pool definitions"
+    ]
+  },
+  "locked_criteria": {
+    "pass_criterion": "mean grouped R2 must not fall by more than 0.0050, AND the standard deviation of the repeat-level R2 readings must shrink by at least 20 percent relative to the baseline arm",
+    "secondary_criterion": "no regression in MAE or in the mae_gt60 stratum beyond noise",
+    "kill_line": "mean R2 falls by more than 0.0050, or the standard deviation shrinks by less than 20 percent -> dead. A variance claim without a narrowed interval is not a result.",
+    "expected_delta": "about +0.01 on the mean; the real deliverable is the interval",
+    "cost": "half a day"
+  },
+  "main_scoreboard": {
+    "rows_scored": 457,
+    "compounds_scored": 97,
+    "n_splits": 5,
+    "n_repeats": 10,
+    "requested_repeats": 10,
+    "seed": 42,
+    "min_test_rows_per_fold": 2,
+    "folds_measured": 50,
+    "expected_rows_scored": 457,
+    "expected_compounds_scored": 97,
+    "expected_folds": 50,
+    "full_run_folds": 50,
+    "shifted_or_resized": false,
+    "guards_passed": true
+  },
+  "baseline_reproduces": {
+    "arm": "paired_base",
+    "representation": "Morgan+Physical",
+    "published_r2": 0.4091179943351143,
+    "reproduced_r2": 0.4091179943351143,
+    "abs_difference": 0.0,
+    "tolerance": 1e-09,
+    "bit_exact": true
+  },
+  "reference_triple": {
+    "arm": "paired_base",
+    "representations": {
+      "Morgan": {
+        "expected": 0.06487386371009436,
+        "reproduced": 0.06487386371009436,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      },
+      "Morgan+Physical": {
+        "expected": 0.4091179943351143,
+        "reproduced": 0.4091179943351143,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      },
+      "Physical": {
+        "expected": 0.2531659995294713,
+        "reproduced": 0.2531659995294713,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      }
+    },
+    "all_bit_exact": true,
+    "tolerance": 1e-09
+  },
+  "ensemble": {
+    "n_bags": 10,
+    "bag_seeds": [
+      42000,
+      42001,
+      42002,
+      42003,
+      42004,
+      42005,
+      42006,
+      42007,
+      42008,
+      42009
+    ],
+    "bag_seed_rule": "random_state = seed * 1000 + bag index",
+    "averaging": "one complete hybrid prediction per bag, then the bags averaged, then the frozen non-negativity clip",
+    "representations_scored": [
+      "Morgan+Physical"
+    ],
+    "hyper_parameters": {
+      "n_estimators": 200,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1.0,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1
+    },
+    "hyper_parameters_changed": []
+  },
+  "arms": {
+    "baseline": {
+      "meta": {
+        "scored_rows": 457,
+        "compounds_scored": 97,
+        "train_pool_rows": 457,
+        "train_pool_compounds": 97,
+        "requested_repeats": 10,
+        "executed_repeats": 10,
+        "folds": 50,
+        "note": "",
+        "model": "XGBRegressor with XGB_PARAMS, frozen hyper-parameters",
+        "objective": "reg:squarederror",
+        "splitter": "grouped by InChIKey (masked_splits)",
+        "min_test_rows_per_fold": 2,
+        "seed": 42
+      },
+      "audit": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0,
+        "scored_rows_total": 4570,
+        "scored_rows_outside_the_score_mask": 0,
+        "train_rows_used": 18280,
+        "train_rows_offered_but_unused": 0,
+        "compounds_scored": 97,
+        "compounds_available_for_training": 97,
+        "training_only_compounds": []
+      },
+      "leak_reference": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0
+      }
+    },
+    "lever": {
+      "meta": {
+        "scored_rows": 4570,
+        "compounds_scored": 97,
+        "train_pool_rows": 457,
+        "train_pool_compounds": 97,
+        "requested_repeats": 10,
+        "executed_repeats": 10,
+        "folds": 50,
+        "model": "XGBRegressor with XGB_PARAMS, frozen hyper-parameters, bagged over independent seeds",
+        "objective": "reg:squarederror",
+        "splitter": "grouped by InChIKey (masked_splits)",
+        "min_test_rows_per_fold": 2,
+        "seed": 42,
+        "n_bags": 10,
+        "bag_seeds": [
+          42000,
+          42001,
+          42002,
+          42003,
+          42004,
+          42005,
+          42006,
+          42007,
+          42008,
+          42009
+        ],
+        "representations_scored": [
+          "Morgan+Physical"
+        ]
+      },
+      "leak_reference": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0
+      }
+    },
+    "control": {
+      "meta": {
+        "scored_rows": 4570,
+        "compounds_scored": 97,
+        "train_pool_rows": 457,
+        "train_pool_compounds": 97,
+        "requested_repeats": 10,
+        "executed_repeats": 10,
+        "folds": 50,
+        "model": "XGBRegressor with XGB_PARAMS, frozen hyper-parameters, bagged over independent seeds",
+        "objective": "reg:squarederror",
+        "splitter": "grouped by InChIKey (masked_splits)",
+        "min_test_rows_per_fold": 2,
+        "seed": 42,
+        "n_bags": 10,
+        "bag_seeds": [
+          42000,
+          42001,
+          42002,
+          42003,
+          42004,
+          42005,
+          42006,
+          42007,
+          42008,
+          42009
+        ],
+        "representations_scored": [
+          "Morgan+Physical"
+        ]
+      },
+      "leak_reference": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0
+      }
+    },
+    "dummy_mean": {
+      "arm": "dummy_mean_reference",
+      "folds": 50
+    },
+    "dummy_mean_control_floor": {
+      "arm": "dummy_mean_control_floor",
+      "folds": 50
+    }
+  },
+  "readings": {
+    "paired_base": {
+      "Morgan": {
+        "r2": {
+          "mean": 0.06487386371009436,
+          "std": 0.12756423159062394,
+          "n": 10
+        },
+        "mae": {
+          "mean": 11.085225396826887,
+          "std": 1.066222599261893,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 17.680941136425623,
+          "std": 1.1800646579899972,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.494994800871032,
+          "std": 0.2558315207124181,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 7.016358381800293,
+          "std": 1.595332482177116,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 13.534955276822174,
+          "std": 0.9335439726280093,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 67.31664593476515,
+          "std": 1.406870277147763,
+          "n": 10
+        }
+      },
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.4091179943351143,
+          "std": 0.08896659338164581,
+          "n": 10
+        },
+        "mae": {
+          "mean": 8.040673846399821,
+          "std": 1.0163761980594126,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.0504394656373,
+          "std": 1.0060012939542327,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7762564780701202,
+          "std": 0.11534266085166892,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.8820684793058,
+          "std": 1.5896193181641838,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.934666717201002,
+          "std": 1.0711445895673308,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 55.713141056941105,
+          "std": 2.6657225058234455,
+          "n": 10
+        }
+      },
+      "Physical": {
+        "r2": {
+          "mean": 0.2531659995294713,
+          "std": 0.23228852049508575,
+          "n": 10
+        },
+        "mae": {
+          "mean": 9.241225646401663,
+          "std": 1.8478311557603,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 15.667155140564446,
+          "std": 2.4060575562247575,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.8027186759283931,
+          "std": 0.10003074766251538,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 6.049494745288631,
+          "std": 1.9134811660495652,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 11.885881278913093,
+          "std": 3.4377436327564963,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 44.1738981114901,
+          "std": 4.813331401324833,
+          "n": 10
+        }
+      }
+    },
+    "lever_7_bagging": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.4108674982090773,
+          "std": 0.08297942672982424,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.959074922527421,
+          "std": 1.006540520796042,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.03297842785141,
+          "std": 0.9510174793387245,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.778724447367291,
+          "std": 0.11512071051797682,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.873508677104553,
+          "std": 1.5686728165213586,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.672963495492647,
+          "std": 1.1028111212428595,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 56.34994937896728,
+          "std": 2.168958867385699,
+          "n": 10
+        }
+      }
+    },
+    "dummy_control": {
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.04600090536412456,
+          "std": 0.010280316819598847,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.82246930847001,
+          "std": 0.13312608915157656,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.087073908357517,
+          "std": 0.09400119477723705,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.03879695048744247,
+          "std": 0.025970013703692243,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 10.420196274683477,
+          "std": 0.31502528068559554,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.286219670204225,
+          "std": 0.4076604026755751,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 69.94290333121162,
+          "std": 0.6942751186892021,
+          "n": 10
+        }
+      }
+    },
+    "dummy_mean_reference": {
+      "DummyMean": {
+        "r2": {
+          "mean": -0.06871114279629383,
+          "std": 0.0473595292414982,
+          "n": 10
+        },
+        "mae": {
+          "mean": 14.019707514609332,
+          "std": 0.503609870363581,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 18.935354719679275,
+          "std": 0.4193287399700383,
+          "n": 10
+        },
+        "spearman": {
+          "mean": -0.3535427014278476,
+          "std": 0.1328141145479397,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 11.487522197237102,
+          "std": 0.4539563779964537,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 13.990516896901571,
+          "std": 0.6513069213204096,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 68.73479639681184,
+          "std": 0.7517731934276677,
+          "n": 10
+        }
+      }
+    },
+    "dummy_mean_control_floor": {
+      "DummyMean": {
+        "r2": {
+          "mean": -0.0063523871448647904,
+          "std": 0.0035589952186534848,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.4258488074398,
+          "std": 0.056979734197200246,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 18.722010941244182,
+          "std": 0.03309861995947581,
+          "n": 10
+        },
+        "spearman": {
+          "mean": -0.07212498684932825,
+          "std": 0.04111282899098717,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 9.663177501190965,
+          "std": 0.11665603660383936,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.747907905974635,
+          "std": 0.09212884796597787,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 70.24310229885712,
+          "std": 0.2086819222264356,
+          "n": 10
+        }
+      }
+    }
+  },
+  "delta": {
+    "available": true,
+    "base": "paired_base",
+    "widened": "lever_7_bagging",
+    "representation": "Morgan+Physical",
+    "metrics": {
+      "r2": {
+        "base": 0.4091179943351143,
+        "widened": 0.4108674982090773,
+        "delta": 0.0017495038739629987
+      },
+      "mae": {
+        "base": 8.040673846399821,
+        "widened": 7.959074922527421,
+        "delta": -0.08159892387240042
+      },
+      "spearman": {
+        "base": 0.7762564780701202,
+        "widened": 0.778724447367291,
+        "delta": 0.0024679692971707468
+      }
+    },
+    "delta_r2": 0.0017495038739629987,
+    "verdict": "inert",
+    "tolerance": 0.005
+  },
+  "control": {
+    "available": true,
+    "base": "paired_base",
+    "widened": "dummy_control",
+    "representation": "Morgan+Physical",
+    "metrics": {
+      "r2": {
+        "base": 0.4091179943351143,
+        "widened": -0.04600090536412456,
+        "delta": -0.45511889969923885
+      },
+      "mae": {
+        "base": 8.040673846399821,
+        "widened": 13.82246930847001,
+        "delta": 5.781795462070189
+      },
+      "spearman": {
+        "base": 0.7762564780701202,
+        "widened": 0.03879695048744247,
+        "delta": -0.7374595275826777
+      }
+    },
+    "delta_r2": -0.45511889969923885,
+    "verdict": "hurts",
+    "tolerance": 0.005
+  },
+  "control_collapse": {
+    "control_r2": -0.04600090536412456,
+    "trivial_floor_r2": -0.0063523871448647904,
+    "trivial_floor_definition": "the fold-mean predictor scored on the identical folds and on the identical (permuted) label vector as the control arm",
+    "trivial_floor_r2_real_labels": -0.06871114279629383,
+    "delta_over_the_floor": -0.03964851821925977,
+    "abs_delta_over_the_floor": 0.03964851821925977,
+    "baseline_r2": 0.4091179943351143,
+    "delta_vs_the_real_label_baseline": -0.45511889969923885,
+    "tolerance": 0.02,
+    "primary_rule": "the shuffled-label arm must not beat the trivial-mean floor by more than the tolerance",
+    "collapsed": true,
+    "two_sided_against_the_floor_also_passes": false,
+    "literal_wording_is_satisfiable": false,
+    "wording_note": "the pre-registration names no reference for the collapse delta; measured against the real-label baseline the test is unsatisfiable by construction, so the control is measured against the no-information floor and both readings are reported"
+  },
+  "lever_minus_control": {
+    "available": true,
+    "base": "dummy_control",
+    "widened": "lever_7_bagging",
+    "representation": "Morgan+Physical",
+    "metrics": {
+      "r2": {
+        "base": -0.04600090536412456,
+        "widened": 0.4108674982090773,
+        "delta": 0.45686840357320185
+      },
+      "mae": {
+        "base": 13.82246930847001,
+        "widened": 7.959074922527421,
+        "delta": -5.863394385942589
+      },
+      "spearman": {
+        "base": 0.03879695048744247,
+        "widened": 0.778724447367291,
+        "delta": 0.7399274968798485
+      }
+    },
+    "delta_r2": 0.45686840357320185,
+    "verdict": "helps",
+    "tolerance": 0.005
+  },
+  "control_permutation": {
+    "seed": 43,
+    "rows": 2029,
+    "first_ten": [
+      1591,
+      272,
+      1999,
+      1821,
+      1330,
+      452,
+      1966,
+      747,
+      1052,
+      1373
+    ],
+    "sha256_of_order": "9f447d23a002595a304b12b743c880662963a2e4dceecad5a5e5395876a34d7b"
+  },
+  "shared_folds": {
+    "arms": [
+      "paired_base",
+      "lever_7_bagging"
+    ],
+    "scored_side_identical": true,
+    "statement": "the bagged arm was handed the same fold assignment the baseline arm consumed"
+  },
+  "verdict": {
+    "decision": "dead",
+    "reasons": [
+      "mean grouped R2 moved by +0.001750, against a pre-registered floor of -0.0050",
+      "repeat-level R2 std moved from 0.088967 to 0.082979 (+6.73 percent), against a required shrink of 20 percent",
+      "the interval did not narrow by the pre-registered 20 percent"
+    ],
+    "criteria_applied": {
+      "pass_criterion": "mean grouped R2 must not fall by more than 0.0050 AND the standard deviation of the repeat-level R2 readings must shrink by at least 20 percent relative to the baseline arm",
+      "kill_line": "mean R2 falls by more than 0.0050, or the standard deviation shrinks by less than 20 percent -> dead",
+      "control_rule": "each lever carries a shuffled-label control: a lever may only be called real if its control collapses"
+    },
+    "delta_mean_r2": 0.0017495038739629987,
+    "baseline_mean_r2": 0.4091179943351143,
+    "lever_mean_r2": 0.4108674982090773,
+    "baseline_std_r2": 0.08896659338164581,
+    "lever_std_r2": 0.08297942672982424,
+    "std_shrink_percent": 6.729679562010463,
+    "mean_ok": true,
+    "std_shrink_ok": false,
+    "control_collapsed": true,
+    "secondary": {
+      "delta_mae": -0.08159892387240042,
+      "delta_mae_gt60": 0.6368083220261767,
+      "delta_spearman": 0.0024679692971707468,
+      "noise_band": 0.02,
+      "noise_band_definition": "a MAE move inside 2 percent of the baseline MAE is called noise",
+      "mae_ok": true,
+      "mae_gt60_ok": true
+    },
+    "control_delta_r2": -0.45511889969923885,
+    "carried_into_the_merge_arm": false
+  },
+  "shots": {
+    "this_lever": 1,
+    "control_arm_shots": 1,
+    "policy": "every scored attempt at the main scoreboard counts, including dead ones"
+  },
+  "honest_boundaries": [
+    "the main scoreboard is the 457-row / 97-compound paired_base pool, not the v1.0 236-row pool",
+    "0.5332 / 0.5454 are never quoted next to the v1.0 headline 0.364 without their pool definitions",
+    "no random_row split was constructed, let alone judged",
+    "test residuals did not steer anything: n_bags and the bag-seed rule were frozen in the pre-registration",
+    "the scored pool, the fold numbers and the metric denominator did not move; only the fitted model did",
+    "every frozen hyper-parameter is untouched; bagging changes how many models are fitted, not what one model is",
+    "the bagged arm is scored on the main scoreboard's representation only; the single representations are not re-bagged",
+    "the bagged arm re-implements the frozen fit loop because the frozen helper fits exactly one model per representation; the baseline arm does not",
+    "the number of worker processes cannot move a number: every fit is independent and seeded"
+  ],
+  "outputs": {
+    "summary": "probes/dielectric_bagging_probe_summary.json",
+    "report": "reports/dielectric_bagging_probe.md",
+    "folds": "probes/artifacts/dielectric_bagging_folds.csv",
+    "repeats": "probes/artifacts/dielectric_bagging_repeats.csv",
+    "predictions": "probes/artifacts/dielectric_bagging_predictions.csv"
+  },
+  "inputs": {
+    "coverage_table": "data/processed/dielectric_observations_v11plus.csv",
+    "coverage_table_sha256": "159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9",
+    "feature_blocks": {
+      "frozen": {
+        "path": "data/processed/dielectric_physical_features_v03.csv",
+        "sha256": "b36d3439560e4381b7779565b9950eed379832e832b72ea6a3a010662ed24fa3",
+        "source": "frozen_v03",
+        "usable": 237,
+        "errored": 4,
+        "errored_keys": [
+          "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+          "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+          "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+          "JWFPQAXAGSAKRF-UHFFFAOYSA-N"
+        ],
+        "incomplete": 0,
+        "incomplete_keys": [],
+        "duplicate_keys": []
+      },
+      "new": {
+        "path": "data/processed/dielectric_physical_features_v11plus_new.csv",
+        "sha256": "661df4f8b48e0b61d2d7e917d453e6f5cf6682ea71b9acf4e50949230cd562a1",
+        "source": "new_xtb",
+        "usable": 39,
+        "errored": 3,
+        "errored_keys": [
+          "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+          "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+          "JWFPQAXAGSAKRF-UHFFFAOYSA-N"
+        ],
+        "incomplete": 0,
+        "incomplete_keys": [],
+        "duplicate_keys": []
+      },
+      "merged_usable": 276,
+      "usable_from_frozen": 237,
+      "usable_from_new": 39,
+      "overlap_keys": [],
+      "overlap_physical_column_disagreements": {}
+    },
+    "coverage_loader_dropped": {
+      "no_xtb_features": 36
+    },
+    "rows_loaded": 2029,
+    "scored_rows": 457,
+    "scored_compounds": 97,
+    "probe_script": "probes/dielectric_bagging_probe.py",
+    "probe_script_sha256": "b00a2bce8ebf2aadc9007222c0de320a0963180a95bc91260f12882e83ce2a26",
+    "workers": 6
+  }
+}

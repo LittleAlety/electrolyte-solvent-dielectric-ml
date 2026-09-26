@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "task": "week14_feature_envelope_gate",
+  "title": "Feature-envelope applicability gate, pre-registered before any run (appendix W D2 track B)",
+  "locked_at_utc": "2026-09-26T01:45:40Z",
+  "status": "locked_before_run",
+  "lock_rule": "Criteria and kill lines frozen before the probe ran. Never relaxed afterwards.",
+  "why": "The Week 13 L3 stage-1 pilot found the most dangerous failure mode in the funnel: EC and PC were scored 23.1 and 17.0 against a truth of 90.5 and 64.9, and not one existing gate fired. The structural SMARTS gates target associating liquids, and EC/PC carry no O-H, so the model was quietly wrong with no flag. This probe builds the missing flag: a candidate whose features leave the envelope of the training domain must be raised, not scored.",
+  "question": "Given a training domain and a candidate compound, does the candidate sit inside the envelope of the descriptor space the model was fitted on? If not, raise the flag.",
+  "inputs": {
+    "training_domain": "probes/l3_stage1_pilot_pool.csv, the 236 known-solvent pool the stage-1 pilot scored against",
+    "held_out_candidates_for_the_primary_check": ["EC", "PC"],
+    "features_path": "data/processed/dielectric_physical_features_v03.csv",
+    "note": "the pilot held EC and PC out of the training side; the primary check therefore uses the same held-out setting, and the rule must be computable without ever looking at the candidate's own target"
+  },
+  "descriptors": [
+    "dipole_D",
+    "mu_sq_over_Vm",
+    "molecular_volume_A3",
+    "tpsa_A2",
+    "hba",
+    "hbd",
+    "heavy_atom_count",
+    "homo_lumo_gap_ev"
+  ],
+  "rules": [
+    {
+      "id": "robust_interval_fence",
+      "definition": "per descriptor, on the training domain, the envelope is median +/- k * IQR with k = 1.5. A candidate is flagged if any descriptor falls outside its envelope.",
+      "k": 1.5
+    },
+    {
+      "id": "knn_distance_fence",
+      "definition": "standardise the descriptors on the training domain, then flag a candidate whose Euclidean distance to its nearest training compound exceeds the 95th percentile of the leave-one-out nearest-neighbour distances measured inside the training domain.",
+      "percentile": 95
+    }
+  ],
+  "primary_criterion": "both EC and PC are flagged by at least one rule in the held-out setting of the stage-1 pilot",
+  "secondary_criterion": "the leave-one-out flag rate over the 236-compound pool is at most 20 percent, so the gate is a gate and not an alarm that always rings",
+  "kill_line": "EC and PC unflagged by every rule -> the probe is dead and is reported as a failed envelope, not as a near miss. A flag rate above 50 percent is likewise a dead gate.",
+  "controls": {
+    "positive": ["EC", "PC"],
+    "negative": "the leave-one-out sweep over the 236 pool is the false-positive control",
+    "rule": "the gate is only accepted if it separates the two groups; a gate that rings on everything is worth nothing"
+  },
+  "action_when_flagged": "the candidate is removed from the ranking channel and routed to measurement or a physical estimate. It is never silently ranked.",
+  "scaling_note": "the pilot pool is 236 known solvents; the real funnel sees a 29.5k candidate pool, where recall is systematically harder. Any recall claim must carry the pool size.",
+  "shots_policy": {
+    "rule": "attempts at this gate are counted in reports/decisions_log.md section 12",
+    "counted_so_far": 0
+  },
+  "forbidden": [
+    "tuning k or the percentile after seeing whether EC and PC are flagged",
+    "using the candidate's own target value in the rule",
+    "reporting a flag rate only for the cases that were flagged"
+  ],
+  "frozen_red_lines_untouched": [
+    "probes/l3_stage1_pilot_pool.csv digest b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "probes/l3_backvalidation_prereg.json digest 77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+    "data/dielectric_v03.csv digest ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4"
+  ]
+}

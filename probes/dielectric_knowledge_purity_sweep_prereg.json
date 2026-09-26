@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "task": "week14_lever9_knowledge_purity_sweep",
+  "title": "Lever 9: knowledge purity sweep with per-fold importance ranking, motivated by Angew. Chem. Int. Ed. 2025, 64, e202416506",
+  "locked_at_utc": "2026-09-26T04:20:00Z",
+  "status": "locked_before_run",
+  "lock_rule": "Criteria and kill lines frozen before the run. Never relaxed afterwards.",
+  "why": "Lever 2 appended six association descriptors in one block and the grouped R2 fell by 0.0119. Lever 3 fell by 0.1054. The KPI paper reports the same shape of failure from the opposite direction: embedding all 64 knowledge dimensions is worse than embedding the top 20 (MP), 20 (BP) or 10 (FP), because less relevant knowledge adds learning burden. If that mechanism is what killed lever 2, then the fix is not a different chemistry but a purity sweep: rank the candidate knowledge inside the training side of every fold, then add only the top k.",
+  "source_paper": {
+    "doi": "10.1002/anie.202416506",
+    "venue": "Angew. Chem. Int. Ed. 2025, 64, e202416506",
+    "title": "A Knowledge-Data Dual-Driven Framework for Predicting the Molecular Properties of Rechargeable Battery Electrolytes",
+    "local_copy": "C:/Users/Little Alety/Downloads/Angew Chem Int Ed - 2024 - Gao - A Knowledge Data Dual-Driven Framework for Predicting the Molecular Properties of.pdf",
+    "what_we_take": "the knowledge purity controller (how many dimensions of a knowledge vector to concatenate) and the empirical law that too much knowledge hurts",
+    "what_we_do_not_take": "their ranking is computed on the whole dataset before training, which leaks into cross-validation. We rank strictly inside each training fold, so our version is stricter than the paper's.",
+    "what_we_do_not_claim": "their targets are MP, BP and FP, which are atomic-count dominated and reach R2 0.97-0.99. Ours is the collective dielectric response. Their absolute numbers are not portable to us and are never quoted as a bar."
+  },
+  "main_scoreboard": {
+    "rows_scored": 457,
+    "compounds_scored": 97,
+    "splitter": "GroupKFold by InChIKey",
+    "n_splits": 5,
+    "n_repeats": 10,
+    "seed": 42,
+    "min_test_rows_per_fold": 2,
+    "model": "XGBRegressor with the frozen v1.0 hyper-parameters",
+    "baseline_to_reproduce": 0.4091179943351143,
+    "tolerance": 1e-09,
+    "folds_frozen": true
+  },
+  "knowledge_pool": {
+    "rule": "every descriptor here is computable from the SMILES already in the table. No xTB rerun, no experimental lookup, so the sweep cannot be blocked by cost or by data coverage.",
+    "members": [
+      "donor_count",
+      "acceptor_count",
+      "has_1_donor",
+      "has_2_donors",
+      "has_3plus_donors",
+      "donor_acceptor_pair_density",
+      "ring_count",
+      "double_bond_count",
+      "rotatable_bond_count",
+      "heteroatom_over_carbon"
+    ],
+    "why_these": "the KPI paper's SHAP rules say the signal is non-monotone with saturation (donors: +65.6 / +56.0 / +35.4 K for one, two, three, flat at four) and structural-rigidity driven (rings +77.7 K each, double bonds +30 K each, rotatable bonds negative). Lever 2 only ever added linear counts; these members also carry the shape."
+  },
+  "purity_controller": {
+    "definition": "inside each training fold, fit the frozen model on the fold's training rows using the frozen 13-column physical block plus the full knowledge pool, rank the pool members by permutation importance measured on the fold's own training rows only, then re-fit using only the top k members alongside the frozen block.",
+    "k_grid": [2, 4, 6, 10],
+    "leak_rule": "the ranking may never see a test-fold row. A ranking computed on the pooled dataset is a leak and is forbidden.",
+    "flow_controller": "not implemented. The paper also learns how much of the selected knowledge to blend in; we do not. This is recorded as a stated boundary, not as an achieved feature."
+  },
+  "arms": [
+    "baseline (frozen physical block + Morgan, re-run in this script)",
+    "purity_k2 / purity_k4 / purity_k6 / purity_k10 (top-k by per-fold importance)",
+    "placebo (the same top-k pipeline on shuffled labels, must collapse)"
+  ],
+  "pass_criterion": "the best k reaches a grouped R2 delta of at least +0.0200 against the baseline arm re-run in the same script, AND the delta is positive in at least 8 of the 10 repeats, AND the placebo arm collapses",
+  "kill_line": "every k stays below +0.0050 -> dead, reported as dead. A pass carried by a single repeat is not a pass.",
+  "shape_finding_to_report": "the shape of the delta-R2 against k curve is itself a deliverable. The paper's mechanism predicts an interior peak (too few knowledge dimensions loses signal, too many adds burden). A monotone decrease would contradict the mechanism and must be reported as such.",
+  "shots_policy": {
+    "rule": "each k in the grid is one scored attempt at the main scoreboard and counts as a shot. The baseline re-run is the reference, not a shot.",
+    "shots_registered_up_front": 4,
+    "why": "a four-point sweep is four chances to look good by luck. The shot count is declared before the run, exactly as the standing discipline requires."
+  },
+  "forbidden": [
+    "ranking knowledge with any test-fold row in view",
+    "selecting k after seeing the results and then quoting only the best k without counting all four as shots",
+    "row-level random splits for any conclusion",
+    "silently shrinking the scored pool",
+    "changing the score mask, the compound set or the fold numbers",
+    "quoting the paper's R2 0.97-0.99 as a target for our target",
+    "quoting 0.5332 or 0.5454 next to the v1.0 headline 0.364 without their pool definitions"
+  ],
+  "frozen_red_lines_untouched": [
+    "data/dielectric_v03.csv digest ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "probes/l3_stage1_pilot_pool.csv digest b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+    "probes/l3_backvalidation_prereg.json digest 77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+    "data/processed/dielectric_observations_v11plus.csv digest 159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9"
+  ]
+}

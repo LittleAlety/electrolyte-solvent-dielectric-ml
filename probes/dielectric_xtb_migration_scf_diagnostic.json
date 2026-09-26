@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "probe": "dielectric_xtb_migration_scf_diagnostic",
+  "task": "week14_lever4_xtb_full_table_migration",
+  "scope_note": "Feasibility diagnostic only, run after the frozen v0.4 migration probe. It decides nothing: the migration verdict in probes/dielectric_xtb_full_table_migration_summary.json is read off the frozen protocol and is not recomputed here. No dataset cell, frozen feature table, digest, score mask, fold number or export bundle is modified, and the two compounds keep their frozen dipole in the released migration artifacts.",
+  "question": "The frozen v0.4 probe reports two scored compounds as compound-level xTB failures. Is the failure a property of the compound, or of a single conformer under the probe's fail-fast policy?",
+  "why_it_matters": "If the failure is conformer-specific, whole-table coverage is reachable with a tolerant (drop-non-converged-conformer) averaging policy rather than with a chemistry-specific fix. That policy would be a post-hoc protocol variant and was deliberately not run: the released reading stays the frozen-protocol one.",
+  "protocol": {
+    "geometry": "RDKit ETKDGv3, numConfs=8, MMFF94 (UFF fallback), seed = 42 + roster order (the v0.4 embedding)",
+    "electronic_structure": "plain GFN2 single point, no --opt, one conformer per freshly cleared directory",
+    "arms": {
+      "frozen_no_flags": "xtb input.xyz --gfn 2 --chrg <q> --uhf 0",
+      "etemp_500": "same plus --etemp 500",
+      "etemp_1000": "same plus --etemp 1000"
+    },
+    "exit_code_0": "converged",
+    "exit_code_128": "SCF did not converge (.sccnotconverged, 'Self consistent charge iterator did not converge')"
+  },
+  "compounds": {
+    "HQWOEDCLDNFWEV-UHFFFAOYSA-M": {
+      "name": "1-ethyl-3-methylimidazolium diethyl phosphate",
+      "smiles": "CCOP(=O)([O-])OCC.CCn1cc[n+](C)c1",
+      "n_conformers": 8,
+      "force_field": "MMFF94",
+      "formal_charge": 0,
+      "exit_codes_by_arm": {
+        "frozen_no_flags": [
+          128,
+          0,
+          0,
+          0,
+          0,
+          128,
+          0,
+          0
+        ],
+        "etemp_500": [
+          128,
+          0,
+          0,
+          0,
+          0,
+          128,
+          0,
+          0
+        ],
+        "etemp_1000": [
+          128,
+          0,
+          0,
+          0,
+          0,
+          128,
+          0,
+          0
+        ]
+      },
+      "converged_by_arm": {
+        "frozen_no_flags": 6,
+        "etemp_500": 6,
+        "etemp_1000": 6
+      },
+      "frozen_dipole_D": "11.775",
+      "frozen_feature_source": "frozen_v03"
+    },
+    "XDJYSDBSJWNTQT-UHFFFAOYSA-N": {
+      "name": "1-ethyl-2,3-dimethylimidazolium bis[(trifluoromethyl)sulfonyl]imide",
+      "smiles": "CCn1cc[n+](C)c1C.O=S(=O)([N-]S(=O)(=O)C(F)(F)F)C(F)(F)F",
+      "n_conformers": 8,
+      "force_field": "MMFF94",
+      "formal_charge": 0,
+      "exit_codes_by_arm": {
+        "frozen_no_flags": [
+          0,
+          0,
+          0,
+          0,
+          128,
+          0,
+          0,
+          0
+        ],
+        "etemp_500": [
+          0,
+          0,
+          0,
+          0,
+          128,
+          0,
+          0,
+          0
+        ],
+        "etemp_1000": [
+          0,
+          0,
+          0,
+          0,
+          128,
+          0,
+          0,
+          0
+        ]
+      },
+      "converged_by_arm": {
+        "frozen_no_flags": 7,
+        "etemp_500": 7,
+        "etemp_1000": 7
+      },
+      "frozen_dipole_D": "8.609",
+      "frozen_feature_source": "frozen_v03"
+    }
+  },
+  "reading": {
+    "failure_is_conformer_specific": true,
+    "compound_level_failure_is_a_policy_artefact": true,
+    "etemp_changes_any_exit_code": false,
+    "frozen_probe_policy": "run_conformer_compound raises on the first non-zero single-point exit, so one bad conformer out of eight removes the whole compound from the migration",
+    "recovery_precedent": "probes/g1plus_xtb_recovery_probe.json recovered analogous multi-fragment ion pairs with --etemp 1000/5000 or --alpb; those flags are a different geometry and were not applied to the two compounds here"
+  },
+  "related": {
+    "defect_probe": "probes/xtb_fragment_geometry_defect.py",
+    "recovery_probe": "probes/xtb_recovery_probe.py",
+    "recovery_evidence": "probes/g1plus_xtb_recovery_probe.json"
+  }
+}

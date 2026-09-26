@@ -1,0 +1,999 @@
+{
+  "schema_version": 1,
+  "task": "week14_r2_levers",
+  "lever_id": "lever_3_target_transform_and_robust_loss",
+  "title": "Lever 3: log(epsilon-1) target with a pseudo-Huber loss",
+  "generated_at_utc": "2026-09-26T02:33:12Z",
+  "prereg": {
+    "path": "probes/dielectric_r2_levers_prereg.json",
+    "sha256": "ab3503c037f05ac398b3c0c59d0e4845943d49fa5a5349fa46b8944f2bc1bdaa",
+    "status": "locked_before_run",
+    "locked_at_utc": "2026-09-26T01:45:40Z",
+    "lock_rule": "The criteria and the kill lines in this file were frozen before the levers were executed. They are never relaxed afterwards. Any lever that does not clear its criterion is reported as failed, not as a trend.",
+    "thresholds": {
+      "pass_delta_r2": 0.02,
+      "kill_delta_r2": 0.005,
+      "control_collapse_tolerance": 0.02
+    },
+    "locked_criteria": {
+      "pass_criterion": "grouped R2 on the raw scale, on the main scoreboard, increases by at least +0.0200 against the baseline arm re-run in the same script",
+      "secondary_criterion": "Spearman must not fall, and the control arm (same transform, shuffled labels) must collapse",
+      "kill_line": "delta R2 below +0.0050 on the raw scale -> dead. A lift that exists only in log space and vanishes after back-transformation is not a lift and is reported as such.",
+      "expected_delta": "+0.02 to +0.04",
+      "cost": "half a day"
+    },
+    "control_arm_rule": "each lever carries a shuffled-label control on its own feature block: the same folds, the same model, the target permuted. A lever may only be called real if its control collapses (|delta R2| <= 0.02).",
+    "shots_policy": "every scored attempt at the main scoreboard is counted, including failed and abandoned ones. The count is written into reports/decisions_log.md section 12 and into each lever summary.",
+    "forbidden": [
+      "row-level random splits for any conclusion",
+      "letting test residuals steer feature selection",
+      "silently shrinking the scored pool",
+      "changing the score mask, the compound set or the fold numbers",
+      "quoting a delta against a baseline that was not re-run in the same script",
+      "quoting 0.5332 or 0.5454 next to the v1.0 headline 0.364 without their pool definitions"
+    ]
+  },
+  "locked_criteria": {
+    "pass_criterion": "grouped R2 on the raw scale, on the main scoreboard, increases by at least +0.0200 against the baseline arm re-run in the same script",
+    "secondary_criterion": "Spearman must not fall, and the control arm (same transform, shuffled labels) must collapse",
+    "kill_line": "delta R2 below +0.0050 on the raw scale -> dead. A lift that exists only in log space and vanishes after back-transformation is not a lift and is reported as such.",
+    "expected_delta": "+0.02 to +0.04",
+    "cost": "half a day"
+  },
+  "main_scoreboard": {
+    "rows_scored": 457,
+    "compounds_scored": 97,
+    "n_splits": 5,
+    "n_repeats": 10,
+    "requested_repeats": 10,
+    "seed": 42,
+    "min_test_rows_per_fold": 2,
+    "folds_measured": 50,
+    "expected_rows_scored": 457,
+    "expected_compounds_scored": 97,
+    "expected_folds": 50,
+    "full_run_folds": 50,
+    "guards_passed": true
+  },
+  "baseline_reproduces": {
+    "arm": "paired_base",
+    "representation": "Morgan+Physical",
+    "published_r2": 0.4091179943351143,
+    "reproduced_r2": 0.4091179943351143,
+    "abs_difference": 0.0,
+    "tolerance": 1e-09,
+    "bit_exact": true
+  },
+  "reference_triple": {
+    "arm": "paired_base",
+    "representations": {
+      "Morgan": {
+        "expected": 0.06487386371009436,
+        "reproduced": 0.06487386371009436,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      },
+      "Morgan+Physical": {
+        "expected": 0.4091179943351143,
+        "reproduced": 0.4091179943351143,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      },
+      "Physical": {
+        "expected": 0.2531659995294713,
+        "reproduced": 0.2531659995294713,
+        "abs_difference": 0.0,
+        "bit_exact": true
+      }
+    },
+    "all_bit_exact": true,
+    "tolerance": 1e-09
+  },
+  "transform_contract": {
+    "train_target": "y_train = ln(epsilon - 1)",
+    "back_transform": "prediction = exp(y_hat) + 1, clipped at 1.0 exactly like the frozen hybrid",
+    "objective": "reg:pseudohubererror",
+    "huber_slope": 1.0,
+    "hybrid_averaging": "the two single-representation predictions are back-transformed first and averaged on the raw scale, mirroring the frozen hybrid which also averages raw predictions",
+    "unchanged_hyperparameters": {
+      "n_estimators": 200,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1.0,
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1
+    },
+    "model_signature": "{\"colsample_bytree\":0.8,\"huber_slope\":1.0,\"learning_rate\":0.05,\"max_bin\":64,\"max_depth\":2,\"n_estimators\":200,\"n_jobs\":1,\"objective\":\"reg:pseudohubererror\",\"random_state\":42,\"reg_lambda\":1.0,\"subsample\":0.8,\"tree_method\":\"hist\"}",
+    "scoring_space": "raw epsilon: every metric in the judged arm is computed after the back-transform"
+  },
+  "arms": {
+    "baseline": {
+      "meta": {
+        "scored_rows": 457,
+        "compounds_scored": 97,
+        "train_pool_rows": 457,
+        "train_pool_compounds": 97,
+        "requested_repeats": 10,
+        "executed_repeats": 10,
+        "folds": 50,
+        "note": "",
+        "model": "XGBRegressor, frozen XGB_PARAMS except the target and the objective",
+        "objective": "reg:squarederror",
+        "train_target": "epsilon (raw)",
+        "splitter": "grouped by InChIKey (masked_splits)",
+        "min_test_rows_per_fold": 2,
+        "seed": 42
+      },
+      "audit": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0,
+        "scored_rows_total": 4570,
+        "scored_rows_outside_the_score_mask": 0,
+        "train_rows_used": 18280,
+        "train_rows_offered_but_unused": 0,
+        "compounds_scored": 97,
+        "compounds_available_for_training": 97,
+        "training_only_compounds": []
+      },
+      "leak_reference": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0
+      }
+    },
+    "lever": {
+      "meta": {
+        "scored_rows": 457,
+        "compounds_scored": 97,
+        "train_pool_rows": 457,
+        "train_pool_compounds": 97,
+        "requested_repeats": 10,
+        "executed_repeats": 10,
+        "folds": 50,
+        "note": "",
+        "model": "XGBRegressor, frozen XGB_PARAMS except the target and the objective",
+        "objective": "reg:pseudohubererror",
+        "train_target": "y_train = ln(epsilon - 1)",
+        "splitter": "grouped by InChIKey (masked_splits)",
+        "min_test_rows_per_fold": 2,
+        "seed": 42
+      },
+      "audit": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0,
+        "scored_rows_total": 4570,
+        "scored_rows_outside_the_score_mask": 0,
+        "train_rows_used": 18280,
+        "train_rows_offered_but_unused": 0,
+        "compounds_scored": 97,
+        "compounds_available_for_training": 97,
+        "training_only_compounds": []
+      },
+      "leak_reference": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0,
+        "scored_predictions_at_or_below_one": 0
+      }
+    },
+    "control": {
+      "meta": {
+        "scored_rows": 457,
+        "compounds_scored": 97,
+        "train_pool_rows": 457,
+        "train_pool_compounds": 97,
+        "requested_repeats": 10,
+        "executed_repeats": 10,
+        "folds": 50,
+        "note": "",
+        "model": "XGBRegressor, frozen XGB_PARAMS except the target and the objective",
+        "objective": "reg:pseudohubererror",
+        "train_target": "y_train = ln(epsilon - 1)",
+        "splitter": "grouped by InChIKey (masked_splits)",
+        "min_test_rows_per_fold": 2,
+        "seed": 42
+      },
+      "audit": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0,
+        "scored_rows_total": 4570,
+        "scored_rows_outside_the_score_mask": 0,
+        "train_rows_used": 18280,
+        "train_rows_offered_but_unused": 0,
+        "compounds_scored": 97,
+        "compounds_available_for_training": 97,
+        "training_only_compounds": []
+      },
+      "leak_reference": {
+        "folds": 50,
+        "folds_with_a_straddling_compound": 0,
+        "max_straddling_compounds_in_a_fold": 0,
+        "scored_predictions_at_or_below_one": 0
+      }
+    },
+    "dummy_mean": {
+      "arm": "dummy_mean_reference",
+      "folds": 50
+    },
+    "dummy_mean_control_floor": {
+      "arm": "dummy_mean_control_floor",
+      "folds": 50
+    }
+  },
+  "readings": {
+    "paired_base": {
+      "Morgan": {
+        "r2": {
+          "mean": 0.06487386371009436,
+          "std": 0.12756423159062394,
+          "n": 10
+        },
+        "mae": {
+          "mean": 11.085225396826887,
+          "std": 1.066222599261893,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 17.680941136425623,
+          "std": 1.1800646579899972,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.494994800871032,
+          "std": 0.2558315207124181,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 7.016358381800293,
+          "std": 1.595332482177116,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 13.534955276822174,
+          "std": 0.9335439726280093,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 67.31664593476515,
+          "std": 1.406870277147763,
+          "n": 10
+        }
+      },
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.4091179943351143,
+          "std": 0.08896659338164581,
+          "n": 10
+        },
+        "mae": {
+          "mean": 8.040673846399821,
+          "std": 1.0163761980594126,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 14.0504394656373,
+          "std": 1.0060012939542327,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7762564780701202,
+          "std": 0.11534266085166892,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.8820684793058,
+          "std": 1.5896193181641838,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 7.934666717201002,
+          "std": 1.0711445895673308,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 55.713141056941105,
+          "std": 2.6657225058234455,
+          "n": 10
+        }
+      },
+      "Physical": {
+        "r2": {
+          "mean": 0.2531659995294713,
+          "std": 0.23228852049508575,
+          "n": 10
+        },
+        "mae": {
+          "mean": 9.241225646401663,
+          "std": 1.8478311557603,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 15.667155140564446,
+          "std": 2.4060575562247575,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.8027186759283931,
+          "std": 0.10003074766251538,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 6.049494745288631,
+          "std": 1.9134811660495652,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 11.885881278913093,
+          "std": 3.4377436327564963,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 44.1738981114901,
+          "std": 4.813331401324833,
+          "n": 10
+        }
+      }
+    },
+    "lever_3_target_transform_and_robust_loss": {
+      "Morgan": {
+        "r2": {
+          "mean": 0.07200667064546813,
+          "std": 0.11988223672562683,
+          "n": 10
+        },
+        "mae": {
+          "mean": 10.727722639663298,
+          "std": 1.2769227583473897,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 17.616939942777844,
+          "std": 1.114711633397276,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.5181804216838504,
+          "std": 0.258763679542737,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.943476198945566,
+          "std": 1.9777778508660018,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 14.18212271249772,
+          "std": 1.3956634112149842,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 69.56070301986085,
+          "std": 1.7709662846934304,
+          "n": 10
+        }
+      },
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.3037456715367863,
+          "std": 0.06771286820221277,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.890823795971376,
+          "std": 0.8897129965861822,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 15.271121062038953,
+          "std": 0.7349051277024178,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7908388349850644,
+          "std": 0.11411970135486603,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 4.201999218862123,
+          "std": 1.1679140054608175,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 9.439842522691437,
+          "std": 1.6312955251475283,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 67.39805203479222,
+          "std": 1.8016535286339739,
+          "n": 10
+        }
+      },
+      "Physical": {
+        "r2": {
+          "mean": 0.2870736564776989,
+          "std": 0.14064570171140586,
+          "n": 10
+        },
+        "mae": {
+          "mean": 7.68423789881596,
+          "std": 1.1178619915823926,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 15.405806315700897,
+          "std": 1.4720356854563974,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.8398768046277414,
+          "std": 0.028954321039905535,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 3.9923343493450383,
+          "std": 0.7170485737981583,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 9.344401458896417,
+          "std": 2.674949178611887,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 65.84686119797831,
+          "std": 4.256343200032761,
+          "n": 10
+        }
+      }
+    },
+    "dummy_control": {
+      "Morgan": {
+        "r2": {
+          "mean": -0.14827183117143167,
+          "std": 0.012940733988851883,
+          "n": 10
+        },
+        "mae": {
+          "mean": 12.815768077505814,
+          "std": 0.13301761923183045,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.998352338428017,
+          "std": 0.11268439877344857,
+          "n": 10
+        },
+        "spearman": {
+          "mean": -0.007752233820620541,
+          "std": 0.03451603840831095,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 6.101786397377737,
+          "std": 0.19977820080525457,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 23.069577364140788,
+          "std": 0.2705828501782638,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 76.19116774785462,
+          "std": 0.4179275947750497,
+          "n": 10
+        }
+      },
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.11255897467017277,
+          "std": 0.013393707319912483,
+          "n": 10
+        },
+        "mae": {
+          "mean": 12.599907469321215,
+          "std": 0.10032426545828564,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.684867690207412,
+          "std": 0.11852937262126456,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.06300360012450519,
+          "std": 0.019357909323122126,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 5.997511448876704,
+          "std": 0.18239111623966053,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 22.647856463044285,
+          "std": 0.3024830068025926,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 75.23340749177166,
+          "std": 0.5290771642652674,
+          "n": 10
+        }
+      },
+      "Physical": {
+        "r2": {
+          "mean": -0.1148957469059551,
+          "std": 0.01774062071021875,
+          "n": 10
+        },
+        "mae": {
+          "mean": 12.75881585166034,
+          "std": 0.18532508927460095,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 19.705287638997767,
+          "std": 0.15706361976909566,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.09019276395263627,
+          "std": 0.020318261376556918,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 6.416307177273308,
+          "std": 0.3884390855379782,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 22.25773566001363,
+          "std": 0.44751253358201143,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 74.2756472356887,
+          "std": 1.1797076132395923,
+          "n": 10
+        }
+      }
+    },
+    "dummy_mean_reference": {
+      "DummyMean": {
+        "r2": {
+          "mean": -0.06871114279629383,
+          "std": 0.0473595292414982,
+          "n": 10
+        },
+        "mae": {
+          "mean": 14.019707514609332,
+          "std": 0.503609870363581,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 18.935354719679275,
+          "std": 0.4193287399700383,
+          "n": 10
+        },
+        "spearman": {
+          "mean": -0.3535427014278476,
+          "std": 0.1328141145479397,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 11.487522197237102,
+          "std": 0.4539563779964537,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 13.990516896901571,
+          "std": 0.6513069213204096,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 68.73479639681184,
+          "std": 0.7517731934276677,
+          "n": 10
+        }
+      }
+    },
+    "dummy_mean_control_floor": {
+      "DummyMean": {
+        "r2": {
+          "mean": -0.0063523871448647904,
+          "std": 0.0035589952186534848,
+          "n": 10
+        },
+        "mae": {
+          "mean": 13.4258488074398,
+          "std": 0.056979734197200246,
+          "n": 10
+        },
+        "rmse": {
+          "mean": 18.722010941244182,
+          "std": 0.03309861995947581,
+          "n": 10
+        },
+        "spearman": {
+          "mean": -0.07212498684932825,
+          "std": 0.04111282899098717,
+          "n": 10
+        },
+        "mae_lt20": {
+          "mean": 9.663177501190965,
+          "std": 0.11665603660383936,
+          "n": 10
+        },
+        "mae_20_60": {
+          "mean": 16.747907905974635,
+          "std": 0.09212884796597787,
+          "n": 10
+        },
+        "mae_gt60": {
+          "mean": 70.24310229885712,
+          "std": 0.2086819222264356,
+          "n": 10
+        }
+      }
+    }
+  },
+  "delta": {
+    "available": true,
+    "base": "paired_base",
+    "widened": "lever_3_target_transform_and_robust_loss",
+    "representation": "Morgan+Physical",
+    "metrics": {
+      "r2": {
+        "base": 0.4091179943351143,
+        "widened": 0.3037456715367863,
+        "delta": -0.10537232279832803
+      },
+      "mae": {
+        "base": 8.040673846399821,
+        "widened": 7.890823795971376,
+        "delta": -0.14985005042844524
+      },
+      "spearman": {
+        "base": 0.7762564780701202,
+        "widened": 0.7908388349850644,
+        "delta": 0.014582356914944139
+      }
+    },
+    "delta_r2": -0.10537232279832803,
+    "verdict": "hurts",
+    "tolerance": 0.005
+  },
+  "control": {
+    "available": true,
+    "base": "paired_base",
+    "widened": "dummy_control",
+    "representation": "Morgan+Physical",
+    "metrics": {
+      "r2": {
+        "base": 0.4091179943351143,
+        "widened": -0.11255897467017277,
+        "delta": -0.521676969005287
+      },
+      "mae": {
+        "base": 8.040673846399821,
+        "widened": 12.599907469321215,
+        "delta": 4.5592336229213934
+      },
+      "spearman": {
+        "base": 0.7762564780701202,
+        "widened": 0.06300360012450519,
+        "delta": -0.713252877945615
+      }
+    },
+    "delta_r2": -0.521676969005287,
+    "verdict": "hurts",
+    "tolerance": 0.005,
+    "collapse_tolerance": 0.02,
+    "collapsed": true
+  },
+  "control_collapse": {
+    "control_r2": -0.11255897467017277,
+    "trivial_floor_r2": -0.0063523871448647904,
+    "trivial_floor_definition": "the fold-mean predictor scored on the identical folds and on the identical (permuted) label vector as the control arm",
+    "trivial_floor_r2_real_labels": -0.06871114279629383,
+    "delta_over_the_floor": -0.10620658752530798,
+    "abs_delta_over_the_floor": 0.10620658752530798,
+    "baseline_r2": 0.4091179943351143,
+    "delta_vs_the_real_label_baseline": -0.521676969005287,
+    "tolerance": 0.02,
+    "primary_rule": "the shuffled-label arm must not beat the trivial-mean floor by more than the tolerance",
+    "collapsed": true,
+    "two_sided_against_the_floor_also_passes": false,
+    "literal_wording_is_satisfiable": false,
+    "wording_note": "the pre-registration names no reference for the collapse delta; measured against the real-label baseline the test is unsatisfiable by construction, so the control is measured against the no-information floor and both readings are reported"
+  },
+  "lever_minus_control": {
+    "available": true,
+    "base": "dummy_control",
+    "widened": "lever_3_target_transform_and_robust_loss",
+    "representation": "Morgan+Physical",
+    "metrics": {
+      "r2": {
+        "base": -0.11255897467017277,
+        "widened": 0.3037456715367863,
+        "delta": 0.41630464620695906
+      },
+      "mae": {
+        "base": 12.599907469321215,
+        "widened": 7.890823795971376,
+        "delta": -4.709083673349839
+      },
+      "spearman": {
+        "base": 0.06300360012450519,
+        "widened": 0.7908388349850644,
+        "delta": 0.7278352348605591
+      }
+    },
+    "delta_r2": 0.41630464620695906,
+    "verdict": "helps",
+    "tolerance": 0.005
+  },
+  "log_space_diagnostic": {
+    "lever_log_readings": {
+      "Morgan": {
+        "r2": {
+          "mean": 0.281494319288887,
+          "std": 0.19796616365274497,
+          "n": 10
+        },
+        "mae": {
+          "mean": 0.6172658689625371,
+          "std": 0.0774305371105662,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.5181804216838504,
+          "std": 0.258763679542737,
+          "n": 10
+        }
+      },
+      "Morgan+Physical": {
+        "r2": {
+          "mean": 0.5505584565851719,
+          "std": 0.1385382828710035,
+          "n": 10
+        },
+        "mae": {
+          "mean": 0.46282503260040675,
+          "std": 0.05735045228244893,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.7908388349850644,
+          "std": 0.11411970135486603,
+          "n": 10
+        }
+      },
+      "Physical": {
+        "r2": {
+          "mean": 0.6127179976601147,
+          "std": 0.0966651871651272,
+          "n": 10
+        },
+        "mae": {
+          "mean": 0.4394587536968436,
+          "std": 0.06829277017754877,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.8398768046277414,
+          "std": 0.028954321039905535,
+          "n": 10
+        }
+      }
+    },
+    "control_log_readings": {
+      "Morgan": {
+        "r2": {
+          "mean": -0.06787663359874777,
+          "std": 0.021027691061917906,
+          "n": 10
+        },
+        "mae": {
+          "mean": 1.0297810396335496,
+          "std": 0.009589499980637465,
+          "n": 10
+        },
+        "spearman": {
+          "mean": -0.007752233820620541,
+          "std": 0.03451603840831095,
+          "n": 10
+        }
+      },
+      "Morgan+Physical": {
+        "r2": {
+          "mean": -0.038577272770575696,
+          "std": 0.01090393096802556,
+          "n": 10
+        },
+        "mae": {
+          "mean": 1.0088180717221213,
+          "std": 0.007005017678286314,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.06300360012450519,
+          "std": 0.019357909323122126,
+          "n": 10
+        }
+      },
+      "Physical": {
+        "r2": {
+          "mean": -0.07596013814366147,
+          "std": 0.02160600389847368,
+          "n": 10
+        },
+        "mae": {
+          "mean": 1.0189199970349898,
+          "std": 0.01223306462049091,
+          "n": 10
+        },
+        "spearman": {
+          "mean": 0.09019276395263627,
+          "std": 0.020318261376556918,
+          "n": 10
+        }
+      }
+    },
+    "lever_log_r2": 0.5505584565851719,
+    "lever_raw_r2": 0.3037456715367863,
+    "lever_log_spearman": 0.7908388349850644,
+    "lever_raw_spearman": 0.7908388349850644,
+    "control_log_r2": -0.038577272770575696,
+    "log_gain_over_raw": 0.2468127850483856,
+    "vanished_after_back_transform": true,
+    "note": "log-space R2 and raw-space R2 are different scales and are never compared as a judged delta; the raw-scale delta is the pre-registered one"
+  },
+  "control_permutation": {
+    "seed": 43,
+    "rows": 2029,
+    "first_ten": [
+      1591,
+      272,
+      1999,
+      1821,
+      1330,
+      452,
+      1966,
+      747,
+      1052,
+      1373
+    ],
+    "sha256_of_order": "9f447d23a002595a304b12b743c880662963a2e4dceecad5a5e5395876a34d7b"
+  },
+  "shared_folds": {
+    "arms": [
+      "paired_base",
+      "lever_3_target_transform_and_robust_loss",
+      "dummy_control"
+    ],
+    "scored_side_identical": true,
+    "statement": "the scored side of every fold is identical across the three arms"
+  },
+  "verdict": {
+    "decision": "dead",
+    "reasons": [
+      "raw-scale grouped R2 moved by -0.1054, below the +0.005 kill line",
+      "the log-space R2 sits +0.2468 above the raw-scale R2 of the same arm: the dividend does not survive the back-transformation"
+    ],
+    "criteria_applied": {
+      "pass_criterion": "raw-scale grouped R2 delta >= +0.02",
+      "kill_line": "raw-scale grouped R2 delta < +0.005",
+      "control_rule": "the control R2 must not exceed the trivial-mean floor by more than 0.02",
+      "log_space_rule": "a lift that exists only in log space and vanishes after back-transformation is not a lift",
+      "spearman_rule": "Spearman must not fall"
+    },
+    "delta_r2": -0.10537232279832803,
+    "delta_mae": -0.14985005042844524,
+    "delta_mae_gt60": 11.68491097785111,
+    "delta_spearman": 0.014582356914944139,
+    "control_delta_r2": -0.521676969005287,
+    "control_collapsed": true,
+    "control_collapse": {
+      "control_r2": -0.11255897467017277,
+      "trivial_floor_r2": -0.0063523871448647904,
+      "trivial_floor_definition": "the fold-mean predictor scored on the identical folds and on the identical (permuted) label vector as the control arm",
+      "trivial_floor_r2_real_labels": -0.06871114279629383,
+      "delta_over_the_floor": -0.10620658752530798,
+      "abs_delta_over_the_floor": 0.10620658752530798,
+      "baseline_r2": 0.4091179943351143,
+      "delta_vs_the_real_label_baseline": -0.521676969005287,
+      "tolerance": 0.02,
+      "primary_rule": "the shuffled-label arm must not beat the trivial-mean floor by more than the tolerance",
+      "collapsed": true,
+      "two_sided_against_the_floor_also_passes": false,
+      "literal_wording_is_satisfiable": false,
+      "wording_note": "the pre-registration names no reference for the collapse delta; measured against the real-label baseline the test is unsatisfiable by construction, so the control is measured against the no-information floor and both readings are reported"
+    },
+    "spearman_fell": false,
+    "log_gain_over_raw": 0.2468127850483856,
+    "vanished_after_back_transform": true,
+    "carried_into_the_merge_arm": false
+  },
+  "shots": {
+    "this_lever": 1,
+    "policy": "every scored attempt at the main scoreboard counts, including dead ones"
+  },
+  "honest_boundaries": [
+    "the main scoreboard is the 457-row / 97-compound paired_base pool, not the v1.0 236-row pool",
+    "0.5332 / 0.5454 are never quoted next to the v1.0 headline 0.364 without their pool definitions",
+    "no random_row split was constructed, let alone judged",
+    "test residuals did not steer anything: the transform and the loss were frozen in the pre-registration",
+    "the scored pool, the fold numbers and the metric denominator did not move; only the training target did",
+    "the transformed arm re-implements the frozen fit loop because the frozen helper clips on the model's own scale; the baseline arm does not"
+  ],
+  "outputs": {
+    "summary": "probes/dielectric_target_transform_probe_summary.json",
+    "report": "reports/dielectric_target_transform_probe.md",
+    "folds": "probes/artifacts/dielectric_target_transform_probe_folds.csv",
+    "repeats": "probes/artifacts/dielectric_target_transform_probe_repeats.csv",
+    "predictions": "probes/artifacts/dielectric_target_transform_probe_predictions.csv",
+    "log_folds": "probes/artifacts/dielectric_target_transform_probe_log_folds.csv",
+    "log_repeats": "probes/artifacts/dielectric_target_transform_probe_log_repeats.csv"
+  },
+  "inputs": {
+    "coverage_table": "data/processed/dielectric_observations_v11plus.csv",
+    "coverage_table_sha256": "159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9",
+    "feature_blocks": {
+      "frozen": {
+        "path": "data/processed/dielectric_physical_features_v03.csv",
+        "sha256": "b36d3439560e4381b7779565b9950eed379832e832b72ea6a3a010662ed24fa3",
+        "source": "frozen_v03",
+        "usable": 237,
+        "errored": 4,
+        "errored_keys": [
+          "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+          "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+          "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+          "JWFPQAXAGSAKRF-UHFFFAOYSA-N"
+        ],
+        "incomplete": 0,
+        "incomplete_keys": [],
+        "duplicate_keys": []
+      },
+      "new": {
+        "path": "data/processed/dielectric_physical_features_v11plus_new.csv",
+        "sha256": "661df4f8b48e0b61d2d7e917d453e6f5cf6682ea71b9acf4e50949230cd562a1",
+        "source": "new_xtb",
+        "usable": 39,
+        "errored": 3,
+        "errored_keys": [
+          "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+          "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+          "JWFPQAXAGSAKRF-UHFFFAOYSA-N"
+        ],
+        "incomplete": 0,
+        "incomplete_keys": [],
+        "duplicate_keys": []
+      },
+      "merged_usable": 276,
+      "usable_from_frozen": 237,
+      "usable_from_new": 39,
+      "overlap_keys": [],
+      "overlap_physical_column_disagreements": {}
+    },
+    "coverage_loader_dropped": {
+      "no_xtb_features": 36
+    },
+    "rows_loaded": 2029,
+    "scored_rows": 457,
+    "scored_compounds": 97,
+    "target_min": 1.873,
+    "target_max": 178.47,
+    "lever_script": "probes/dielectric_target_transform_probe.py",
+    "lever_script_sha256": "71f3d36ab45a1fe5b357d70de186829034e764f5d515b6a7fcbd8663b8ff1773"
+  }
+}

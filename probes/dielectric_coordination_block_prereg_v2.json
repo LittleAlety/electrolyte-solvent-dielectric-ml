@@ -1,0 +1,109 @@
+{
+ "schema_version": 1,
+ "task": "week14_lever8_coordination_block_placebo_clause_v2",
+ "title": "Lever 8, second shot: independent confirmation run of the Li+ coordination block under an explicitly amended placebo clause",
+ "locked_at_utc": "2026-09-26T04:02:50Z",
+ "status": "locked_before_run",
+ "lock_rule": "The criteria and the kill lines in this file are frozen before the v2 run. They are never relaxed afterwards.",
+ "what_this_file_is": "an ADDITIONAL shot at the same frozen scoreboard with the same frozen features and the same frozen folds. It does not retroactively validate v1 and it does not replace v1.",
+ "v1_is_not_edited": {
+  "rule": "probes/dielectric_coordination_block_prereg.json and every v1 artefact stay byte identical. The v1 decision is `dead` and remains `dead`.",
+  "v1_decision_is_still_in_force": "dead",
+  "v1_artefact_digests_observed_at_lock_time": {
+   "probes/dielectric_coordination_block_prereg.json": "5aa2e3483c7fae52144dc4e7a524d46138d2c85d714e748e8d59de2787613629",
+   "probes/dielectric_coordination_block_summary.json": "b8a4ca6ae2eef3469b3058ed0aab8ebfbfc385892cd65406c440353a2eaa667c",
+   "probes/artifacts/dielectric_coordination_block_features.csv": "e09a08d1c2620548c891b096f89bf641f6606c7bf3a5aacddcd6ae63e4849500",
+   "probes/artifacts/dielectric_coordination_block_folds.csv": "446e467e85d1e425751d2d6eddf70851e42d191baaa10513c1f1f19499bb1cb1",
+   "probes/artifacts/dielectric_coordination_block_predictions.csv": "f8d6dc1ee41deb50b998c8a2312a10ef88af7183d31e5de1613173c68494526f",
+   "probes/artifacts/dielectric_coordination_block_repeats.csv": "ef80e37e5ef104ea982b15fd03697bc47e0d4a183225e3e1696949d71846be97",
+   "reports/dielectric_coordination_block.md": "142478f4e9e778112b2b8aa9301d6b34412c5864c20aea7e8200302c9cf8aa2e"
+  },
+  "why_this_matters": "the point of a second shot is that the first shot's record is untouched, so a reader can see both the original verdict and the amended-clause verdict side by side"
+ },
+ "why_this_shot_exists": {
+  "the_defect_is_constructive_not_result_driven": "the v1 secondary criterion reads `the placebo arm must collapse (|delta R2| <= 0.0200)`. Read literally against the baseline arm, that inequality can only hold when the placebo KEEPS the baseline signal, so it is unsatisfiable whenever the placebo behaves as a placebo. The clause is broken by construction, independently of any number this probe produced.",
+  "the_repair_form_is_older_than_this_reading": "the same shape of clause was already implemented elsewhere in Week 14 before this probe read its own numbers: lever 2 (`probes/dielectric_association_features_probe.py`) takes the collapse reading against the no-information floor, and lever 9 (`probes/dielectric_knowledge_purity_sweep.py`) names `fold_mean_floor` explicitly as the reference. This v2 adopts that form verbatim.",
+  "not_a_rescue": "this clause was written to fix a broken sentence, not to turn a failing lever into a passing one. The amended clause is at least as strict as the sibling levers' and it is evaluated on all three readings at once; if any of them fails, the decision is `dead`.",
+  "discipline_note": "relaxing a criterion after seeing a result is exactly what the project forbids, which is why v1 keeps its `dead` and this run is filed as a separate, newly-counted shot."
+ },
+ "superseded_placebo_clause": {
+  "source": "probes/dielectric_coordination_block_prereg.json",
+  "fields_verbatim": {
+   "secondary_criterion": "the mae_gt60 stratum must not get worse, and the placebo arm must collapse (|delta R2| <= 0.0200)",
+   "kill_line": "delta R2 below +0.0050, or a placebo arm that does not collapse, or a lift that exists only in the MAE strata while total R2 falls -> dead, reported as dead",
+   "arms_entry": "placebo (the same block, target shuffled, must collapse)"
+  },
+  "status": "superseded by this file for the v2 shot only; left untouched in v1",
+  "defect": "the parenthetical names no reference. Against the baseline arm it is unsatisfiable by construction; the sibling levers therefore read it against a no-information floor."
+ },
+ "amended_placebo_clause": {
+  "tolerance": 0.02,
+  "rule_1_floor_upper_bound": "the shuffled-label arm must NOT beat its own no-information floor by more than +0.0200. The floor is the training-fold-mean predictor scored on the identical folds AND the identical permuted label vector as the shuffled-label arm.",
+  "rule_2_block_pipeline_on_shuffled_labels": "the same coordination-block pipeline on shuffled labels must NOT manufacture a gain of more than +0.0200 relative to the same pipeline's real-label arm.",
+  "rule_3_within_pipeline_contrast": "the coordination-block pipeline on shuffled labels must NOT manufacture a gain of more than +0.0200 against the baseline feature set on the same shuffled label vector (the lever-9 reading).",
+  "combination": "collapsed = rule_1 AND rule_2 AND rule_3. All three must hold. No threshold is widened: every rule uses the same +0.0200.",
+  "consistency_statement": "this repair form is identical to lever 2 and lever 9. It was not invented for lever 8.",
+  "why_three_readings": "rule_1 is the sibling precedent; rule_2 is the literal reading of the sentence the integrator wrote; rule_3 is the reading that actually detects leakage (a block that still lifts on random labels). Gating on all three is the strictest of the three choices and requires no interpretation to be defensible."
+ },
+ "arms": [
+  "baseline (frozen v03 physical + Morgan, real labels, re-run in this script)",
+  "plus_coordination_block (the five new columns appended, real labels)",
+  "placebo_shuffled_target (the same block pipeline, target shuffled)",
+  "baseline_features_shuffled_target (the frozen feature set on the SAME shuffled vector; contrast arm required by rule_3, not an extra shot)",
+  "no_information_floor (training-fold mean, the SAME shuffled vector; reference, not a shot)",
+  "no_information_floor_real_labels (training-fold mean, real labels; context, not a shot)"
+ ],
+ "frozen_inputs": {
+  "coordination_features": "probes/artifacts/dielectric_coordination_block_features.csv",
+  "coordination_features_rule": "reused byte-identical from the v1 xTB phase; no xTB is executed by this script, so the feature side is literally the same block and no new chemistry enters",
+  "scoreboard": "the frozen main scoreboard, 457 rows / 97 compounds, GroupKFold by InChIKey",
+  "folds": "the v1 folds, re-derived by the same frozen call chain, never re-invented"
+ },
+ "main_scoreboard": {
+  "rows_scored": 457,
+  "compounds_scored": 97,
+  "splitter": "GroupKFold by InChIKey",
+  "n_splits": 5,
+  "n_repeats": 10,
+  "seed": 42,
+  "min_test_rows_per_fold": 2,
+  "model": "XGBRegressor with the frozen v1.0 hyper-parameters",
+  "baseline_to_reproduce": 0.4091179943351143,
+  "tolerance": 1e-09,
+  "folds_frozen": true,
+  "shuffled_vector": "the same permutation as v1's placebo arm (seed 42 over the scored rows), reused rather than redrawn, so the floor and the placebo arm sit on the identical label vector"
+ },
+ "pass_criterion": "the baseline arm re-run in this script reproduces 0.4091179943351143 to within 1e-9, AND the grouped Morgan+Physical R2 of the block arm rises by at least +0.0200 against that re-run baseline, AND the amended placebo clause collapses",
+ "kill_line": "delta R2 below +0.0050, or a baseline that does not reproduce (whole shot stamped `unverified` and no delta may be quoted), or any of rule_1 / rule_2 / rule_3 failing -> dead, reported as dead",
+ "decision_vocabulary": [
+  "pass_under_amended_placebo_clause",
+  "sub_threshold",
+  "dead",
+  "unverified"
+ ],
+ "merge_arm": "not run and not decided here. Whether the coordination block is carried into any merge arm is the integrator's ruling, and this file neither requests nor pre-empts it.",
+ "not_a_gate_but_reported": "the mae_gt60 stratum and the paired MAE / RMSE / Spearman deltas are reported beside the decision. They are not part of the amended pass criterion.",
+ "shots_policy": {
+  "rule": "every scored attempt at the main scoreboard is counted, including failed ones. This shot is counted as 1.",
+  "this_shot": 1,
+  "v1_shot": 1,
+  "lever8_total_after_this_run": 2,
+  "must_be_registered_in": "reports/decisions_log.md section 12, by the integrator"
+ },
+ "forbidden": [
+  "editing v1's pre-registration, v1's summary, v1's artefacts or v1's report",
+  "editing reports/decisions_log.md, the handbook, or paper/*",
+  "row-level random splits for any conclusion",
+  "letting test residuals steer which features enter the block",
+  "silently shrinking the scored pool",
+  "changing the score mask, the compound set or the fold numbers",
+  "quoting the v1 `dead` as if it had been overturned",
+  "quoting 0.5332 or 0.5454 next to the v1.0 headline 0.364 without their pool definitions"
+ ],
+ "frozen_red_lines_untouched": [
+  "data/dielectric_v03.csv digest ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+  "probes/l3_stage1_pilot_pool.csv digest b838febbca4d65975d1820ae9275215288968979b78756611cb031eb7c408b18",
+  "probes/l3_backvalidation_prereg.json digest 77f61a83b82de346292ff055c4f4c52003bccb6bfc98bf11813048abc6f0db98",
+  "data/processed/dielectric_observations_v11plus.csv digest 159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9"
+ ]
+}

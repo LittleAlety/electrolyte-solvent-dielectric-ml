@@ -123,11 +123,41 @@ def main() -> int:
                    ticket["only_electrical_quantity"]["usable_as_dielectric_value"] is False))
     checks.append(("MOPN net_new is 0", nn["MOPN"] == 0))
 
+    contract = summary.get("restricted_values_contract")
+    checks.append(("restricted_values_contract is present", isinstance(contract, dict)))
+    contract = contract if isinstance(contract, dict) else {}
+    checks.append(("contract route is the manual logged-in Edge session",
+                   contract.get("route") == "reaxys_ui_manual_query_in_logged_in_edge_session"))
+    checks.append(("contract provenance stops at the bibliographic citation",
+                   contract.get("provenance") == "reaxys<-bibliographic_citation"))
+    checks.append(("contract declares the mirror is present",
+                   contract.get("machine_readable_mirror_present") is True))
+    checks.append(("contract names the mirror fields",
+                   isinstance(contract.get("mirror_fields"), list) and len(contract["mirror_fields"]) >= 2))
+    checks.append(("contract forbids redistribution",
+                   contract.get("redistribution") == "not_permitted"))
+    checks.append(("contract forbids joining the data or the candidate pool",
+                   contract.get("may_join_into_data_or_pool") is False))
+    checks.append(("contract declares no channel availability",
+                   contract.get("declares_channel_availability") is False))
+    superseded = summary.get("method_facts_superseded_key") or {}
+    checks.append(("the retired compliance key is gone from the summary",
+                   "compliance" not in summary))
+    checks.append(("the retired compliance prose is recorded verbatim",
+                   "永不进可分发数据集" in str(superseded.get("old_value", ""))
+                   and bool(superseded.get("why_rewritten"))))
+    checks.append(("each row routes through the restricted contract",
+                   all(r["provenance_tag"] == "reaxys_crosscheck_only"
+                       and r["access"] == "restricted_crosscheck_only" for r in rows)))
+
     md = MD_PATH.read_text(encoding="utf-8")
     for needle in ("Static Dielectric Constant", "Frequency (Hz)", "10.1039/j29660000005",
                    "Hagiyama", "支持材料" if False else "supporting information",
-                   "Werblan", "Vahidi", "永不进可分发数据集", "净新增", "110-67-8", "Strobykina", "4.04", "SummaryAI"):
+                   "Werblan", "Vahidi", "restricted_values_contract", "禁止再分发", "不得并入数据集或候选池", "净新增", "110-67-8", "Strobykina", "4.04", "SummaryAI"):
         checks.append((f"report mentions {needle!r}", needle in md))
+
+    checks.append(("report retires the falsified compliance claim",
+                   "永不进可分发数据集" not in md))
 
     ok = all(v for _, v in checks) and not problems
     for name, value in checks:

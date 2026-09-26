@@ -2,7 +2,7 @@
 
 **日期**：2026-09-26
 **浏览器**：Edge（用户已登录的 Reaxys 会话）
-**方法合规**：**手动逐条查询**；所有取值标记 `restricted_crosscheck_only`，**永不进可分发数据集**；未使用批量爬虫。
+**方法事实**：Reaxys 网页端（用户已登录的 Edge 会话）**手动逐条查询**；未使用批量爬虫、未批量导出、未自动遍历。受限值口径见 `restricted_values_contract`：受限 Reaxys 数值**已镜像在本产物的 CSV 与 summary 内**，**禁止再分发**，**不得并入数据集或候选池**，本产物**不声明任何通道可用**。
 **产物**：`probes/reaxys_dielectric_queue_first_cut.csv`（19 行）、`probes/reaxys_dielectric_queue_first_cut_summary.json`、`probes/verify_reaxys_dielectric_queue_first_cut.py`
 
 ## 0 结论速览
