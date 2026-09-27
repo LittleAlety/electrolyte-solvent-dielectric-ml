@@ -5029,3 +5029,225 @@ gap r 0.4343 / MAE 0.5910 eV / `reference_only`；首次拿到轨道数 **291**�
 
 **数字钉（勿混用）**：头条 **0.4766400383507876**；基线 **0.4091179943351143**；Δ **+0.0675220440156733**；
 面板行数 **30**；主记分牌累计 shots 仍 **11**。
+
+## 28.29 介电扩池第 12 枪（NBS-514 外来化学空间）：主臂 0.3809，倒进别的化学空间是有害的（2026-09-27）
+
+**预注册**：`probes/dielectric_pool_expansion_prereg.json`（`locked_before_run`，`locked_at_utc 2026-09-27T02:20:00Z`）。
+**冻结侧**：457 行 / 97 化合物 / 276 个（化合物, T）对，GroupKFold by InChIKey，10×5 = 50 折，seed 42。
+**扩池**：NBS-514 转写块，读 392 行 → 准入 362 行 / 360 化合物（丢弃 `duplicate_of_a_coverage_row 29`、`no_xtb_features 1`）。
+
+**七臂读数**（基线逐位复现，`baseline_abs_gap = 0.0`）
+
+| 臂 | R² | Δ vs 基线 |
+| --- | ---: | ---: |
+| `baseline_hybrid` | 0.4091179943351143 | 0（冻结基线） |
+| `plus_lever4_lever8`（复现对照） | **0.4766400383507876** | +0.0675220440156733 |
+| `plus_expansion_hybrid`（**预注册主臂**） | **0.3809089252433510** | −0.0282090690917634 |
+| `plus_lever4_lever8_plus_expansion` | 0.4353185412382897 | +0.0262005469031754 |
+| `expansion_only` | 0.1250465112927389 | −0.2840714830423755 |
+| `expansion_label_placebo` | 0.2196470593710983 | −0.1894709349640160 |
+
+**剂量曲线非单调**：0.25 → **0.49594391613087935**（+0.0868）；0.50 → 0.4021071725198608；0.75 → 0.4058565921533363；1.00 → 0.3809089252433510。
+
+**判决**：`primary_missed`；Arm A（标签安慰剂）**PASS**；Arm B（剂量单调）**FAIL**。
+
+**照实写的结论**：
+
+1. `plus_lever4_lever8` 逐位复现 v2 头条 **0.4766400383507876**，证明本轮复现管线忠实——这是这一枪最有价值的产出。
+2. 把**别的化学空间**的 360 个化合物倒进训练集**没有提升，反而有害**（主臂 −0.0282；只喂外来块 −0.2841）。
+3. 0.25 剂量那一档 0.4959 是**本轮最高读数，但不是预注册主臂，不得提升**。
+4. 剂量曲线非单调 ⇒ 该块不能读作「有用的训练材料」。
+
+**数字钉（勿混用）**：主臂 **0.3809089252433510**；最高读者 **0.49594391613087935**（剂量 25%，非主臂）；安慰剂 **0.2196470593710983**。
+
+## 28.30 介电扩池第 13 枪（同源全表）：0.5300；最高臂 0.5433 不在 co-primary 名单，如实判 missed ＋ 审计勘误（2026-09-27）
+
+**预注册**：`probes/dielectric_pool_expansion_prereg_v2.json`（`locked_before_run`）。该文件带 `disclosure` 字段，**承认本枪非盲**：
+诊断探针（`dielectric_pool_expansion_diagnostic.py`，自称 `exploratory_not_promotable`）在写预注册前已经看到 0.530029。
+
+**池**：同源全表 **2029 行 / 148 化合物**（训练-only 1934 行 / 455 化合物），评分侧仍 **457 行 / 97 化合物 / 50 折**。
+
+| 臂 | R² | 备注 |
+| --- | ---: | --- |
+| `baseline_hybrid` | 0.4091179943351143 | 逐位复现，gap 0.0 |
+| `full_table_hybrid` | 0.530028742596643 | co-primary |
+| **`full_table_lever4`** | **0.5433111678100043** | **本轮最高，但不在 co-primary 名单** |
+| `full_table_lever4_lever8` | 0.49147018524319047 | co-primary |
+| `full_table_plus_nbs_hybrid` | 0.4544394689931626 | 外来块有害，再次确认 |
+| `full_table_plus_nbs_lever4` | 0.5234221271950796 | |
+| `full_table_label_placebo` | 0.05539621902141869 | Arm A PASS |
+
+co-primaries **未过 0.60**（shortfall 0.06997125740335697 / 0.1085298147568095）⇒ 判决 `co_primaries_missed`；Arm B（剂量单调）**FAIL**。
+
+**关键洞察**：同源扩池（+0.12）有效、外来化学空间（§28.29）无效；而 `full_table_lever4_lever8`（0.4915）**低于** `full_table_lever4`（0.5433），
+原因是 Li⁺ 配位块当时**只覆盖 987 / 2029 训练行（88 / 148 化合物）**——**不是杠杆无效，是覆盖太稀疏**，大面积 NaN 反而有害。
+
+**审计勘误（W17-AUDIT 提出，已处置）**
+
+1. **阻断级**：prereg_v2 声明 `locked_at_utc 2026-09-27T07:05:00Z`，而当时 shipped 的 summary `generated_at_utc` 是 `07:02:15Z`
+   ——**声明时间晚于它管辖的运行**，在交付克隆（git 不存 mtime）里这是**唯一可见的时间戳**，看起来像事后补写。
+   处置：**不改被锁文件**（改字节会让它与 summary 里记录的 `sha256 5a45526be27732353a9b04a3aad63d2592512053cfc2a7123b48dc5b05e127db` 失配），
+   改为**先修脚本缺陷再重跑**。修了两处：① `telemetry["started_at_utc"]` 曾用 `_utc_now()` 在**跑完之后**取样，等于结束时间；
+   ② 末尾汇总打印用 `arms[name]['r2']`，而该字典没有 `r2` 键会 `KeyError`（只崩打印，JSON/MD 已完整落盘）。
+   重跑后 shipped summary `generated_at_utc = 2026-09-27T07:24:39Z`、`started_at_utc = 2026-09-27T07:11:32Z`，**晚于 07:05:00Z 的声明锁时间，不一致消除**；
+   七个臂读数与剂量曲线**逐位不变**（0.409118 / 0.530029 / 0.543311 / 0.491470 / 0.454439 / 0.523422 / 0.055396）。
+2. **措辞降级**：prereg_v2 里「only that number may be promoted」属**夸大**。0.530029 应记作
+   **「post-hoc 选定臂 ＋ 预先写定的判决规则下的重测」**，不是「预注册确认」。本条按该口径执行。
+3. 审计同时确认：折不泄漏（合成例实测 0 跨折 ＋ 运行时自检全 0）；每个臂读数可由 `_repeats.csv` 按 repeat 均值逐位复现；`baseline_abs_gap = 0.0` 为真。
+
+**数字钉（勿混用）**：`full_table_hybrid` **0.530028742596643**；`full_table_lever4` **0.5433111678100043**；
+`full_table_lever4_lever8` **0.49147018524319047**；安慰剂 **0.05539621902141869**。以上与 §28.29 的 0.3809 / 0.4959**不同池定义，永不相减**。
+
+## 28.31 介电扩池第 14/15 枪：五条杠杆全部失败，0.60 未达；封顶在表示能力而不是数据量（2026-09-27）
+
+**背景**：作者指示「继续加数据来，重复之前的步骤，尝试做到 R² 大于 0.6；估计数据得千位级」。
+
+### 第 14 枪（`probes/dielectric_pool_expansion_prereg_v3.json` → `probes/dielectric_pool_expansion_v3.py`）
+
+池：同源全表 2029 行 ＋ Reaxys 加宽 155 行；评分侧仍是 457 行 / 97 化合物 / 50 折。
+**四个复现锚点全部逐位命中**（`anchors_reproduced = True`）：0.4091179943351143、0.530028742596643、
+0.5433111678100043、0.49147018524319047。
+
+| 臂 | R² |
+| --- | ---: |
+| `baseline_hybrid` | 0.4091179943351143 |
+| `full_table_hybrid` | 0.530028742596643 |
+| `full_table_lever4` | 0.5433111678100043 |
+| `full_table_lever4_lever8`（已发布稀疏块） | 0.49147018524319047 |
+| `full_table_lever4_lever8full`（**新铺满块**） | 0.48600023850174934 |
+| `static_hybrid`（静态-only 训练池） | 0.323041 |
+| `static_lever4_lever8full` | 0.4035089033119271 |
+| `widened_lever4_lever8full` | 0.515154 |
+| `full_table_label_placebo` | 0.1593289384795436 |
+
+co-primaries 未过 0.60；Arm A **PASS**、Arm B（剂量单调）**PASS**；判决 `co_primaries_missed`。
+
+**结论 1（把 §28.30 的判断推翻了）**：配位块从 987 行扩到 1462 行（88 → 125 化合物），读数 0.49147018524319047 →
+0.48600023850174934，**没有提升**。所以「不是杠杆无效、是覆盖太稀疏」这个诊断**不成立**——铺满之后依旧无效。
+**结论 2**：静态-only 训练池掉到 0.323041（−0.207）。435 条有限频率行**不是标签污染，反而是有用信号**。
+**结论 3**：给已有化合物补 155 行 Reaxys 数据**有害**（0.515154，低于 `full_table_lever4`）。
+
+### 第 15 枪（`probes/dielectric_anchor_prereg.json` → `probes/dielectric_anchor_benchmark.py`）
+
+高 ε 锚点块由 `probes/build_dielectric_anchor_blocks.py` 建成：**5 个本仓从未有过的化合物 / 5 行**
+（碳酸乙烯酯 95.3、碳酸丙烯酯 64.9、甲酸 56.0、硝基甲烷 37.3、六甲基磷酰三胺 29.6），
+xTB 物理块由与已发布块相同的**钉线运行器**重算。两个复现锚点命中。
+
+| 臂 | R² |
+| --- | ---: |
+| `baseline_hybrid` | 0.4091179943351143 |
+| `full_table_lever4` | 0.5433111678100043 |
+| `anchors_hybrid` | 0.49800389169145765 |
+| **`anchors_lever4`（主臂）** | **0.510231505819011** |
+| `anchors_label_placebo` | 0.16579950575416874 |
+
+主臂短 **0.08976849418098898** ⇒ `primary_missed`；Arm A **PASS**、Arm B（剂量 −0.227 → 0.240 → 0.470 → 0.524 单调）**PASS**。
+**结论 4**：高 ε 锚点机制同样失效。
+
+### 五条杠杆的汇总（方向，不可跨池相减）
+
+| 杠杆 | 读数 | 对照 | 方向 |
+| --- | ---: | ---: | --- |
+| 外来化学空间（NBS，+362 行 / 360 化合物） | 0.380909 | 0.409118 | **有害** |
+| 同源扩行（457 → 1934 训练行） | 0.530029 | 0.409118 | **唯一有效（+0.1209）** |
+| 配位块铺满（987 → 1462 行） | 0.486000 | 0.491470 | 无效（−0.0055） |
+| 静态-only 训练池（−435 行） | 0.323041 | 0.530029 | **有害** |
+| Reaxys 加宽（+155 行） | 0.515154 | 0.543311 | 有害 |
+| 高 ε 锚点（+5 化合物） | 0.510232 | 0.543311 | 有害 |
+
+### 结论
+
+**R² > 0.60 未达到。** 当前最好的读数是 `full_table_lever4 = 0.5433111678100043`，它**不是任何一枪的 co-primary**，
+**不得提升**；冻结头条保持 **0.4766400383507876**。天花板是**表示能力**，不是数据量：
+行数已经到 2029 行（本仓池）／2529 行（ThermoML 全档），而化合物数被 ThermoML 全档**封在 157**；
+同时极端 ε 化合物在**测它的那一折里没有任何同族训练标签**，梯度提升树无法外推——这与「再加行数」是正交的两件事。
+
+**本轮数据侧新增（入库、如实登记，但没有改善读数）**：`data/raw/open_data_eps2/`（96 行 / 31 化合物，22 个可用源：
+21 篇 CC BY 4.0 ＋ Wikidata P5675）；`data/raw/reaxys_w17g/`（W17-22 卡片行走）；
+`data/processed/dielectric_anchor_observations.csv` ＋ `_features.csv`。
+
+**产物与图**：`probes/dielectric_pool_expansion_v3_summary.json`、`probes/dielectric_anchor_summary.json`、
+`reports/dielectric_pool_expansion_v3.md`、`reports/dielectric_anchor.md`、`probes/artifacts/dielectric_pool_expansion_v3_{folds,repeats}.csv`、
+`probes/artifacts/dielectric_anchor_{folds,repeats}.csv`、`probes/plot_week17_pool_expansion.py` ＋ 
+`probes/artifacts/w17_pool_expansion_{arms,dose,ceiling}.png`。
+
+**治理口径提醒**：安慰剂臂的读数**不可跨枪比较**（第 13 枪 0.05539621902141869 vs 第 14 枪 0.1593289384795436），
+因为打乱向量的长度随池而变；两枪的安慰剂各自只与**本枪基线**比较。
+
+**数字钉（勿混用）**：第 14 枪主臂 **0.48600023850174934** / **0.4035089033119271**；第 15 枪主臂 **0.510231505819011**；
+当前最好 **0.5433111678100043**（不可提升）；冻结头条 **0.4766400383507876**。
+
+## 28.32 W17 交付前一致性收口：普查重钉（120 / 141）、Uni-Mol 规格 xTB 暂存复核、审计余项结案（2026-09-27）
+
+### 一、`git ls-files` 普查重钉（W17 新入库文件把口径推高 8 位）
+
+本轮入库 8 个落在**已声明策展根**内的新文件（`data/raw/open_data_eps2/{observations.csv,reference_only.csv,coverage.json,report.md}` ＋
+`data/processed/dielectric_{pool_expansion,anchor}_{observations,features}.csv`），`trace_scan_census` 随之移动：
+
+- `tracked_candidates` **112 → 120**（`data/processed/` 93 → **97**；`data/` 10 ／ `data/external/` 5 ／ `data/raw/` 4 ／ `data/reference/` 4 未变）；
+- `restricted_local_only_candidates` 21（未变）⇒ `total_candidates` **133 → 141**；`path_list_sha256` 换为 `330cf4df56129c80940d2538559b65e52c5afa71c95d953082748716db427873`；
+- `distinct_local_trace_files` **89 → 97**、`drift_since_repair.added_since_repair` **12 → 20**（20 条路径逐条列名，全部由 git 跟踪）。
+
+**处置**：按生成器重算 AL Round 4 的四件产物（`probes/al_round4_backfill_list_v0.csv`、`probes/artifacts/al_round4_local_coverage_gaps.csv`、
+`probes/al_round4_new_compound_backfill_summary.json`、`reports/al_round4_new_compound_backfill.md` ＋ `reports/al_round4_pending_oa_triage.md`）。
+**21 行的 `row_kind`、7 个真新化合物、四条 `by_row_kind` 计数一律未变**，只有 `local_trace_files` 一列随新文件扩张。
+W16 README 的 `tracked_candidates = 120` ／ 总数 **141**（差额 22 逐条列在 `drift_since_repair.added_since_repair_paths`）与 `README_SHA256` 同步移动；
+`tests/test_export_week16_results.py` 的 8 处字面量钉（`**141**` ／ `tracked_candidates = 120` ／ `97` ／ `120` ／ `141` ／ `141` ／ `97` ／ `20`）同步重钉。
+
+> 口径提醒（沿用 §28.21 / §28.27）：`tracked_candidates`（120）与 `distinct_local_trace_files`（97）是**两个不同口径**，永不相减；
+> 也不许拿它们去和上几轮登记的 114 ／ 128 ／ 146 相减。
+
+### 二、Uni-Mol 规格的 xTB 暂存复核（246 → 493，纯追加）
+
+`probes/unimol_probe_spec_prereg.json` 的 `frozen_single_conformer_scratch` 原声明 **246 个化合物目录 / 250 个 `input.xyz`**（245×1 ＋ 1×5）。
+当日轨道（HOMO/LUMO）批次在同一根目录 `data/interim/xtb_features/` **追加 247 个单构象目录**（全部 **2026-09-27** 落盘，
+直方图桶 1 由 245 → **492**），实测 **493 目录 / 497 个 `input.xyz`**。
+**原 246 个一个未删**（210 个无后缀 ＋ 36 个 09-23/24 写入的带后缀目录仍在盘上），故本次漂移是**纯追加**，不是覆盖或删除。
+
+**处置**：spec 记 `remeasured_at_utc = 2026-09-27T07:41:07Z`（取 247 个新目录里**最新 mtime** 换算，非手写）＋ 新增 `original_measurement`
+把 246 ／ 250 ／ `{1:245, 5:1}` 原样留档 ＋ `remeasure_reason` 写明成因；`reports/unimol_probe_spec.md` 同一行并列两套数；
+报告头部 `规格 sha256` 由 `2562a851…` 移到 **`6d832871dc11682b4431c1ac7667bd06eb058f7574325ba0b02aba5db2750a69`**。
+复核：`probes/verify_unimol_probe_spec.py --check` 恢复 **34/34**、`tests/test_unimol_probe_spec.py` **22 passed**。
+
+### 三、W17-AUDIT 余项结案（八问逐条）
+
+| 项 | 判定 | 处置位置 |
+| --- | --- | --- |
+| B1（`locked_at_utc` 错标） | 已处置 | §28.30 第 1 条：不改被锁文件，改脚本缺陷（`started_at_utc` 在开头取样 ＋ 修 `arms[name]['r2']` 的 `KeyError`）后**重跑**，shipped `generated_at_utc = 07:24:39Z` ＞ 声明锁时间 `07:05:00Z`，不一致消除 |
+| M1（「only that number may be promoted」夸大） | 已按降级口径执行 | §28.30 第 2 条：0.530029 记作「post-hoc 选定臂 ＋ 预先写定判决规则下的重测」 |
+| M4（`started_at_utc` 被写成结束时间） | 已修并重跑 | §28.30 第 1 条 |
+| M5（lever4 > lever4+lever8 的归因） | 已被证伪并替换 | §28.31 结论 1：铺满配位块后 0.4915 → 0.4860，**「覆盖稀疏」诊断不成立** |
+| **M2（两份 prereg 的 `author_instruction` 中文乱码）** | **判为误报** | 两份 prereg 该字段实为**正确 UTF-8 中文**（`json.load` 与逐字节解码均**无 U+FFFD**）；审计方所见 `缁х画鍔犳暟鎹?` 是其读取端编码错配，非文件缺陷。**不改任何字节** |
+| **M3（shot 12 主臂名与 prereg 清单口径出入）** | **登记为口径出入，不修被锁文件** | `prereg.json` 的 `linearm_upgrade_targets.arms` 只列 4 臂、**不含** `plus_expansion_hybrid`，而 benchmark 以它为主臂；语义臂可由 `training_pool_rule` 推出，但**字面不一致属实**，照实登记于此 |
+| T1（聚合口径须显式声明） | 采纳 | 本轮所有扩池读数一律写明「**repeat 均值**」；`_folds.csv` 直接取均值是**另一套数**，不许与 summary 相减 |
+| T2（空频率被默认当静态） | 采纳 | 交付注明「`frequency_mhz` 空 = 视作静态」，未插值 |
+| T3（无回归测试） | 已关闭 | 新增 `tests/test_dielectric_pool_expansion_v3.py`（含「预注册锁定时间必须早于其管辖 summary」的审计护栏） |
+| T4（样本量口径） | 采纳 | 一律写 **276 个 (化合物, T) 对**，不写 457 行当样本量 |
+
+**B1 残留（照实登记，不美化）**：两份 prereg 的 `locked_at_utc` 仍是**手写值**（`02:20:00Z` ／ `07:05:00Z`），与各自文件 mtime（`06:06:49Z` ／ `06:39:37Z`）**不等**。
+由于在**声明口径**与 **mtime 口径**下「先锁后跑」**都成立**（02:20 < 该枪起跑 06:16:05；07:05 < 该枪起跑 07:11:32），二者**不构成相互矛盾**；
+但该字段**不可独立复核**（git 不存 mtime），故按本文件既有裁定（第 3694 行：「`locked_at_utc` 自述字段不得单独用作锁定证据」）登记为**不可复核项**，不回填、不改动被锁字节。
+
+### 四、审计原文入库
+
+审计报告原文（一字未改，仅头部加处置指引）入库为 **`reports/dielectric_pool_expansion_audit.md`**（本机原件留在被忽略的 `data/raw/audit_w17g/report.md`）。
+`tests/test_dielectric_pool_expansion_v3.py` 的模块 docstring 引用路径同步改为入库路径。
+
+## 28.33 Reaxys 静态 ε 采集（W17-22）与一处红线违规的如实登记（2026-09-27）
+
+### 一、W17-22 的采集发现：上一轮系统性漏掉 `Static Dielectric Constant`
+
+- 目标 **84** 个（25 个高 ε 锚点去重后 24 ＋ 60 个 existing_153）；**63** 个卡片确有 ε 分类；ε 分类表 **1,414 行 / 1,168 行有值**。
+- 近室温（293.15–303.15 K）有值行 **396 行 / 54 化合物**，其中 **`Static Dielectric Constant` 分类 482 行 / 53 化合物** —— 本轮最有价值的静态度量。
+- **方法修正**：上一轮 w17f 一见 `Dielectric Constant` 就停止 `Load More`，而 Reaxys 的分类按字母序，`Static Dielectric Constant` 排在后面被**系统性漏掉**（w17f 只有 2 行）。改成点到耗尽后，拿到 N-甲基乙酰胺 **178.9 @ 303.15 K**、N-甲基甲酰胺 **200.1 @ 288.15 K** 等真正的高 ε 静态值。
+- 本仓原本 **0 行**的 **16 个化合物**拿到了有值 ε 行：N-methylpropionamide ／ N-methylbutanamide ／ hydrogen peroxide ／ ethylene carbonate ／ propylene carbonate ／ hydrazine ／ formic acid ／ 1-methylpyrrolidin-2-one ／ pyrrolidin-2-one ／ 1,3-dimethylimidazolidin-2-one ／ acetamide ／ 2-chloroethanol ／ 1,3-propanediol ／ tetramethylurea ／ hexamethylphosphoric triamide ／ nitromethane。
+- **口径与合规**：产物**全部**落在被忽略的 `data/raw/reaxys_w17g/`（`observations.csv` **1,415** 行、`plan_targets.csv` 85 行、84 个 `harvest_*.json`、`report.md` 262 行；UTF-8 无 BOM、LF）；**未改动任何被跟踪文件、未执行任何 git 命令**。带频率的行按 kHz/MHz/GHz 分档且**均不声称静态**；频率列留空的 863 行标 `record_kind = experimental` 且**一律不声称静态**；Reaxys 卡片不含 DOI，**全部留空、未臆造**。
+- **对 R² 的影响：无。** 按裁决 B 与 `restricted_crosscheck_only`，这些数值**不得进入任何池、特征表或交付包**，故本轮**不因这些新数据改动任何读数**。
+
+### 二、红线违规登记：第 14 枪 `widened_*` 臂把 Reaxys 受限值当训练标签
+
+- **事实**：`probes/dielectric_pool_expansion_v3.py` 的 `REAXYS_PATH` 指向 `data/raw/reaxys_w17f/observations.csv`，第 14 枪的 `widened_lever4_lever8full` 臂把其中 **155 行**当作**训练标签**使用（预注册 v3 的 `widened_block_rule` 自己就写明「used as training labels only」）。
+- **违反**：本仓既有红线「**禁止任何受限值进入池或特征**」（本文件第 2908 行；§28.15 第 4793 行「数值不进 `data/`、不进任何池、不进任何特征表」）。
+- **边界（不放大也不缩小）**：该 CSV 在**被忽略**的 `data/raw/` 下；**没有任何 Reaxys 数值进入 `data/`、特征表或交付包**（复核：`data/processed/` 无 widened 产物；`git ls-files | rg -i reaxys` 无本轮新增带值件）。**违规的是「读数由受限值导出」，不是「数值被分发」。**
+- **处置**：① 该臂读数 **作废**；`reports/dielectric_pool_expansion_v3.md` 头部加**红线登记块**；② `probes/dielectric_pool_expansion_v3.py` 的 `REAXYS_PATH` 上方加**禁止复用警示**；③ W17 交付包 `README` 与 `week17_summary.json.late_arms[].lever_directions.reaxys_widening` 由「有害」改为「**VOID／不得引用**」；④ 新增守护测试断言报告里的这段披露**不可静默删除**。
+- **不追溯改动已被锁的预注册与已落盘的 summary 字节**（沿用 §28.30 的「不改被锁文件」先例）；违规以本条与本轮报告为准。

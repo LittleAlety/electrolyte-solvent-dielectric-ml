@@ -67,7 +67,7 @@ VISCOSITY_MAE_GATE = 0.15
 DN_AUDIT_SHA256 = "3a80daa9f74c423bfcd6d2cbd3f6c54a6ffe2516daab0c3147e33d92adf7dab6"
 
 # A mutant that rewrites one narrative number must move this line as well.
-README_SHA256 = "14d5b57d6c547e8eadcdd0fe604ce366d0727db0dc3650a47fe2dfab0ff3e32f"
+README_SHA256 = "aa65d62052d6d14d95dbcbf9cba0bd651f5489d8a8f552e90a04029cd9afc12c"
 README_NARRATIVE_NUMBERS = (
     "0.4091179943351143",
     "0.7481271437772365",
@@ -155,6 +155,27 @@ README_NARRATIVE_NUMBERS = (
     "0.3036",
     "0.6141",
     "0.4343",
+    # W17-21 .. W17-25 -- the dielectric pool-expansion shots 12-15, the audit
+    # and the delivery-consistency close-out.
+    "0.3809089252433510",
+    "0.530028742596643",
+    "0.49147018524319047",
+    "0.5433111678100043",
+    "0.48600023850174934",
+    "0.4035089033119271",
+    "0.510231505819011",
+    "0.323041",
+    "0.515154",
+    "96 行 / 31 化合物",
+    "246 → 493",
+    "112 → 120",
+    "133 → 141",
+    "276 个 (化合物, T) 对",
+    "457 行 / 97 化合物",
+    "w17_pool_expansion_{arms,dose,ceiling}.png",
+    # W17-22/W17-23 -- the Reaxys static-epsilon harvest and the red-line register.
+    "读数作废",
+    "§28.33",
 )
 
 
@@ -412,6 +433,69 @@ def test_the_liquid_window_lane_matches_its_own_summary(exported: tuple[Path, di
     assert gate["trigger_rate_blocked_plus_unknown"] == pytest.approx(0.5987261146496815)
     assert gate["trigger_rate_blocked_plus_unknown"] == pytest.approx(188 / 314)
 
+
+def test_the_pool_expansion_lane_is_frozen_and_not_promoted(
+    exported: tuple[Path, dict],
+) -> None:
+    """The five-shot 0.60 chase, read off the lane rather than the prose.
+
+    The scoring pool never moves across the shots, no shot reaches the target, and
+    the best reading is not a co-primary, so it may not be promoted.
+    """
+
+    root, _ = exported
+    summary = _summary(root)
+    lane = summary["late_arms"]["W17-21_dielectric_pool_expansion"]
+
+    frozen_pool = lane["scoring_pool_frozen"]
+    assert frozen_pool["rows_scored"] == 457
+    assert frozen_pool["compounds_scored"] == 97
+    assert frozen_pool["compound_temperature_pairs"] == 276
+    assert frozen_pool["folds"] == 50
+    assert frozen_pool["frozen_baseline_r2"] == FROZEN_BASELINE_R2
+    assert frozen_pool["baseline_reproduced_in_every_shot"] is True
+
+    assert lane["target_r2"] == 0.6
+    assert lane["target_met"] is False
+    assert lane["promoted_headline_unchanged_r2"] == FROZEN_PROMOTED_HEADLINE_R2
+
+    best = lane["best_reading"]
+    assert best["r2"] == 0.5433111678100043
+    assert best["promotable"] is False
+    assert "not a co-primary" in best["why_not"]
+
+    shots = lane["shots"]
+    shot12 = shots["shot_12_foreign_space"]
+    assert shot12["primary_r2"] == 0.38090892524335096
+    assert shot12["decision"] == "primary_missed"
+    assert shot12["arm_a_pass"] is True
+    assert shot12["arm_b_pass"] is False
+
+    shot13 = shots["shot_13_same_source_full_table"]
+    assert shot13["decision"] == "co_primaries_missed"
+    assert shot13["co_primary_values"] == {
+        "full_table_hybrid": 0.530028742596643,
+        "full_table_lever4_lever8": 0.49147018524319047,
+    }
+    assert "not a blind confirmation" in shot13["not_blind"]
+
+    shot14 = shots["shot_14_block_full_plus_reaxys_widening"]
+    assert shot14["decision"] == "co_primaries_missed"
+    assert shot14["co_primary_values"] == {
+        "full_table_lever4_lever8full": 0.48600023850174934,
+        "static_lever4_lever8full": 0.4035089033119271,
+    }
+    assert shot14["anchors_reproduced"] is True
+
+    shot15 = shots["shot_15_high_epsilon_anchors"]
+    assert shot15["decision"] == "primary_missed"
+    assert shot15["co_primary_values"] == {"anchors_lever4": 0.510231505819011}
+
+    counts = lane["open_access_sources"]["counts"]
+    assert counts["usable_sources"] == 22
+    assert counts["usable_rows"] == 96
+    assert counts["usable_compounds"] == 31
+    assert counts["reference_only_rows"] == 10
 
 def test_the_coordination_block_lane_matches_its_own_summary(
     exported: tuple[Path, dict],

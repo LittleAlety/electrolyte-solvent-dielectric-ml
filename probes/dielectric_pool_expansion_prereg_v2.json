@@ -1,0 +1,67 @@
+{
+ "schema_version": 1,
+ "task": "dielectric_pool_expansion_full_table",
+ "week": "week17",
+ "status": "locked_before_run",
+ "locked_at_utc": "2026-09-27T07:05:00Z",
+ "author_instruction": "继续加数据，尝试做到 R2 > 0.6；估计数据得千位级。",
+ "supersedes": {
+  "path": "probes/dielectric_pool_expansion_prereg.json",
+  "outcome": "primary_missed: the NBS-514 block lowered the hybrid scoreboard by 0.028209 and the merged gun by 0.041321; Arm A passed, Arm B failed",
+  "note": "this is a separate, separately counted shot; the NBS experiment is reported as it stands and is not overwritten"
+ },
+ "disclosure": "an exploratory, explicitly non-promotable diagnostic (probes/dielectric_pool_expansion_diagnostic.py) measured the full-table arm at 0.530029 before this file was written, so this shot is NOT blind to the headline. What is locked here is the decision rule, the arm list, the governance arms and the reporting duty, not the discovery. The same arm is re-measured inside this pre-registered script and only that number may be promoted.",
+ "objective": {
+  "primary": "raise the epsilon main scoreboard above 0.60 on the FROZEN scoring pool by widening only the TRAINING pool to every row of the released merged observation table",
+  "target_r2": 0.6,
+  "expected_scale": "about 2,000 training rows and about 150 training compounds"
+ },
+ "frozen_quantities_never_moved": {
+  "scoring_pool": "457 rows / 97 compounds, thermoml_zero_frequency AND room_temperature",
+  "splitter": "GroupKFold by InChIKey, 10 repeats x 5 folds, seed 42",
+  "hybrid": "0.5 * (Morgan + Physical), the frozen blend",
+  "model": "XGBRegressor with the frozen v1.0 hyper-parameters, n_jobs=1",
+  "baseline_r2": 0.4091179943351143,
+  "promoted_headline_reference_r2": 0.4766400383507876
+ },
+ "training_pool_rule": {
+  "source": "every row of data/processed/dielectric_observations_v11plus.csv that the frozen loader already admits -- i.e. rows the repository has already validated. No new download, no new source, no invented value.",
+  "mechanism": "train_mask = all admitted rows; score_mask stays the frozen 457",
+  "leakage_argument": "folds are dealt over the compounds of score_mask alone, and masked_splits sends a row to the training side only when its compound's fold differs from the scored fold, so a scored compound's other-temperature rows are excluded from the fold that tests it",
+  "optional_external_block": "the NBS-514 block of shot 12 may be appended as an explicitly labelled extra arm; it is never the primary arm",
+  "never": "no expansion row may enter score_mask; no scoring-pool row may be dropped"
+ },
+ "arms": [
+  "baseline_hybrid",
+  "full_table_hybrid",
+  "full_table_lever4",
+  "full_table_lever4_lever8",
+  "full_table_plus_nbs_hybrid",
+  "full_table_plus_nbs_lever4"
+ ],
+ "primary_criterion": {
+  "rule": "BOTH co-primary arms are reported against the same bar and neither is selected after the fact: full_table_hybrid and full_table_lever4_lever8 must each exceed 0.60 on the grouped Morgan+Physical representation",
+  "comparison": "against the same folds and the same scored rows, with the baseline arm re-run in the same script and required to reproduce 0.4091179943351143 within 1e-9"
+ },
+ "governance_criteria_three_arms": {
+  "arm_a_label_placebo": "the labels of every training-only row (everything outside the 457 scored rows) are permuted across compounds with the multiset and the per-compound row counts kept; delta_r2 must stay <= +0.02",
+  "arm_b_dose_response": "25 / 50 / 75 / 100 percent of the training-only rows; the delta curve must be monotone non-decreasing within float tolerance",
+  "decision_text": [
+   "co-primaries met AND arm A passes AND arm B is monotone -> observation-level information",
+   "co-primaries met but arm A or arm B fails -> reported, but only as a data-volume effect",
+   "co-primaries missed -> reported as missed, with the achieved numbers and the shortfall"
+  ]
+ },
+ "shots": {
+  "this_shot": 1,
+  "cumulative_before": 12,
+  "cumulative_after": 13,
+  "policy": "every scored attempt at the main scoreboard is counted, including failed ones"
+ },
+ "honest_boundaries": [
+  "the scoring pool is 457 rows but only 276 distinct (compound, temperature) pairs; the honest sample size is 276",
+  "the training-only rows come from the same released table, so this is a coverage/volume experiment, not new chemistry",
+  "no training-only row is ever scored, and no outward bundle may quote this R2 without the pool definition",
+  "the frozen promoted headline stays 0.4766400383507876 until a promotion is written down deliberately"
+ ]
+}

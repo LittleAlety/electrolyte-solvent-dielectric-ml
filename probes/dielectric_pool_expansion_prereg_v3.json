@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task": "dielectric_pool_expansion_v3",
+  "shot": 14,
+  "week": "week17",
+  "status": "locked_before_run",
+  "author_instruction": "继续加数据，尝试做到 R2 > 0.6；利用 agent 集群提高效率。",
+  "locked_at_utc": "2026-09-27T07:15:21Z",
+  "disclosure": "This shot is NOT blind. Before it was written the following readings existed: shot 13's full_table_hybrid 0.530028742596643, full_table_lever4 0.5433111678100043 and full_table_lever4_lever8 0.49147018524319047, and an exploratory 10-fold probe (probes/dielectric_target_scale_explore.py, status exploratory_not_promotable) which showed a log-epsilon target is far worse in epsilon space and was abandoned. The arm that this shot promotes had never been measured: the coordination block had only 88 of 148 pool compounds when shot 13 ran, and it now has 125.",
+  "diagnosis_being_tested": "shot 13 read full_table_lever4 (0.5433) ABOVE full_table_lever4_lever8 (0.4915) and attributed it to coverage: the released coordination table covered 987 of 2029 training rows (88 of 148 compounds), so half the training matrix carried NaN in that block. probes/dielectric_coordination_block_full.py recomputed the same five columns for every pool compound under the same four-seed protocol and got 125 of 148 compounds ok.",
+  "second_lever_being_tested": "the scored pool is 100 percent zero-frequency (static) permittivity, but the training pool also carries 435 rows whose property_name is 'Relative permittivity at various frequencies' (136 at <= 1 MHz and 299 above 1 MHz). Those are not static permittivities and they are used as training labels. A static-only training pool is a hygiene arm, not a new measurement.",
+  "frozen_quantities_never_moved": {
+    "scored_rows": 457,
+    "compounds_scored": 97,
+    "folds": 50,
+    "n_splits": 5,
+    "n_repeats": 10,
+    "seed": 42,
+    "baseline_r2": 0.4091179943351143,
+    "reproduction_tolerance": 1e-9,
+    "primary_target_r2": 0.6,
+    "placebo_tolerance": 0.02,
+    "room_band_for_training_rows_k": [
+      273.15,
+      353.15
+    ],
+    "epsilon_lower_exclusive": 1,
+    "epsilon_upper_inclusive": 200
+  },
+  "reproduction_anchors": {
+    "baseline_hybrid": 0.4091179943351143,
+    "full_table_hybrid": 0.530028742596643,
+    "full_table_lever4": 0.5433111678100043,
+    "full_table_lever4_lever8": 0.49147018524319047
+  },
+  "co_primary_arms": [
+    "full_table_lever4_lever8full",
+    "static_lever4_lever8full"
+  ],
+  "fitted_arms": [
+    "baseline_hybrid",
+    "full_table_hybrid",
+    "full_table_lever4",
+    "full_table_lever4_lever8",
+    "full_table_lever4_lever8full",
+    "static_hybrid",
+    "static_lever4_lever8full",
+    "widened_lever4_lever8full",
+    "full_table_label_placebo"
+  ],
+  "decision_rule": "co_primaries_met_with_governance  -- both co-primary arms above 0.60 AND Arm A passes (label placebo at or below the frozen baseline plus the placebo tolerance) AND Arm B passes (the training-row dose curve is monotone non-decreasing). co_primaries_met_governance_failed -- both above 0.60 but a governance arm fails. co_primaries_missed              -- at least one co-primary arm is at or below 0.60. No other arm may be promoted, whatever it reads, and no two readings from different pool definitions may be subtracted from one another.",
+  "reporting_duty": "every arm, its delta against the frozen baseline and the pool definition it was measured on must be reported, including the arms that lose.",
+  "widened_block_rule": "the widened arm adds only rows whose compound is already in the released pool (so the frozen feature block applies unchanged): record_kind == experimental, value a plain decimal (ranges dropped rather than guessed), 1.0 < epsilon <= 200, temperature in 273.15..353.15 K, and (inchikey, T_K) not already present in the released table. The Reaxys cards carry no frequency column, so these rows are low-frequency and uncalibrated and are used as training labels only, never as a scoring row."
+}

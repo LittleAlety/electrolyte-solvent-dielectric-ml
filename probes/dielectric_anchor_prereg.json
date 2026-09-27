@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task": "dielectric_anchor",
+  "shot": 15,
+  "week": "week17",
+  "status": "locked_before_run",
+  "author_instruction": "继续加数据来，重复之前的步骤，尝试做到 R方大于0.6；利用 agent 集群来提高效率。",
+  "locked_at_utc": "2026-09-27T07:41:38Z",
+  "disclosure": "This shot is NOT blind to the state of the pool. Before it was written these readings existed: baseline 0.4091179943351143, full_table_hybrid 0.530028742596643, full_table_lever4 0.5433111678100043, full_table_lever4_lever8 0.49147018524319047, and shot 14's full_table_lever4_lever8full 0.486000, static_hybrid 0.323041, static_lever4_lever8full 0.403509, widened_lever4_lever8full 0.515154. The arm this shot promotes (anchors_lever4) and its pool had never been measured: the released pool has no ethylene carbonate, no propylene carbonate, no formic acid, no nitromethane and no hexamethylphosphoric triamide.",
+  "hypothesis": "The scored pool is 457 static rows whose squared error is dominated by a handful of very polar liquids. In the fold that tests one of them, every row of that compound leaves the training set at once, so a gradient-boosted tree has no training label above its own range. A permanent anchor compound in the 90-100 permittivity band should give the trees something to interpolate towards.",
+  "frozen_quantities_never_moved": {
+    "scored_rows": 457,
+    "compounds_scored": 97,
+    "folds": 50,
+    "n_splits": 5,
+    "n_repeats": 10,
+    "seed": 42,
+    "baseline_r2": 0.4091179943351143,
+    "reproduction_tolerance": 1e-9,
+    "primary_target_r2": 0.6,
+    "placebo_tolerance": 0.02
+  },
+  "reproduction_anchors": {
+    "baseline_hybrid": 0.4091179943351143,
+    "full_table_lever4": 0.5433111678100043
+  },
+  "arm_under_test": "anchors_lever4",
+  "decision_rule": "primary_met_with_governance -- anchors_lever4 above 0.60, the label placebo at or below the frozen baseline plus the placebo tolerance, and the training-row dose curve monotone non-decreasing. primary_met_governance_failed -- above 0.60 but a governance arm fails. primary_missed -- above 0.60 not reached. In that case nothing is promoted, and the frozen headline stays 0.4766400383507876. No arm measured on the anchor pool may be subtracted from an arm measured on the released pool alone, and full_table_lever4 is a reference reading, not a baseline to beat by delta.",
+  "reporting_duty": "every arm, its delta against the frozen baseline and the pool definition it was measured on must be reported, including the arms that lose.",
+  "anchor_block_rule": "rows come from data/raw/open_data_eps2/observations.csv, are restricted to compounds the released pool does not contain, are liquid and pure, carry epsilon in (1, 200], carry a temperature in 273.15..353.15 K, carry a source_url, a licence and a source sha256, and are deduplicated on (inchikey, T_K). The xTB physical block for the new compounds is computed by probes/build_dielectric_anchor_blocks.py through the same pinned-thread runner the released block used."
+}

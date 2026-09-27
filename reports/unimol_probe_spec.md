@@ -3,7 +3,7 @@
 **日期**：2026-09-26
 **范围**：执行手册附录 AA-5 的「缓冲」项、附录 Y 的 D7、附录 X 杠杆 6 修订、附录 O-4。
 **机读规格**：probes/unimol_probe_spec_prereg.json
-**规格 sha256**：2562a85149ccff6257a25aea0b72a27998cc77f79f3cbdae6620df84161aef60
+**规格 sha256**：6d832871dc11682b4431c1ac7667bd06eb058f7574325ba0b02aba5db2750a69
 **独立校验器**：probes/verify_unimol_probe_spec.py --check
 **单测**：tests/test_unimol_probe_spec.py
 
@@ -25,7 +25,7 @@
 
 | 产物 | 路径 | 实测 | 出处/说明 |
 |---|---|---|---|
-| 冻结单构象暂存（v1.0 口径，1 构象/化合物） | data/interim/xtb_features | 246 个化合物目录、250 个 input.xyz（245 目录各 1 个 + 1 目录 5 个） | 生成器 src/electrolyte_ml/xtb_features.py:176 generate_3d_xyz；脚本默认工作目录 scripts/run_xtb_physical_features.py:549 |
+| 冻结单构象暂存（v1.0 口径，1 构象/化合物） | data/interim/xtb_features | **W16 定稿实测 246 个化合物目录、250 个 input.xyz（245 目录各 1 个 + 1 目录 5 个）；W17 复核实测 493 个目录、497 个 input.xyz（492 × 1 + 1 × 5）** | 生成器 src/electrolyte_ml/xtb_features.py:176 generate_3d_xyz；脚本默认工作目录 scripts/run_xtb_physical_features.py:549。W17 漂移为**纯追加**：轨道（HOMO/LUMO）批次在同一根目录新写入 247 个单构象目录（全部 2026-09-27 落盘），原 246 个一个未删；两套数分别留档在 spec 的 `original_measurement` 与 `remeasured_at_utc` 字段 |
 | v1.x 新增 42 化合物的同配方暂存 | data/interim/xtb_features_v11plus | 42 个化合物目录、42 个 input.xyz | 同配方 |
 | **唯一的多构象集合**（v0.4 迁移轮） | data/interim/xtb_conformer_migration | 276 个化合物目录、2198 个 input.xyz；每化合物构象数直方图 {8: 274, 5: 1, 1: 1} | probes/dielectric_xtb_full_table_migration.py:108 MAX_CONFORMERS = 8；:92 WORK_DIR；:962 构象种子 = 42 + 名册序 |
 | 逐化合物构象记账（随仓库分发） | probes/artifacts/dielectric_xtb_full_table_migration_conformers.csv | 276 行 | 列含 n_conformers / force_field / dipole_D_frozen / dipole_D_conformer_mean |

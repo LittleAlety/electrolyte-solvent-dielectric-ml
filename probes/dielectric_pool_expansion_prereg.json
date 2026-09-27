@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "task": "dielectric_pool_expansion_to_0p6",
+  "week": "week17",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-27T02:20:00Z",
+  "author_instruction": "继续加数据，重复之前的步骤，尝试做到 R2 > 0.6；估计数据得千位级；利用 agent 集群来提高效率。",
+  "objective": {
+    "primary": "raise the epsilon main scoreboard grouped hybrid R2 above 0.60 on the FROZEN scoring pool, by widening only the TRAINING pool",
+    "target_r2": 0.6,
+    "expected_scale": "thousand-level rows and (if the sources allow) hundreds to thousands of training compounds"
+  },
+  "frozen_quantities_never_moved": {
+    "scoring_pool": "457 rows / 97 compounds, thermoml_zero_frequency AND room_temperature",
+    "splitter": "GroupKFold by InChIKey, 10 repeats x 5 folds, seed 42",
+    "hybrid": "0.5 * (Morgan + Physical), the frozen blend",
+    "model": "XGBRegressor with the frozen v1.0 hyper-parameters, n_jobs=1",
+    "baseline_r2": 0.4091179943351143,
+    "frozen_red_lines": "the six digests in export_week17_results.FROZEN_RED_LINES must stay INTACT"
+  },
+  "training_pool_rule": {
+    "base": "the 457 scored rows (paired_base: train_mask == score_mask)",
+    "expansion": "new near-room observations from the expansion tracks, added to train_mask only",
+    "never": "no expansion row may enter score_mask; no scoring-pool row may be dropped",
+    "band": "293.15 <= T_K <= 303.15 (ROOM_TEMPERATURE_RANGE_K)",
+    "frequency": "static / <= 1.0 MHz (PRIMARY_FREQUENCY_CAP_MHZ)",
+    "phase": "liquid, pure component (no mixtures, no solutions, no electrolytes)"
+  },
+  "admission_gates_for_a_new_observation": [
+    "t_k within [293.15, 303.15]",
+    "frequency_mhz <= 1.0, or explicitly labelled static / zero-frequency",
+    "phase == liquid",
+    "pure component: component_count == 1",
+    "epsilon finite and 1.0 < epsilon <= 200.0",
+    "structure resolved to a canonical InChIKey (no name-only rows may be fitted)",
+    "provenance recorded: source url/file + sha256 + retrieval timestamp",
+    "license recorded, and the source must be redistributable-or-local (a non-redistributable source may only be used after an explicit governance entry)"
+  ],
+  "primary_criterion": {
+    "rule": "the rebuilt scoreboard's grouped Morgan+Physical R2 exceeds 0.60",
+    "comparison": "against the same folds and the same scored rows, with the baseline arm re-run in the same script and required to reproduce 0.4091179943351143 within 1e-9"
+  },
+  "governance_criteria_three_arms": {
+    "arm_a_label_placebo": "the new block's epsilon labels permuted across its compounds, rows/composition/regularisation untouched; delta_r2 must stay <= +0.02",
+    "arm_b_dose_response": "25 / 50 / 75 / 100 percent sub-sampling of the expansion block; the delta curve must be monotone non-decreasing within float tolerance",
+    "decision_text": [
+      "primary met AND arm A passes AND arm B is monotone -> the gain may be written up as observation-level information",
+      "primary met but arm A or arm B fails -> the number is still reported, but only as a data-volume effect and never as an information claim",
+      "primary missed -> reported as missed, with the achieved number and the shortfall"
+    ]
+  },
+  "linearm_upgrade_targets": {
+    "note": "the promoted headline (0.4766400383507876) already carries lever 4 + lever 8; the expansion experiment reuses that feature configuration so the two effects are read separately",
+    "arms": [
+      "baseline_hybrid",
+      "plus_lever4_lever8",
+      "plus_lever4_lever8_plus_expansion",
+      "expansion_only"
+    ]
+  },
+  "shots": {
+    "this_shot": 1,
+    "cumulative_before": 11,
+    "cumulative_after": 12,
+    "policy": "every scored attempt at the main scoreboard is counted, including failed ones"
+  },
+  "honest_boundaries": [
+    "the scoring pool is 457 rows but only 276 distinct (compound, temperature) pairs; the honest sample size is 276",
+    "the expansion set is NOT a random sample of chemical space: it is whatever the sources actually tabulate, so coverage bias must be measured and reported",
+    "a large expansion block whose target distribution differs from the scoring pool can move R2 through distribution shift alone; arm A and arm B exist to separate that from information",
+    "no expansion row is ever delivered as a scored observation, and no outward bundle may quote the expansion's R2 without the pool definition"
+  ],
+  "expansion_tracks": [
+    "nbs514 -- the local NBS Circular 514 PDF and its already-parsed organic parts",
+    "pubchem_pugview -- PubChem experimental dielectric constant over a broad CID set",
+    "open_data -- Zenodo / figshare / GitHub / open-access supplement tables of solvent dielectric constants",
+    "local_sweep -- everything already on disk (g1plus webbook/tier3, reference PDFs, coverage_gap targets)"
+  ]
+}

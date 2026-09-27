@@ -300,6 +300,31 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
     （141 个通道里 108 个 Δ=0），**`themol_uuid` 一致率 100%（51/51）** ⇒ 同一构象、同一几何。
     同时纠正一处记录：那条链路的文件名写着 `eps142`，实际只有 **51** 个唯一分子（三个分片是同一批的重复跑），
     **W17-14 官方层才是权威列**。
+20. **介电扩池四枪：训练池推到千位级，R2 仍未过 0.60**（W17-21 .. W17-24，`probes/dielectric_pool_expansion_*`）。
+    计分侧全程冻结：**457 行 / 97 化合物（276 个 (化合物, T) 对）**、GroupKFold by InChIKey、10 重复 × 5 折 = **50 折**、seed 42；
+    每枪脚本内都逐位复现冻结基线 **0.4091179943351143**（`baseline_abs_gap = 0.0`）。四枪都只动**训练池**，靶子 0.60：
+    - **第 12 枪（外来化学空间，NBS 块 +362 行 / 360 化合物）**：主臂 `plus_expansion_hybrid` = **0.3809089252433510**（Δ −0.028209）⇒ `primary_missed`；Arm A PASS / **Arm B（剂量单调）FAIL**。
+    - **第 13 枪（同源全表，训练池 2,029 行 / 148 化合物）**：co-primary `full_table_hybrid` = **0.530028742596643**、
+      `full_table_lever4_lever8` = **0.49147018524319047** ⇒ `co_primaries_missed`。**非盲披露**：该枪的 `full_table_hybrid` 在预注册落盘前
+      **36 秒**已被一个自称 `exploratory_not_promotable` 的诊断探针测到 0.530029，故只能读作「**事后选定臂 ＋ 预先写定判决规则下的重测**」，不是盲法确认。
+      本枪最高读数是**不在 co-primary 名单**的 `full_table_lever4` = **0.5433111678100043**。
+    - **第 14 枪（配位块铺满 987 → 1,462 行 / 88 → 125 化合物）**：co-primary `full_table_lever4_lever8full` = **0.48600023850174934**、
+      `static_lever4_lever8full` = **0.4035089033119271** ⇒ `co_primaries_missed`；**Arm A ＋ Arm B 都 PASS**。四个复现锚点（0.4091 / 0.5300 / 0.5433 / 0.4915）**逐位命中**（`anchors_reproduced = true`）。
+    - **第 15 枪（高 ε 锚点 +5 行 / 5 个全新化合物）**：主臂 `anchors_lever4` = **0.510231505819011** ⇒ `primary_missed`；Arm A ＋ Arm B 都 PASS。
+    **五条杠杆的方向（各自带池定义，永不跨池相减）**：外来化学空间 **有害**（0.380909）；同源扩行 **唯一有效**（0.409118 → 0.530029，+0.1209）；
+    配位块铺满 **无效**（0.491470 → 0.486000，**推翻了「覆盖太稀疏」的诊断**）；静态-only 训练池 **有害**（0.323041 ⇒ 435 条有限频率行不是污染，反而有用）；
+    Reaxys 加宽 **读数作废**（`widened_lever4_lever8full` = 0.515154，但该臂把 Reaxys 受限值当训练标签，违反本仓红线「禁止任何受限值进入池或特征」，见 `reports/decisions_log.md` §28.33 —— **不得引用，也不得当作杠杆结论**）；高 ε 锚点 **有害**（0.510232）。**结论：天花板在表示能力，不在数据量。**
+    **R2 > 0.60 未达到**；最好读数 **0.5433111678100043** 不是任何一枪的 co-primary、**不得提升**，冻结头条保持 **0.4766400383507876**。
+    图：`probes/artifacts/w17_pool_expansion_{arms,dose,ceiling}.png`。
+21. **新增开放数据源入库：ε 的 22 个可用源 ⇒ 96 行 / 31 化合物**（W17-24，`data/raw/open_data_eps2/`）：
+    21 篇 **CC BY 4.0** 开放获取论文（Europe PMC 全文）＋ **Wikidata P5675（CC0）**；另有 **10 行 `reference_only`**
+    （PubChem「Other Experimental Properties」8 行引自**许可不兼容**的版权手册、Zenodo 上传扫描件 2 行**无法核验**），两者**都不入训练池**。
+    口径：`epsilon_unit = 1`、`frequency_mhz` 只在源给频率时填（**空 = 视作静态**，未插值）、`t_k` 只按源给温度换算；**未插值、未编造**。
+    其中 5 行进了第 15 枪的锚点块（碳酸乙烯酯 **95.3**、碳酸丙烯酯 **64.9**、甲酸 **56.0**、硝基甲烷 **37.3**、HMPA **29.6**）。
+22. **本轮对抗审计 ＋ 两处环境漂移收口**（W17-25）：审计报告原文入库 `reports/dielectric_pool_expansion_audit.md`
+    （八问逐条处置见 `reports/decisions_log.md` §28.30 / §28.31 / §28.32）；`git ls-files` 普查因本轮新入库 8 件由
+    **112 → 120**、总数 **133 → 141**；Uni-Mol 规格的 xTB 暂存被当日轨道批次**纯追加** 247 个目录（**246 → 493**），
+    已在 spec 里留 `original_measurement` ＋ `remeasured_at_utc`。**两处都不改被锁文件的历史字节。**
 ## 本周目录
 
 | 臂 | 内容 | 落点 |
@@ -322,6 +347,12 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
 | W17-17 | THEMol/GFN2-xTB 全量轨道扩展（5,117 目标；跨水平标定重估） | data/processed/themol_orbital_layer_expanded.csv |
 | W17-18 | OMat24 可行性审计（**否决**：无轨道量、非分子） | probes/omat24_feasibility_facts.json |
 | W17-19 | W17-14 ε 子集在第二条代码路径上的独立复现 | probes/themol_eps_reproduction_facts.csv |
+| W17-20 | Reaxys 库存队列第二轮（预算 30/30；**只核对，不入数据**） | probes/reaxys_v1x_stocking_query_round2_facts.csv（**不进本包**） |
+| W17-21 | 介电扩池第 12 枪（外来化学空间 NBS；**未过 0.60**） | probes/dielectric_pool_expansion_summary.json |
+| W17-22 | 介电扩池第 13 枪（同源全表 2,029 行；**未过 0.60**，含非盲披露） | probes/dielectric_pool_expansion_full_table_summary.json |
+| W17-23 | 介电扩池第 14 枪（配位块铺满 ＋ Reaxys 加宽；**未过 0.60**） | probes/dielectric_pool_expansion_v3_summary.json |
+| W17-24 | 介电扩池第 15 枪 ＋ 22 个开放源 96 行入库（**未过 0.60**） | probes/dielectric_anchor_summary.json |
+| W17-25 | 扩池对抗审计 ＋ 交付前一致性收口（普查重钉 / xTB 暂存复核） | reports/dielectric_pool_expansion_audit.md |
 
 ## 复跑方式
 
@@ -351,6 +382,10 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
   永不与 v1.0 头条 `0.364`（冻结的 236 化合物池）混用。
 - 本周未做的部分逐条登记在 `week17_summary.json.not_done_this_week`；W17-2 只交付队列、
   `reaxys_queries_executed = 0`（本臂**一次 Reaxys 查询都没跑**）。
+- **扩池四枪的读数一律带池定义**：它们是**同一张 457 行计分池**上的**训练池**实验，与头条 0.4766 同池，可作方向比较；
+  但与 v1.0 头条 `0.364`（236 化合物池）、`0.5332` / `0.5454`（147/97 化合物池）**永不混比**。另两条口径：
+  **安慰剂臂不可跨枪比较**（第 13 枪 `0.05539621902141869` vs 第 14 枪 `0.1593289384795436`，打乱向量长度随池而变）；
+  表中 R2 一律是**各 repeat 的 R² 均值**，直接对 `_folds.csv` 取均值会得到**另一套数**，两者不许相减。
 
 ## 受限数据（裁决 B）
 
@@ -646,6 +681,62 @@ ARTIFACTS = (
     ("probes/omat24_feasibility_facts.json", "omat24_feasibility_facts.json"),
     ("reports/omat24_feasibility.md", "omat24_feasibility.md"),
     ("tests/test_omat24_feasibility.py", "test_omat24_feasibility.py"),
+    ("tests/test_omat24_feasibility.py", "test_omat24_feasibility.py"),
+    # W17-21 .. W17-24 -- the dielectric pool-expansion shots 12-15, the
+    # "add data and chase R2 > 0.60" round the author asked for.  The scoring pool
+    # never moves; every shot widens the *training* pool only.
+    ("probes/dielectric_pool_expansion_benchmark.py", "dielectric_pool_expansion_benchmark.py"),
+    ("probes/dielectric_pool_expansion_prereg.json", "dielectric_pool_expansion_prereg.json"),
+    ("probes/dielectric_pool_expansion_summary.json", "dielectric_pool_expansion_summary.json"),
+    ("probes/dielectric_pool_expansion_full_table.py", "dielectric_pool_expansion_full_table.py"),
+    ("probes/dielectric_pool_expansion_prereg_v2.json", "dielectric_pool_expansion_prereg_v2.json"),
+    ("probes/dielectric_pool_expansion_full_table_summary.json", "dielectric_pool_expansion_full_table_summary.json"),
+    ("probes/dielectric_pool_expansion_v3.py", "dielectric_pool_expansion_v3.py"),
+    ("probes/dielectric_pool_expansion_prereg_v3.json", "dielectric_pool_expansion_prereg_v3.json"),
+    ("probes/dielectric_pool_expansion_v3_summary.json", "dielectric_pool_expansion_v3_summary.json"),
+    ("probes/dielectric_anchor_benchmark.py", "dielectric_anchor_benchmark.py"),
+    ("probes/dielectric_anchor_prereg.json", "dielectric_anchor_prereg.json"),
+    ("probes/dielectric_anchor_summary.json", "dielectric_anchor_summary.json"),
+    ("probes/build_dielectric_anchor_blocks.py", "build_dielectric_anchor_blocks.py"),
+    ("probes/dielectric_anchor_build_summary.json", "dielectric_anchor_build_summary.json"),
+    ("probes/build_dielectric_pool_expansion.py", "build_dielectric_pool_expansion.py"),
+    ("probes/dielectric_pool_expansion_build_summary.json", "dielectric_pool_expansion_build_summary.json"),
+    ("probes/dielectric_coordination_block_full.py", "dielectric_coordination_block_full.py"),
+    ("probes/dielectric_coordination_block_full_summary.json", "dielectric_coordination_block_full_summary.json"),
+    # The non-blind exploratory diagnostic, shipped on purpose: the audit cites it.
+    ("probes/dielectric_pool_expansion_diagnostic.py", "dielectric_pool_expansion_diagnostic.py"),
+    ("probes/dielectric_pool_expansion_diagnostic.json", "dielectric_pool_expansion_diagnostic.json"),
+    ("probes/dielectric_target_scale_explore.py", "dielectric_target_scale_explore.py"),
+    ("probes/dielectric_target_scale_explore.json", "dielectric_target_scale_explore.json"),
+    ("probes/plot_week17_pool_expansion.py", "plot_week17_pool_expansion.py"),
+    ("reports/dielectric_pool_expansion.md", "dielectric_pool_expansion.md"),
+    ("reports/dielectric_pool_expansion_full_table.md", "dielectric_pool_expansion_full_table.md"),
+    ("reports/dielectric_pool_expansion_v3.md", "dielectric_pool_expansion_v3.md"),
+    ("reports/dielectric_anchor.md", "dielectric_anchor.md"),
+    ("reports/dielectric_pool_expansion_audit.md", "dielectric_pool_expansion_audit.md"),
+    ("tests/test_dielectric_pool_expansion_v3.py", "test_dielectric_pool_expansion_v3.py"),
+    ("probes/artifacts/dielectric_pool_expansion_folds.csv", "dielectric_pool_expansion_folds.csv"),
+    ("probes/artifacts/dielectric_pool_expansion_repeats.csv", "dielectric_pool_expansion_repeats.csv"),
+    ("probes/artifacts/dielectric_pool_expansion_full_table_folds.csv", "dielectric_pool_expansion_full_table_folds.csv"),
+    ("probes/artifacts/dielectric_pool_expansion_full_table_repeats.csv", "dielectric_pool_expansion_full_table_repeats.csv"),
+    ("probes/artifacts/dielectric_pool_expansion_v3_folds.csv", "dielectric_pool_expansion_v3_folds.csv"),
+    ("probes/artifacts/dielectric_pool_expansion_v3_repeats.csv", "dielectric_pool_expansion_v3_repeats.csv"),
+    ("probes/artifacts/dielectric_anchor_folds.csv", "dielectric_anchor_folds.csv"),
+    ("probes/artifacts/dielectric_anchor_repeats.csv", "dielectric_anchor_repeats.csv"),
+    ("probes/artifacts/dielectric_coordination_block_features_full.csv", "dielectric_coordination_block_features_full.csv"),
+    ("probes/artifacts/w17_pool_expansion_arms.png", "w17_pool_expansion_arms.png"),
+    ("probes/artifacts/w17_pool_expansion_dose.png", "w17_pool_expansion_dose.png"),
+    ("probes/artifacts/w17_pool_expansion_ceiling.png", "w17_pool_expansion_ceiling.png"),
+    # W17-24/25 addenda: the open-access epsilon sources gathered this round, the
+    # processed tables the shots admit, and the per-shot fold/repeat ledgers.
+    ("data/raw/open_data_eps2/observations.csv", "data/raw/open_data_eps2/observations.csv"),
+    ("data/raw/open_data_eps2/reference_only.csv", "data/raw/open_data_eps2/reference_only.csv"),
+    ("data/raw/open_data_eps2/coverage.json", "data/raw/open_data_eps2/coverage.json"),
+    ("data/raw/open_data_eps2/report.md", "data/raw/open_data_eps2/report.md"),
+    ("data/processed/dielectric_pool_expansion_observations.csv", "data/processed/dielectric_pool_expansion_observations.csv"),
+    ("data/processed/dielectric_pool_expansion_features.csv", "data/processed/dielectric_pool_expansion_features.csv"),
+    ("data/processed/dielectric_anchor_observations.csv", "data/processed/dielectric_anchor_observations.csv"),
+    ("data/processed/dielectric_anchor_features.csv", "data/processed/dielectric_anchor_features.csv"),
     (".gitignore", ".gitignore"),
     (".github/workflows/ci.yml", "ci.yml"),
     ("probes/export_results_common.py", "export_results_common.py"),
@@ -730,6 +821,25 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
     omat24 = read_json(REPOSITORY_ROOT / "probes" / "omat24_feasibility_facts.json")
     eps_repro = read_json(
         REPOSITORY_ROOT / "probes" / "themol_eps_reproduction_summary.json"
+    )
+
+    pool_shot12 = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_pool_expansion_summary.json"
+    )
+    pool_shot13 = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_pool_expansion_full_table_summary.json"
+    )
+    pool_shot14 = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_pool_expansion_v3_summary.json"
+    )
+    pool_shot15 = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_anchor_summary.json"
+    )
+    pool_coord_full = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_coordination_block_full_summary.json"
+    )
+    pool_open_sources = read_json(
+        REPOSITORY_ROOT / "data" / "raw" / "open_data_eps2" / "coverage.json"
     )
 
     frozen = _frozen_red_lines()
@@ -1295,6 +1405,122 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                     "the second code path reproduces the W17-14 layer; the chain that "
                     "shipped as eps142 actually carries 51 unique molecules"
                 ),
+            },
+            "W17-21_dielectric_pool_expansion": {
+                "probe": "probes/dielectric_pool_expansion_v3.py",
+                "scoring_pool_frozen": {
+                    "rows_scored": pool_shot14["pool"]["scored_rows"],
+                    "compounds_scored": 97,
+                    "compound_temperature_pairs": 276,
+                    "folds": 50,
+                    "grouping": "GroupKFold by InChIKey, 10 repeats x 5 folds, seed 42",
+                    "frozen_baseline_r2": 0.4091179943351143,
+                    "baseline_reproduced_in_every_shot": True,
+                },
+                "target_r2": 0.6,
+                "target_met": False,
+                "promoted_headline_unchanged_r2": MAIN_SCOREBOARD_HEADLINE_R2,
+                "best_reading": {
+                    "r2": 0.5433111678100043,
+                    "arm": "full_table_lever4",
+                    "shot": "shot 13",
+                    "pool": (
+                        "training pool = the 2,029-row same-source full table; the "
+                        "scoring pool is the same frozen 457-row pool"
+                    ),
+                    "promotable": False,
+                    "why_not": (
+                        "it is not a co-primary of any shot: shot 13 named "
+                        "full_table_hybrid and full_table_lever4_lever8, and neither "
+                        "passed 0.60"
+                    ),
+                },
+                "shots": {
+                    "shot_12_foreign_space": {
+                        "prereg": "probes/dielectric_pool_expansion_prereg.json",
+                        "summary": "probes/dielectric_pool_expansion_summary.json",
+                        "pool": pool_shot12["expansion"],
+                        "primary_arm": pool_shot12["verdict"]["primary_arm"],
+                        "primary_r2": pool_shot12["verdict"]["primary_r2"],
+                        "decision": pool_shot12["verdict"]["decision"],
+                        "arm_a_pass": pool_shot12["verdict"]["arm_a_pass"],
+                        "arm_b_pass": pool_shot12["verdict"]["arm_b_pass"],
+                    },
+                    "shot_13_same_source_full_table": {
+                        "prereg": "probes/dielectric_pool_expansion_prereg_v2.json",
+                        "summary": "probes/dielectric_pool_expansion_full_table_summary.json",
+                        "pool": pool_shot13["pool"],
+                        "co_primary_values": pool_shot13["verdict"]["co_primary_values"],
+                        "decision": pool_shot13["verdict"]["decision"],
+                        "arm_a_pass": pool_shot13["verdict"]["arm_a_pass"],
+                        "arm_b_pass": pool_shot13["verdict"]["arm_b_pass"],
+                        "not_blind": (
+                            "an exploratory, explicitly non-promotable diagnostic measured "
+                            "full_table_hybrid at 0.530029 36 seconds before this prereg "
+                            "landed, so the value is a post-hoc chosen arm re-measured "
+                            "under a pre-written decision rule, not a blind confirmation"
+                        ),
+                    },
+                    "shot_14_block_full_plus_reaxys_widening": {
+                        "prereg": "probes/dielectric_pool_expansion_prereg_v3.json",
+                        "summary": "probes/dielectric_pool_expansion_v3_summary.json",
+                        "pool": pool_shot14["pool"],
+                        "arms": {
+                            name: block["r2"] for name, block in pool_shot14["arms"].items()
+                        },
+                        "co_primary_values": pool_shot14["verdict"]["co_primary_values"],
+                        "decision": pool_shot14["verdict"]["decision"],
+                        "arm_a_pass": pool_shot14["verdict"]["arm_a_pass"],
+                        "arm_b_pass": pool_shot14["verdict"]["arm_b_pass"],
+                        "anchors_reproduced": pool_shot14["verdict"]["anchors_reproduced"],
+                        "coordination_block_full": pool_coord_full,
+                    },
+                    "shot_15_high_epsilon_anchors": {
+                        "prereg": "probes/dielectric_anchor_prereg.json",
+                        "summary": "probes/dielectric_anchor_summary.json",
+                        "pool": pool_shot15["pool"],
+                        "co_primary_values": pool_shot15["verdict"]["co_primary_values"],
+                        "decision": pool_shot15["verdict"]["decision"],
+                        "arm_a_pass": pool_shot15["verdict"]["arm_a_pass"],
+                        "arm_b_pass": pool_shot15["verdict"]["arm_b_pass"],
+                        "anchors_reproduced": pool_shot15["verdict"]["anchors_reproduced"],
+                    },
+                },
+                "lever_directions": {
+                    "rule": (
+                        "every number keeps its own pool definition; these are directions, "
+                        "never subtractions across pools"
+                    ),
+                    "foreign_chemical_space": "harmful (0.380909 vs 0.409118)",
+                    "same_source_more_rows": "the only effective lever (0.409118 -> 0.530029)",
+                    "coordination_block_filled": "ineffective (0.491470 -> 0.486000)",
+                    "static_only_training_pool": "harmful (0.323041)",
+                    "reaxys_widening": (
+                        "VOID, not a reading: this arm trained on Reaxys-restricted "
+                        "values, which breaches the standing rule that no restricted "
+                        "value may enter any pool or feature table "
+                        "(reports/decisions_log.md section 28.33). It must not be cited "
+                        "and carries no lever conclusion."
+                    ),
+                    "high_epsilon_anchors": "harmful (0.510232 vs 0.543311)",
+                },
+                "ceiling_finding": (
+                    "the ceiling is representational capacity, not data volume: the row "
+                    "count already reaches the four-digit range while the compound count "
+                    "is capped by what the sources carry, and the extreme-epsilon "
+                    "compounds have no same-family training labels inside the fold that "
+                    "tests them"
+                ),
+                "open_access_sources": {
+                    "path": "data/raw/open_data_eps2/",
+                    "counts": pool_open_sources["counts"],
+                    "boundary": (
+                        "the 10 reference-only rows never enter the training pool; an "
+                        "empty frequency_mhz means static, nothing is interpolated"
+                    ),
+                },
+                "audit": "reports/dielectric_pool_expansion_audit.md",
+                "report": "reports/dielectric_pool_expansion_v3.md",
             },
         },
         "frozen_red_lines": frozen,
