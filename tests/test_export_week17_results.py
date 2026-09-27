@@ -67,7 +67,7 @@ VISCOSITY_MAE_GATE = 0.15
 DN_AUDIT_SHA256 = "3a80daa9f74c423bfcd6d2cbd3f6c54a6ffe2516daab0c3147e33d92adf7dab6"
 
 # A mutant that rewrites one narrative number must move this line as well.
-README_SHA256 = "aa65d62052d6d14d95dbcbf9cba0bd651f5489d8a8f552e90a04029cd9afc12c"
+README_SHA256 = "6ee0689e12aa41561ec2424ac388c485fe6d0c2fff164683ba212b4c9e23547a"
 README_NARRATIVE_NUMBERS = (
     "0.4091179943351143",
     "0.7481271437772365",
@@ -87,6 +87,15 @@ README_NARRATIVE_NUMBERS = (
     "0.5987261146496815",
     "36.4",
     "0.4766400383507876",
+    # W17-26 -- the seed-robustness lane of the single-representation 0.6081.
+    "0.6080587938801277",
+    "+0.044489",
+    "+0.015919",
+    "0.000550",
+    "0.586114",
+    "0.565349–0.608059",
+    "0.523136",
+    "0.486277",
     "+0.0675220440156733",
     "+0.0200",
     "9/10",
@@ -496,6 +505,51 @@ def test_the_pool_expansion_lane_is_frozen_and_not_promoted(
     assert counts["usable_rows"] == 96
     assert counts["usable_compounds"] == 31
     assert counts["reference_only_rows"] == 10
+
+def test_the_seed_robustness_lane_never_promotes_the_6081(
+    exported: tuple[Path, dict],
+) -> None:
+    """The one reading above 0.60 is explained, bounded, and never promoted.
+
+    The lane has to ship the counterexample next to the finding: the ordering it
+    confirms on the lever4 arm reverses on the hybrid arm, and the cross-seed mean
+    of the single-representation reading stays below the 0.60 target.
+    """
+
+    root, _ = exported
+    summary = _summary(root)
+    lane = summary["late_arms"]["W17-26_representation_seed_robustness"]
+
+    assert lane["frozen_side_unchanged"] is True
+    assert lane["frozen_baseline_r2"] == FROZEN_BASELINE_R2
+    assert lane["frozen_headline_unchanged_r2"] == FROZEN_PROMOTED_HEADLINE_R2
+    assert lane["seeds"] == [42, 1234, 2026, 31337, 7]
+    assert lane["seed_42_anchors_reproduced"] is True
+    assert lane["leakage_clean"] is True
+    assert lane["seed_42_single_representation_r2"] == 0.6080587938801277
+    assert lane["prereg"]["status"] == "locked_before_run"
+
+    hypothesis = lane["hypothesis"]
+    assert hypothesis["arm"] == "full_table_lever4"
+    assert hypothesis["verdict"] == "confirmed_out_of_seed"
+    assert hypothesis["positive_seeds"] == 5
+    assert hypothesis["total_seeds"] == 5
+    assert hypothesis["delta_min"] > 0.0
+
+    means = lane["cross_seed_means"]
+    assert means["full_table_lever4/Physical"] == pytest.approx(0.586114, abs=1e-6)
+    assert means["full_table_lever4/Morgan+Physical"] == pytest.approx(0.541625, abs=1e-6)
+    assert means["full_table_lever4/Physical"] < 0.60
+    # the counterexample ships with the finding, not instead of it
+    assert means["full_table_hybrid/Morgan+Physical"] > means["full_table_hybrid/Physical"]
+    assert "Morgan+Physical 0.523136" in lane["counterexample"]
+
+    assert lane["target_r2"] == 0.6
+    assert lane["target_met"] is False
+    assert lane["reading_never_promoted"] is True
+    assert lane["non_blind"] is True
+    assert lane["promotable"] is False
+
 
 def test_the_coordination_block_lane_matches_its_own_summary(
     exported: tuple[Path, dict],

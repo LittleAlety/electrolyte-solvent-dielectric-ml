@@ -1,0 +1,55 @@
+{
+ "schema": "dielectric_representation_seed_robustness/prereg@1",
+ "status": "locked_before_run",
+ "author_instruction": "继续加数据并复核：唯一的 >0.60 读数是单表示 Physical=0.6081，请判定它是不是种子 42 的选择性偏差。",
+ "objective": "判定 full_table_lever4 上 Physical 单表示对 Morgan+Physical 的优势，是换折种子后仍成立的表示能力效应，还是冻结种子 42 的折分配运气。",
+ "question": "在冻结池（2029 行基表训练 / 457 行 97 化合物计分）与冻结协议（5 折 x 10 重复，GroupKFold by InChIKey）不变的前提下，只更换折分配的随机种子，Physical 单表示是否仍在每个种子上超过 Morgan+Physical？",
+ "known_before_locking": [
+  "seed 42 的三个读数已在本仓登记：full_table_hybrid=0.530028742596643、full_table_lever4=0.5433111678100043、baseline_hybrid=0.4091179943351143",
+  "seed 42 上 full_table_lever4 的 Physical=0.6080587938801277（repeat 均值），Morgan+Physical=0.5433111678100043",
+  "seed 42 上该臂 10 个重复里 Physical 有 6 个 >0.60、hybrid 0 个 >0.60；配对差 9/10 为正，均值 +0.064748"
+ ],
+ "disclosure": "本探针不是盲法确认：上述 seed 42 读数在预注册前已观测到。它做的是「同一协议下换折随机化」的稳健性复验，用于判定该优势能否离开 seed 42。无论结果如何，本探针都是诊断性的，不得把任何读数提升为头条或主判据达标。",
+ "frozen_side": {
+  "pool": "data/processed/dielectric_observations_v11plus.csv 基表 2029 行",
+  "scoring": "457 行 / 97 化合物 / 276 个 (化合物, T) 对",
+  "splitting": "GroupKFold by InChIKey, 5 折 x 10 重复",
+  "representations": [
+   "Morgan",
+   "Physical",
+   "Morgan+Physical"
+  ],
+  "frozen_seed": 42
+ },
+ "arms": {
+  "baseline_hybrid": "只在计分行上训练（冻结基线语义）",
+  "full_table_hybrid": "在全部 2029 基表行上训练，physical = 基础 13 列",
+  "full_table_lever4": "在全部 2029 基表行上训练，physical = 基础 13 列 + 构象平均偶极 2 列"
+ },
+ "seeds": [
+  42,
+  1234,
+  2026,
+  31337,
+  7
+ ],
+ "decision_rule": {
+  "primary_arm": "full_table_lever4",
+  "statistic": "每个种子内 R2(Physical) - R2(Morgan+Physical)，R2 为 10 个重复的均值",
+  "confirmed": "在全部 5 个种子上差值均为正 → 表述为「表示能力效应离开 seed 42 仍成立」",
+  "partial": "在 3~4 个种子上为正 → 表述为「部分成立」，并给出逐种子表",
+  "refuted": "在 <=2 个种子上为正 → 表述为「seed 42 的选择性偏差」"
+ },
+ "anchors": {
+  "note": "seed 42 必须在 1e-9 内逐位复现三个已登记读数，否则本探针拒绝对外报告任何数",
+  "baseline_hybrid": 0.4091179943351143,
+  "full_table_hybrid": 0.530028742596643,
+  "full_table_lever4": 0.5433111678100043
+ },
+ "promotion_rule": "本探针任何读数一律不提升；冻结头条保持 0.4766400383507876，冻结基线保持 0.4091179943351143。",
+ "outputs": [
+  "probes/dielectric_representation_seed_robustness_summary.json",
+  "reports/dielectric_representation_seed_robustness.md",
+  "probes/artifacts/dielectric_representation_seed_robustness_repeats.csv"
+ ]
+}

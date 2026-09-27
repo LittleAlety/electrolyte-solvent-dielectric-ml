@@ -325,6 +325,16 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
     （八问逐条处置见 `reports/decisions_log.md` §28.30 / §28.31 / §28.32）；`git ls-files` 普查因本轮新入库 8 件由
     **112 → 120**、总数 **133 → 141**；Uni-Mol 规格的 xTB 暂存被当日轨道批次**纯追加** 247 个目录（**246 → 493**），
     已在 spec 里留 `original_measurement` ＋ `remeasured_at_utc`。**两处都不改被锁文件的历史字节。**
+23. **单一表示 0.6081 的换折种子复验：`>0.60` 是**种子 42 的运气**，但「Physical > 混合」跨 5 个种子成立**（W17-26，`probes/dielectric_representation_seed_robustness.py`）。
+    W17 记录里**唯一** `>0.60` 的读数是 shot 13 的 **`full_table_lever4` / `Physical`（单表示）= 0.6080587938801277**（10 个重复里 **6 个** >0.60）；
+    审计 `reports/dielectric_pool_expansion_audit.md` Q7 判定它是**单表示**读数、与预注册主判据（`Morgan+Physical` 混合）**不是同一口径**，**不得当作达标**。
+    本枪**不动池**（2,029 行基表训练 / 457 行计分 / 97 化合物 / 10 重复 × 5 折 / GroupKFold by InChIKey），**只换折种子**（42, 1234, 2026, 31337, 7）；
+    脚本先要求种子 42 在 **1e-9** 内逐位复现三个已登记读数（`abs_gap = 0.00e+00`）且折签名与冻结折一致，否则拒绝对外报告任何数。
+    - **逐种子差值（Physical − Morgan+Physical）5/5 为正**（均值 **+0.044489**，最小 **+0.015919**）⇒ `confirmed_out_of_seed`：
+      「Physical 更好」**不是**种子 42 的选择性偏差（机制读作「Morgan(ECFP) 块在该臂上净有害」，同臂 `Morgan` 单独跨种子均值仅 0.000550）；**但**
+    - **跨种子平均 Physical = 0.586114**（sd 0.0175，range 0.565349–0.608059）⇒ **0.6081 含种子 42 的运气**，5 个种子里**只有 1 个** >0.60，**R² > 0.60 仍未达到**；
+    - **反例（不许省略）**：在 `full_table_hybrid` 臂上方向**相反**（跨种子均值混合 **0.523136** > Physical **0.486277**）⇒ 结论**只在 lever4 配置下成立**，不是普适结论。
+    本枪**非盲、诊断性**：任何读数**一律不提升**，冻结头条保持 **0.4766400383507876**、基线 **0.4091179943351143**。图：`probes/artifacts/w17_representation_seed_robustness.png`。
 ## 本周目录
 
 | 臂 | 内容 | 落点 |
@@ -353,6 +363,7 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
 | W17-23 | 介电扩池第 14 枪（配位块铺满 ＋ Reaxys 加宽；**未过 0.60**） | probes/dielectric_pool_expansion_v3_summary.json |
 | W17-24 | 介电扩池第 15 枪 ＋ 22 个开放源 96 行入库（**未过 0.60**） | probes/dielectric_anchor_summary.json |
 | W17-25 | 扩池对抗审计 ＋ 交付前一致性收口（普查重钉 / xTB 暂存复核） | reports/dielectric_pool_expansion_audit.md |
+| W17-26 | 单表示 0.6081 的换折种子复验（5 种子；**非盲、不提升**） | probes/dielectric_representation_seed_robustness_summary.json |
 
 ## 复跑方式
 
@@ -737,6 +748,30 @@ ARTIFACTS = (
     ("data/processed/dielectric_pool_expansion_features.csv", "data/processed/dielectric_pool_expansion_features.csv"),
     ("data/processed/dielectric_anchor_observations.csv", "data/processed/dielectric_anchor_observations.csv"),
     ("data/processed/dielectric_anchor_features.csv", "data/processed/dielectric_anchor_features.csv"),
+    # W17-26 -- the seed-robustness re-measurement of the single-representation 0.6081.
+    ("probes/dielectric_representation_seed_robustness.py", "dielectric_representation_seed_robustness.py"),
+    (
+        "probes/dielectric_representation_seed_robustness_prereg.json",
+        "dielectric_representation_seed_robustness_prereg.json",
+    ),
+    (
+        "probes/dielectric_representation_seed_robustness_summary.json",
+        "dielectric_representation_seed_robustness_summary.json",
+    ),
+    ("probes/plot_representation_seed_robustness.py", "plot_representation_seed_robustness.py"),
+    (
+        "reports/dielectric_representation_seed_robustness.md",
+        "dielectric_representation_seed_robustness.md",
+    ),
+    (
+        "probes/artifacts/dielectric_representation_seed_robustness_repeats.csv",
+        "dielectric_representation_seed_robustness_repeats.csv",
+    ),
+    (
+        "probes/artifacts/w17_representation_seed_robustness.png",
+        "w17_representation_seed_robustness.png",
+    ),
+    ("tests/test_representation_seed_robustness.py", "test_representation_seed_robustness.py"),
     (".gitignore", ".gitignore"),
     (".github/workflows/ci.yml", "ci.yml"),
     ("probes/export_results_common.py", "export_results_common.py"),
@@ -840,6 +875,9 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
     )
     pool_open_sources = read_json(
         REPOSITORY_ROOT / "data" / "raw" / "open_data_eps2" / "coverage.json"
+    )
+    seed_robust = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_representation_seed_robustness_summary.json"
     )
 
     frozen = _frozen_red_lines()
@@ -1521,6 +1559,66 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                 },
                 "audit": "reports/dielectric_pool_expansion_audit.md",
                 "report": "reports/dielectric_pool_expansion_v3.md",
+            },
+            "W17-26_representation_seed_robustness": {
+                "probe": "probes/dielectric_representation_seed_robustness.py",
+                "prereg": {
+                    "path": "probes/dielectric_representation_seed_robustness_prereg.json",
+                    "sha256": seed_robust["prereg"]["sha256"],
+                    "status": seed_robust["prereg"]["status"],
+                },
+                "question": (
+                    "the only reading above 0.60 in the whole W17 record is "
+                    "full_table_lever4 / Physical = 0.6080587938801277; it is a "
+                    "single-representation reading that the pre-registered primary "
+                    "criterion (the Morgan+Physical hybrid) does not cover, so the "
+                    "question is whether it is an artifact of the frozen fold seed 42"
+                ),
+                "frozen_side_unchanged": True,
+                "frozen_baseline_r2": 0.4091179943351143,
+                "frozen_headline_unchanged_r2": MAIN_SCOREBOARD_HEADLINE_R2,
+                "seeds": seed_robust["contract"]["seeds"],
+                "seed_42_anchors_reproduced": seed_robust["anchors"]["reproduced"],
+                "leakage_clean": seed_robust["leakage"]["clean"],
+                "seed_42_single_representation_r2": seed_robust["seed42_single_representation"],
+                "hypothesis": {
+                    "statement": seed_robust["hypothesis"]["statement"],
+                    "arm": seed_robust["hypothesis"]["arm"],
+                    "verdict": seed_robust["hypothesis"]["verdict"],
+                    "positive_seeds": seed_robust["hypothesis"]["positive_seeds"],
+                    "total_seeds": seed_robust["hypothesis"]["total_seeds"],
+                    "delta_mean": seed_robust["hypothesis"]["delta_mean"],
+                    "delta_min": seed_robust["hypothesis"]["delta_min"],
+                },
+                "cross_seed_means": {
+                    row["arm"] + "/" + row["representation"]: row["r2_seed_mean"]
+                    for row in seed_robust["seed_averaged"]
+                },
+                "target_r2": 0.6,
+                "target_met": False,
+                "reading_never_promoted": True,
+                "finding": (
+                    "the Physical > Morgan+Physical ordering on full_table_lever4 holds on "
+                    "5 of 5 fresh fold seeds, so it is not a seed-42 artifact; but the "
+                    "cross-seed mean of Physical is 0.586114 with a range of "
+                    "0.565349-0.608059, i.e. the 0.6081 itself is partly seed-42 luck and "
+                    "0.60 is not reached; and on full_table_hybrid the ordering reverses, "
+                    "so the effect is specific to the lever4 configuration"
+                ),
+                "counterexample": (
+                    "full_table_hybrid cross-seed means: Morgan+Physical 0.523136 > "
+                    "Physical 0.486277"
+                ),
+                "open_source_frontier": (
+                    "an independent open-licence sweep run this round found no new "
+                    "epsilon source: net-new compounds are approximately zero (upper "
+                    "bound 4, all from the ThermoML archive the repo already carries); "
+                    "the sweep evidence is local-only and ships in no bundle"
+                ),
+                "non_blind": True,
+                "promotable": False,
+                "report": "reports/dielectric_representation_seed_robustness.md",
+                "figure": "probes/artifacts/w17_representation_seed_robustness.png",
             },
         },
         "frozen_red_lines": frozen,
