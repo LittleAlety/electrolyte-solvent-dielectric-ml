@@ -67,7 +67,7 @@ VISCOSITY_MAE_GATE = 0.15
 DN_AUDIT_SHA256 = "3a80daa9f74c423bfcd6d2cbd3f6c54a6ffe2516daab0c3147e33d92adf7dab6"
 
 # A mutant that rewrites one narrative number must move this line as well.
-README_SHA256 = "ca2f09dddd9e84f00c0b7d238ca1061916bdeb31c9f638a4fdd400993a38e6d6"
+README_SHA256 = "ad33d867d32cdaf6294816069095f241a0b7ca6c2be437b90cac850364cbf986"
 README_NARRATIVE_NUMBERS = (
     "0.4091179943351143",
     "0.7481271437772365",
@@ -199,6 +199,11 @@ README_NARRATIVE_NUMBERS = (
     "0.7358",
     "1594",
     "125.8 s",
+    # W17-28 -- the open-licence epsilon frontier re-check.
+    "153 + 4 = 157",
+    "785 张 PNG",
+    "58 个 raw 键",
+    "403",
 )
 
 
@@ -699,6 +704,35 @@ def test_the_splitter_lane_keeps_ordering_while_magnitude_collapses(
     assert leak["r2"] > honest["r2"] > scaffold["r2"]
     assert leak["auc_gt30"] > honest["auc_gt30"] > scaffold["auc_gt30"]
     assert honest["auc_gt30"] - scaffold["auc_gt30"] < honest["r2"] - scaffold["r2"] + 1.0
+
+
+def test_the_source_recheck_lane_registers_a_re_check_not_a_crawl(
+    exported: tuple[Path, dict],
+) -> None:
+    """The open-licence re-check adds no source and records its accounting gap.
+
+    It must state that it did not run a new crawl, that the frontier is not
+    overturned, and that the raw keys outside the roster were not re-judged.
+    """
+
+    root, _ = exported
+    summary = _summary(root)
+    lane = summary["late_arms"]["W17-28_open_licence_source_recheck"]
+
+    assert lane["new_sources"] == 0
+    assert lane["net_new_compounds"] == 0
+    assert lane["net_new_rows"] == 0
+    assert lane["roster_size"] == 153
+    assert lane["upper_bound_compounds"] == 157
+    assert lane["widest_bound_compounds"] == 161
+    assert lane["frontier_exhausted_not_overturned"] is True
+    assert lane["raw_keys_outside_the_roster"] == 58
+    assert "already went through an admission ruling" in lane["raw_keys_note"]
+    assert lane["models_fitted"] == 0
+    assert lane["promotable"] is False
+    assert lane["candidates"] == "probes/dielectric_source_sweep_v2_sources.csv"
+    assert lane["blocking_reasons"]["figshare_api"].startswith("HTTP 403")
+    assert "not a new crawl" in lane["nature"]
 
 
 def test_the_coordination_block_lane_matches_its_own_summary(    exported: tuple[Path, dict],

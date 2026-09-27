@@ -364,6 +364,16 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
     **结论：R² 量的是「量级」，AUC 量的是「排序」；我们排序学会了、量级没学会。**
     两块都**不提升任何冻结数**（`promoted = false`）；`random_row` 的 **0.9337 是泄漏参考、绝不可当达标题**。
     图：`probes/artifacts/w17_ordering_vs_magnitude.png`。
+26. **ε 开放许可源二次普查（**复核性，非新检索**）：新源 0 / 净新增 0，「见底」未被推翻，并登记一处「raw 键集」口径缺口**（W17-28，`reports/w17_dielectric_source_sweep_v2.md`）。
+    本臂**不联网、不跑新检索**：只对前几轮已抓回本地的**开放许可** ε 文件做**本地键集核算**，并把各轮已实测的源可达性结论汇总成一张 13 行逐源表。
+    结论：**新源 0 个、可入库净新增化合物 0、净新增行 0**；上限仍是 **153 + 4 = 157**（最宽口径 **161**）
+    ⇒ **「ε 开放许可源见底」本轮未被推翻**，千位级（10³）差两个数量级。
+    新角度的阻断原因：NIST WebBook **无介电常数字段**、figshare 全程 **HTTP 403**、Dryad 检索 **0 命中**、
+    Zenodo 8252886 只有 **785 张 PNG**（数值源自受限 DDB ⇒ 红线）、HF 命中全是无机 / MD / CC BY-NC-ND。
+    **唯一新信息**：把三份已抓的开放许可文件按 InChIKey 去重后与 153 名单求差，另有 **58 个 raw 键**落在名单之外
+    （`pubchem_eps` 26 ＋ `open_data_eps` 34 ＋ `open_data_eps2` 7，含重叠）；它们全部来自**已做过入库判定**的源，
+    本轮**未重判**，故**不计入净新增**——这个「raw 键集 vs 已判定名单」的口径缺口在此显式登记。
+    本臂 `models_fitted = 0`，不动任何冻结读数。逐源明细：`probes/dielectric_source_sweep_v2_sources.csv`。
 ## 本周目录
 
 | 臂 | 内容 | 落点 |
@@ -395,6 +405,7 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
 | W17-26 | 单表示 0.6081 的换折种子复验（5 种子；**非盲、不提升**） | probes/dielectric_representation_seed_robustness_summary.json |
 | W17-27 | 换模型头扫描（7 臂；**refuted、不提升**）＋ 内层选族不可迁移 | probes/dielectric_head_sweep_summary.json |
 | W18-F | AUC 侧车（零重拟合）＋ 三档划分 × AUC 表（**排序 vs 量级**） | probes/dielectric_splitters_auc_summary.json |
+| W17-28 | ε 开放许可源二次普查（**复核性，非新检索**；登记 raw 键集口径缺口） | reports/w17_dielectric_source_sweep_v2.md |
 
 ## 复跑方式
 
@@ -775,6 +786,9 @@ ARTIFACTS = (
     ("data/raw/open_data_eps2/reference_only.csv", "data/raw/open_data_eps2/reference_only.csv"),
     ("data/raw/open_data_eps2/coverage.json", "data/raw/open_data_eps2/coverage.json"),
     ("data/raw/open_data_eps2/report.md", "data/raw/open_data_eps2/report.md"),
+    # W17-28 -- the open-licence epsilon frontier re-check (a re-check, not a new crawl).
+    ("reports/w17_dielectric_source_sweep_v2.md", "w17_dielectric_source_sweep_v2.md"),
+    ("probes/dielectric_source_sweep_v2_sources.csv", "dielectric_source_sweep_v2_sources.csv"),
     ("data/processed/dielectric_pool_expansion_observations.csv", "data/processed/dielectric_pool_expansion_observations.csv"),
     ("data/processed/dielectric_pool_expansion_features.csv", "data/processed/dielectric_pool_expansion_features.csv"),
     ("data/processed/dielectric_anchor_observations.csv", "data/processed/dielectric_anchor_observations.csv"),
@@ -1801,6 +1815,39 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                 "report": "reports/dielectric_splitters_auc.md",
                 "figure": "probes/artifacts/w17_ordering_vs_magnitude.png",
                 "table": "probes/artifacts/dielectric_splitters_auc.csv",
+            },
+            "W17-28_open_licence_source_recheck": {
+                "report": "reports/w17_dielectric_source_sweep_v2.md",
+                "candidates": "probes/dielectric_source_sweep_v2_sources.csv",
+                "nature": (
+                    "a close-out re-check, not a new crawl: local key-set accounting over "
+                    "already-fetched open-licence files plus a per-source reachability "
+                    "table that summarises earlier rounds"
+                ),
+                "new_sources": 0,
+                "net_new_compounds": 0,
+                "net_new_rows": 0,
+                "roster_size": 153,
+                "upper_bound_compounds": 157,
+                "widest_bound_compounds": 161,
+                "frontier_exhausted_not_overturned": True,
+                "raw_keys_outside_the_roster": 58,
+                "raw_keys_note": (
+                    "pubchem_eps 26 + open_data_eps 34 + open_data_eps2 7 (overlapping) "
+                    "raw keys fall outside the 153 roster, but they all come from sources "
+                    "that already went through an admission ruling and were not re-judged "
+                    "here, so they do not count as net-new; the 153/157-161 bound therefore "
+                    "only holds under the already-adjudicated convention"
+                ),
+                "blocking_reasons": {
+                    "nist_webbook": "no dielectric-constant field at all",
+                    "figshare_api": "HTTP 403 at the CDN layer, unreachable",
+                    "dryad_api": "search for dielectric constant solvent returned 0 hits",
+                    "zenodo_8252886": "785 PNG images only; values come from the restricted DDB",
+                    "hf_hits": "inorganic crystals, MD boxes, or a CC BY-NC-ND licence",
+                },
+                "models_fitted": 0,
+                "promotable": False,
             },
         },
         "frozen_red_lines": frozen,
