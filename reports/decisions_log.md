@@ -6021,3 +6021,142 @@ MD / RDF 管线（整条新管线，循环 3 再评估）、介电谱反推 Deby
 - 0.349 / `never subjected to a group-split audit` / `CC-BY-NC-ND` / 10 ← `reports/w19_ranking_key_spec.md::2`（证据三条）与 `::9`（10 篇扫描文献 0 篇报分组 ε R2）
 **数字自检**：片段内数值 token 已对 `reports/w19_ranking_key_spec.md` + `probes/w19_ranking_key.py` + `tests/test_w19_ranking_key.py` 逐字回搜（ISO 日期整段排除、digest 不作数值 token）。**推算值 / 运行值 / 外部常量**：`28.50`（节号，任务书指定）；`0.4091179943351143`（W18 冻结基线常量，本 lane 素材只含头条 `0.4766400383507876`）；`9,676` / `9,081`（两个交付件的**本机 stat 实测字节数**，文件正文不含自身字节数）；`11`（累计主记分牌尝试，W18 冻结记账）。其余全部数值 token 在本 lane 素材内逐字命中。
 |
+
+## 28.51 Week 19 通道转移预案：ε 表示层封顶后 η ⇒ HOMO-LUMO ⇒ 氧化还原 三级转移，触发成立、主记分牌不动（2026-09-28）
+|
+**定位**：本件是 `Week19立项计划_文献驱动三线.md` §W19-7「通道转移预案（与 W18-7 衔接）」的落地章，与 §28.45（W18-7 分域记分牌）并列衔接。本件只做六件事：① 触发条件判定；② 三级转移排序（η ⇒ HOMO-LUMO ⇒ 氧化还原）；③ 未触发分支的口径处置；④ 不做清单重述；⑤ shots 记账；⑥ 一处自我澄清。**本件不拟合任何模型、不产任何 R² / MAE、不动任何冻结件、不引用 Reaxys 数值**；`produces_reading = false`。
+**纪律**：三级顺序与每级门槛**先于执行锁定**（预注册），不临场改；本件不行使任何晋级权。
+|
+**① 触发条件判定**
+计划书 §W19-7 原文：触发 = 「W18-3 与 W18-5 均未把跨种子均值推过 0.60 ⇒ Week 18 末宣布 ε 表示层封顶，ε lane 冻结（0.586 线钉住为终态，0.4766 headline 留在原协议区永不混比）」。逐条裁定：
+- **子句一「跨种子均值未过 0.60」⇒ 成立**。本机最接近的一枪是 W18-P0 超参网格最优臂 `hp_d4_n200`，跨种子端点 **0.5998203128630835**，对 0.60 **差 0.00018**，判 `partial`（§28.42）。
+- **子句二「W18-3 与 W18-5 两条提门杠杆均未过门」⇒ 成立（按可核口径）**。两条编号在仓内**无逐字出处**（W18 计划书不在盘，W18 章节一律用 `W18-P0 … P6` 命名）；本机对**所有已知 W18 提门杠杆**逐条裁定如下，编号映射须由作者确认：
+
+| W18 提门杠杆（本机节号） | 跨种子端点 | 过 0.60 | 判 |
+| --- | --- | --- | --- |
+| P0 稠密物理配置重调 XGB 超参（§28.42） | **0.5998203128630835**（最优臂） | 否（差 0.00018） | `partial` |
+| P2 Onsager / Kirkwood Δ-learning（§28.44） | 0.2242978111516481 | 否 | `refuted` |
+| P3 构象方差特征 | 0.5691705415075562 | 否 | `refuted` |
+| P5 Uni-Mol 嵌入特征块 | 0.1102020209457352 | 否 | `refuted` |
+| P6 log 空间 + 保序校准 | 0.5834189863657219 | 否 | `partial` |
+
+- **触发结论 ⇒ 成立**：ε 表示层封顶，ε lane 冻结，执行三级转移；**但 ε 的两块记分牌读数一个都不动**（见 ③）。
+|
+**② 三级转移排序（预注册，不临场改）**
+计划书 §W19-7 定的顺序是「门槛最近者优先」：η（第一，**0.17477197208762** vs 门 **0.15**，已在仓核）⇒ HOMO-LUMO（第二，MIT 源已在盘且无分发约束）⇒ 氧化还原（第三，依赖 W19-2 抽取路线，时序最后）。
+
+| 级 | 通道 | 门槛 | 当前读数 | 距门缺口 | 依赖的 W19 lane | 是否已过门 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | η 黏度 | MAE < **0.15** log10(cP)（group_key） | 在役族级 **0.17477197208762**；W18 行级最好 **0.15686276760094522** | 族级 **0.025**；行级 **0.006863** | W19-3（D5） | **在役未过**；Chemprop-η 行级 **0.08506361044387624**（Δ -0.07179915715706899）、族级 **0.08908094784092072**（Δ -0.08569102424669928）**过门**（`chemprop_better`，`promoted=false`） |
+| 2 | HOMO-LUMO | MAE < **0.20** eV | HOMO **0.19050925839013938** / LUMO **0.13855083976437643** | 两通道均 < 0.20 | W19-1（D2；名册 **246** 行逐字命中 **77**） + W19-D6 | **已过门**（六通道中只有这两条过 0.20 eV 门） |
+| 3 | 氧化还原 | MAE < 0.15 eV | 氧化 0.2905180517963865 / 还原 0.4096241620366996 | 均未过 | W19-2（D4，抽取模板 v0，本周不执行抽取） | **未过门** |
+
+`data/external/Batt-SLM-RX-392.csv`（393 行含表头、**392** 条记录）已在盘，本件只作核对层登记，不产读数。
+|
+**③ 未触发分支（本次未启用，预注册留册）**
+- 若触发不成立（即 ε 有杠杆把跨种子均值推过 0.60）⇒ ε 继续 W19-5，η / HOMO-LUMO 并行但优先级次席，本转移预案**整章转档案**。本机实测触发成立，故该分支本次**未启用**。
+- **口径永不混比**（无论走哪个分支）：`0.5861142332208197`（单表示跨种子端点，钉为 ε 终态）与 `0.4766400383507876`（冻结头条）**永不混比**；冻结基线 `0.4091179943351143` 原位保留；ε 的 457 行 / 97 化合物 / 276 个（化合物, T）对口径不得与 η 的 4151 行 / 976 键混说。
+|
+**④ 不做清单（逐条重述计划书 §W19-8）**
+- 不接 OMat24（无机晶体，与本项目分子液体错配）。
+- 不做生成闭环、不做候选生成器（uniqueness 0.349 证据在册）。
+- 不把 ElectrolyteGPT 的代理输出当训练数据；不用任何随机拆分文献数字做对照靶或晋升依据。
+- **不重跑已在盘的 W17 资产**（Batt-P30K 下载与标定、Onsager 探针、`homo_lumo_baselines`、`dielectric_channel_v2`）；确需重跑须先写明既有结果缺陷并入预注册。
+- **不把行级随机折读数当对照靶**——既包括文献读数，也包括仓内 Onsager 探针与 channel_v2 的读数。
+- 不动 6 个冻结件（v03 `ff214293…`、v11plus `159b928f…`、viscosity_v01 `12dfa03f…`、3 个预注册件 `ab3503c0…` / `77f61a83…` / `b838febb…`）。
+- 不开无预注册的枪；81 MB 原始层不进任何 bundle；受限值永不在再分发层出现。
+- 不在本章修订 Week 18 的任何判据（W18-2 端点定义、W18-7 退出判据只能由作者确认后修订，修订即记录）。
+|
+**⑤ shots 记账**
+- **shot 19**（Batt-P30K 交叉核对）、**shot 20**（Onsager 预检，条件性）、**shot 21**（抽取探针 Phase-0）为计划书原编号。**v2 补充裁定**：shot 19 / 20 对应资产在仓内**已存在**（Batt↔PubChemQC 标定 n = 111、Onsager 探针已出 `decision=go`），本周须先判定这两枪「**是否已用掉编号**」——若视为已用，新工作取 **shot 22** 起；若视为复核性工作，则按「复核不占号」处理。该判定写入预注册，**不得事后改**。
+- **本判定须作者确认，不得由本稿单方生效**。
+- 累计主记分牌尝试 **11** 次，本件不增不减。
+|
+**⑥ 自我澄清：转移预案会不会抬高主记分牌？**
+- **否。** 本件 `promoted = false`；本件不占 shot、不产 R² / MAE；主记分牌尝试 **0** 次，累计仍 **11** 次；冻结基线 `0.4091179943351143` 与冻结头条 `0.4766400383507876` **原位未动**。
+- 转移预案改变的是**后续工作重心**（ε 冻结后投向 η / 轨道 / 氧化还原），**不改变任何已冻结读数**。
+|
+**数字自检**（逐条列章节用到的数值 token 及其来源文件::小节）
+- `0.5998203128630835` / `0.00018` / `0.5861142332208197` / `partial` ⇒ `reports/_w18_section_p0.md`（§28.42）
+- `0.2242978111516481` ⇒ `reports/_w18_section_p2.md`（§28.44）｜`probes/dielectric_onsager_delta_w18_summary.json`
+- `0.5691705415075562` ⇒ `probes/dielectric_conformer_flexibility_summary.json`
+- `0.5834189863657219` ⇒ `probes/dielectric_log_scale_calibration_summary.json`
+- `0.1102020209457352` ⇒ `probes/dielectric_unimol_embedding_summary.json`
+- `0.17477197208762` / `0.15` ⇒ `probes/viscosity_baseline_summary.json::primary_gate`（`threshold` = 0.15、`group_key_passed` = false）；`0.025` ⇒ `reports/_w19_section_d5.md`（§28.49，「只差 0.025」）
+- `0.15686276760094522` / `0.006863` ⇒ `reports/_w18_readme_draft.md`（W18-A 行级解冻）
+- `0.08506361044387624` / `0.08908094784092072` / `-0.07179915715706899` / `-0.08569102424669928` ⇒ `probes/w19_chemprop_viscosity_summary.json`（减号用 ASCII；同值的字面钉在 `reports/_w19_section_d5.md` 用 U+2212 减号）｜`reports/_w19_section_d5.md`（§28.49）
+- `0.19050925839013938` / `0.13855083976437643` / `0.2905180517963865` / `0.4096241620366996` / `0.20` ⇒ `probes/four_channel_coverage_summary.json::pinned`；`models/homo_lumo_baselines.json::gate`；`reports/w19_ranking_key_spec.md`（D6，§28.50）
+- `246` / `77` / `111` ⇒ `reports/w19_batt_direct_hit.md`（§28.47）｜`probes/w19_batt_direct_hit_summary.json`
+- `393` / `392` ⇒ `reports/w19_state_audit.md`（§28.46）｜`data/external/Batt-SLM-RX-392.csv`
+- `0.4091179943351143` / `0.4766400383507876` / `457` / `97` / `276` ⇒ `probes/four_channel_coverage_summary.json::pinned`
+- `4151` / `976` ⇒ `reports/w19_chemprop_viscosity.md`（§28.49）
+- `0.349` ⇒ `reports/w19_ranking_key_spec.md`（生成闭环三条证据）；计划书 §W19-8
+- `11`（累计主记分牌尝试）⇒ `reports/decisions_log.md::§28.41`（「累计 11 次不变」）
+- `28.51` ⇒ 本节号（任务书逐字指定）
+|
+
+## 28.52 Week 19 D3 Onsager 残差层换到组外划分：结构族组外 5 门全过（`delta_layer_survives_out_of_family`），但域反号分裂未保持、ε>60 区仍不可解（2026-09-28）
+|
+**机制假设**：W18-P2 判 `refuted` 的那一枪，把 Onsager 残差 Δ-learning 放在**行级 RepeatedKFold** 上量；该协议允许同族近邻同时出现在训练与测试两侧，等于给「分子间关联」这一层开了后门。D3 的问法不是「再堆一次描述符」，而是**只换划分、不换模型**：把同一探针搬到 111 个 Murcko/Butina 结构族的组外 5 折 x 10 重复（共 50 折），回答计划书 §W19-5 锁定的三问。判据是**预注册的 5 门**，不是 R²，也不是主记分牌。
+**预注册**：`probes/w19_onsager_grouped_prereg.json`，sha256 `921ba092c6dfc8976d045c089caeeafb714da639f6c24634a97bd3f9284c6839`，`status = locked_before_run`；跑前登记的**唯一一次增补**是把 `row_level_reproduction` 登记为并列基准（增补时仓内不存在本探针任何结果）。门定义逐字复用冻结的 `probes/dielectric_onsager_delta_probe.py::evaluate_gates`，公式不重写。
+|
+**池与切分 · 行级参考与组外读数并列、永不混比**
+| 项目 | 值 |
+| --- | --- |
+| 行数 / 唯一 InChIKey | 234 / 234 |
+| 结构族（Murcko scaffold；无环走 Butina） | 111（其中单例 76、最大 31） |
+| 失败行 / 暂扣行 | 4 / 1 |
+| 分层 lt20 / 20_60 / gt60 | 182 / 47 / 5 |
+| 域 none / assoc_only / ionic_only / both | 150 / 66 / 15 / 3 |
+| `structure_family`（主读数） | 5 折 x 10 重复 = 50 折，训练 149-206 |
+| `row_level_reproduction`（对照基准） | RepeatedKFold 5 x 10 = 50 折，训练 187-188 |
+| `inchikey`（退化对照，跑前已声明） | 234 组全为单例 ⇒ 退化成普通行级留出，**不计入组外压力** |
+- 主读数逐 arm（MAE / R² / Spearman）：`O0_onsager` 10.488447267414694 / -0.682296765194945 / 0.67637461648358；`O1_structured_offset` 9.712536036273614 / -0.5243166065971072 / 0.7508995711631504；`R0_direct_regression` 7.6638502783946505 / 0.2618082947442962 / 0.7576630886950296；`R1_direct_with_logg` 7.105924504314814 / 0.1840837816325239 / 0.7944375166885387；`D0_delta_core` 9.462750080736846 / -0.2823334839412389 / 0.7496583230171197；`D1_delta_core_morgan` 9.732598032673137 / -0.512513404542229 / 0.7301984899382461；`D2_delta_log` 16.6468345368987 / -4.0825878705138585 / 0.6418337835273601；`D3_delta_leaky`（泄漏对照，不受门）8.562802610068925 / -0.062377601950978835 / 0.7558608323774854。
+- **两条必须与读数同框的诚实话**：① 主读数上**最好的不是任何 Δ 臂**——`R1_direct_with_logg` 7.105924504314814、`R0_direct_regression` 7.6638502783946505，都低于全部 Δ 臂；② `D0_delta_core` 9.462750080736846 落在 `O0_onsager` 10.488447267414694 的 bootstrap 带内（配对簇 bootstrap `delta_mean = -1.0256971866778457`、`delta_ci95 = [-2.0646583943890198, 0.02264978539549294]`，**跨零**），故 5 门结论是**重复平均点估计**上的结论，不是分离结论。
+|
+**5 门逐 arm 裁定（主读数 `structure_family`；门槛值取自 summary 实测列）**
+| 门 | 判据 | 门槛参照 | D0_delta_core | D1_delta_core_morgan | D2_delta_log |
+| --- | --- | --- | --- | --- | --- |
+| `a_donor_mae_below_onsager` | `mae_assoc(arm) < mae_assoc(O0_onsager)` | 16.66422703535138 | 13.966612961983486 PASS | 13.031472247883638 PASS | 23.5931562114305 FAIL |
+| `b_ionic_mae_not_worse_than_onsager` | `mae_ionic(arm) <= mae_ionic(O0_onsager)` | 41.22140207561585 | 34.93832021859354 PASS | 40.17556915457252 PASS | 50.20548179109598 FAIL |
+| `c_high_permittivity_improved` | `mae_gt60(arm) < 87.02347866934045` 或 `spearman_gt60(arm) > -0.7999999999999999` | 87.02347866934045 / -0.7999999999999999 | 72.0614455552206 PASS | 76.81859574687758 PASS | 93.62813989821383 / -0.6199999999999999（仅靠 spearman 子句）PASS |
+| `d_overall_mae_below_structured_offset` | `mae(arm) < mae(O1_structured_offset)` | 9.712536036273614 | 9.462750080736846 PASS | 9.732598032673137 **FAIL** | 16.6468345368987 FAIL |
+| `e_donor_mae_below_structured_offset` | `mae_assoc(arm) < mae_assoc(O1_structured_offset)` | 14.83331535120289 | 13.966612961983486 PASS | 13.031472247883638 PASS | 23.5931562114305 FAIL |
+| **整臂通过** | 5 门全真 | — | **true** | false | false |
+- `gates.headline_arm = D0_delta_core`、`gates.passed = true`；summary 自己声明该 headline 选择是**事后**取「确认臂里重复平均 MAE 最低」，并**把逐 arm 门结果并列在旁**。
+|
+**三问逐条裁定（verdict 字符串逐字照抄）**
+| 问 | verdict | 关键依据 |
+| --- | --- | --- |
+| Q1 Δ 层组外是否仍过 5 门 | `delta_layer_survives_out_of_family` | 主读数 `headline_passed_all_five_gates = true`、`n_groups = 111`；`inchikey_control_degenerate = true` 且其 headline 也全过（退化对照**不构成独立证据**）；`D1_delta_core_morgan` 只失 `d`、`D2_delta_log` 失 4 门 |
+| Q2 域反号分裂组外是否保持 | `sign_split_not_preserved_out_of_family` | 逐域偏置符号 vs 行级：`O0_onsager` opposite、`O1_structured_offset` opposite、`D0_delta_core` opposite、`D1_delta_core_morgan` opposite、`D2_delta_log` same；分组与行级两套 pattern **arm 对 arm 一致**，都判 4/5 为 opposite ⇒ 记「随机折内插值假象」，不记机制 |
+| Q3 ε > 60 区组外是否仍不可解 | `zone_still_unsolvable_out_of_family` | `row_count = 5`、`threshold = 60`、`onsager_coverage_fraction = 0`、`onsager_coverage_is_split_invariant = true`；组外最佳确认臂 `mae_gt60 = 72.0614455552206` vs 行级最佳 `70.26943459448498` ⇒ `grouped_best_not_better_than_row_level = true`；组外 `bias_gt60`：D0 70.74055320184931、D1 76.65222626086577、D2 48.31560765575515 |
+|
+**判定与边界**
+- `promotes_no_reading = true`；`main_scoreboard_untouched = true`；`scoreboard_attempts_delta = 0`；`produces_deployable_model = false`；**主记分牌尝试仍为 0，累计仍为 11 次**；冻结基线 `0.4091179943351143` 与冻结头条 `0.4766400383507876` 未动；`role` 明写**不是晋升臂**。
+- **口径更正（本枪必须登记）**：summary 里**没有** `read_only` / `models_fitted` / `promoted` 三个键；承担同一职能的字面键是 `promotes_no_reading` / `main_scoreboard_untouched` / `scoreboard_attempts_delta` / `produces_deployable_model`。探针效果上是只读的，但**不以未出现的字面键作断言**。
+- **复现检查**：`max_abs_difference = 0.0`、`reproduced_bit_for_bit = true`（比较 `mae` / `mae_assoc` / `mae_ionic` / `mae_gt60` / `r2` / `spearman` 六键），对照件 `probes/dielectric_onsager_delta_summary.json` sha256 `3acd499b2653135556bcdd61a1bdb2e8977973821f8b00f804e2431edef1754b`。
+- **五条预注册 limitations 逐条照录**：① 池内 234 行一行一化合物，故计划书要求的「按 InChIKey 分组」在本池**约束不了任何东西**；② 结构族是本池唯一非退化的分组键，且比化合物划分**更粗**，故其读数是**下界**；③ 111 个结构族里 76 个是单例，大多数行看到的训练池与化合物级划分无异；④ ε>60 区只有 5 行，其 MAE 是**无区间的点估计**；⑤ Onsager 无标签且确定，其覆盖率**不随划分变化**，动的只有拟合臂。
+- **honest_boundary 逐字**：`epsilon_lane_is_frozen = true`、`frozen_baseline = 0.4091179943351143`、`frozen_headline = 0.4766400383507876`、`main_scoreboard_untouched = true`、`not_a_promotion_arm = true`。
+- **自我澄清**：分域/组外读数**不替换、不修订、不晋升**任何主记分牌数字；§2.1 与 §2.2 是同一池上的**两套协议**，只并列、**不平均**、不互为替代。本枪**零 Reaxys 引用**（`reaxys_numeric_red_line`：Reaxys 数值禁止进入任何池、特征或交付包）。
+|
+**产物清单**
+- `probes/w19_onsager_grouped.py`（sha256 `e5396bb7dcad7ea4bf587256536105132be4a51c8c3a069efbf22607111046b3`）
+- `probes/w19_onsager_grouped_prereg.json`（sha256 `921ba092c6dfc8976d045c089caeeafb714da639f6c24634a97bd3f9284c6839`）
+- `probes/w19_onsager_grouped_summary.json`（sha256 `dabb9df580cb7d44e4cd096bdeb72543c0666f0d7bbe8114ded37cad7b9e7dba`）
+- `reports/w19_onsager_grouped.md`（sha256 `f70ea93d8b4cd392ffa9e9e2e2eeb84b582ef0433a3e8a807231baa5a17224fe`）
+- `tests/test_w19_onsager_grouped.py`（sha256 `f0c066abb46ba6db358102cb35c3ca25792d9beab4ce86961d783765bcc7e2a9`）
+|
+**数字出处**
+- 234 / 234 / 111 / 76 / 31 / 4 / 1 与 182 / 47 / 5、150 / 66 / 15 / 3 ← `probes/w19_onsager_grouped_summary.json::pool` 与 `::structure_groups.group_size_histogram`
+- 50 折 / 149-206 / 187-188 ← 同 JSON `::readings.structure_family.n_folds` / `::train_count_min` / `::train_count_max` 与 `::readings.row_level_reproduction`
+- 全部逐 arm MAE / R² / Spearman ← 同 JSON `::readings.*.overall_metrics`
+- 16.66422703535138 / 41.22140207561585 / 87.02347866934045 / -0.7999999999999999 / 9.712536036273614 / 14.83331535120289 ← 同 JSON `::readings.structure_family.overall_metrics.O0_onsager` 与 `::...O1_structured_offset`
+- 各 PASS / FAIL 与 `headline_arm` / `passed` / `failed_gates` ← 同 JSON `::readings.structure_family.gates`（并用探针同一门公式独立重算复核，见测试 `_recompute_gates`）
+- 三问 verdict 串与全部依据 ← 同 JSON `::three_questions.q1_grouped_delta_gates` / `::q2_domain_sign_split` / `::q3_high_permittivity_zone`
+- `max_abs_difference = 0.0` / `reproduced_bit_for_bit = true` / `3acd499b...f1754b` ← 同 JSON `::reproduction_check`
+- `-1.0256971866778457` 与 `[-2.0646583943890198, 0.02264978539549294]` ← 同 JSON `::readings.structure_family.paired_results`（`O0_onsager` vs `D0_delta_core`，metric `mae`）
+- 0.4091179943351143 / 0.4766400383507876 ← `probes/w19_onsager_grouped_prereg.json::frozen_baseline` 与 `::frozen_headline`（W18 冻结坐标）
+- `11` ← **W18 冻结记账**（累计主记分牌尝试次数），仓内本 lane 素材不含该字面量；此处引用的是 W18 收口既成事实，不是本探针产出。
+**数字自检**：片段内数值 token 已对 `probes/w19_onsager_grouped_summary.json` + `probes/w19_onsager_grouped_prereg.json` + `reports/w19_onsager_grouped.md` 逐字回搜（ISO 日期整段排除、sha256 摘要不作数值 token）。**推算值 / 运行值 / 外部常量**：`28.52`（节号，任务书指定）；`11`（W18 冻结记账，仓内无本 lane 字面出处，已在上一行点名）；其余全部数值 token 在本 lane 素材内逐字命中。
+|

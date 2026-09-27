@@ -5,9 +5,10 @@ An auditable, machine-learning-ready dataset of static dielectric constants
 temperature, together with the frozen benchmark and the verifiers that recompute
 every reported number.
 
-**Release:** v1.0 (GitHub release 2026-09-25) · **Dataset:** v0.3.3 ·
-**DOI:** https://doi.org/10.5281/zenodo.22957696 (concept DOI
-https://doi.org/10.5281/zenodo.22957695) ·
+**Release:** v1.1 (GitHub release 2026-09-28; Week 18 post-cap path ranking + Week 19
+three-line evidence, no lane promoted) · **Dataset:** v0.3.3 (unchanged) ·
+**DOI (concept, all versions):** https://doi.org/10.5281/zenodo.22957695 ·
+**DOI (v1.0):** https://doi.org/10.5281/zenodo.22957696 ·
 **Licences:** data CC BY 4.0 (`LICENSE-DATA.md`), code MIT (`LICENSE`)
 
 ## What is here
@@ -17,6 +18,7 @@ https://doi.org/10.5281/zenodo.22957695) ·
 | `data/dielectric_v03.csv` | the canonical dataset: 246 rows x 38 columns, digest `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4` |
 | `paper/full_draft.md` | the data descriptor, generated from the five section files |
 | `paper/release_notes_v1.0.md` | what this release contains and what it admits to |
+| `paper/release_notes_v1.1.md` | the Week 18 and Week 19 evidence bundle: eight pre-registered lanes, none promoted |
 | `probes/` | every probe behind every number and figure |
 | `probes/artifacts/` | the six paper figures and their pinned summaries |
 | `scripts/` | build scripts and the verifiers listed below |
