@@ -1,0 +1,116 @@
+{
+  "probe": "w19_batt_gap_crosscheck",
+  "title": "N2 直接交叉核对：我方 GFN2-xTB 轨道能 vs Batt-P30K ωB97X-V 轨道能（名册命中化合物）",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-27T17:52:40Z",
+  "hypothesis": "Batt-P30K（MIT 许可，ωB97X-V/def2-TZVPPD/SMD(ε=18.5)）能否升格为我方 HOMO/LUMO 的迁移源。",
+  "claim_under_test": "在名册命中化合物上，我方 GFN2-xTB 轨道能与 Batt-P30K 对应轨道能之间存在可达标的线性关系。",
+  "read_only": true,
+  "reaxys_values_used": false,
+  "writes_any_pool": false,
+  "promoted": false,
+  "main_scoreboard_attempts": 0,
+  "shot_accounting": "本件零拟合入库、零杠杆、不碰主记分牌；按 §W19-9「复核不占号」申请不新占 shot，编号是否另立由作者裁定。",
+  "models_fitted_expected": 7,
+  "models_fitted_note": "7 = 3 主臂通道(homo/lumo/gap) + 3 敏感性臂 A 通道 + 1 敏感性臂 B（gap 专用）；每臂一条 OLS 线性映射并用留一折外推作样本外读数。全部只读，不写回任何池。",
+  "inputs": {
+    "data/raw/batt/Batt-P30K.h5": {
+      "sha256": "587f1490613a008b91f45ee9de607a2e057c88c301fa9e5c9d7785b1968d118d",
+      "role": "Batt 轨道能真源（homo/lumo/gap/ip/ea/dipole/coord），SMD(ε=18.5)",
+      "sha256_must_match_registered": true
+    },
+    "data/dielectric_v03.csv": {
+      "sha256": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+      "role": "冻结 ε 名册，磁盘实测 246 行 / 246 唯一 InChIKey"
+    },
+    "data/processed/themol_orbital_layer.csv": {
+      "sha256": "6e05f02e755c57ab09d73a784687b2c1deb757f80e43c5746358f1f7a5ecde80",
+      "role": "我方 xTB 层（GFN2-xTB 6.7.1pre 气相单点）166 行，含 homo_gfn2_eV/lumo_gfn2_eV/gap_gfn2_eV"
+    },
+    "data/processed/themol_orbital_layer_expanded.csv": {
+      "sha256": "8b10b23f3da60c48cafc96cf783605180869b890ff0c5a4df7d0dd9c2036703b",
+      "role": "敏感性臂 A：同一 xTB 层的扩展配对版本，4668 行含 batt 对应值"
+    },
+    "probes/artifacts/v03_features_baseline_input.csv": {
+      "sha256": "da82f748daeccbc9c7c045aa2369085b147c2124693c62dc72994a4cb629f5f4",
+      "role": "敏感性臂 B（仅 gap 通道）：另一条我方 xTB gap 记录，235 行有值"
+    },
+    "probes/w19_batt_direct_hit_summary.json": {
+      "sha256": "46892d764461e0cdac474f9f4c3f81f11da5455fcac569b9bbe8cb478c2ad97e",
+      "role": "D2 既有产物的命中判据口径（仅用于口径比对，不复制其数字）"
+    }
+  },
+  "pool_definition": {
+    "roster": "data/dielectric_v03.csv 的 inchikey 列，磁盘实测 246 个唯一键（计划书写的 239 是 v03_features_baseline_input.csv 口径，本件不用 239）。",
+    "batt_identity_rule": "对 Batt-P30K.h5 每个 group 的 smiles dataset 执行 RDKit Chem.MolFromSmiles -> Chem.MolToInchiKey，取全 27 位（bare：不做去盐、不去电荷、不改立体），与本仓 28.17/28.39 节 Batt 身份口径一致。",
+    "hit_rule": "名册命中集 = roster ∩ batt_identity。D2 已独立实测为 78 键；本件重算并断言逐键相等，不等则报错停止。",
+    "our_side_primary": "themol_orbital_layer.csv 的 homo_gfn2_eV / lumo_gfn2_eV / gap_gfn2_eV（GFN2-xTB 气相单点，THEMol B3LYP-D3(BJ)/DZVP 几何）。",
+    "primary_arm": "名册命中集 ∩ 我方 xTB 层，预期 n = 49（= 78 命中 ∩ 166 层行）。",
+    "sensitivity_arm_a": "themol_orbital_layer_expanded.csv 的 paired_anchor 行（n ≈ 4668），同三通道，用于检验「小样本相关性是否为抽样噪声」。",
+    "sensitivity_arm_b": "gap 通道专属：名册命中集 ∩ v03_features_baseline_input.csv 的 homo_lumo_gap_ev（预期 n = 71），用于检验 gap 通道结论对「哪一条我方 xTB 记录」的稳健性。",
+    "uncovered_hits": "78 命中中未被我方 xTB 覆盖的键照实登记为「不可核」，不插补、不外推。"
+  },
+  "channels": [
+    "homo",
+    "lumo",
+    "gap"
+  ],
+  "metrics": [
+    "n",
+    "pearson_r",
+    "spearman_rho",
+    "ols_slope",
+    "ols_intercept",
+    "mae_raw_cross_level",
+    "mae_after_linear_map_in_sample",
+    "loo_mae_mean",
+    "loo_mae_sd",
+    "mean_signed_diff_batt_minus_ours",
+    "batt_sd",
+    "ours_sd"
+  ],
+  "gate": {
+    "source": "W19 计划 §W19-1 步骤 2",
+    "rule": "样本外（留一）MAE <= 0.35 eV 且 Pearson r >= 0.80，两条件同时成立才判 usable；否则 reference_only。",
+    "applied_per_channel": true,
+    "thresholds": {
+      "loo_mae_ev_max": 0.35,
+      "pearson_r_min": 0.8
+    },
+    "verdict_on_primary_arm_only": true,
+    "sensitivity_arms_cannot_upgrade_verdict": true
+  },
+  "loo_definition": "对每个化合物 i：以其余 n-1 个点拟合 OLS（Batt = a + b * ours），预测 i，误差 = |pred - Batt_i|；报 n 折误差均值与样本 sd（ddof=1），并给分位（p25/中位/p75/p95）。",
+  "cross_level_discipline": {
+    "cross_level": true,
+    "statement": "Batt-P30K 为 SMD(ε=18.5) 隐式溶剂化 ωB97X-V；我方为 GFN2-xTB 气相单点。跨水平原始 MAE 不得当「模型精度」宣传，只报「线性映射后的样本外 MAE」与相关系数；所有跨水平数字一律带 cross_level=true 标注。",
+    "equal_level_claims_allowed": false
+  },
+  "falsifiable_predictions": [
+    "PR-1：若 homo 通道 r >= 0.80 而 lumo/gap 通道 r < 0.80，则 Batt 的可用性依通道分裂，属「逐通道裁定」成立。",
+    "PR-2：Batt 的 lumo 在本集合内应近乎常数（sd < 0.4 eV），即其 LUMO 通道不携带可迁移的化学方差。若实测 sd >= 0.4 eV 则本条被证伪。",
+    "PR-3：带符号平均差（Batt − 我方）在 lumo 通道应显著大于 homo 通道（水平错位集中在空轨道侧）。若两通道带符号差同量级则本条被证伪。",
+    "PR-4：gap 通道相关性应最弱（预测 r < 0.40），因为两端对「哪支轨道是前沿轨道」的判定不同。",
+    "PR-5：全配对层（n ≈ 4668）若给出与主臂一致的相关性量级，则主臂 n=49 的结论不是抽样噪声。"
+  ],
+  "alternative_hypotheses": [
+    "H-alt1（方法学）：差异来自泛函/基组/溶剂化水平，而非 Batt 数据本身错误。",
+    "H-alt2（标识符）：命中化合物存在结构错配（同 InChIKey 但构象/互变异构不同）。",
+    "H-alt3（构象）：我方取单构象，Batt 取其自定构象，几何差异导致轨道能散布。",
+    "本件只能实测排除其中一部分，排除不掉的照实登记为未排除。"
+  ],
+  "red_lines": [
+    "Reaxys 数值禁止进入本件任何读数、特征、交付层（§28.33 红线）。",
+    "不写任何池、不改任何冻结件、不做 git 操作。",
+    "跨水平 MAE 不得当模型精度；不得用本件数字声称任一通道达到 e 通道口径的「过门」。",
+    "correlation != transferability：即使 r >= 0.80，只要存在系统性水平偏移，也不得称为迁移源，只能称第二参考层。"
+  ],
+  "recon_disclosure": "本预注册在锁定前做过一次只读侦察（确认名册命中数为 78、我方 xTB 覆盖为 49、并确认三条通道可算），侦察中一并算出过相关系数与原始 MAE 以确认本任务可执行。判据、门槛、留一 定义、逐通道裁定规则均在侦察后写定且未因侦察结果调整；最终交付数字以锁定脚本的一次完整重跑为准（脚本会重算并覆盖侦察值）。此披露用于防止「先看结果再定门槛」的口径污染。",
+  "outputs": [
+    "probes/w19_batt_gap_crosscheck.py",
+    "probes/w19_batt_gap_crosscheck_prereg.json",
+    "probes/w19_batt_gap_crosscheck_summary.json",
+    "reports/w19_batt_gap_crosscheck.md",
+    "tests/test_w19_batt_gap_crosscheck.py"
+  ]
+}

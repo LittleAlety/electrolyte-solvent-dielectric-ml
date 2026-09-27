@@ -1,0 +1,54 @@
+{
+  "schema_version": "dielectric_unimol_embedding/prereg@1",
+  "lane": "W18-P5",
+  "title": "Uni-Mol pre-trained embeddings as a feature block (the one untested representation family)",
+  "locked_at_utc": "2026-09-27T15:01:15Z",
+  "status": "locked_before_run",
+  "question": "Does a pre-trained 3D Uni-Mol representation, used as a frozen feature block, move the full-base physical reading away from the frozen single-representation anchor 0.6080587938801277 and above the frozen cross-seed endpoint 0.5861142332208197?",
+  "hypothesis": "An end-to-end 3D network could not be kept alive on this roster, but a pre-trained embedding column block is a different object: the network is frozen, the block is dense, and the frozen XGB head is unchanged. The prior is declared unknown; this is the only representation family that has never been measured on this scoreboard.",
+  "representation": "Physical(lever4)+UniMol",
+  "arms": {
+    "reference_lever4": "the frozen dense physical block, 13 columns, conformer-average dipole (anchor arm)",
+    "plus_unimol": "reference_lever4 with the Uni-Mol embedding block appended",
+    "unimol_only": "the Uni-Mol embedding block alone (control arm)"
+  },
+  "seeds": [
+    42,
+    1234,
+    2026,
+    31337,
+    7
+  ],
+  "anchor_seed": 42,
+  "endpoint": "cross-seed mean of the per-seed 10-repeat R2 means, exactly the endpoint W18-P1 defined",
+  "decision_rule": {
+    "confirm_bar": 0.02,
+    "partial_bar": 0.005,
+    "compared_against": 0.5861142332208197,
+    "promoted_when": "plus_unimol minus reference_lever4 clears confirm_bar on the cross-seed mean and the delta stays positive on at least 4 of 5 seeds"
+  },
+  "runtime_requirements": [
+    "torch",
+    "unimol_tools"
+  ],
+  "checkpoint": {
+    "repository": "dptech/Uni-Mol-Models",
+    "file": "mol_pre_all_h_220816.pt",
+    "mirror": "https://hf-mirror.com/dptech/Uni-Mol-Models/resolve/main/mol_pre_all_h_220816.pt",
+    "environment_variable": "UNIMOL_WEIGHTS_PATH",
+    "search_paths": [
+      "%UNIMOL_WEIGHTS_PATH%",
+      "~/.unimol/mol_pre_all_h_220816.pt",
+      "~/.cache/unimol/mol_pre_all_h_220816.pt"
+    ]
+  },
+  "blocked_rule": "If the runtime or the checkpoint is absent, this lane writes a blocked summary with the measured blocker evidence, claims no reading, promotes nothing, and puts no number into any pool. A blocked lane is not a negative result and must never be quoted as one.",
+  "stage_2_contract": "probes/artifacts/dielectric_unimol_embedding.csv holds one row per inchikey with columns inchikey, smiles, dim_000..dim_{D-1}. It is built by this same probe with --build-embeddings.",
+  "scoreboard_isolation": "This lane reports under its own pre-registration on the full-base pool. It adds no shot to the frozen main scoreboard, which stays at baseline 0.4091179943351143 and headline 0.4766400383507876 with 11 cumulative attempts.",
+  "forbidden": [
+    "no Uni-Mol number may be quoted if the runtime was absent",
+    "no synthetic, imputed or randomly drawn embedding may stand in for the pre-trained representation",
+    "the frozen 0.6080587938801277 / 0.5861142332208197 pair may not be edited by this lane"
+  ],
+  "self_check": "the anchor arm must reproduce 0.6080587938801277 at seed 42 to within 1e-09 on the full-base pool, otherwise the probe refuses to report any other reading"
+}

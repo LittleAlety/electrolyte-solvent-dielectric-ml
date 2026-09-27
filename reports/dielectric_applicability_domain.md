@@ -1,0 +1,59 @@
+# ε 分域记分牌（W18-B）
+
+冻结头条是 plus_both（Morgan+Physical + lever4 + lever8）在 457 行 / 97 化合物 / 276 个（化合物，T）对上的读数
+`0.4766400383507876`。本枪不改它，只在同一池、同一臂上并列报第二块记分牌：域内读数。
+
+## 复现（先决条件）
+
+- seed 42 全域 R2：0.4766400383507876（发布 0.4766400383507876，偏差 0.00e+00，容差 1e-09）
+- 复现成立：True；不成立则整枪抛错、不报任何域内数字。
+
+## 跨种子端点（种子集 42, 1234, 2026, 31337, 7 跑前锁定）
+
+| 规则 | 口径 | 行（均值） | 化合物（均值） | R2 均值 | R2 跨种子 sd | MAE 均值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 全域（无域声明） | 全域 | 457.0 | 97.0 | 0.454011 | 0.014627 | 7.657 |
+| D1 极性质子性（特征规则） | 域内 | 297.0 | 57.0 | 0.524012 | 0.024133 | 8.589 |
+| D1 极性质子性（特征规则） | 域外 | 160.0 | 40.0 | 0.319802 | 0.007561 | 5.925 |
+| D2 训练侧 p95 分类器 | 域内 | 451.5 | 92.3 | 0.422004 | 0.021091 | 7.392 |
+| D2 训练侧 p95 分类器 | 域外 | 5.5 | 4.7 | -0.320153 | 0.346709 | 29.569 |
+| D3 已核实高 ε 名册（诊断） | 域内 | 442.0 | 90.0 | 0.539451 | 0.035130 | 6.361 |
+| D3 已核实高 ε 名册（诊断） | 域外 | 15.0 | 7.0 | -3.035495 | 0.120143 | 45.839 |
+
+## 域声明与全域数的关系
+
+- 全域跨种子端点 R2：0.454011
+- D1 域内 R2：0.524012（对全域 0.070002）
+- D3 域内 R2：0.539451（对全域 0.085441）
+- 域内数不得当作达标题：域内数是范围声明下的第二块记分牌，不得替换或提升为主记分牌读数。
+
+## 安慰剂
+
+- 洗牌标签臂跨种子 R2 均值：-0.031312（sd 0.003448）；地板（训练折均值）：-0.004935；过地板 -0.026377
+
+## 域外名册（全量报出）
+
+- D1（特征规则）域外化合物 40 个：AMQJEAYHLZJPGS-UHFFFAOYSA-N, BBMCTIGTTCKYKF-UHFFFAOYSA-N, BDERNNFJNOPAEC-UHFFFAOYSA-N, BMRWNKZVCUKKSR-UHFFFAOYSA-N, BTANRVKWQNVYAZ-UHFFFAOYSA-N, CBTVGIZVANVGBH-UHFFFAOYSA-N, CRVGTESFCCXCTH-UHFFFAOYSA-N, DKGAVHZHDRPRBM-UHFFFAOYSA-N, DNIAPMSPPWPWGF-UHFFFAOYSA-N, GSEJCLTVZPLZKY-UHFFFAOYSA-N, HPXRVTGHNJAIIH-UHFFFAOYSA-N, HZAXFHJVJLSVMW-UHFFFAOYSA-N, HZKDSQCZNUUQIF-UHFFFAOYSA-M, KBPLFHHGFOOTCA-UHFFFAOYSA-N, KFZMGEQAYNKOFK-UHFFFAOYSA-N, KLTUZFZUYLXTFF-UHFFFAOYSA-N, LFQSCWFLJHTTHZ-UHFFFAOYSA-N, LRHPLDYGYMQRHN-UHFFFAOYSA-N, LVTYICIALWPMFW-UHFFFAOYSA-N, LYCAIKOWRPUZTN-UHFFFAOYSA-N, LZJIBRSVPKKOSI-UHFFFAOYSA-O, MTHSVFCYNBDYFN-UHFFFAOYSA-N, MWKFXSUHUHTGQN-UHFFFAOYSA-N, NEQXUPRFDXNNTA-UHFFFAOYSA-N, OHLUUHNLEMFGTQ-UHFFFAOYSA-N, OKKJLVBELUTLKV-UHFFFAOYSA-N, PEDCQBHIVMGVHV-UHFFFAOYSA-N, QTBSBXVTEAMEQO-UHFFFAOYSA-N, RJQQOKKINHMXIM-UHFFFAOYSA-N, UEEJHVSXFDXPFK-UHFFFAOYSA-N, UPCXAARSWVHVLY-UHFFFAOYSA-N, UWHCKJMYHZGTIT-UHFFFAOYSA-N, VVLAIYIMMFWRFW-UHFFFAOYSA-N, YEYKMVJDLWJFOA-UHFFFAOYSA-N, YIWUKEYIRIRTPP-UHFFFAOYSA-N, ZBCBWPMODOFKDW-UHFFFAOYSA-N, ZHNUHDYFZUAESO-UHFFFAOYSA-N, ZIBGPFATKBEMQZ-UHFFFAOYSA-N, ZSIAUFGUXNUGDI-UHFFFAOYSA-N, ZXEKIIBDNHEJCQ-UHFFFAOYSA-N
+- D1 域内化合物 57 个
+- D2 逐种子域外名册（化合物数）：1234:7, 2026:8, 31337:7, 42:7, 7:7
+- D2 fallback 折数（训练标签只有一类）：{'42': 0, '1234': 0, '2026': 0, '31337': 0, '7': 0}
+- D3 诊断名册：OHLUUHNLEMFGTQ-UHFFFAOYSA-N, ZHNUHDYFZUAESO-UHFFFAOYSA-N, NEQXUPRFDXNNTA-UHFFFAOYSA-N, XLYOFNOQVPJJNP-UHFFFAOYSA-N, LZJIBRSVPKKOSI-UHFFFAOYSA-O, RJQQOKKINHMXIM-UHFFFAOYSA-N, VVLAIYIMMFWRFW-UHFFFAOYSA-N
+
+## 诚实边界
+
+- 全域读数照报：plus_both 在 457/97/276 上的跨种子均值就是主记分牌读数，域内数不替换它。
+- 域内数不得当作达标题；本枪 promoted 恒为 false。
+- 种子集跑前锁定；多种子只消种子方差，不改折结构与超参。
+- D3 依赖标签幅度，只是诊断件，不是可部署的域规则。
+- D1 是宽口径的质子性极性类（含全部醇），该族的尾部才是高 ε 自缔合液体；名册全量报出。
+- 安慰剂洗牌在 v1 里钉死为 seed 42，逐字复用；地板是训练折均值。
+- 本枪不动任何冻结数字：0.4766400383507876 只被复现，不被改写；0.4091179943351143 不在本记分牌上。
+
+## 产物
+
+- 脚本：probes/dielectric_applicability_domain.py
+- 预注册：probes/dielectric_applicability_domain_prereg.json（sha256 b69084ef67a34e05134d3d7712de34e413b0b1a56e2ed39d35b37b185894894f）
+- 读数表：probes/artifacts/dielectric_applicability_domain_repeats.csv
+- 摘要：probes/dielectric_applicability_domain_summary.json
+- 墙钟：4774.9 s，jobs 1
+

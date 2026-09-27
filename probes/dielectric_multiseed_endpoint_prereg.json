@@ -1,0 +1,54 @@
+{
+  "schema": "dielectric_multiseed_endpoint/prereg@1",
+  "lane": "W18-1",
+  "title": "Multi-seed endpoint upgrade for the frozen main-scoreboard arms",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-27T14:10:00Z",
+  "why": "W17 scored every arm at the single frozen fold seed 42. Shot 16 showed that a 0.6081 reading on one arm carried a favourable seed-42 draw (five-seed mean 0.586114). This lane changes no model: it re-scores the four frozen merge arms over a pre-locked five-seed set and defines the endpoint as the cross-seed mean, so a seed-42 reading stops being the endpoint by construction.",
+  "frozen_side": {
+    "scoreboard": "the frozen main scoreboard, 457 rows / 97 compounds / 276 (compound, T) pairs",
+    "splitter": "GroupKFold by InChIKey, 10 repeats x 5 folds",
+    "model": "XGBRegressor with the frozen v1.0 hyper-parameters, n_jobs=1",
+    "representation_read": "Morgan+Physical = 0.5 * (Morgan + Physical), the frozen blend",
+    "headline_unchanged": 0.4766400383507876,
+    "baseline_unchanged": 0.4091179943351143
+  },
+  "seeds": [
+    42,
+    1234,
+    2026,
+    31337,
+    7
+  ],
+  "anchor_seed": 42,
+  "anchor_tolerance": 1e-9,
+  "arms": {
+    "baseline": "Morgan+Physical on the frozen physical block (13 columns)",
+    "plus_lever4": "Morgan+Physical with the lever-4 conformer-average dipole migration",
+    "plus_lever8": "Morgan+Physical plus the five-column Li+ coordination block",
+    "plus_both": "Morgan+Physical plus lever 4 plus lever 8 (the promoted headline arm)"
+  },
+  "seed_42_anchors": {
+    "baseline": 0.4091179943351143,
+    "plus_lever4": 0.4649564468823552,
+    "plus_lever8": 0.4531768105508106,
+    "plus_both": 0.4766400383507876
+  },
+  "endpoint_rule": "the endpoint for any arm is the arithmetic mean of its per-seed 10-repeat R2 means over the pre-locked five-seed set; the seed-42 value is reported beside it as a single-draw reading, never alone",
+  "decision_rule": {
+    "no_model_change": true,
+    "promotes_no_reading": true,
+    "what_it_can_do": "it can only remove seed variance from an endpoint definition; it adds no information and cannot on its own lift any arm above a target",
+    "verdict_if_anchors_reproduce": "endpoint_upgraded",
+    "verdict_if_anchors_move": "refused"
+  },
+  "accounting": {
+    "shots": 0,
+    "models_fitted_here": 20
+  },
+  "restrictions": [
+    "no Reaxys-derived value enters this lane",
+    "the frozen headline and the frozen baseline are never modified",
+    "the cross-seed mean and the seed-42 reading are never subtracted from each other"
+  ]
+}

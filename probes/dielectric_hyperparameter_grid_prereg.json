@@ -1,0 +1,228 @@
+{
+  "schema": "dielectric_hyperparameter_grid/prereg@1",
+  "task": "w18_p0_hyperparameter_grid",
+  "week": "week18",
+  "arm": "W18-P0_hyperparameter_grid",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-27T13:40:00Z",
+  "non_blind": true,
+  "non_blind_reason": "the seed-42 single-representation reading 0.6080587938801277 and the shot-17 head sweep were known before this file was written; this is a within-family hyperparameter grid, not an external test",
+  "question": "on the frozen protocol (5 folds x 10 repeats, GroupKFold by InChIKey, Physical(lever4), train_mask full_base 2029 rows, score_mask scored 457 rows / 97 compounds), does retuning the XGBoost hyperparameters of the dense physical configuration push the cross-seed endpoint above 0.60?",
+  "representation": "Physical(lever4)",
+  "frozen_protocol": {
+    "n_splits": 5,
+    "n_repeats": 10,
+    "group_key": "InChIKey",
+    "context_builder": "dielectric_representation_seed_robustness.build_context",
+    "splitter": "dielectric_representation_seed_robustness.splits_for -> dielectric_room_window_paired.masked_splits",
+    "train_mask": "full_base (2029 base rows) -- the shot-13 full_table_lever4 configuration",
+    "score_mask": "scored (457 rows over 97 compounds)",
+    "tail": "drop_thin_folds(min_test_rows=MIN_TEST_ROWS_PER_FOLD=2)",
+    "prediction_floor": 1,
+    "model_process": "ProcessPoolExecutor over (repeat, fold) tasks, one fold per task, every grid arm fitted inside the same worker"
+  },
+  "grid": {
+    "family": "xgboost.XGBRegressor",
+    "inherited_from_frozen_XGB_PARAMS": {
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1,
+      "random_state": 42
+    },
+    "factors": {
+      "max_depth": [
+        2,
+        3,
+        4,
+        6
+      ],
+      "n_estimators": [
+        200,
+        400,
+        800
+      ],
+      "learning_rate": [
+        0.03,
+        0.05,
+        0.1
+      ],
+      "min_child_weight": [
+        1,
+        5
+      ],
+      "subsample": [
+        0.8,
+        1
+      ],
+      "colsample_bytree": [
+        0.8,
+        1
+      ]
+    },
+    "full_cartesian_size": 288,
+    "arm_count": 7,
+    "max_arms_cap": 24,
+    "selection_rule": "three pre-registered blocks, listed in full below; (a) 12 axis-sweep arms = the frozen reference plus one factor moved at a time (depth 3/4/6, trees 400/800, lr 0.03/0.1, min_child_weight 5, subsample 1.0, colsample 1.0, both 1.0); (b) 7 capacity-ladder arms over depth x trees x lr at the frozen regularisation; (c) 3 regularisation-relaxed arms that move min_child_weight / subsample / colsample together. The full 288-point cartesian product is explicitly not run. See cost_amendment: the arm set actually registered for the run is the 7-arm subset that carries both axes."
+  },
+  "arms": [
+    "xgb_reference",
+    "hp_d3_n200_lr0.05_mcw1_ss0.8_cs0.8",
+    "hp_d4_n200_lr0.05_mcw1_ss0.8_cs0.8",
+    "hp_d6_n200_lr0.05_mcw1_ss0.8_cs0.8",
+    "hp_d2_n400_lr0.05_mcw1_ss0.8_cs0.8",
+    "hp_d2_n800_lr0.05_mcw1_ss0.8_cs0.8",
+    "hp_d4_n400_lr0.05_mcw1_ss0.8_cs0.8"
+  ],
+  "arm_params": {
+    "xgb_reference": {
+      "n_estimators": 200,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1,
+      "min_child_weight": 1
+    },
+    "hp_d3_n200_lr0.05_mcw1_ss0.8_cs0.8": {
+      "n_estimators": 200,
+      "max_depth": 3,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1,
+      "min_child_weight": 1
+    },
+    "hp_d4_n200_lr0.05_mcw1_ss0.8_cs0.8": {
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1,
+      "min_child_weight": 1
+    },
+    "hp_d6_n200_lr0.05_mcw1_ss0.8_cs0.8": {
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1,
+      "min_child_weight": 1
+    },
+    "hp_d2_n400_lr0.05_mcw1_ss0.8_cs0.8": {
+      "n_estimators": 400,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1,
+      "min_child_weight": 1
+    },
+    "hp_d2_n800_lr0.05_mcw1_ss0.8_cs0.8": {
+      "n_estimators": 800,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1,
+      "min_child_weight": 1
+    },
+    "hp_d4_n400_lr0.05_mcw1_ss0.8_cs0.8": {
+      "n_estimators": 400,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1,
+      "min_child_weight": 1
+    }
+  },
+  "reference_arm": "xgb_reference",
+  "seeds": [
+    42,
+    1234,
+    2026,
+    31337,
+    7
+  ],
+  "anchor_seed": 42,
+  "anchor_tolerance": 1e-9,
+  "decision_rule": {
+    "endpoint": "cross_seed_mean",
+    "pass_threshold_r2": 0.6,
+    "improvement_bar_r2": 0.02,
+    "kill_bar_r2": 0.005,
+    "seeds_locked": [
+      42,
+      1234,
+      2026,
+      31337,
+      7
+    ],
+    "best_arm": "highest cross-seed mean R2 among the non-reference arms; ties break on arm name",
+    "confirmed": "the best non-reference arm has cross-seed mean R2 > 0.60 AND its cross-seed mean improvement over xgb_reference is >= +0.02",
+    "partial": "the best non-reference arm has cross-seed mean improvement over xgb_reference >= +0.005 but the confirmed gate is not met",
+    "refuted": "the best non-reference arm has cross-seed mean improvement over xgb_reference < +0.005",
+    "placebo": "verdict is placebo when --placebo is used; the target is permuted on the scored rows only before fitting"
+  },
+  "anchors": {
+    "seed": 42,
+    "xgb_reference_physical_lever4": 0.6080587938801277,
+    "tolerance": 1e-9,
+    "fold_signature": "must equal dielectric_pool_expansion_benchmark.fold_signature of the frozen scoreboard splits",
+    "on_mismatch": "refuse to report anything else and exit non-zero"
+  },
+  "promotion_rule": "no reading from this probe is promoted; the frozen headline stays 0.4766400383507876 and the frozen baseline stays 0.4091179943351143 regardless of the outcome",
+  "outputs": [
+    "probes/dielectric_hyperparameter_grid_summary.json",
+    "reports/dielectric_hyperparameter_grid.md",
+    "probes/artifacts/dielectric_hyperparameter_grid_repeats.csv"
+  ],
+  "pre_run_correction": "2026-09-27: the first transcription of arm_params hard-coded subsample=0.8/colsample_bytree=0.8 for every arm, which contradicted the arm names and the locked grid factors; the script refused to start before any fit was run, the table was rebuilt from the arm names, and the digest was re-pinned. No result existed when this was corrected. 2026-09-27 (second correction, still before any fit): the 22-arm grid was measured to need over 2.6 hours of pure CPU per seed set, which no single session can pay; the registered arm set was reduced to the 7 arms that carry both grid axes plus one interaction point, the reduced table was rebuilt from the arm names, and the digest was re-pinned. No result existed when this was corrected.",
+  "cost_amendment": {
+    "recorded_at_utc": "2026-09-27T15:45:00Z",
+    "rule": "amended before the first fit; no reading of any arm existed when this was written",
+    "measurement": [
+      "one frozen-head fit (200 trees, max_depth 2) on the 2029 x 2061 dense Physical(lever4)+Morgan design matrix costs 4.16 s CPU (8.04 s wall while the machine was loaded)",
+      "the deepest registered arm (800 trees, max_depth 6) costs about 35 s of CPU for the same matrix",
+      "XGBoost histogram construction is O(rows x features), so the 2048 dense ECFP columns dominate the cost and no hyper-parameter of the frozen head changes it"
+    ],
+    "registered_cost": "22 arms x 50 folds x 5 seeds = 5,500 fits per seed, about 18,500 s of CPU per seed, i.e. over 2.6 hours of pure CPU for the five-seed set before any process overhead",
+    "amended_arm_count": 7,
+    "preserved": "both registered axes -- depth at the frozen tree count (3 / 4 / 6) and tree count at the frozen depth (400 / 800) -- plus one depth x capacity interaction point (depth 4, 400 trees)",
+    "dropped": "the learning-rate / min_child_weight / subsample / colsample axis variants (4.16 s per fit each, dropped for budget only) and the eight 800-tree lattice points (4x to 8x the reference cost each)",
+    "unchanged": "the representation, the pool, the splitter, the frozen head, the five locked seeds, the anchor and the decision rule are all untouched by this amendment",
+    "no_result_existed": true
+  }
+}

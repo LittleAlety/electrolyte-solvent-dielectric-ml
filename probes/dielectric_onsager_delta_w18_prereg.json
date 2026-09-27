@@ -1,0 +1,94 @@
+{
+ "schema": "dielectric_onsager_delta_w18/prereg@1",
+ "task": "w18_p2_onsager_delta",
+ "week": "week18",
+ "arm": "W18-P2_onsager_delta",
+ "status": "locked_before_run",
+ "locked_at_utc": "2026-09-27T14:40:00Z",
+ "non_blind": true,
+ "non_blind_reason": "the seed-42 anchor 0.6080587938801277, the frozen five-seed mean 0.5861142332208197 and the Week 8 C4 delta readings were all known before this file was written",
+ "question": "with the pool, folds, scorer and the 13-column Physical(lever4) block frozen, does swapping the *target* (fit epsilon - epsilon_Onsager instead of epsilon, then add the analytic term back) beat the frozen head on the five-seed mean R2?",
+ "representation": "Physical(lever4)",
+ "frozen_protocol": {
+  "n_splits": 5,
+  "n_repeats": 10,
+  "group_key": "InChIKey",
+  "context_builder": "dielectric_representation_seed_robustness.build_context",
+  "splitter": "dielectric_representation_seed_robustness.splits_for -> dielectric_room_window_paired.masked_splits",
+  "train_mask": "full_base (2029 base rows)",
+  "score_mask": "scored (457 rows over 97 compounds)",
+  "tail": "drop_thin_folds(min_test_rows=MIN_TEST_ROWS_PER_FOLD=2)",
+  "prediction_floor": 1,
+  "head_process": "ProcessPoolExecutor over (repeat, fold) tasks, one fold per task",
+  "seed_handling": "exactly the shot-16 convention: only the *fold draw* changes with the seed, the model keeps the frozen random_state = SEED = 42 on every seed. The reference arm must therefore reproduce all five frozen full_table_lever4/Physical readings bit for bit, not just seed 42."
+ },
+ "onsager_constants": {
+  "avogadro_per_mol": 6.02214076e+23,
+  "boltzmann_j_per_k": 1.380649e-23,
+  "vacuum_permittivity_f_per_m": 8.8541878128e-12,
+  "debye_to_coulomb_metre": 3.335640951981521e-30,
+  "source": "src/electrolyte_ml/xtb_features.py (the repository's canonical Onsager implementation)"
+ },
+ "onsager_definition": {
+  "high_frequency_epsilon": "n2 = (1 + 2 q) / (1 - q) with q = N_A alpha / (3 V_m) (Lorentz-Lorenz)",
+  "reaction_field": "A = N_A mu^2 / (9 eps_0 k_B T V_m)",
+  "solved_equation": "(eps - n2)(2 eps + n2) / (eps (n2 + 2)^2) = A  =>  eps = (L + sqrt(L^2 + 8 n2^2)) / 4 with L = n2 + A (n2 + 2)^2",
+  "dipole_density_term": "mu_sq_over_Vm = dipole_D^2 / V_m with dipole_D in debye and V_m in m^3 mol^-1, so mu_sq_over_Vm carries the unit D^2 mol m^-3",
+  "unit_conversion": "(mu_sq_over_Vm) * (debye_to_coulomb_metre^2) * N_A / (9 eps_0 k_B T) is dimensionless because D^2 -> C^2 m^2 and mol^-1 * N_A -> 1",
+  "molar_volume_from_the_matrix": "V_m = molecular_volume_A3 * 1e-30 * N_A: the PHYSICAL_COLUMNS entry molecular_volume_A3 is a per-molecule volume in Angstrom^3, not a molar volume. This was the first unit trap and it is why the raw column cannot be used as V_m directly.",
+  "polarizability_density": "q = polarizability_A3 / (3 * molecular_volume_A3) = alpha_over_Vm / 3; the Avogadro factor cancels because both entries are per-molecule volumes",
+  "validation": "the vectorised form must match electrolyte_ml.xtb_features.onsager_dielectric_estimate row by row; the max absolute gap is recorded in the summary and must be <= 1e-09",
+  "sanity_check_targets": "water ~44 (obs 87), methanol ~17 (obs 39), dimethyl sulfoxide ~41 (obs 51), acetonitrile ~54 (obs 38); the estimate has to be the same order of magnitude as the observation and must never reach the eps > 60 zone, which is the known association failure"
+ },
+ "arms": [
+  "reference_direct",
+  "onsager_analytic_only",
+  "onsager_delta_xgb",
+  "onsager_delta_recomputed"
+ ],
+ "arm_definitions": {
+  "reference_direct": "the frozen head XGBRegressor(**XGB_PARAMS, random_state=SEED=42) fits epsilon itself; this is the anchor and must reproduce all five frozen full_table_lever4/Physical readings bit for bit",
+  "onsager_analytic_only": "no learning: the closed-form Onsager estimate from the frozen lever4 columns (dipole_D, molecular_volume_A3, polarizability_A3, T_K) is the whole prediction",
+  "onsager_delta_xgb": "the same frozen head fits the residual epsilon - epsilon_Onsager and the analytic term is added back on the held-out fold",
+  "onsager_delta_recomputed": "the same delta scheme with the analytic term recomputed from the frozen v0.4 conformer table at probes/artifacts/dielectric_xtb_full_table_migration_conformers.csv using the single-conformer dipole density mu_sq_over_Vm_frozen, i.e. a different dipole source than the conformer-averaged one the lever4 column carries; compounds without a table row fall back to the lever4 term"
+ },
+ "arm_notes": {
+  "conformer_mean_route_is_not_a_separate_arm": "the table's mu_sq_over_Vm_conformer_mean equals the lever4 column by construction (dipole_map_from_conformer_rows feeds dipole_D and mu_sq_over_Vm = dipole_D^2 / V_m), so a conformer-mean arm would duplicate onsager_delta_xgb. The equality is verified at run time and recorded as a wiring check instead.",
+  "no_hyperparameter_search": "the head stays the frozen XGB_PARAMS and no grid is run, because Week 17 shot 17 showed inner-fold family selection does not transfer at 97 compounds / 276 samples"
+ },
+ "judged_arms": [
+  "onsager_delta_xgb",
+  "onsager_delta_recomputed"
+ ],
+ "reference_arm": "reference_direct",
+ "decision_rule": {
+  "endpoint": "cross-seed mean of the 10-repeat-mean R2 over the pre-registered seed set 42,1234,2026,31337,7",
+  "confirmed": "cross-seed mean of the arm >= cross-seed mean of reference_direct + 0.02",
+  "partial": "cross-seed mean of the arm >= cross-seed mean of reference_direct + 0.005 but below the confirmed bar",
+  "refuted": "no judged arm reaches +0.005 over reference_direct",
+  "placebo": "verdict is placebo when --placebo is used; the target is permuted on the scored compounds only and every delta arm must collapse towards the direct arm",
+  "min_confirming_seeds": 5
+ },
+ "anchors": {
+  "tolerance": 1e-9,
+  "per_seed_reference_direct": {
+   "7": 0.5738259459028902,
+   "42": 0.6080587938801277,
+   "1234": 0.5653494903237062,
+   "2026": 0.5848044432962747,
+   "31337": 0.5985324927011
+  },
+  "cross_seed_reference_direct": 0.5861142332208197,
+  "source": "probes/dielectric_representation_seed_robustness_summary.json (arm full_table_lever4, representation Physical, seed_rows)",
+  "fold_signature": "must equal dielectric_pool_expansion_benchmark.fold_signature of the frozen scoreboard splits at the anchor seed 42 (only seed 42 shares the frozen fold draw; every other seed re-draws the folds by design, and the resulting signature is recorded as information)",
+  "on_mismatch": "at seed 42, refuse to report anything else and exit non-zero"
+ },
+ "known_prior": "Week 8 C4 ran an Onsager delta layer under an MAE / RepeatedKFold protocol on a different pool; the confirmatory arm D1_delta_core_morgan scored 8.54 MAE against the plain direct regressor R0 at 6.36, and Onsager was not promoted to a standalone predictor. That reading is a prior, not a result of this probe.",
+ "promotion_rule": "no reading from this probe is promoted; the frozen headline stays 0.4766400383507876 and the frozen baseline stays 0.4091179943351143 regardless of the outcome",
+ "outputs": [
+  "probes/dielectric_onsager_delta_w18_summary.json",
+  "reports/dielectric_onsager_delta_w18.md",
+  "probes/artifacts/dielectric_onsager_delta_w18_repeats.csv",
+  "probes/artifacts/dielectric_onsager_delta_w18_folds.csv"
+ ]
+}

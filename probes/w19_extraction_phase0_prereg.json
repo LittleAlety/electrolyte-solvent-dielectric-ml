@@ -1,0 +1,256 @@
+{
+  "schema": "w19_extraction_phase0/prereg@1",
+  "task": "w19_d4_extraction_template_v0_phase0",
+  "week": "week19",
+  "deliverable": "D4",
+  "title": "文献抽取探针 Phase-0：抽取模板 v0 与预注册",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-27T16:39:35Z",
+  "authority": {
+    "plan": "E:/大二/d2qc/电解液（长期项目）/文献调研/重点且同向/Week19立项计划_文献驱动三线.md",
+    "sections": [
+      "W19-2",
+      "W19-9"
+    ],
+    "in_repo_style_references": [
+      "probes/dielectric_hyperparameter_grid_prereg.json",
+      "probes/dielectric_applicability_domain_prereg.json"
+    ]
+  },
+  "file_purpose": "Phase-0 设计件：落定抽取模板 v0、建议门槛、红线与许可判读。本件不含任何抽取结果，本周不执行抽取，不产生任何读数，不占主记分牌。",
+  "executes_extraction_this_week": false,
+  "produces_reading": false,
+  "thresholds_pending_author_confirmation": true,
+  "author_confirmation_note": "本件内全部门槛、通道裁定与 shot 记账均为「建议 + 依据 + 待作者确认」；待作者确认前，不得由本件单方生效，也不得据此宣称任何通道达标或路线成立。",
+  "design_only_language": "建议门槛；待作者确认，不得由本稿单方生效",
+  "precedents": [
+    {
+      "id": "EDB",
+      "claim": "250+ 篇文献 → 18,316 条条目",
+      "source": "计划 §W19-2",
+      "in_repo_correction": "本仓 reports/w19_state_audit.md（D1 实测）判定该 18,316 实为「EDB + MP」合计，非 EDB 单独条目数；引用时须写「EDB+MP 合计 18,316」。"
+    },
+    {
+      "id": "s43246",
+      "claim": "RAG + LLM 使筛选精度 30% → 100%",
+      "source": "计划 §W19-2；原文 s43246-026-01100-5_reference.pdf",
+      "use": "作为「文献抽取可行性」的流程证据；其数据不可搬运（许可见 license）。"
+    }
+  ],
+  "mission": "文献抽取是破 157–161 开源 ε 物质封顶的唯一新路线；收益在 Week 20+，本周只做 Phase-0 可行性验证与模板设计。",
+  "template_v0": {
+    "record_granularity": "一条记录 = 一个（化合物, 通道性质, 数值）观测行",
+    "fields": [
+      {
+        "name": "compound_name",
+        "type": "string",
+        "required": "是",
+        "missing_behaviour": "整条丢弃",
+        "validation": "去首尾空白后长度 ≥ 2；保留原文写法，不得规范化成 IUPAC 名"
+      },
+      {
+        "name": "smiles",
+        "type": "string",
+        "required": "是",
+        "missing_behaviour": "整条丢弃",
+        "validation": "RDKit MolFromSmiles 可解析；解析失败即丢弃，不得人工替写结构"
+      },
+      {
+        "name": "inchikey",
+        "type": "string",
+        "required": "是",
+        "missing_behaviour": "由 SMILES 现算；算不出则整条丢弃",
+        "validation": "27 字符标准形（XXXXXXXXXXXXXX-XXXXXXXXXX-N）；须与 smiles 现算值逐位一致"
+      },
+      {
+        "name": "disambiguation_confidence",
+        "type": "float [0,1]",
+        "required": "是",
+        "missing_behaviour": "整条丢弃（不得默认 1.0）",
+        "validation": "名称 → 结构消歧置信度；< 0.90 进人工复核队列，不得直接入库"
+      },
+      {
+        "name": "property_value",
+        "type": "float",
+        "required": "是",
+        "missing_behaviour": "整条丢弃",
+        "validation": "有限实数；须过量级守卫；超界即人工复核"
+      },
+      {
+        "name": "unit",
+        "type": "string（受控词表）",
+        "required": "是",
+        "missing_behaviour": "整条丢弃",
+        "validation": "只收受控词表成员；原文非表内单位时换算过程写入 unit_note，不得静默丢弃"
+      },
+      {
+        "name": "temperature_K",
+        "type": "float",
+        "required": "η / HOMO-LUMO / 氧化还原：是；ε：条件必填",
+        "missing_behaviour": "整条丢弃",
+        "validation": "单位恒为 K；0 < T ≤ 1000；原文给 °C 时换算并留 temperature_note"
+      },
+      {
+        "name": "method",
+        "type": "string（受控词表）",
+        "required": "是",
+        "missing_behaviour": "整条丢弃",
+        "validation": "只收受控词表成员；必须区分 reported 与 estimated，不得合并口径"
+      },
+      {
+        "name": "source_doi",
+        "type": "string",
+        "required": "是（硬门）",
+        "missing_behaviour": "不入库",
+        "validation": "形如 10.xxxx/...；须可解析且对应一份仓库外合法来源"
+      },
+      {
+        "name": "locator_table_figure",
+        "type": "string",
+        "required": "是（硬门）",
+        "missing_behaviour": "不入库",
+        "validation": "形如 Table 3 row 7 / Figure 2b / page 5 Table S2；无定位视为未核"
+      },
+      {
+        "name": "extraction_confidence",
+        "type": "float [0,1]",
+        "required": "是",
+        "missing_behaviour": "整条丢弃",
+        "validation": "抽取（非消歧）置信度；< 0.95 进人工复核队列"
+      },
+      {
+        "name": "access_class",
+        "type": "string（写入时自动）",
+        "required": "是",
+        "missing_behaviour": "-",
+        "validation": "open_oa 才可能入 data/；restricted_crosscheck_only 永不入 data/、永不入任何池"
+      },
+      {
+        "name": "source_lane",
+        "type": "string",
+        "required": "是",
+        "missing_behaviour": "整条丢弃",
+        "validation": "取值 ∈ {eta, homo_lumo, redox, epsilon}，决定走哪条通道门"
+      }
+    ],
+    "field_groups": {
+      "disambiguation": [
+        "compound_name",
+        "smiles",
+        "inchikey",
+        "disambiguation_confidence"
+      ],
+      "numeric": [
+        "property_value",
+        "unit",
+        "temperature_K",
+        "method"
+      ],
+      "hard_gates": [
+        "source_doi",
+        "locator_table_figure"
+      ],
+      "confidence": [
+        "extraction_confidence"
+      ],
+      "governance": [
+        "access_class",
+        "source_lane"
+      ]
+    }
+  },
+  "channel_priority": {
+    "first": [
+      "eta",
+      "homo_lumo",
+      "redox"
+    ],
+    "rationale": "计划 §W19-2：η、HOMO-LUMO、氧化还原先做。η 存量最大且离过门最近（组键 MAE 0.174772 vs 门 0.15）；HOMO/LUMO 已有基线池可做组外对照；氧化还原有 RX-392 存量 + N14 安全通道。",
+    "epsilon_template_activation": "deferred_to_w18_7",
+    "epsilon_branch": {
+      "if_w18_7_freezes_the_lane": "ε 模板转档案：template_v0 保留为历史规格，不投入 Week 20 规模化，不占抽取预算",
+      "if_w18_7_unfreezes_or_replaces_the_lane": "ε 通道按与 η 同一套字段模板另开预注册立项，不在本件内改口径"
+    },
+    "author_confirmation_required": true
+  },
+  "phase0_plan": {
+    "corpus": "20–50 篇 OA（开放获取）论文；非 OA 一律转人工单篇复核，不进批量管线",
+    "method": "LLM + RAG 抽取，模板由 template_v0 字段清单驱动",
+    "human_audit_subset": "精度/召回的金标准子集；子集大小与抽样方式待作者确认（建议 ≥ 20% 或 ≥ 50 条，取大者）",
+    "staging": "先跑模板稳定性小样本（≤ 5 篇）；模板 v0 冻结后才放量；放量后改字段即需重开预注册",
+    "executes_now": false
+  },
+  "thresholds": {
+    "status": "proposed_pending_author_confirmation",
+    "note": "建议门槛；待作者确认，不得由本稿单方生效。作者未确认前不得作为验收判据，不得据此宣称任何通道达标。",
+    "numeric_field_precision_min": 0.95,
+    "numeric_field_recall_min": 0.8,
+    "numeric_field_scope": [
+      "property_value",
+      "unit",
+      "temperature_K"
+    ],
+    "compound_disambiguation_precision_min": 0.9,
+    "compound_disambiguation_scope": "compound_name -> inchikey",
+    "doi_plus_locator_completeness_min": 1,
+    "doi_plus_locator_rule": "硬门：完整率 = 100%，缺则不入库（不是降级，是不入库）",
+    "magnitude_guards": {
+      "eta_Pa_s": [
+        0,
+        10
+      ],
+      "homo_lumo_eV": [
+        -15,
+        5
+      ],
+      "redox_vs_Li_V": [
+        0,
+        10
+      ],
+      "epsilon": [
+        1,
+        300
+      ],
+      "note": "超界一律人工复核，不得静默入库；同为建议值，待作者确认"
+    }
+  },
+  "branches": {
+    "pass": "全部四条门槛达成 ⇒ Week 20 立项规模化：语料扩到 200+ 篇 OA，按 channel_priority 放量；每条记录仍带 DOI + 定位；入库前做 Reaxys 同源排除",
+    "fail": "任一门槛未达 ⇒ 降级为半自动辅助工具：LLM 只做候选定位与预填，每条记录人核后才可能入库；不硬上规模；半自动产物不得直接当训练数据",
+    "lock_rule": "判据与分支须在本预注册锁定后才可执行抽取；看到结果后再改门槛即违反 §W19-9（lever-8 先例）"
+  },
+  "red_lines": [
+    "图源读数与受限库值一律 restricted_crosscheck_only：只作交叉核对，永不入 data/、永不入任何池、永不入任何特征",
+    "每条记录必须带 DOI + 表/图定位；无定位不入库（硬门）",
+    "出版商站点手动逐条查询合规；批量爬虫禁止；OA API 除外且需登记（API 名、许可条款、抓取时间窗、条数）",
+    "Reaxys 数值禁入池 / 特征 / 交付包（§28.33 红线延续）；与 Reaxys 同源同值一律按 restricted_crosscheck_only 处置，不得因文献里印了同一个数而洗白入库"
+  ],
+  "license": {
+    "field_design": "EDB / ElectrolyteGPT 的字段设计可借鉴（思想不受版权保护）；本模板 v0 为「抄字段设计、按四通道改造」的自研版本",
+    "data": "EDB / ElectrolyteGPT 的数据受 CC-BY-NC-ND 约束：不得改造后入库（ND 禁改造后分发/入库，NC 禁商用）",
+    "conclusion": "只学字段设计，不取其数据",
+    "s43246": "RAG + LLM 流程按「方法可借鉴、数据不可搬运」处理；30% → 100% 是流程证据，不是可搬运语料"
+  },
+  "shot_accounting": {
+    "status": "proposed_pending_author_confirmation",
+    "planned_shot_in_the_plan": 21,
+    "plan_reference": "§W19-2 标题预分配 shot 21",
+    "open_question_from_w19_9": "shot 19 / 20 是否已用掉编号：对应资产在仓内已存在（Batt↔PubChemQC 标定 n = 111；Onsager 探针已出 decision=go）",
+    "recommended_reading": "这两枪本周只做复核性工作（组外核对，不产生新主记分牌读数），按「复核不占号」处理",
+    "recommended_shot": 21,
+    "fallback_if_shot_19_20_counted": 22,
+    "this_file_consumes_a_shot": false,
+    "this_file_consumes_a_shot_rationale": "本件是 Phase-0 设计件，本周不执行抽取；按 §W19-9「每枪先锁预注册」，本件锁定的是执行前的模板与门槛，占号发生在抽取执行时",
+    "basis": [
+      "§W19-2（shot 21 预分配 + 先锁预注册）",
+      "§W19-9（编号裁定须写入预注册且不得事后改；预注册永不事后修订）"
+    ],
+    "author_confirmation_required": true
+  },
+  "promotion_rule": "本件不提升任何读数、不占主记分牌；W18 冻结头条 0.4766400383507876 与基线 0.4091179943351143 不受本件影响；累计主记分牌尝试次数不变（11）。",
+  "outputs": {
+    "report": "reports/w19_extraction_phase0.md",
+    "prereg": "probes/w19_extraction_phase0_prereg.json",
+    "tests": "tests/test_w19_extraction_phase0.py"
+  }
+}

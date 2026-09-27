@@ -1,0 +1,60 @@
+{
+  "schema": "dielectric_log_scale_calibration/prereg@1",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-27T12:00:00Z",
+  "non_blind": true,
+  "non_blind_reason": "锚点 0.6080587938801277 与 lever 3 的 log 空间 0.551 读数都已在 W17 记录里公开；本枪是诊断性扩展，不是盲测。",
+  "lane": "Week 18 P6 (log space training + isotonic calibration back to the original scale)",
+  "question": "epsilon 跨 1--178，量级极不正态。log 空间 R² 现成 0.551，但 exp 回原尺度后 R² 为负。把 log 空间的预测用保序回归（训练折内拟合）校准回原尺度，原尺度 R² 能不能变正、能不能超过锚点？",
+  "frozen": {
+    "headline": 0.4766400383507876,
+    "baseline": 0.4091179943351143,
+    "single_representation_anchor": 0.6080587938801277,
+    "lever3_log_space_r2": 0.551,
+    "lever3_original_scale_r2": -0.105,
+    "head_params": {
+      "n_estimators": 200,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1
+    },
+    "random_state": 42,
+    "protocol": "5 folds x 10 repeats, GroupKFold by InChIKey, seed 42 anchor",
+    "seeds": [
+      42,
+      1234,
+      2026,
+      31337,
+      7
+    ],
+    "anchor_seed": 42,
+    "anchor_tolerance": 1e-9
+  },
+  "arms": {
+    "reference_lever4": "冻结头 + physical_lever4，直接在 epsilon 原尺度上拟合；锚点臂",
+    "log_space_raw": "冻结头 + physical_lever4，在 log(epsilon) 上拟合，预测后 exp 回原尺度，并按惯例下限截到 1.0",
+    "log_space_isotonic": "同上训练 log 空间模型；用训练折内 in-sample 的 log 预测对训练折真值拟合 IsotonicRegression(out_of_bounds='clip')，再把它应用到测试折的 log 预测上，最后截到 1.0"
+  },
+  "calibration_rule": "保序映射只用训练折（in-sample 预测 + 训练折真值），测试折的任何信息都不进入校准；不做交叉拟合，属已注册的乐观性来源，写进报告。",
+  "optional_arm_not_run": {
+    "name": "log_space_isotonic_spearman",
+    "reason": "保序回归只依赖预测的次序，所以「按秩做保序」与 log_space_isotonic 在数值上恒等；注册一个恒等重复臂属于凑数，故不跑。",
+    "registered_alternative_not_run": "out-of-fold（内层 GroupKFold）交叉拟合的保序校准是真正不同的变体，本枪不跑，留给下一枪。"
+  },
+  "decision_rule": {
+    "primary": "原尺度跨种子均值 R²(log_space_isotonic) > 原尺度跨种子均值 R²(reference_lever4) ⇒ improved",
+    "partial": "原尺度 R² 未超锚点，但 MAE 均值改善 >= 0.01、或 Spearman 均值改善 >= 0.01、或 AUC>30 均值改善 >= 0.005，三者任一成立 ⇒ partial",
+    "refuted": "以上都不成立 ⇒ refuted",
+    "reporting_duty": "无论 verdict 如何，都必须同时报 MAE / Spearman / AUC>30，且不得宣称原尺度 R² 达标。"
+  },
+  "placebo_rule": "--placebo 用固定 rng 2026 只置换 scored 行的标签（其余行标签不动，与 shot 17 同构）；",
+  "placebo_collapse_rule": "placebo 下 reference_lever4 的跨种子均值 < 0.5 * 0.6080587938801277（即 < 0.304029）即记 collapsed=true。",
+  "promotion_rule": "本枪为诊断枪：任何读数都不 promote；冻结头条 0.4766400383507876 与冻结基线 0.4091179943351143 不动。",
+  "rerun_order": "先跑 --placebo 写出 _placebo_summary.json，再跑真实枪，真实枪会把它读进来做对照。"
+}

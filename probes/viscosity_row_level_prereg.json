@@ -1,0 +1,132 @@
+{
+ "schema_version": 1,
+ "task": "week18_w18a_viscosity_row_level_unfreeze",
+ "title": "η 通道行级解冻：把行级黏度（含解冻后的运动黏度行）折进 η 训练表，从族级升到行级",
+ "locked_at_utc": "2026-09-27T00:00:00Z",
+ "status": "locked_before_run",
+ "lock_rule": "池的定义、解冻配对规则、接受规则、折与判据在第一次运行前冻结。任何一条规则事后要改，按『更正』登记，不在原地修改。",
+ "why": "reports/walden_dn_channel.md 的 kinematic_thaw 登记件写明：联表排除表里 kinematic_viscosity_not_dynamic 共 214 条，其中 ThermoML 腿 176 条，当时只是族级读数，解冻依赖 data/density_v01.csv。该依赖已在盘上，176/176 行都能按 |ΔT| <= 1e-3 K 精确配到密度。冻结基线 probes/viscosity_baseline_summary.json 的组键读数是 MAE 0.17477197208762 / R2 0.7481271437772365，门是 MAE <= 0.15，差 0.0248。这一枪把运动黏度解冻到行级、并把 ThermoML 的纯组分 Pa*s 行一并折进训练表，看门能否过。",
+ "reuses": {
+  "pool": "data/viscosity_v01.csv，冻结基线 probes/viscosity_baseline_summary.json 的唯一输入，input_sha256 12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26",
+  "split_and_criterion": "probes/viscosity_baseline.py 的 _random_row_split / _group_key_split / build_feature_matrix / _fit_predict / transformed_metrics，逐字导入，不重写",
+  "thaw_rule": "probes/build_viscosity_v02.py 的 pair_kinematic_rows，逐字导入，不重写",
+  "model": "probes/p2_battp30k_baseline.py 的 _model(seed=42)，与冻结基线同一个拟合器",
+  "no_new_dependency": "不安装新依赖、不联网、不调用 xTB"
+ },
+ "inputs": {
+  "v01": {
+   "path": "data/viscosity_v01.csv",
+   "role": "族级池（冻结基线池）",
+   "read_only": true,
+   "expected_rows": 3582,
+   "expected_keys": 957
+  },
+  "thermoml": {
+   "path": "data/processed/viscosity_observations_thermoml.csv",
+   "role": "行级 η 的来源",
+   "read_only": true,
+   "expected_rows": 2725,
+   "expected_dynamic_pa_s_rows": 2549,
+   "expected_kinematic_rows": 176
+  },
+  "density": {
+   "path": "data/density_v01.csv",
+   "role": "解冻所依赖的密度表",
+   "read_only": true,
+   "expected_rows": 182154
+  },
+  "smiles_sources": [
+   "data/viscosity_v01.csv",
+   "data/viscosity_v02.csv",
+   "data/density_v01.csv",
+   "data/dielectric_v04.csv"
+  ]
+ },
+ "thaw_contract": {
+  "rule": "逐字复用 build_viscosity_v02.pair_kinematic_rows(kinematic_rows, density_rows)；exact 容差 1e-3 K、nearest 容差 1.0 K，取 |ΔT| 最小者，同 |ΔT| 取温度更低者。",
+  "conversion": "eta_Pa_s = viscosity_kinematic_m2_s * density_kg_m3",
+  "admission": "只有 pooled_into_main_table 为真的行（即 n_components == '1' 的纯组分行）才允许进入训练表；多组分行按冻结规则 deferred，另册登记，绝不并入。",
+  "expected": {
+   "local_rows": 176,
+   "exact_rows": 176,
+   "nearest_rows": 176,
+   "converted_rows": 176,
+   "pooled_rows": 86,
+   "deferred_multi_component_rows": 90
+  },
+  "cell_rule": "同一 (inchikey, T_K) 命中的多条密度行不平均、不去重；取法由冻结的 pair_kinematic_rows 决定，本枪不改。"
+ },
+ "dynamic_contract": {
+  "admission": "ThermoML 动态行只在 n_components == '1'（纯组分）且其 inchikey 能在本地 SMILES 源里解析出 SMILES 时才入池；多组分（n_components != '1'）记 reason=multi_component_not_single_molecule，缺 SMILES 记 reason=no_local_smiles。",
+  "expected": {
+   "dynamic_rows": 2549,
+   "pure_rows": 483,
+   "pure_rows_with_smiles": 483,
+   "pure_keys": 43,
+   "new_keys_vs_v01": 16
+  },
+  "no_averaging": "同一 (inchikey, T_K) 在 v01 与 ThermoML 侧同时出现时两条都留，不做平均、不做去重，只登记重叠单元数。"
+ },
+ "pools": {
+  "family_level": {
+   "definition": "v01 only",
+   "expected_rows": 3582,
+   "expected_keys": 957,
+   "role": "族级读数：冻结基线的原位复现"
+  },
+  "thaw_only": {
+   "definition": "v01 + 86 行解冻纯组分运动黏度",
+   "expected_rows": 3668,
+   "expected_keys": 960,
+   "role": "增量读数：只加解冻行"
+  },
+  "row_level": {
+   "definition": "v01 + 483 行 ThermoML 纯组分 Pa*s + 86 行解冻纯组分运动黏度",
+   "expected_rows": 4151,
+   "expected_keys": 976,
+   "role": "行级读数：候选过门的那一版池"
+  },
+  "no_subtraction": "三个池是三块不同的记分牌，读数只并列报，绝不相减、绝不混比。"
+ },
+ "protocol": {
+  "target": "log10(viscosity_cP) = log10(eta_Pa_s * 1000)",
+  "features": "Morgan count, radius=2, fpSize=2048, 拼接 [T_K, 1000/T_K]",
+  "model": "XGBRegressor(objective=reg:squarederror, n_estimators=800, max_depth=10, learning_rate=0.05, subsample=0.8, colsample_bytree=0.6, reg_lambda=1.0, tree_method=hist, random_state=42)",
+  "splits": "与冻结基线同一套：random_row = np.random.default_rng(42).permutation 取 TEST_FRACTION=0.2；group_key = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42) by InChIKey。同一次运行两个划分都跑，random_row 只作泄漏参照、永不进判决。",
+  "gate": {
+   "metric": "log10_cP mae on the group_key split",
+   "threshold": 0.15,
+   "direction": "mae < 0.15 才算过门"
+  },
+  "seeds": {
+   "frozen": 42,
+   "note": "本枪是冻结基线的池升级复跑，不引入多种子端点；端点口径的升级属于另一件预注册。"
+  },
+  "jobs": {
+   "default": 4
+  }
+ },
+ "decisions": {
+  "reproduce_first": "family_level 的 group_key MAE 必须复现 0.17477197208762 与 R2 0.7481271437772365（容差 1e-9）。不复现则整枪 stamp unverified，且行级/增量两块读数一律不得引用。",
+  "primary_question": "row_level 池的 group_key MAE 是否 < 0.15",
+  "vocabulary": [
+   "passes_gate_at_row_level",
+   "refuted",
+   "unverified"
+  ],
+  "honesty": "族级读数、行级读数、增量读数三块并列；若行级反而更差，如实报 refuted。若过门，必须写明是哪一版池过的门。",
+  "frozen_numbers_note": "本枪不触碰任何冻结数字：0.4091179943351143（ε 基线）、0.4766400383507876（ε 头条）都不在本枪的记分牌上。"
+ },
+ "promotion": {
+  "promoted": false,
+  "promotion_rule": "本枪只产出一块池升级读数；提升为主臂要另开一次预注册（判据 + 安慰剂 + 折签名）后才成立。"
+ },
+ "outputs": {
+  "script": "probes/viscosity_row_level_unfreeze.py",
+  "prereg": "probes/viscosity_row_level_prereg.json",
+  "summary": "probes/viscosity_row_level_summary.json",
+  "repeats_csv": "probes/artifacts/viscosity_row_level_repeats.csv",
+  "report": "reports/viscosity_row_level_unfreeze.md",
+  "tests": "tests/test_viscosity_row_level.py"
+ }
+}

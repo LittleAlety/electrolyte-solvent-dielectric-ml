@@ -5446,3 +5446,578 @@ MD / RDF 管线（整条新管线，循环 3 再评估）、介电谱反推 Deby
 - 本臂 `models_fitted = 0`；不改任何冻结读数（头条 0.4766400383507876、基线 0.4091179943351143）。
 - 产物：`reports/w17_dielectric_source_sweep_v2.md`、`probes/dielectric_source_sweep_v2_sources.csv`（13 行逐源表）。
 |
+
+## 28.38 W18-A η 行级解冻：MAE 从 0.17477 压到 0.15686（改善 −0.0179），但 0.15 门仍未过，判 refuted（2026-09-27）
+|
+**性质（必须明说）**：本臂是**池升级读数**，不改模型、不改切分、不改判据。它回答的是 Week 18 立项章里「η 通道是全漏斗里离过门最近的一处」到底能不能跨过去。
+⇒ 它**不产出新主臂**：`promotion_rule` 写明「本枪只产出池升级读数；提升为主臂要另开一次预注册（判据 + 安慰剂 + 折签名）后才成立」，故 `promoted = false`。
+|
+**预注册**：`probes/viscosity_row_level_prereg.json`（跑前锁定三池定义、切分、判据与复现容差）。
+**三个池（口径必须一起报，永不混比）**：
+- `family_level`（control）：v01 全量 **3582 行 / 957 键**，用于冻结基线原位复现。
+- `thaw_only`：只加 **86 行**解冻纯组分运动黏度（176 行 ThermoML kinematic 经 `density_v01` 密度配对 → exact 176 / nearest 176 / converted 176 → 池化 86；另有 **90 行多组分**按规则延后不入池）→ **3668 行 / 960 键**。
+- `row_level`：在 `thaw_only` 之上再加 **483 行** ThermoML 纯组分动力黏度（Pa·s）→ **4151 行 / 976 键**。
+|
+**第一步·冻结复现（先复现再报任何新数）**：族级 `group_key` 切分 MAE `0.17477197208762`、R² `0.7481271437772365`，与已发布值 `mae_abs_delta = 0.0`、`r2_abs_delta = 0.0`（容差 1e-9），输入 sha256 `12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26` 逐位一致 ⇒ `reproduced = true`。
+**第二步·实测（`group_key` 切分 = 主判据）**：
+- `thaw_only`：MAE **0.15698877870055475**（较族级 −0.01778319338706），R² 0.785284380839631
+- `row_level`：MAE **0.15686276760094522**（较族级 −0.01790920448667），R² 0.752682215223955
+- 门 = MAE < **0.15** ⇒ `family_level` / `thaw_only` / `row_level` **三池全未过**，`which_pool_passed = []`。
+|
+**verdict = `refuted`**（判据未达），**但改善是真的、必须照实记**：
+- 缺口从族级的 **0.024772** 缩到 row_level 的 **0.006863**——离过门的距离缩到原来的约 **27.7%**。
+- 本次未过门的原因不再是数据量，而是**最后 0.0069**；这是全漏斗中最接近过门的一次。
+- 诚实反例：`row_level` 的 **R² 反而低于** `thaw_only`（0.7527 < 0.7853），说明加 483 行压低的是中位数附近的绝对误差，不是量级解释力——「排序学会了、量级学不会」的同一现象在 η 通道重演。
+- 无泄漏证据：三池 `group_overlap_keys = 0`；解冻行只在 `random_row` 切分下进入测试（thaw_only 21 行 / row_level 19 行），`group_key` 切分下为 0 行 ⇒ 主判据没有靠解冻行自证。
+- 本臂 `random_row` 读数（0.0632 / 0.0617）**只作对照**，因 group 重叠 275/314 键属泄漏口径，**不得当作成绩**。
+|
+- 未改任何冻结读数：头条 `0.4766400383507876`、基线 `0.4091179943351143` 原位不动；本臂不产生 shot。
+- 产物：`probes/viscosity_row_level_unfreeze.py`、`probes/viscosity_row_level_prereg.json`、`probes/viscosity_row_level_summary.json`、`probes/artifacts/viscosity_row_level_repeats.csv`、`reports/viscosity_row_level_unfreeze.md`、`tests/test_viscosity_row_level.py`。
+|
+
+## 28.39 W18-P3 构象方差 / 柔性列：5 种子均值 0.5692 < 锚点 0.5861，判 refuted（2026-09-27）
+|
+**机制假设**：lever 4 只用了构象**均值**偶极；方差携带柔性信息，与均值正交，本该是「小补丁级」的正收益。
+**预注册**：`probes/dielectric_conformer_flexibility_prereg.json`（sha256 `6b00b4ba1c2881e6512bf722f7b485f361c3cf0ff6ec3977ce9db08b62c8714a`，`locked_before_run`）；种子集 42/1234/2026/31337/7 跑前锁定；判据 confirm ≥ +0.02、partial ≥ +0.005、否则 refuted。
+**锚点先复现**：seed 42 `reference_lever4` 期望 `0.6080587938801277`、实测 `0.6080587938801277`、`abs_gap = 0.0`（容差 1e-09）⇒ 逐位一致。
+|
+**实测（跨种子均值 = 端点）**：
+- `reference_lever4` **0.5861142332208197**（sd 0.017462，5/5 种子 > 0.60 的有 5 个）
+- `plus_flexibility` **0.5691705415075562**（sd 0.011484）——差值 **−0.016943691713263487**
+- `flexibility_only` **−0.44448789096938646**（只放柔性列，对照臂，彻底崩）
+- **0/5** 个种子上 `plus_flexibility` 相对锚点为正（最好的一枪 seed 1234 也只有 −0.004512）
+- 泄漏审计 `clean = True`（5 个种子 × 50 折，跨折化合物计数全 0）；安慰剂 `ran`
+|
+**verdict = `refuted`**，`promotable = false`。冻结头条 `0.4766400383507876` 与冻结基线 `0.4091179943351143` 未动。
+**照实记两条硬边界**：
+- **`n_conformers` 是退化的**：可用行上取值集合恒为 `[8]`（零方差）；而缺失化合物被填 0.0，于是它实际退化成「该化合物在不在构象表里」的**指示变量**，不是柔性信息。
+- **0.0 填充把「缺失」与「多构象但偶极一致（刚性）」混在同一取值上**，是本枪已知的结构性弱点；柔性列真实非零覆盖只有 188/274 行，池内 239/2391 行被填 0。
+- 安慰剂**不是强安慰剂**：它只置换 457 个 scored 行标签，训练池 2029 行里其余 1572 行仍带真标签，故 `full_base` 臂在安慰剂下读数偏高（0.523638）属结构性预期，**不得**据此宣布通过或失败。
+- 产物：`probes/dielectric_conformer_flexibility.py`、`_prereg.json`、`_summary.json`、`probes/artifacts/dielectric_conformer_flexibility_repeats.csv`、`probes/dielectric_conformer_flexibility_placebo_summary.json`、`reports/dielectric_conformer_flexibility.md`、`tests/test_conformer_flexibility.py`。
+|
+
+## 28.40 W18-P6 log 空间训练 + 保序校准：原尺度 R² 0.5834/0.4802 未超锚点 0.5861，判 partial（2026-09-27）
+|
+**机制假设**：在 log(ε) 上训练再 exp 回原尺度，或再加保序校准，改善 MAE / 排序口径（**不动**原尺度 R²）。
+**预注册**：`probes/dielectric_log_scale_calibration_prereg.json`（sha256 `244a53d07c6101abc970ba5a0c8a1628972cd650afcba94592bc33321b9d64c4`，`locked_before_run`）；opts 明说 `log_space_isotonic_spearman` 不跑——保序只依赖次序，按秩做与 `log_space_isotonic` **数值恒等**，注册一个恒等重复臂属于凑数。
+**锚点先复现**：seed 42 `reference_lever4` 期望 `0.6080587938801277`、实测同上、`abs_gap = 0.0` ⇒ 逐位一致。
+|
+**实测（原尺度跨种子均值）**：`reference_lever4` **0.5861142332208197**、`log_space_raw` **0.5834189863657219**、`log_space_isotonic` **0.4801664084104241**。
+- 次要口径改善（正数 = 保序臂更好）：MAE **−0.177121**（门 +0.01，**反向**）、Spearman **+0.009721**（门 +0.01，**未达**）、AUC>30 **+0.005687**（门 +0.005，**刚过**）。
+- 结论与立项时的预期一致：**log 空间只微微动 R²（−0.0027），保序校准把原尺度 R² 直接打到 0.4802**，换来的是排序类指标——「只改善 MAE/排序口径、不动原尺度 R²」被实测证实。
+- 校准口径（必须先看清再用数）：`IsotonicRegression(out_of_bounds='clip')` 只用**训练折**，输入是该折 **in-sample** 的 log 预测，因此映射坡度偏陡；**本枪没跑交叉拟合版本**，这是下一枪的候选。
+- 泄漏审计 `clean = True`（250 折）；安慰剂 `ran`，锚点臂安慰剂读数 0.523638 ⇒ `collapsed = False`（门 0.304029）。同样受「只置换 457 行」的口径限制。
+|
+**verdict = `partial`**（次要口径至少一项改善过门，但原尺度 R² 未超锚点），`promotable = false`。冻结头条 `0.4766400383507876` 与冻结基线 `0.4091179943351143` 未动，**不得**据此宣称原尺度 R² 达标。
+- 产物：`probes/dielectric_log_scale_calibration.py`、`_prereg.json`、`_summary.json`、`probes/artifacts/dielectric_log_scale_calibration_repeats.csv`、`probes/dielectric_log_scale_calibration_placebo_summary.json`、`reports/dielectric_log_scale_calibration.md`、`tests/test_log_scale_calibration.py`。
+|
+
+## 28.41 W18-P5 Uni-Mol 预训练嵌入作特征块：跨种子均值 0.1102 vs 锚点 0.5861（Δ = −0.4759），0/5 种子为正，判 refuted（2026-09-27）
+|
+**机制假设**：端到端 3D 网络在这份名册上养不活（W16 已证），但「预训练嵌入 → 冻结特征列」是另一个东西：网络冻结、块是稠密的、冻结的 XGB 头一字未动。这是**唯一从未在本记分牌上量过的表示家族**，先验在预注册里声明为未知。
+**预注册**：`probes/dielectric_unimol_embedding_prereg.json`（sha256 `246739353161080c4e36190677736cb5370a2c87f747f2f7f8ac15ef5692a89f`，`locked_before_run`）。三臂 = 冻结稠密块 `reference_lever4`（锚点）/ 冻结块 + 嵌入 `plus_unimol` / 仅嵌入 `unimol_only`；判据 confirm `0.02`、partial `0.005`，对比冻结跨种子端点 `0.5861142332208197`。（该预注册在本次运行中被我误改过一次，随后按原字节逐位还原，摘要记录的 sha 与磁盘一致。）
+**运行时（本枪真正的成本项）**：`unimol_tools 0.1.6` + `torch 2.14.0+cpu`（CPU only），权重 `mol_pre_all_h_220816.pt`（190,540,187 字节，`dptech/Uni-Mol-Models`，经 `hf-mirror.com`）+ 词典 `mol.dict.txt`。安装与权重下载在**隔离解释器**里完成，评分仍在被钉住的仓库解释器里跑，两者不共进程。为此新增独立构建器 `probes/build_unimol_embeddings.py`：模块级只依赖标准库 + numpy，运行时懒加载 `uni-mol-tools`，所以隔离解释器不需要评分依赖即可构建嵌入表。产物 `probes/artifacts/dielectric_unimol_embedding.csv` = 276 化合物 × 512 维，构建耗时 12.1 秒。
+**锚点先复现**：seed 42 `reference_lever4` = `0.6080587938801277`，`abs_gap = 0.0`，折分配签名一致 ⇒ 逐位复现；跨种子参考臂均值 = **`0.5861142332208197`**，与冻结端点**逐位一致**（这是对 0.5861 这个端点的第二次独立复现）。
+**实测（跨种子均值）**：`reference_lever4` **0.5861142332208197**、`plus_unimol` **0.1102020209457352**、`unimol_only` **0.0305790659288033**。
+- 逐种子 Δ（plus − reference）：42 **−0.409254**、1234 **−0.439800**、2026 **−0.492266**、31337 **−0.521393**、7 **−0.516848**；**0/5 种子为正**，且每个种子的 Δ 都比 −0.40 更负。
+- 次要口径同向恶化：MAE `5.44–6.06 → 9.59–10.29`；AUC>30 `0.955–0.961 → 0.920–0.927`。
+- **值得单列的一条**：R² 从 0.586 塌到 0.110，而 AUC>30 只从 ~0.96 掉到 ~0.92。嵌入块伤的主要是**量级**，不是**排序**——这与总诊断「排序学会了、量级学不会」一致，而且是在一个新的表示家族上独立复现出来的。
+- 覆盖审计（必须先看清再用数）：2391 行里 2154 行拿到嵌入，**237 行零填充**（外来扩展行 + 名册外化合物）。零填充把「缺失」与「真值为 0」混在一起，这是本枪的硬边界：下一枪若还要用嵌入块，必须先给出缺失处理方案。同样受「只置换计分行」的口径限制。
+- 泄漏审计 `clean = True`（5 种子 × 50 折，跨折化合物全 0）。
+|
+**verdict = `refuted`**，`promotable = false`。这是**唯一没被证否的表示家族**的判决：预训练 3D 嵌入作为冻结特征列，在本任务上**净有害**，且有害幅度远大于任何已试杠杆的正向幅度（最大的正向杠杆 Δ 是 +0.0675）。冻结头条 `0.4766400383507876`、冻结基线 `0.4091179943351143` 未动；W18 零次主记分牌尝试，累计 11 次不变。
+- 产物：`probes/dielectric_unimol_embedding.py`、`probes/build_unimol_embeddings.py`、`probes/dielectric_unimol_embedding_prereg.json`、`probes/dielectric_unimol_embedding_summary.json`、`probes/artifacts/dielectric_unimol_embedding.csv`、`probes/dielectric_unimol_embedding_placebo_summary.json`、`probes/artifacts/dielectric_unimol_embedding_repeats.csv`、`reports/dielectric_unimol_embedding.md`、`tests/test_unimol_embedding.py`。
+|
+
+## 28.42 W18-P0 稠密物理配置重调 XGB 超参：最优臂跨种子均值 0.599820 未过 0.60（差 0.00018），判 partial（2026-09-27）
+|
+**机制假设**：冻结头（200 树 / `max_depth=2` / lr 0.05）是当年为 **2048 列稀疏 Morgan** 指纹定的；胜出的 `Physical(lever4)` 只有 **13–15 列稠密特征**，深度 2 = 每树 4 叶，**几乎必然欠拟合**。P0 问的是同族最窄的一个问题：同池、同切分、同计分器、同表示，只重调 XGBoost 超参，能否把跨种子端点顶过 0.60。这是 shot 17「换拟合器」被证否（最佳替代族 0.567035 vs 冻结头 0.608059）之后**剩下的同族杠杆**。
+**预注册**：`probes/dielectric_hyperparameter_grid_prereg.json`，sha256 `79834b717141dbbace6ae91bd259fa37289f81f7d310feaa8b2470d7743179bc`，`status = locked_before_run`；**非盲**（`non_blind = true`，理由原文：seed 42 的 `0.6080587938801277` 与 shot 17 的读数在写预注册前已知，这是**族内超参网格、不是外部检验**）。搜索空间：全笛卡尔 **288 臂**，注册上限 **24 臂**，实际注册 **7 臂**。判据：confirm = 跨种子均值 > 0.60 **且** 提升 ≥ +0.02；partial = 提升 ≥ +0.005；否则 refuted。
+**运行前修订（必须单列·没有任何读数时做的）**：候选块最初登记 **22 臂**；**开跑前实测成本** = 一次冻结头拟合（200 树 / depth 2）在 **2029 × 2061** 稠密矩阵上 **4.16 s CPU**（机器有负载时 8.04 s wall），最深候选（800 树 / depth 6）同一矩阵约 **35 s**；原文指出 XGBoost 直方图构建是 O(rows × features)，**2048 列稠密 ECFP 主导成本，冻结头的任何超参都改不了它**。于是 22 臂 × 50 折 × 5 种子 = **5,500 fits/种子**、单种子集约 **18,500 s CPU**、五种子的集合在算进程开销前就 **> 2.6 小时纯 CPU**。据此把注册臂缩到 **7 臂**（`cost_amendment.rule` 原文：「amended before the first fit; no reading of any arm existed when this was written」，`no_result_existed = true`）：**两条预注册轴都保住**——冻结树数下的 depth 3/4/6、冻结 depth 下的 400/800 树——外加一个 depth × 容量交互点（depth 4 / 400 树）；被砍的是 lr / min_child_weight / subsample / colsample 轴变体与 8 个 800 树格点；**表示、池、切分器、冻结头、五种子、锚点、判据一字未动**。`pre_run_correction` 还记录同一轮更早的一次修订：`arm_params` 首抄把 subsample/colsample 写死 0.8、与臂名冲突，脚本在任何拟合前拒绝启动、按臂名重建、**重钉 digest**。两次修订**都发生在零结果状态**，预注册 sha 因此重钉为上述值。
+**锚点先复现**：seed 42 / `xgb_reference` 期望 `0.6080587938801277`、实测 `0.6080587938801277`、`abs_gap = 0`、`reproduced = true`（容差 `1e-09`）⇒ **逐位复现**；折签名必须等于冻结 scoreboard 的签名，不符则拒绝报其它任何数并非零退出。
+|
+**实测（跨种子均值 = 端点；种子 42 / 1234 / 2026 / 31337 / 7）**：
+- `xgb_reference`（冻结头，200/2）：**0.5861142332208197**（sd 0.017461880006798203）｜过 0.60 种子数 **1/5**
+- `hp_d3_n200_lr0.05_mcw1_ss0.8_cs0.8`（200/3）：0.5638672862389339（sd 0.03017441957774392）｜0/5
+- `hp_d4_n200_lr0.05_mcw1_ss0.8_cs0.8`（200/4，**最优臂**）：**0.5998203128630835**（sd 0.008159756085597283）｜**2/5**
+- `hp_d6_n200_lr0.05_mcw1_ss0.8_cs0.8`（200/6）：0.5306397096540456（sd 0.025239974044738225）｜0/5
+- `hp_d2_n400_lr0.05_mcw1_ss0.8_cs0.8`（400/2）：0.498277146324478（sd 0.029308014890417542）｜0/5
+- `hp_d2_n800_lr0.05_mcw1_ss0.8_cs0.8`（800/2）：0.3463236145907241（sd 0.04741787133989063）｜0/5
+- `hp_d4_n400_lr0.05_mcw1_ss0.8_cs0.8`（400/4，capacity_ladder）：0.5767934182517341（sd 0.00900105949233252）｜0/5
+- 参考臂 `0.5861142332208197` 与该表示家族的**冻结跨种子端点逐位一致**——这是对 0.5861 这个端点的**又一次独立复现**。
+- 最优臂对参考的提升 **+0.01370607964226378**；判据 `target_met_cross_seed = false`（**0.599820 对 0.60 差 0.00018，未过门**）、`improvement_met = false`（提升门 +0.02）。
+|
+**机制发现（单列）**：`hp_d4_n200` 不仅唯一稳定超过参考，而且**种子方差几乎减半**（`r2_seed_sd` **0.008159756085597283** vs 参考 **0.017461880006798203**），**五个种子的均值全部落在 0.590–0.609**（0.6079114372577955 / 0.5976706539764927 / 0.5949201897635696 / 0.5900344987346258 / 0.6085647845829333；最差一枪 0.5900344987346258 仍高于参考的跨种子均值），`seeds_above_060` = **2/5**（参考只有 **1/5**，那 1 个就是 seed 42 ⇒ 参考「过 0.60」是单种子运气、不是端点性质）。即「**冻结 depth 2 在 13–15 列稠密块上欠拟合**」**方向被证实、幅度不足以过门**；反向同样成立：容量加到 depth 6（0.5306397096540456）或只加树数到 800（0.3463236145907241）都**急剧反噬**——欠的是「每树多切几刀」，不是「多堆树」。
+|
+**泄漏审计**：`clean = true`；`folds_by_seed` 五种子**各 350**（= 50 折 × 7 臂），逐种子 `folds_with_a_straddling_compound = 0`、`max_straddling_compounds_in_a_fold = 0`。
+**placebo**：预注册在 `decision_rule` 里声明了 `placebo` 词条（`--placebo` 会在计分行上置换 target 后才拟合）；**主跑的 `placebo` 字段为 `false`**，安慰剂是**另一条独立运行、独立产物**，本节**不声称**任何安慰剂结果。
+**测试门禁随修订同步的留证**：`tests/test_hyperparameter_grid.py` 里旧文本门 `text.count("hp_d") >= 21`（=「脚本必须声明 22 臂」）是**修订前写的、与注册集冲突**；本次改为「**6 个非参考注册臂 + 脚本必须写明 `PRE_RUN_AMENDMENT` 修订记录 + 禁用旧 22 臂措辞**」（现为 `assert text.count("hp_d") >= 6`、`assert "PRE_RUN_AMENDMENT" in text`、`assert "5,500 fits per seed" in text`、`assert "the registered arm set is the 7-arm subset" in text`、`assert "no result existed" in text`、`assert "pre-registers a 22-arm grid" not in text`）——这是**门禁跟随注册集**，不是放宽门禁。
+⇒ **但脚本侧留证本次核对时尚未落盘（未核）**：`probes/dielectric_hyperparameter_grid.py`（本次核对字节，mtime 2026-09-27T23:42:19）全文 **0 命中** `PRE_RUN_AMENDMENT` / `5,500 fits per seed` / `the registered arm set is the 7-arm subset` / `no result existed`，且 docstring 仍写「pre-registers a 22-arm grid」（被禁用的串仍在）⇒ 该测试项按当前字节应为**红**，需在收口时把修订记录写进脚本（**本节不据此改任何数**）。
+|
+**verdict = `partial`**（过了 kill bar 0.005，未过提升门 0.02；目标 0.60 **未达成**）。
+- **不提升**：`promotion.promoted = false`，冻结头条 **0.4766400383507876** 与冻结基线 **0.4091179943351143** 原位未动；原因原文：本轮是冻结协议上的**诊断性超参网格**，冻结头条是 co-primary 混合臂，而本网格**对 seed 42 非盲**、端点是 **7 臂多重比较**。**本 lane 零次主记分牌尝试**（W18 累计仍 **11 次**，与 §28.41 结转一致）。
+- 产物：`probes/dielectric_hyperparameter_grid.py`、`probes/dielectric_hyperparameter_grid_prereg.json`、`probes/dielectric_hyperparameter_grid_summary.json`、`probes/artifacts/dielectric_hyperparameter_grid_repeats.csv`（350 行 = 5 种子 × 7 臂 × 10 重复）、`reports/dielectric_hyperparameter_grid.md`、`tests/test_hyperparameter_grid.py`。
+|
+**数字出处**（`值 ← 文件::JSON键`）
+- 预注册 sha256 / status / arm_count ← `probes/dielectric_hyperparameter_grid_summary.json::prereg.sha256` ｜ `::prereg.status` ｜ `::prereg.arm_count`
+- non_blind / full_cartesian_size / max_arms_cap / arms / seeds / decision_rule ← `probes/dielectric_hyperparameter_grid_prereg.json::non_blind` ｜ `::grid.full_cartesian_size` ｜ `::grid.max_arms_cap` ｜ `::arms` ｜ `::seeds` ｜ `::decision_rule`
+- 4.16 s CPU（8.04 s wall） / 约 35 s / O(rows x features) ← `prereg.json::cost_amendment.measurement[0..2]`
+- 5,500 fits/种子、约 18,500 s CPU/种子、> 2.6 h、22→7 臂、保住两轴 / amended before the first fit ... / no_result_existed ← `prereg.json::cost_amendment.registered_cost` ｜ `::cost_amendment.rule` ｜ `::cost_amendment.amended_arm_count` ｜ `::cost_amendment.preserved` ｜ `::cost_amendment.dropped` ｜ `::cost_amendment.no_result_existed`
+- 两次运行前修订与重钉 digest ← `prereg.json::pre_run_correction`
+- 锚点 0.6080587938801277 / abs_gap = 0 / reproduced = true / 容差 1e-09 ← `probes/dielectric_hyperparameter_grid_summary.json::anchors.rows[0].measured` ｜ `::anchors.rows[0].abs_gap` ｜ `::anchors.reproduced` ｜ `::anchors.tolerance`
+- 参考臂跨种子均值 0.5861142332208197 ← `summary.json::answers.reference_cross_seed_mean`；其 sd 0.017461880006798203 ← `::cross_seed[0].r2_seed_sd`
+- 七臂跨种子均值与过 0.60 种子数 ← `summary.json::cross_seed[i].r2_seed_mean` ｜ `::cross_seed[i].seeds_above_060`（i = 0…6，次序同 `::contract.arms`：reference / d3n200 / d4n200 / d6n200 / d2n400 / d2n800 / d4n400）
+- d4_n200 的 sd 0.008159756085597283 / 五种子均值 0.6079114372577955, 0.5976706539764927, 0.5949201897635696, 0.5900344987346258, 0.6085647845829333 ← `summary.json::cross_seed[2].r2_seed_sd` ｜ `::cross_seed[2].seed_means`
+- 最优臂 0.5998203128630835 / 提升 +0.01370607964226378 / target_met_cross_seed = false / improvement_met = false / 门 0.6 与 0.02 与 0.005 ← `summary.json::answers.best_cross_seed_mean` ｜ `::answers.best_improvement_vs_reference` ｜ `::answers.target_met_cross_seed` ｜ `::answers.improvement_met` ｜ `::answers.target_r2` ｜ `::answers.improvement_bar_r2` ｜ `::answers.kill_bar_r2`
+- verdict = partial ← `summary.json::verdict`；泄漏 clean = true 与五种子各 350 ← `::leakage.clean` ｜ `::leakage.folds_by_seed`；placebo = false ← `::placebo`
+- promoted = false / 冻结头条 0.4766400383507876 / 冻结基线 0.4091179943351143 / 不提升理由 ← `summary.json::promotion.promoted` ｜ `::promotion.frozen_headline` ｜ `::promotion.frozen_baseline` ｜ `::promotion.reason`
+- 2029 训练行 / 457 计分行 / 2635.1006592000003 s / jobs 6 ← `summary.json::pool.base_rows` ｜ `::pool.scored_rows` ｜ `::wall_seconds` ｜ `::jobs`
+- 350 行（含表头 351）与列 schema ← `probes/artifacts/dielectric_hyperparameter_grid_repeats.csv`
+- 累计 11 次主记分牌尝试 ← `reports/decisions_log.md::§28.41`（原文「W18 零次主记分牌尝试，累计 11 次不变」）
+- 门禁断言全文（hp_d >= 6 / PRE_RUN_AMENDMENT / 禁用串 not in text） ← `tests/test_hyperparameter_grid.py::test_the_script_states_the_frozen_head_and_the_ladder`
+- 「脚本 0 命中 `PRE_RUN_AMENDMENT`、docstring 仍含 pre-registers a 22-arm grid」 ← `probes/dielectric_hyperparameter_grid.py`（本次只读核对，非 JSON 键）
+|
+
+## 28.43 W18-P1 多种子端点升级：四臂跨种子端点 0.4014 / 0.4484 / 0.4375 / 0.4540，冻结头条 0.4766 被证实是五种子中的最大单抽（2026-09-28）
+|
+**性质（必须明说）**：本 lane **不换模型、不拟合新模型族、不加任何信息**，只把「端点」的口径从 **seed 42 单次抽样** 改成「**跑前锁定的五种子**（42, 1234, 2026, 31337, 7）上、每种子 10 重复 R² 均值的算术平均」。它回答的是 W17 遗留的一处口径问题：冻结头条 `0.4766400383507876` 究竟是一个稳定的臂，还是一个走运的种子。
+⇒ 它**不产出新主臂**：预注册 `decision_rule.promotes_no_reading = true` 写明「它只能从端点定义里去掉种子方差，本身不增加信息、也不可能单靠它把任何臂抬过目标」，故 `promoted = false`、`shots = 0`（W18 累计主记分牌尝试 **11 次不变**）。
+|
+**预注册**：`probes/dielectric_multiseed_endpoint_prereg.json`，`status = locked_before_run`，`locked_at_utc = 2026-09-27T14:10:00Z`（早于起跑 `15:06:14Z`）；**原始字节 sha256 = `3516befd25cf6ff9258f1d1d678786915504ac5a6c0fbd5529b75514a2313083`**（2573 字节、纯 LF、无 BOM），已作为字面量钉进 `tests/test_multiseed_endpoint.py`。
+**四臂**：`baseline`（Morgan+Physical，物理块 13 列）/ `plus_lever4`（加 conformer-average 偶极迁移）/ `plus_lever8`（加 5 列 Li+ 配位块）/ `plus_both`（lever4 + lever8，即冻结头条臂）。
+**端点规则（逐字）**：`the endpoint for any arm is the arithmetic mean of its per-seed 10-repeat R2 means over the pre-locked five-seed set; the seed-42 value is reported beside it as a single-draw reading, never alone`（`endpoint_rule`）。
+|
+**第一步·锚点先复现（先复现再报任何新数）**：四臂 seed 42 逐位复现冻结记分牌读数 `0.4091179943351143` / `0.4649564468823552` / `0.4531768105508106` / `0.4766400383507876`，`abs_gap` 全 `0.0`（容差 `1e-09`）⇒ `anchors.reproduced = true`。
+|
+**第二步·实测（跨种子均值 = 端点，本节核心数字）**：
+
+| 臂 | seed 42（单抽） | 跨种子端点 | sd |
+| --- | ---: | ---: | ---: |
+| `baseline` | 0.4091179943351143 | **0.40135270382650734** | 0.02394435067835822 |
+| `plus_lever4` | 0.4649564468823552 | **0.44840711903316777** | 0.01583870809667547 |
+| `plus_lever8` | 0.4531768105508106 | **0.4374976919688038** | 0.017411299602092544 |
+| `plus_both` | 0.4766400383507876 | **0.45401075998423623** | 0.01462722417311012 |
+
+- `best_arm = plus_both`（端点 `0.45401075998423623`）；`target_r2 = 0.60`、`target_met_cross_seed = false`——**四臂的 `cross_seed_max` 全部落在自己的 seed 42 上，`above_060_seeds` 四臂皆 0/5**（0.454 距 0.60 很远）。
+|
+**最重要的一条诚实披露（不许省略）**：`plus_both` 的 `cross_seed_max` **恰好等于** seed 42 的 `0.4766400383507876` ⇒ **冻结头条那个数是五个种子里最大的一个单抽**；在锁定的跨种子端点口径下，**同一臂的诚实读数是 `0.45401075998423623`**（比头条低 0.0226）。
+- 冻结头条仍**原位保留**（它是冻结记分牌读数，永不与基线互比、也永不与本 lane 的端点互比）；但**任何引用 `0.4766400383507876` 的地方都必须同时说明：它是 seed-42 单抽，其跨种子端点是 `0.45401075998423623`**。
+- `cross_seed_mean` 与 `seed_42` 是两种口径，`endpoint_rule` 与预注册 `restrictions[2]` 都写明**两者永不互减**。
+|
+**符号稳健性（杠杆方向是否靠运气）**：`plus_both − baseline` 在 **5/5 个种子上都为正**：
+- seed 42：`0.0675220440156733`
+- seed 1234：`0.06719383048427285`
+- seed 2026：`0.031659711999165674`
+- seed 31337：`0.0704559453827242`
+- seed 7：`0.026458748906808216`
+- 跨种子均值差 `cross_seed_mean_minus_baseline = 0.052658056157728894`（对比冻结的单种子差 `0.0675220440156733`）⇒ **杠杆符号稳、幅度被种子 42 抬高**（全期最小的正差也还有 +0.02646）。
+|
+**折数门禁（不是只写 clean）**：`leakage.clean = true`，且 `leakage.by_seed_arm` 的 **20 个 (seed, arm) 格子**每个都记录 `folds = 50`、`folds_with_a_straddling_compound = 0`、`max_straddling_compounds_in_a_fold = 0`。
+- 收口时给测试补了**两条门禁**并留证：① `test_every_seed_arm_pair_covers_all_fifty_folds` 逐格子断言 `folds == 50`（原门槛只能看见「跨折化合物」，`drop_thin_folds` 静默丢折它看不见）；② `test_the_preregistration_bytes_are_pinned_by_sha256` 把预注册 sha256 作为字面量钉死（LF / 无 BOM 同断言），事后改动任何字段——**包括未注册字段**——都会让测试变红。
+- 折签名注：本仓的「GroupKFold by InChIKey」实为**自研按 InChIKey 整组轮转分折**（性质 = 同一化合物不跨折），**不是** sklearn 的 `GroupKFold`；引用时不要写错。
+|
+**池（回归守卫）**：`scored_rows = 457`、`scored_compounds = 97`、**`training_rows = 457`**（`!= 2029`）。
+- 这是该 lane 首次运行的实测缺陷留下的守卫：探针最早按 shot-13 的 `full_base`（2029 行全表）配置训练，却声称复现四臂的 scored 池锚点，seed 42 会打印 `0.530029` 而不是 `0.409118`；要不是 `pool.training_rows == 457` 这条断言，整轮数小时的扫描会在事后才被扔掉。**2029 行全表没有进过训练侧**，测试逐字断言这一点。
+|
+**verdict = `endpoint_upgraded`**（锚点逐位复现，端点口径升级成立），`promotion.promoted = false`。
+- 冻结头条 `frozen_headline_unchanged_r2 = 0.4766400383507876`、冻结基线 `frozen_baseline_unchanged_r2 = 0.4091179943351143` **原位未动**；本 lane **零次主记分牌尝试**（W18 累计 11 次不变）。
+- **照实记三条边界**：
+  1. 本 lane **不改任何模型、不拟合新族**，只换端点口径，所以**过门与否都不构成增益**——它甚至没有「过门」这个出口（`target_met_cross_seed = false`）。
+  2. 跨种子差异里**仍混有折难度**：预注册未声明 placebo，本 lane **没有安慰剂臂**，故「符号 5/5 为正」只能说杠杆方向不靠 seed 42 的运气，**不能说**折难度已被排除。
+  3. `shots = 0`、`models_fitted_here = 20`（四臂 × 五种子），`n_splits = 5`、`n_repeats = 10`；`wall_seconds = 4702.12`、`jobs = 4`。
+- 产物：`probes/dielectric_multiseed_endpoint.py`、`probes/dielectric_multiseed_endpoint_prereg.json`、`probes/dielectric_multiseed_endpoint_summary.json`、`probes/artifacts/dielectric_multiseed_endpoint_repeats.csv`、`reports/dielectric_multiseed_endpoint.md`、`tests/test_multiseed_endpoint.py`。
+|
+**数字出处**（`值 ← 文件::JSON 键`）：
+- 0.4091179943351143 ← `probes/dielectric_multiseed_endpoint_summary.json::anchors.rows[0].measured`（亦 `frozen_baseline_unchanged_r2`）
+- 0.4649564468823552 ← `probes/dielectric_multiseed_endpoint_summary.json::endpoints[1].seed_42`
+- 0.4531768105508106 ← `probes/dielectric_multiseed_endpoint_summary.json::endpoints[2].seed_42`
+- 0.4766400383507876 ← `probes/dielectric_multiseed_endpoint_summary.json::endpoints[3].seed_42`（亦 `frozen_headline_unchanged_r2`、`promotion.frozen_headline`）
+- 0.40135270382650734 ← `probes/dielectric_multiseed_endpoint_summary.json::endpoints[0].cross_seed_mean`（sd ← `endpoints[0].cross_seed_sd`）
+- 0.44840711903316777 ← `probes/dielectric_multiseed_endpoint_summary.json::endpoints[1].cross_seed_mean`（sd ← `endpoints[1].cross_seed_sd`）
+- 0.4374976919688038 ← `probes/dielectric_multiseed_endpoint_summary.json::endpoints[2].cross_seed_mean`（sd ← `endpoints[2].cross_seed_sd`）
+- 0.45401075998423623 ← `probes/dielectric_multiseed_endpoint_summary.json::endpoints[3].cross_seed_mean`（sd ← `endpoints[3].cross_seed_sd`；亦 `best_arm.cross_seed_mean`）
+- 0.052658056157728894 ← `probes/dielectric_multiseed_endpoint_summary.json::endpoints[3].cross_seed_mean_minus_baseline`
+- 逐种子差值 ← `endpoints[3].seed_values[s] − endpoints[0].seed_values[s]`，s ∈ {42, 1234, 2026, 31337, 7}（本节五条精确值均由该键逐位相减得到，全为正）
+- 50 折 × 20 格 ← `probes/dielectric_multiseed_endpoint_summary.json::leakage.by_seed_arm`（每个 (seed, arm) 格子的 `folds`）
+- 457 / 97 ← `probes/dielectric_multiseed_endpoint_summary.json::pool.scored_rows` / `pool.scored_compounds`；训练行 ← `pool.training_rows`
+- `endpoint_upgraded` ← `probes/dielectric_multiseed_endpoint_summary.json::verdict`；`promoted = false` ← `probes/dielectric_multiseed_endpoint_summary.json::promotion.promoted`
+- sha256 `3516befd25cf6ff9258f1d1d678786915504ac5a6c0fbd5529b75514a2313083` ← `probes/dielectric_multiseed_endpoint_prereg.json` 原始字节（`hashlib.sha256`，2573 字节，无 BOM、纯 LF）
+|
+
+
+## 28.44 W18-P2 Onsager / Kirkwood Δ-learning（只换目标，池 / 折 / 计分器 / 表示全冻）：跨种子端点 0.224298 vs 参考 0.586114（Δ −0.361816），判 refuted；且安慰剂臂未按预注册塌回直接臂（2026-09-28）
+|
+**机制假设**：W17 的天花板分析说，单分子描述符缺的那一维是 **g（Kirkwood 取向相关因子）**。P2 不改模型、不改表示，只改**目标**：让冻结头去拟合残差 `ε_obs − ε_Onsager(μ², V_m, α, T)`，把 Onsager 反应场形式当先验注入。这是 W17 已证否的「描述符堆叠」之外的另一类射击——**物理函数形式**，而不是又一列特征。
+|
+**预注册**：`probes/dielectric_onsager_delta_w18_prereg.json`，sha256 `7c936b53e99182ab7f4bbe03aa13620f11095f2fc6a85eed882ef36759a08c8b`，`status = locked_before_run`，`non_blind = true`（seed 42 的锚点读数在写预注册前已知）。端点 = 预注册五种子 {42, 1234, 2026, 31337, 7} 上「10 重复 R² 均值」的跨种子算术平均；判据 = 该端点 ≥ 参考臂 + 0.02 判 `confirmed`，≥ +0.005 判 `partial`，否则 `refuted`。
+|
+### 一、锚点：先证协议没漂移（5/5 逐位复现）
+- `reference_direct` 逐种子读数为 `0.6080587938801277` / `0.5653494903237062` / `0.5848044432962747` / `0.5985324927011000` / `0.5738259459028902`，与冻结记录 `full_table_lever4` / `Physical` 五种子**逐位相同**，5/5 `abs_gap = 0.000e+00`。
+- 跨种子均值实测 `0.5861142332208197` vs 冻结端点 `0.5861142332208197`，`abs_gap = 0.000e+00`。
+- 泄漏审计：5 种子 × 200 折 = **1000 折**，跨折化合物 0（`leakage_clean_text`）。池 = **2029** 全表行 / **457** 计分行 / **97** 化合物 / 362 外来扩展行；表示 `Physical(lever4)` 13 列。
+|
+### 二、单位自检：先证没算错，再看结论
+- 向量式 vs 规范标量式（`src/electrolyte_ml/xtb_features.py::onsager_dielectric_estimate`）最大绝对偏差 **0.000e+00**；
+- `mu_sq_over_Vm` 列 vs `dipole_D² / V_m` 最大相对偏差 **4.328e-08**（超差 0 行）；
+- `molecular_volume_A3 × 1e-30 × N_A` vs 冻结 `molar_volume_m3_mol` 最大相对偏差 **3.855e-08**（超差 0 行）。
+- **一处必须登记的自我纠错**：第一版把 `molecular_volume_A3`（**单分子**体积）直接当摩尔体积用，`q = N_A α/(3 V_m)` 被放大 N_A 倍、Lorentz–Lorenz 的 `n²` 落到 −2、解析项整体塌成 1.0。正确换算为 `V_m = molecular_volume_A3 × 1e-30 × N_A`（m³/mol）。这类量纲错误若不自检会把「公式没用」与「代码写错」混为一谈，故入册。
+|
+### 三、读数（跨种子端点）
+| 臂 | 跨种子均值 | 相对 `reference_direct` |
+| --- | ---: | ---: |
+| `reference_direct`（冻结头直回 ε，锚点） | 0.5861142332208197 | 0 |
+| `onsager_delta_xgb`（冻结头只拟合残差，预测时加回解析项） | 0.2242978111516481 | −0.3618164220691716 |
+| `onsager_delta_recomputed`（同 Δ 方案，解析项改用 v0.4 构象表单构象偶极密度） | 0.22339251807234367 | −0.362721715148476 |
+| `onsager_analytic_only`（纯解析，无 ML） | −0.5160011378298242 | −1.102115371050644 |
+|
+⇒ `best_arm = onsager_delta_xgb`、`best_improvement = −0.3618164220691716`、`verdict = refuted`、`promotable = false`。**没有任何一个判据臂摸到 +0.005 的 partial 线**，更不用说 +0.02 的 confirm 线。
+|
+### 四、`ε_Onsager` sanity check：这正是 Kirkwood g 的实测指纹
+| 化合物 | T / K | μ / D | α / A³ | ε 观测 | ε_Onsager | 比值 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| water | 273.15 | 2.287 | 1.397 | 87.00 | 46.84 | 0.538 |
+| methanol | 298.15 | 1.987 | 3.196 | 39.25 | 17.81 | 0.454 |
+| formamide | 303.15 | 1.054 | 4.120 | 106.14 | 4.79 | 0.045 |
+| n-methylacetamide | 303.15 | 1.472 | 7.554 | 178.47 | 5.21 | 0.029 |
+| dimethyl sulfoxide | 283.15 | 4.620 | 7.857 | 50.58 | 51.87 | 1.026 |
+| acetonitrile | 293.15 | 3.872 | 4.362 | 37.70 | 54.12 | 1.435 |
+|
+- 质子性缔合液（水、甲醇、甲酰胺、NMA）比值 **≪ 1**（g ≫ 1）；非质子液（DMSO、乙腈）比值 **≥ 1**。这条反号分裂就是 `onsager_analytic_only` 跨种子端点 **−0.5160011378298242** 的来源：单分子量在中性非质子液上尚可，在缔合液上系统性低几个数量级。
+- 计分池里 ε > 60 有 **13** 行，Onsager 覆盖其中 **1** 行。
+|
+### 五、安慰剂：如实登记一处**未达标**
+- 目标在计分化合物上打乱后：`reference_direct` 跨种子均值 **0.5236384736868015**（较冻结端点低 **6.248e-02**，说明置换确实动了标签）、`onsager_delta_xgb` **0.09304306318408645**、`onsager_delta_recomputed` **0.1231841698291171**；`verdict = placebo`。
+- **未达标处**：预注册写明的安慰剂模型是「每个 Δ 臂必须**塌回直接臂**」。实测 Δ 臂并没有收敛到参考臂（0.5236384736868015），而是**掉到参考臂以下**（−0.43059541050271505 / −0.4004543038576844）。即安慰剂下 Δ 变换不只是「无益」，而是**破坏性**。该偏离**照实登记，不解释成合格**；它意味着这条臂的安慰剂对照不像预注册假设的那样是「优势归零」，而更像「解析项本身带噪声」。
+|
+### 六、判定与边界
+- **verdict = `refuted`**、`promotable = false`。冻结基线 `0.4091179943351143` 与冻结头条 `0.4766400383507876` 未动；W18 主记分牌尝试 **0 次**，累计 **11 次**不变。
+- 本枪只换目标，池 / 折 / 计分器 / 表示全冻；`reference_direct` 逐位复现证明协议无漂移，故负结论可归因于「Onsager 形式的先验在本池上不携带可迁移信息」，**不是实现错误**。
+- 与已有先例同向：`reports/week8_c4_onsager_delta.md` 在另一池、另一协议（MAE / RepeatedKFold）上也观察到 Δ 层输给直回（8.54 vs 6.36 MAE）。两枪在两个池上同向 ⇒ **Δ-learning 这条物理射击在 ε 上已被打掉**。
+- 产物：`probes/dielectric_onsager_delta_w18.py`、`probes/dielectric_onsager_delta_w18_prereg.json`、`probes/dielectric_onsager_delta_w18_summary.json`、`probes/dielectric_onsager_delta_w18_placebo_summary.json`、`probes/artifacts/dielectric_onsager_delta_w18_repeats.csv`、`probes/artifacts/dielectric_onsager_delta_w18_folds.csv`、`reports/dielectric_onsager_delta_w18.md`、`reports/dielectric_onsager_delta_w18_placebo.md`、`tests/test_dielectric_onsager_delta_w18.py`。
+- `wall_seconds = 2095.7947824000003`（`--jobs 2`）。
+|
+
+## 28.45 W18-B 分域第二记分牌（5 种子）：全域端点 0.45401075998423623、D1 域内 0.524012313223719、域外 0.3198024498133034，判 domain_split_reported（2026-09-28）
+|
+**机制假设**：W17 的天花板分析指出，扛住 48.4% 标签方差的是 6 个自缩合质子性液体（N-甲基乙酰胺 178.5 / N-甲基甲酰胺 169.8 / 甲酰胺 106.1 / 羟乙基乳酸铵 85.6 / 水 80 / 乙醇铵硝酸盐 60.9）；GroupKFold-by-InChIKey 下这些族整族留出，训练侧 p95 只到 ~46，于是「域外不可测」被记成全池的 R² 损失。W18-B 不改模型、不改池、不改臂，只按**跑前声明的适用域规则**把同一块记分牌切成域内/域外并列报出：这是一块**第二记分牌**，永不替换全域读数。
+|
+**预注册**：`probes/dielectric_applicability_domain_prereg.json`，sha256 `b69084ef67a34e05134d3d7712de34e413b0b1a56e2ed39d35b37b185894894f`，`status = locked_before_run`。声明规则：
+|
+| 规则 | 类型 | 定义 |
+| --- | --- | --- |
+| D1 | 特征规则（可部署） | `NumHDonors(SMILES) >= 1 and TPSA(SMILES) >= 20.0`（极性质子性类） |
+| D2 | 训练侧 p95 分类器 | 只用训练侧标签的 p95 判域（逐折重算） |
+| D3 | 已核实高 ε 名册 | 诊断件，依赖标签幅度，不是可部署规则 |
+|
+**复现（先决条件）**：seed 42 全域 R² = `0.4766400383507876`（发布值 `0.4766400383507876`，`abs_delta = 0.0`，容差 1e-09）→ `reproduced = true`；不成立则整枪抛错、不报任何域内数字。
+|
+### 一、5 种子端点（种子集 42, 1234, 2026, 31337, 7 **跑前锁定**）
+|
+| 规则 | 口径 | 行（均值） | 化合物（均值） | R² 均值 | R² 跨种子 sd | MAE 均值 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 全域（无域声明） | 全域 | 457.0 | 97.0 | 0.45401075998423623 | 0.01462722417311012 | 7.656617449123975 |
+| D1 极性质子性 | 域内 | 297.0 | 57.0 | 0.524012313223719 | 0.024133349593788104 | 8.589299411996425 |
+| D1 极性质子性 | 域外 | 160.0 | 40.0 | 0.3198024498133034 | 0.007561163911186245 | 5.925326555541991 |
+| D2 训练侧 p95 | 域内 | 451.54 | 92.34 | 0.4220038384532859 | 0.021090581807914264 | 7.391979320057826 |
+| D2 训练侧 p95 | 域外 | 5.46 | 4.66 | -0.3201534130670777 | 0.3467085301662939 | 29.568568138556095 |
+| D3 高 ε 名册（诊断） | 域内 | 442.0 | 90.0 | 0.5394513559609291 | 0.03513027638369106 | 6.3608271546385575 |
+| D3 高 ε 名册（诊断） | 域外 | 15.0 | 7.0 | -3.035495068237836 | 0.1201432966792962 | 45.839238126627606 |
+|
+**逐种子（全域 / D1 域内）**：42 `0.4766400383507876` / `0.5597083872335692`；1234 `0.43654757980919767` / `0.4957700224062894`；2026 `0.4550704205912706` / `0.532893571479741`；31337 `0.45392053917583847` / `0.520616795347342`；7 `0.4478752219940866` / `0.5110727896516533`。
+|
+### 二、域声明与全域数的关系（并列，不替换）
+|
+- 全域 5 种子端点 R²：`0.45401075998423623`。
+- D1 域内 `0.524012313223719`，对全域 **+0.07000155323948276**；D3 域内 `0.5394513559609291`，对全域 **+0.08544059597669285**。
+- 冻结头条 `0.4766400383507876` 只被**复现**、未被改写；它是 seed 42 单抽，而 W18-P1 的诚实端点是 `0.45401075998423623`——与本节全域端点**逐位一致**，两条 lane 互为交叉验证。
+- 域内数**不得**当作达标题：`promoted = false`，主记分牌尝试 **0 次**，累计 **11 次**不变。
+|
+### 三、域外口径与名册
+|
+- 池内 D1 域外化合物 **40 / 97**（域内 57）；全名册（246 行）口径的 D1 域外名册 62 个在报告里全量报出。
+- D1 是宽口径的质子性极性类（含全部醇），**该族的尾部才是高 ε 自缩合液体**；不得把「域内 R² 更高」读成「模型变好了」。
+- D2 逐种子域外化合物数（均为 7–8 个）与 `d2_fallback_folds = 0` 逐种子报出。
+|
+### 四、安慰剂
+|
+- 洗牌标签臂跨种子 R² 均值 **-0.031311773280154886**（sd 0.00344836684415283）；地板（训练折均值）**-0.004934950567786717**；过地板 **-0.02637682271236817**。
+- 安慰剂**未塌回 0**，但**低于地板** ⇒ 洗牌臂确实没学到东西，域内数不是摊薄出来的。
+|
+### 五、判定与边界
+|
+- **verdict = `domain_split_reported`**、`promoted = false`。全域端点照报，域内数并列报出、永不替换。
+- 5 个种子**跑前锁定**、`jobs = 1`、**每种子一个进程并行**：逐种子墙钟 950.9–960.8 s，五个种子墙钟之和 **4774.9 s**，并行墙钟 **960.8 s**（telemetry 里 `wall_seconds` 是种子墙钟之和、`parallel_wall_seconds` 是并行墙钟）。
+- 本枪不动任何冻结数字：`0.4091179943351143` 不在本记分牌上，`0.4766400383507876` 只被复现。
+- 产物：`probes/dielectric_applicability_domain.py`、`probes/dielectric_applicability_domain_prereg.json`、`probes/dielectric_applicability_domain_summary.json`、`reports/dielectric_applicability_domain.md`、`probes/artifacts/dielectric_applicability_domain_repeats.csv`、`tests/test_applicability_domain.py`、图 `probes/artifacts/w18_applicability_domain.png`。
+|
+
+## 28.46 Week 19 D1 现状核对与修订台账：11 条计划数字被本机实测逐条裁定（2026-09-28）
+|
+**机制假设**：Week 19 的全部 lane 都吃同一份输入 —— `Week19立项计划_文献驱动三线.md`（本机实测 24,077 B、sha256 `1ba6a239241200aef9f767c5203bd0c6ad0dc7e02d49eea9594f683d39752899`）的资产表 §W19-0.5、转录表 §W19-0、修订台账 §W19-0.6。D1 不造任何东西，只问一件事：计划里那些写着「已核 / 一致」的字节与数值，在本机能不能复现。判定纪律照抄：**计划只作被检对象、不作事实来源**；本机无副本可复现的，一律记「不可核」，不替计划圆场。
+**预注册**：本件是审计件，**不是枪** —— 不锁预注册、不拟合任何模型、不产 R2 / MAE。报告 `reports/w19_state_audit.md`，sha256 `6deeaab6c32eef511336d02677dac654dfc6c8adf71c30f4b5df81cc3e723e1c`；字面钉测试 `tests/test_w19_state_audit.py`，sha256 `ef1a4c7c54004adeeef1939335ce1a568cc6899f5f2e0d0be4107b113325d39e`（逐字钉住报告 digest 与 43 条实测字面量）。报告生成于本机 UTC `2026-09-27T16:11:33.876Z`，全部 digest 按当时工作树字节流式计算。
+|
+**读数一 · 资产表（字节级 + digest 级逐条复算）**
+- `data/raw/batt/Batt-P30K.h5`：183,771,012 B、sha256 `587f1490613a008b91f45ee9de607a2e057c88c301fa9e5c9d7785b1968d118d` ⇒ **与计划逐位一致**（h5 内实测 group 29,519 个，成员键含 `homo` / `lumo` / `gap` / `ip` / `ea` / `dipole` / `quadrupole` / `coord` / `smiles`）。
+- `data/external/Batt-SLM.smi`：1,879,361 B、**115,756** 行（无表头、纯 LF、无 BOM）⇒ 一致。
+- `data/external/Batt-SLM-RX-392.csv`：248,404 B。计划写「393 行」，实测 393 行**含 `$` 分隔表头** ⇒ 数据记录 **392** 条、唯一 MolId 392 个（与文件名 RX-392 自洽）。
+- `data/external/SolvFunc-87.csv`：20,753 B、87 数据行，`DC_Pred` 列 87 行全非空；该列最大值 = Vinylene Carbonate 的 **128.941261**（即计划写的 128.94）。
+- `data/dielectric_v03.csv`：130,844 B、**246** 数据行（247 行含表头）、digest `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4` ⇒ 与计划逐位一致；`data/dielectric_v04.csv`（134,460 B）248 数据行，同名单、数值逐位相同。
+- `data/viscosity_v02.csv`：11,501,156 B、**42,941** 数据行（42,942 行含表头），其中 `Viscosity, Pa*s` 42,855 行、`Kinematic viscosity, m2/s` **86** 行。
+- `probes/artifacts/v03_features_baseline_input.csv`：47,293 B、恰 **239** 数据行，`dipole_D` / `mu_sq_over_Vm` 两列俱在。
+- `probes/homo_lumo_baselines_summary.json`：`pool_rows = 29515`、`gate_status = final`、四目标全完成、champions 恰排除 4 个。
+- `probes/dielectric_onsager_delta_summary.json`：`sample_count = 234`、行级 RepeatedKFold 5×10 / seed 42、`decision = go`。
+- `LICENSE`（1,256 B）/ `LICENSE-DATA.md`（3,704 B）：本仓 MIT 的版权人逐字为 `the electrolyte-solvent-dielectric-ml authors`；全仓对 `Zhan-Yun` **零命中**。
+|
+**读数二 · 转录表逐行裁定（§W19-0 的 7 行）**
+| # | 计划写法 | 计划自评 | **本机裁定** |
+| --- | --- | --- | --- |
+| 1 | DC_Pred 128.94（Vinylene Carbonate） | 已核 | **已核**（实测 128.941261，且为全表最大） |
+| 2 | uniqueness 0.349 | 已核 | **已核，但只在 PDF 层**：原文「decline in uniqueness (0.349), with approximately 65% of compounds generated more than once」；仓内文本对 `0.349` **零命中** ⇒ 引用须注出处是 PDF |
+| 3 | EDB 18,316 条 | 已核 | **数字对、归属错**：原文是「EDB **and MP** data sets」，18,316 为两库**合计**（EDB 腿对应「over 250 literature papers」） |
+| 4 | Batt-P30K 29,519 分子 | 已核 | **已核**（HDF5 顶层 group 实测 29,519） |
+| 5 | RX-392 393 行 | 已核 | **已核、口径需注明**：248,404 B 一致；393 行含表头 ⇒ 392 条记录 |
+| 6 | η MAE 0.1223@298K | 未核 | **未核（本机确证无出处）**：全仓 `0.1223` 命中 69 处，无一处是 MAE；其中 2 处是 `viscosity_v02.csv` 的**实测黏度** 0.1223 Pa·s ⇒ 计划标「未核」成立 |
+| 7 | HOMO MAE 0.304 / LUMO MAE 0.350 | 错 | **确认为错**：仓内 HOMO **0.17662467232470583** eV、LUMO **0.24935401611452185** eV；且 LUMO 降级由 r = **0.7349044734023142** < 0.80 触发、**不是** MAE |
+|
+**读数三 · ε ≥ 60 名册（`dielectric_v03.csv` 全表 246 行，按阈值过滤）**
+实测恰 **9 个**，与计划 §W19-5 逐个成员、逐个数值对齐：N-methylacetamide 178.47 / vinylene carbonate 126 / formamide 106.14 / ethylene carbonate 90.5 / 2-hydroxyethylammonium lactate 85.6 / water 78.87 / fluoroethylene carbonate 78.4 / propylene carbonate 64.9 / ethanolammonium nitrate 60.9。
+- **不含 NMF**：`N-methylformamide` 在 v03 / v04 全表零命中 ⇒ E4 成立。
+- **水是 78.87，不是 80.0**：W17 旧「6 个自缔合质子液」名册的水 80.0 与 v03 的 78.87 不是同一名册，两处数字**不得互引**。
+- **v04 同名单**：按同一阈值实测同为这 9 个、数值逐位相同 ⇒ 名册在 v03 → v04 之间未漂移。
+|
+**读数四 · 修订台账 E1–E6 复核**
+- E1（许可出处）：**不可核**。本机没有 Batt-SLM 上游仓库副本（`data/raw/batt/` 只有 `Batt-P30K.h5`），全仓对 `Zhan-Yun` 零命中；本仓自己的 `LICENSE` 版权人是本项目 ⇒ E1 声称的「实测上游 LICENSE 全文」在本机无副本可复现；**不得**用本仓 `LICENSE-DATA.md` 冒充上游许可证据。
+- E2（计算级别）：**一致（双侧实测）**。THEMol 侧 `level_of_theory` 逐字为 `GFN2-xTB//B3LYP-D3(BJ)/DZVP (gas phase, single point on the DFT geometry)`；Batt 侧 `unit.dataset_method` 逐字为 `wB97X-V/def2-TZVPPD/SMD(epsilon=18.5)`。
+- E3（HOMO / LUMO MAE）：**一致**，见读数二第 7 行。
+- E4（9 个 vs 6 个）：**一致**，见读数三。
+- E5（76 / 239 逐字命中）：**一致，且已补齐落盘证据**。本机取 `v03_features_baseline_input.csv`（恰 239 行）与 `Batt-SLM.smi` 的 115,756 行做逐字比对，命中 **76 / 239**；同一口径下 v03 全表 246 行命中 83。
+- E6（乳酸乙醇铵 85.6）：**一致（正名）** 为 `2-hydroxyethylammonium lactate`；但缩写 `HEAL` **不是仓内术语**（全仓 73 处命中无一指该化合物）⇒ 预注册里若写 `HEAL` 须自带定义。
+|
+**读数五 · ④-b 追加不一致登记（计划未登记、本机新发现 4 条）**
+- **最有问题的一条：§W19-3 的 kinematic 依赖与已执行的 W18 事实矛盾**。计划写「kinematic 存量 214 行（176 ThermoML + 38 其他）仍冻结，待密度配对解冻」。本机实测：`Kinematic viscosity, m2/s` 只有 **86** 行；**214** 的真实出处是 `reports/eta_epsilon_joint_table.md:88` 的**族级排除计数** `kinematic_viscosity_not_dynamic = 214`；而 W18 §28.38 **已经解冻并实测**（176 行 ThermoML kinematic 经 `density_v01` 配对 → 池化 **86** 行，另 90 行多组分延后），三池 MAE `0.17477197208762` / `0.15698877870055475` / `0.15686276760094522`，全部未过 0.15，`verdict = refuted`。⇒ 「214 行仍冻结」是**数级口径混用（族级 214 vs 行级 86）+ 状态过期**的双重问题。
+- **§W19-5 失败名单计数错**：实测 `failed_names` 共 4 条 = **3 个**咪唑类 IL + Iron pentacarbonyl（计划写「2 个」）。另 246 − 4 失败 − 1 留出 = 241，与 `sample_count = 234` 差 **7** 行，计划只写「其余过滤」未给数。
+- **§W19-1 的「UChicago Box」无证据**：本机抽取 `au5c01628.pdf` 全文（15 页 / 81,744 字符）对 `Box` 零命中，Data Availability Statement 逐字指向 `https://github.com/AmanchukwuLab/ElectrolyteGPT`；（许可半句已核实：页脚 `CC-BY-NC-ND 4.0`）。
+- **§W19-3 的 Chemprop 待核项可结案**：`reports/decisions_log.md:432` 逐字为 `10x5 outer folds, mean R2 is 0.237, MAE 7.887, and Spearman 0.665`，对照 v1.0 headline `0.364` ⇒ **0.237 < 0.364 成立**，由「待核」改判**已核**。
+|
+**判定与边界**
+- `verdict`：资产表与 Onsager 读数**高度可复现**（digest 逐位一致、E5 独立复现）；但有 **3 条必须改判/登记**（EDB 归属、HOMO/LUMO MAE 记错、E1 许可出处不可核）+ **4 条追加不一致**（kinematic 矛盾、失败名单计数、UChicago Box、Chemprop 待核结案）。
+- **本件不占 shot、不动主记分牌**：`models_fitted = 0`、无任何 R2 / MAE；冻结基线 `0.4091179943351143` 与冻结头条 `0.4766400383507876` 不受影响；累计主记分牌尝试仍为 11）。
+- **不可核 = 不可核**：「上游 LFS oid」与「上游仓库 LICENSE」两类本机无副本的声明**不得**在后续章节改写成「已核」；`214`（族级）与 `86`（行级）**不得互引**。
+- **不在本章修订 Week 18 判据**：W18-2 端点定义、W18-7 退出判据只能由作者确认后修订，修订即记录。
+|
+**产物清单**
+- `reports/w19_state_audit.md`（23,234 B；sha256 `6deeaab6c32eef511336d02677dac654dfc6c8adf71c30f4b5df81cc3e723e1c`）
+- `tests/test_w19_state_audit.py`（3,013 B；sha256 `ef1a4c7c54004adeeef1939335ce1a568cc6899f5f2e0d0be4107b113325d39e`）
+|
+**数字出处**
+- 24,077 / `1ba6a239241200aef9f767c5203bd0c6ad0dc7e02d49eea9594f683d39752899` ← `reports/w19_state_audit.md`（权威输入块）
+- 183,771,012 / `587f1490…8d118d`（全值见报告）/ 29,519 / 115,756 / 248,404 / 392 / 128.941261 / 130,844 / 246 / 42,941 / 42,942 / 86 / 47,293 / 239 ← `reports/w19_state_audit.md` 资产表与 ③-b
+- 0.17662467232470583 / 0.24935401611452185 / 0.7349044734023142 / 0.1223 / 69 / 18,316 ← `reports/w19_state_audit.md` 转录数字核对表
+- 178.47 / 126 / 106.14 / 90.5 / 85.6 / 78.87 / 78.4 / 64.9 / 60.9 ← `reports/w19_state_audit.md` ③-b 名册表
+- 214 / 176 / 38 / 0.17477197208762 / 0.15698877870055475 / 0.15686276760094522 / 241 / 234 / 0.237 / 0.364 ← `reports/w19_state_audit.md` ④-b
+- 45 条字面量 / digest 钉 ← `tests/test_w19_state_audit.py::MEASURED_LITERALS` / `REPORT_SHA256`
+**数字自检**：片段内数值 token 已对 `reports/w19_state_audit.md` + `tests/test_w19_state_audit.py` 逐字回搜（ISO 日期时间戳整段排除、十六进制 digest 不作数值 token）。**推算值 / 运行值 / 外部常量（素材文件搜不到，故不冒充出处）**：`28.46`（节号，任务书逐字指定）；`0.4091179943351143` / `0.4766400383507876`（W18 冻结基线 / 头条常量，出自 Week 17–18 章节，本 lane 素材不含）；`23,234` / `3,013`（两个交付件的**本机 stat 实测字节数**，文件正文不含自身字节数）；`43`（`MEASURED_LITERALS` 的条目数，**本机清点**得出，非文件字面量）。其余全部数值 token 均在本 lane 素材内逐字命中。
+|
+
+## 28.47 Week 19 D2 Batt-P30K 直接命中核查：名册实为 246 行、逐字命中 77/246、规范化 78/246（2026-09-28）
+|
+**机制假设**：W19-1 剩一个开口 —— 我们的冻结 ε 名册到底有多少化合物**直接落在** MIT 许可的 Batt-P30K（29,519 分子、ωB97X-V/def2-TZVPPD/SMD(ε=18.5)）里。这个数决定 Batt-P30K 能不能当 HOMO/LUMO 的迁移源。D2 只做**只读身份核对**：不拟合任何模型（`models_fitted = 0`）、不产 R2 / MAE、不动任何冻结件、不引用任何 Reaxys 数值。
+**预注册**：本件无独立预注册 JSON —— 它是既有资产的身份核对，`read_only = true`、`writes_any_pool = false`、`reaxys_values_used = false`。冻结读数以字面量钉在 `tests/test_w19_batt_direct_hit.py`（sha256 `f2a710d7c7529c832cde712b0690a516805c2bbc17c03841bd30168c1ff6d558`）；探针内亦钉死输入身份 `EXPECTED_BATT_SHA256 = 587f1490613a008b91f45ee9de607a2e057c88c301fa9e5c9d7785b1968d118d` 与名册 digest `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`。命中阶梯（rungs）与规范化配方在探针里先声明、再执行。
+|
+**读数一 · 直接命中（分母 = 冻结 ε 名册 `data/dielectric_v03.csv` 实测 246 行 / 246 个唯一 InChIKey）**
+| 读数 | 命中 | 分母 | 比率 |
+| --- | --- | --- | --- |
+| 逐字 SMILES 相等 | 77 | 246 | 0.3130081300813008 |
+| RDKit 规范化（主读数 = InChIKey 全 27 位） | 78 | 246 | 0.3170731707317073 |
+| 最宽阶梯（去盐去电荷后取骨架前 14 位） | 78 | 246 | 0.3170731707317073 |
+- 主读数用的是与 §28.17 Batt 键**同一配方**（裸 RDKit `MolFromSmiles` → `MolToInchiKey`，取全 27 位），因此与既有 registry / 锚点可直接对齐。
+- 阶梯累计命中：`verbatim_raw_smiles` 77 → `rdkit_canonical_smiles_isomeric_true` 78 → `inchikey_full_27_bare_rdkit` 78 → `inchikey_skeleton_14_bare_rdkit` 78 → `inchikey_full_27_desalted_uncharged` 78 → `inchikey_skeleton_14_desalted_uncharged` 78 ⇒ **规范化只买到 1 个化合物**（`HCBRSIIGBBDDCD-UHFFFAOYSA-N`，首现于 `rdkit_canonical_smiles_isomeric_true`），更宽的档位再加不了任何分子。
+- 计数自洽：77 + 1 + 168 = 246（168 为规范化后仍未命中数）。
+|
+**读数二 · 分母口径发现（计划书写 239 / 76，磁盘实测 246 / 77）**
+- 磁盘 `data/dielectric_v03.csv` 实测 **246** 行、246 个唯一 InChIKey；逐字命中 **77**、规范化命中 **78** ⇒ 计划书的「239 行 / 76 命中」两个数**都对不上**。这是**分母口径分歧**，不是数据变化（该文件是冻结件，本件未改一个字节，digest 仍为 `ff214293…35ccce4`）。
+- 换成计划所用的 239 行口径（`probes/artifacts/v03_features_baseline_input.csv`）重跑：逐字 **70**、规范化 **71** ⇒ 两个口径都复现不出 76。
+|
+**读数三 · 与 §28.17 n = 111 配对锚点的包含关系**
+- 锚点定义：`data/processed/orbital_second_source_layer.csv` 中 `role == paired_anchor` 且 `batt_homo_eV` 非空的行；本机直接从该层重算得 **111** 个（与冻结摘要一致）。
+- 锚点落在 Batt 键全集里：**111 / 111**（子集判定 `true`）⇒ 两条链的身份**配方一致**。
+- 锚点落在冻结 ε 名册里：**75**（逐字 / 规范化 / 骨架三个口径都是 75）；**111 是否为本轮命中集的子集 = `false`**。
+- 真正可报的三个交并量：名册命中集共 **78** 个键，其中 **3** 个不在锚点集内；111 锚点里有 **36** 个根本不在这份 ε 名册里（75 + 36 = 111）。
+- **宇宙不同、不得直接说谁包含谁**：锚点分母是「PubChemQC 抓取窗口内恰好也落在 `four_core_key_registry` 轨道键上的分子」（全 Batt 池 29,519 键 + 名册外分子），本轮命中集分母是冻结 ε 名册的 246 行。
+- **一处必须登记的自我纠错**：`anchor_containment` 里两格曾拿 27 位 InChIKey 去比 14 位骨架集、拿名册命中集去减锚点集，得 `0` 与 `-33`；已按同宇宙重修 —— `anchors_skeleton_in_max_rung_key_set = 111`、`roster_hit_keys_not_in_anchors = 3`，且旧的 `anchors_in_max_rung_key_set` 键已删除。
+|
+**读数四 · 与 `four_core_key_registry` 的配方交叉核对**
+- registry 的 `has_orbitals` 键数 **29868**，其中能在 Batt 里找到 **29519**；本轮 Batt 键集全在 registry 轨道键里（`batt_keys_subset_of_registry_orbit = true`）。
+- Batt h5 身份：`groups_scanned = 29519`、`groups_without_smiles = 0`、`partial_scan = false`、sha256 与登记值 `sha256_matches_registered = true`。
+|
+**判定与边界**
+- `verdict`：**命中确认** —— 逐字 77/246、规范化 78/246；规范化只多 1 个化合物；111 锚点全部落在 Batt 键全集里（配方一致性成立），但只有 75 个落在 ε 名册里。
+- **命中 ≠ 拿到 Batt 级 HOMO/LUMO 估计**，更不等于过 §28.17 的 cross-level 标定门；前 14 位骨架读数只作敏感性上界（会抹掉质子化 / 立体差异），**不得当主读数引用**。
+- **不静默改用 239**：本件按磁盘实测 246 报数，差异登记在案。
+- **shot 编号留作者裁定**：`shot_accounting_judgement.author_decision_required = true`、`does_not_self_assign_shot_number = true` —— 本件零拟合、只读三件已冻结资产，建议按「复核不占号」处理；若要按「新信息产出」计号则由作者在预注册层拍板。
+- `promoted = false`；主记分牌尝试 **0** 次、累计 **11** 次不变；冻结基线 `0.4091179943351143` 与冻结头条 `0.4766400383507876` 未动。
+|
+**产物清单**
+- `probes/w19_batt_direct_hit.py`（sha256 `de221cb253ca7ba97843b2b8f22c317f7ba5f62f1a6774236321642addb85dd2`）
+- `probes/w19_batt_direct_hit_summary.json`（41,768 B；sha256 `46892d764461e0cdac474f9f4c3f81f11da5455fcac569b9bbe8cb478c2ad97e`）
+- `reports/w19_batt_direct_hit.md`（3,278 B；sha256 `e958e9a51e6f48b1e7f5c6082c57686a7702f9c17d40e773bdf2d654921f8ab5`）
+- `tests/test_w19_batt_direct_hit.py`（7,857 B；sha256 `f2a710d7c7529c832cde712b0690a516805c2bbc17c03841bd30168c1ff6d558`）
+|
+**数字出处**
+- 246 / 77 / 78 / 0.3130081300813008 / 0.3170731707317073 ← `probes/w19_batt_direct_hit_summary.json::roster_rows` / `verbatim_hits` / `normalized_hits` / `verbatim_ratio` / `hit_ratio`
+- 阶梯 6 档与累计命中 ← `probes/w19_batt_direct_hit_summary.json::ladder.rung_cumulative_hits`
+- `HCBRSIIGBBDDCD-UHFFFAOYSA-N` / 168 ← `probes/w19_batt_direct_hit_summary.json::lost_by_verbatim` / `misses_still`
+- 239 / 70 / 71 ← `probes/w19_batt_direct_hit_summary.json::alternate_roster`
+- 111 / 75 / 3 / 36 ← `probes/w19_batt_direct_hit_summary.json::anchor_containment`
+- 29868 / 29519 ← `probes/w19_batt_direct_hit_summary.json::registry_crosscheck`
+- `read_only` / `models_fitted` / `reaxys_values_used` / `writes_any_pool` / `shot_accounting_judgement` ← 同名 JSON 键
+**数字自检**：片段内数值 token 已对 `reports/w19_batt_direct_hit.md` + `probes/w19_batt_direct_hit_summary.json` + `tests/test_w19_batt_direct_hit.py` 逐字回搜（ISO 日期整段排除、digest 不作数值 token）。**推算值 / 运行值 / 外部常量**：`28.47`（节号，任务书指定）；`18.5`（Batt-P30K 计算级别里的 SMD 介电常数，出自 D1 / E2 的级别串，非本 lane 素材）；`0.4091179943351143` / `0.4766400383507876`（W18 冻结常量）；`41,768` / `3,278` / `7,857`（三个交付件的**本机 stat 实测字节数**）；`11`（累计主记分牌尝试，W18 冻结记账）；`-33` 与 `27 / 14`（自我纠错段引的是修复前的两格旧值与键宽，`-33` 见 `tests/test_w19_batt_direct_hit.py::test_the_repaired_fields_stay_in_one_universe` 注释原文）。其余全部数值 token 在本 lane 素材内逐字命中。
+|
+
+## 28.48 Week 19 D4 文献抽取探针 Phase-0：模板 v0 十三字段与门槛先声明、本周不执行抽取（2026-09-28）
+|
+**机制假设**：ε 通道被 157–161 个开放许可化合物的封顶卡住，文献抽取是**唯一**可能突破该封顶的新路线（结构化库上限来自许可，散点文献值不在其中）。D4 只做 Phase-0：把 §W19-2 的抽取模板落成 13 字段规格，并把门槛、量级守卫、红线、许可判读**在执行前**锁死。本周**不执行抽取、不联网、不跑拟合、不产出任何读数**（机器被 W18 / W19 其余 lane 占满）。
+**预注册**：`probes/w19_extraction_phase0_prereg.json`，sha256 `5f83efa632cf7de79c017c938dfb6c63102ae13cbacb0b3f50eeb541d74ccb11`，`status = "locked_before_run"`；`deliverable = "D4"`、`executes_extraction_this_week = false`、`produces_reading = false`、`thresholds_pending_author_confirmation = true`。规格件 `reports/w19_extraction_phase0.md` sha256 `10c7913cefa2f431827d4582250aa2f805c096dd32dce24330c1cdc0230bb25f`；字面钉测试 `tests/test_w19_extraction_phase0.py` sha256 `8b2ee13d53faee3784206b18b7289017413e0f804972ee085111475f0ae74a41`（同时钉住前两个文件的 digest）。
+|
+**规格一 · 抽取模板 v0（记录粒度 = 一个（化合物, 通道性质, 数值）观测行，13 字段）**
+1. `compound_name`（保留原文写法，不得顺手规范化成 IUPAC 名）；2. `smiles`（RDKit 可解析，失败即丢弃、**不得人工替写结构**）；3. `inchikey`（27 字符标准形，须与 SMILES 现算值逐位一致）；4. `disambiguation_confidence`（< 0.90 进人工复核队列，**不得默认 1.0**）；5. `property_value`（过量级守卫）；6. `unit`（受控词表，非表内单位须写 `unit_note`）；7. `temperature_K`（0 < T ≤ 1000，°C 须换算并留 `temperature_note`）；8. `method`（受控词表，必须区分 reported 与 estimated）；9. `source_doi`（**硬门**）；10. `locator_table_figure`（**硬门**，无定位视为未核）；11. `extraction_confidence`（< 0.95 进人工复核队列）；12. `access_class`（写入时自动；`open_oa` 才可能入 `data/`）；13. `source_lane`（∈ {eta, homo_lumo, redox, epsilon}）。
+- 分组读法：字段 1–4 服务**化合物消歧**；5–8 服务**数值字段**；9–10 是**硬门**；11 是**抽取置信度**；12–13 是治理列。
+|
+**规格二 · 通道优先级与 ε 的条件性激活**
+- 先做顺序：**η**（存量最大、离过门最近：组键 MAE `0.174772` vs 门 0.15）→ **HOMO/LUMO**（已有基线池可做组外对照）→ **氧化还原电位**（RX-392 存量 + N14 安全通道）；**ε 条件性激活**。
+- 预注册落为 `channel_priority.first = [eta, homo_lumo, redox]`、`epsilon_template_activation = "deferred_to_w18_7"`：**ε lane 若在 W18-7 判「封顶、无合法路径」则模板转档案**（不投入 Week 20 规模化、不占抽取预算）；若解冻/换线成功则按同一套字段模板另开预注册立项。**本稿不单方判定 ε 通道死活**。
+|
+**规格三 · 建议门槛（全部 `status = proposed_pending_author_confirmation`）**
+| 门槛 | 建议值 | 作用域 | 不达标后果 |
+| --- | --- | --- | --- |
+| 数值字段 precision | ≥ 0.95 | `property_value` + `unit` + `temperature_K` | 整通道转人工复核，不得入库 |
+| 数值字段 recall | ≥ 0.80 | 同上（金标准 = 人工核对子集） | 整通道转人工复核，不得入库 |
+| 化合物消歧 precision | ≥ 0.90 | `compound_name → inchikey` | 全量记录转人工复核消歧 |
+| DOI + 表/图定位完整率 | **= 100%（硬门）** | `source_doi` + `locator_table_figure` | **缺则不入库**（不是降级，是不入库） |
+- 量级守卫（同为建议值）：η ∈ (0, 10] Pa·s、HOMO/LUMO ∈ [-15, 5] eV、氧化还原（vs Li/Li⁺）∈ [0, 10] V、ε ∈ [1, 300]；超界一律人工复核，不得静默入库。
+- **纪律**：上表全部数值均为建议，`design_only_language` 逐字为「建议门槛；待作者确认，不得由本稿单方生效」；**作者未确认前不得作为验收判据，不得据此宣称任何通道达标或抽取路线成立**。
+|
+**规格四 · 先例与许可判读**
+- **EDB 先例**：250+ 篇文献 → **18,316** 条；**口径更正**（引自 D1 实测）：18,316 实为「EDB + MP」**合计**，此后引用一律写合计，不得再单说「EDB 18,316」。
+- **`s43246` 先例（RAG + LLM）**：筛选精度 30% → 100%，按「**方法可借鉴、数据不可搬运**」处理。
+- **EDB / ElectrolyteGPT 只学字段设计**：字段清单/表结构属思想与方法，不受版权保护；但其数据受 **CC-BY-NC-ND** 约束（ND 禁止改造后再分发/入库、NC 禁止商用），**不得改造后入库**。该判读已写入预注册。
+|
+**规格五 · 红线（与 Reaxys 条款同构，已逐条写入预注册）**
+1. 图源读数与受限库值一律 `restricted_crosscheck_only`：只作交叉核对，**永不入 `data/`、永不入任何池、永不入任何特征**；2. 每条记录必须带 DOI + 表/图定位，**无定位不入库**（硬门）；3. 出版商站点手动逐条查询合规、**批量爬虫禁止**（OA API 除外且需登记：API 名 / 许可条款 / 抓取时间窗 / 条数）；4. Reaxys 数值禁入池 / 特征 / 交付包（§28.33 红线延续）—— 抽取值若与 Reaxys 同源同值，一律按 `restricted_crosscheck_only` 处置，**不得因「文献里也印了同一个数」而洗白入库**。
+|
+**判定与边界**
+- **本件无读数、不占主记分牌**：`produces_reading = false`；`promotion_rule` 逐字写明「本件不提升任何读数、不占主记分牌；W18 冻结头条 `0.4766400383507876` 与基线 `0.4091179943351143` 不受本件影响；累计主记分牌尝试次数不变（11）」。
+- **shot 记账待作者裁定（建议，未生效）**：计划预分配 **shot 21**；`shot_accounting.recommended_shot = 21`、`fallback_if_shot_19_20_counted = 22`、`this_file_consumes_a_shot = false`（本件是 Phase-0 设计件，占号发生在抽取执行时）；是否把 shot 19 / 20 视为已用**由作者拍板**。
+- **两条分支**：过门（四条门槛全达）⇒ Week 20 立项规模化（语料扩到 200+ 篇 OA）；不过门 ⇒ 降级为半自动辅助工具（LLM 只做候选定位 + 预填，**每条记录人核后才可能入库**，半自动产物不得直接当训练数据）。**看到结果后再改门槛即违反 §W19-9**（lever-8 先例）。
+- 本件**不声称**任何通道达标、不声称抽取路线成立；Phase-0 方案本身（语料 20–50 篇 OA、人工核对子集大小、模板冻结后放量）中的待定项同样标注「待作者确认」。
+|
+**产物清单**
+- `reports/w19_extraction_phase0.md`（11,083 B；sha256 `10c7913cefa2f431827d4582250aa2f805c096dd32dce24330c1cdc0230bb25f`）
+- `probes/w19_extraction_phase0_prereg.json`（11,634 B；sha256 `5f83efa632cf7de79c017c938dfb6c63102ae13cbacb0b3f50eeb541d74ccb11`）
+- `tests/test_w19_extraction_phase0.py`（sha256 `8b2ee13d53faee3784206b18b7289017413e0f804972ee085111475f0ae74a41`）
+|
+**数字出处**
+- `locked_before_run` / `D4` / `executes_extraction_this_week` / `produces_reading` / `thresholds_pending_author_confirmation` / `design_only_language` / `promotion_rule` ← `probes/w19_extraction_phase0_prereg.json` 同名顶层键
+- 0.95 / 0.80 / 0.90 / 1.00 / `magnitude_guards` ← `probes/w19_extraction_phase0_prereg.json::thresholds`
+- `channel_priority`（`first` / `epsilon_template_activation` / `epsilon_branch`）← 同名 JSON 键
+- `shot_accounting`（21 / 22 / `this_file_consumes_a_shot`）← 同名 JSON 键
+- 13 字段 ← `probes/w19_extraction_phase0_prereg.json::template_v0.fields`（实测 13 条）；文字表述见 `reports/w19_extraction_phase0.md::二`
+- 18,316 / 250 / 30% → 100% / CC-BY-NC-ND ← `reports/w19_extraction_phase0.md::一` 与 `::八`
+**数字自检**：片段内数值 token 已对 `reports/w19_extraction_phase0.md` + `probes/w19_extraction_phase0_prereg.json` + `tests/test_w19_extraction_phase0.py` 逐字回搜（ISO 日期整段排除、digest 不作数值 token）。**推算值 / 运行值 / 外部常量**：`28.48`（节号，任务书指定）；`11,083` / `11,634` 两个字节数是**本机 stat 实测**（素材文件正文不含自身字节数；规格件末尾也自注「不自指自身摘要」）；`11`（累计主记分牌尝试，W18 冻结记账，经 `promotion_rule` 引用）。其余全部数值 token 在本 lane 素材内逐字命中。
+|
+
+## 28.49 Week 19 D5 η 跨模型一致性：Chemprop-η 行级 MAE 0.085064 vs 在役 XGB 0.156863（Δ −0.071799），判 chemprop_better（2026-09-28）
+|
+**机制假设**：η 是全漏斗里离过门最近的在役通道（组键 MAE `0.17477197208762` vs 门 0.15，只差 0.025）。W18-A 只在**特征层**解冻行级数据，把「表示层是不是天花板」这个问题留着没答。D5 的问法是：同池、同切分、同目标、同单位，只把表示从 2048 列 Morgan 计数指纹换成**学出来的图表示**（Chemprop D-MPNN），MAE 会不会移动超过预注册容差 ±0.02。判据是 **delta，不是门**；门 0.15 只作上下文报告。
+**预注册**：`probes/w19_chemprop_viscosity_prereg.json`，sha256 `c42846ccb9c898ebfd7da429e40247132134c90089b0d41d684ce6c5f313f7b9`，`status = locked_before_run`；配置**跑前注册、从未搜索**（60 epochs、batch 64、d_h 300、depth 3、三种子 42/1234/2026、descriptor 只用 T_K 与 1000/T_K 并在**训练行**上 fit StandardScaler）。容差三分支：`|Δ| ≤ 0.02` ⇒ `consistency_confirmed`；`Δ ≤ −0.02` ⇒ `chemprop_better`；`Δ ≥ +0.02` ⇒ `incumbent_confirmed`。`amendment_rule` 亦跑前声明（若计时外推超 60 分钟则按 epochs 60→30、集成 3→1、d_h 300→150 依序缩减，缩减项必须点名）。
+|
+**读数 · 只用组外（GroupShuffleSplit by InChIKey）留出集**
+| 池 | 行 | 键 | 测试行 | 在役 MAE | Chemprop MAE | Δ | verdict |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `row_level`（主池） | 4151 | 976 | 838 | 0.15686276760094522 | 0.08506361044387624 | −0.07179915715706899 | `chemprop_better` |
+| `family_level` | 3582 | 957 | 708 | 0.17477197208762 | 0.08908094784092072 | −0.08569102424669928 | `chemprop_better` |
+- 两个池都报 `split_verified_against_incumbent = true`、`group_overlap_keys = 0`：两模型看到**同一批训练行与同一批测试行**。
+- **在役原位复现**：两池 `incumbent_reproduction.abs_gap = 0.0`、`matches_frozen = true` ⇒ 协议无漂移，负/正结论都不能归因于切分漂移。
+- 主池在役 R2 `0.752682215223955`、Chemprop 集成 R2 `0.908162916149498`；family 池在役 R2 `0.7481271437772365`、Chemprop 集成 R2 `0.9174353584088537`。
+- 门上下文：主池 Chemprop **过** 0.15 门、在役**不过**（`gate_0_15_passed_by_chemprop = true` / `gate_0_15_passed_by_incumbent = false`）。
+|
+**判定与边界**
+- `verdict = chemprop_better`（两池同判）：学到的主池 Δ = −0.07179915715706899，**超过**预注册容差 ±0.02 ⇒ 在本协议下**表示层曾是 η 通道的天花板**。这是**开一条跟进 lane 的触发，不是晋级**。
+- `promoted = false`；主记分牌尝试 **0** 次、累计仍 **11** 次；冻结基线 `0.4091179943351143` 与冻结头条 `0.4766400383507876` 未动。
+- **η 通道独立报数**：row_level **4151 行 / 976 键**、family_level **3582 行 / 957 键** —— 这组数与 ε 通道的 457 / 97 / 276 / 2029 **不得混说**。
+- **设计混淆必须照实说**：在役是**冻结单配置单种子** XGB，Chemprop 是**三种子集成**，Δ 里有集成/调参成分（W18-P0 显示 ε 上纯调参只动 `0.01370607964226378`，故「纯调参」不太可能是这个量级的解释，但该混淆无法从本设计里移除）。
+- **无折级方差**：组外协议只有**一次** 20 percent 留出抽样；三种子只探初始化方差，不探切分方差。Chemprop 固定 60 epochs、无 validation fold、无 early stopping / checkpoint 选择 ⇒ 测试折无法影响任何超参。
+- **口径更正（跑前登记）**：计划写「kinematic 存量 214 行仍冻结」，两半都错 —— 214 是**族级排除计数**、行级残差只有 **86** 行，且 §28.38 已解冻并判 `refuted`；本枪只**复用**已解冻的池，不重新解冻。
+- 环境登记：`.venv-chemprop` 补装 `matplotlib` / `xgboost` / `h5py`（`viscosity_baseline` 导入即需要），镜像曾把 numpy 拉到 2.5.3（chemprop 要求 <2.0.0），已**回钉 1.26.4** 并复验全部导入。
+- 本枪不引用任何文献数字作对照靶；在役 MAE 是**仓内实测值**，故 Δ 有意义。
+|
+**产物清单**
+- `probes/w19_chemprop_viscosity.py`（sha256 `2e2a582b8627aafcbfd5547ba8151c6d1612441cd3a0ad9036d4bb35ea98b15c`）
+- `probes/w19_chemprop_viscosity_prereg.json`（sha256 `c42846ccb9c898ebfd7da429e40247132134c90089b0d41d684ce6c5f313f7b9`）
+- `probes/w19_chemprop_viscosity_summary.json`（sha256 `6fb74468dfa4844f5feeb012ec652ef3d08b70ede355293b60691b32173f7796`）
+- `reports/w19_chemprop_viscosity.md`（sha256 `ca3213a76897f88a188e5b92324756f6764ce617906ec16ff2a887e1820da118`）
+- `tests/test_w19_chemprop_viscosity.py`（sha256 `c7dd58c72fce682c2f88bf328ecf9f4283bebc3878065f86d5615f057d7faae1`）
+- 侧车：`probes/artifacts/w19_chemprop_viscosity_repeats.csv`（sha256 `71e64d79b8e4138b808056c9ed4081ad18d4443d41285a8a3903d022828abec7`）、`probes/artifacts/w19_chemprop_viscosity.png`（sha256 `96f9f069095f86a714187ca912d0457126d75ffeefa65ce0a27e66ef80b292d1`）
+|
+**数字出处**
+- 4151 / 976 / 3313 / 838 / 780 / 196 与 3582 / 957 / 2874 / 708 / 765 / 192 ← `probes/w19_chemprop_viscosity_summary.json::pools.row_level` / `::pools.family_level`
+- 0.15686276760094522 / 0.08506361044387624 / −0.07179915715706899 与 0.17477197208762 / 0.08908094784092072 / −0.08569102424669928 ← 同 JSON 两池的 `incumbent.mae_log10_cP` / `chemprop.ensemble_mae_log10_cP` / `delta_mae_log10_cP`
+- 0.752682215223955 / 0.908162916149498 / 0.7481271437772365 / 0.9174353584088537 ← 同 JSON 两池的 `r2_log10_cP`
+- 0.02 三分支 / `amendment_rule_declared_before_run` ← `probes/w19_chemprop_viscosity_prereg.json::tolerance_preregistered` 与 `::amendment_rule_declared_before_run`
+- 0.01370607964226378 ← `reports/w19_chemprop_viscosity.md::4`（引 W18-P0 的 ε 读数）
+- 60 epochs / 3 集成 / 三种子 42 1234 2026 / 2.1.0 / 3.12.14 / 1.26.4 ← `probes/w19_chemprop_viscosity_summary.json::registered_config` 与 `::environment`
+- 214 / 86 / 0.15 ← `reports/w19_chemprop_viscosity.md::0` 与 `::1`
+**数字自检**：片段内数值 token 已对 `reports/w19_chemprop_viscosity.md` + `probes/w19_chemprop_viscosity_summary.json` + `probes/w19_chemprop_viscosity_prereg.json` + `tests/test_w19_chemprop_viscosity.py` 逐字回搜（ISO 日期整段排除、digest 不作数值 token）。**推算值 / 运行值 / 外部常量**：`28.49`（节号，任务书指定）；节标题里的 `0.085064` / `0.156863` / `0.071799` 是**四舍五入展示值**（文件里是 `0.08506361044387624` / `0.15686276760094522` / `-0.07179915715706899`；标题由任务书逐字指定，正文一律用全精度值）；`0.025`（**推算差值**：门 0.15 与在役 family_level MAE 0.17477197208762 之差）；`2.5` / `2.0`（numpy 镜像事件的环境版本事实：`2.5.3` / 要求 `<2.0.0`；其中 `1.26.4` 在 summary 的 `environment` 里有字面量）；`11`（累计主记分牌尝试，W18 冻结记账）。其余全部数值 token 在本 lane 素材内逐字命中。
+|
+
+## 28.50 Week 19 D6 多目标排序键 v0：实测只有 HOMO/LUMO 两通道过门，权重等权（2026-09-28）
+|
+**机制假设**：筛选使命需要的是**排序**而不是单目标 R2。D6 把已过门通道的分子级读数合成一个排序键（Pareto 前沿 + 前沿内加权分数），交付 ① 支配关系 ② 非支配前沿 ③ 前沿内确定性排序。它**不是生成器**：不产新分子、不产任何新性质预测值，分数是**集合相对**的排序量、不是物性值。本件不拟合任何模型、不读任何大表、不写任何数据文件 —— 门槛表以字面量 + 出处冻结在模块里，import 时由 `measured` 与门规则**重新推导** `passed`（不是手抄）。
+**预注册**：本件无独立预注册 JSON。它锁定的对象是**权重、方向、门槛表与适用域阈值**，全部以字面量钉进 `tests/test_w19_ranking_key.py`（sha256 `705b7440843485550b3bd4ff185414d6aa8bee2249e3c4f386a8e561bcc0071f`，AF-13 同款纪律）；规范件 `reports/w19_ranking_key_spec.md`（sha256 `f7cc41d6cac786a835cf8be4dee795dd8e50b465531cbc88f5e5b94f5b226dee`）、实现 `probes/w19_ranking_key.py`（sha256 `041ed3ca9a27b4cb1fd94259cee293799f4a907a49aa12cf49305a2af5d090c1`）。**权重或方向改动 = 预注册改动**：必须新钉一份预注册并重跑字面钉测试，不许事后静默改数。
+|
+**读数一 · 六通道门槛表（本机从仓内文件实测）**
+| 通道 | 门 | 方向 | 实测值 | 过门 | 进 v0 键 |
+| --- | --- | --- | --- | --- | --- |
+| ε 介电常数 | 分组 R2 ≥ 0.60 | 越高越好 | 0.4766400383507876 | **未过** | **不进键** |
+| η 黏度 | MAE < 0.15 log10(cP) | 越低越好 | 0.17477197208762 | **未过** | **不进键** |
+| HOMO | MAE < 0.20 eV | 越低越好 | 0.19050925839013938 | **过门** | **进键（权重 0.5，方向 min）** |
+| LUMO | MAE < 0.20 eV | 越低越好 | 0.13855083976437643 | **过门** | **进键（权重 0.5，方向 max）** |
+| 氧化（自由能） | MAE < 0.15 eV | 越低越好 | 0.2905180517963865 | **未过** | **不进键** |
+| 还原（自由能） | MAE < 0.15 eV | 越低越好 | 0.4096241620366996 | **未过** | **不进键** |
+- **一句话**：六通道里**只有 HOMO / LUMO 两条过门**，v0 排序键因此只含轨道两维（`GATED_CHANNELS = (homo, lumo)`）。三种门的**方向不同**（ε 是高者过的 R2 门；η / redox / 轨道是高者不过的 MAE 门），实现里逐通道用 `pass_when = below / above` 显式声明，绝不用一套方向套全部通道。
+- η 通道的门下还挂着 W18 行级解冻的最好读数 `0.15686276760094522`，**也未过** 0.15。
+- 补充登记（不进键）：IP `0.2010970559642009`、EA `0.23415453202842548` 也各自差 1.1 meV / 34 meV 未过 0.20 eV 门；且 IP 与 HOMO、EA 与 LUMO 高度共线（Pearson r = -0.9876 / -0.9513），本版不把它们当独立通道重复计权。
+|
+**读数二 · 权重与示例排序（合成夹具，数值任意、不含任何化学主张）**
+- 进键权重：**HOMO 0.5 / LUMO 0.5**（等权）。理由：两通道之间**没有任何实测的成本或收益比**可据以加权，无证据时等权是唯一不引入自由度的选择；任何非等权必须先给出一条可证伪的理由。
+- 分数定义：每通道在**被评分行集内**做 min-max 归一到 [0,1]（方向按通道声明，1 = 最好；整列同值时取 0.5），再按权重线性求和 ⇒ **集合相对排序量**，不得跨集合比较、不得当预测值引用。
+- 默认键（0.5 / 0.5）排序：demo-v `0.7833333333333333` = demo-y `0.7833333333333333` > demo-x `0.5` = demo-z `0.5` > demo-w `0.41666666666666663`；前沿 = {demo-x, demo-y, demo-z, demo-v}，demo-w 被 demo-y / demo-v 支配。
+- 权重改为 HOMO 0.9 / LUMO 0.1 后排序变为 demo-x `0.9` > demo-v `0.69` = demo-y `0.69` > demo-w `0.35` > demo-z `0.1` ⇒ **权重是显式的、可被测试直接推翻的**。
+- 平局：键向量完全相同的两行**互不支配**、都留在前沿，前沿内与全表先后用 `(-score, name)` 裁定（名字升序）⇒ 同分行次序确定、可被测试钉死。被支配行**不隐藏**（仍给分数、标 `on_front = False`）；缺失 / 非有限读数直接 `ValueError`，**不静默填 0**。
+|
+**读数三 · 适用域与失效区（ε > 60 高介电区）**
+- `probes/dielectric_onsager_delta_summary.json` 实测：ε > 60 区共 **5** 个化合物，Onsager 先验在该区覆盖率 **0/5**；Δ-learning headline 臂在该区 MAE **75.95675695251926**（偏置同值）。
+- 结论：**高介电区在单分子描述符下不可解** —— 不是模型容量问题，是缺 Kirkwood g（取向相关）这一维。对排序键的硬约束：① v0 **不含 ε**，故不存在用不可信通道排序的问题；② 将来 ε 若过门入键，必须先把该区显式声明为**域外**：`high_permittivity_excluded(eps) == True` 的行不得参与排序、不得进前沿，阈值以模块常量 `HIGH_PERMITTIVITY_EPS = 60.0` 钉住。
+- **本件不做分域记分牌的替换**：全域数字照报、域外声明在先（与既有适用域声明同款纪律）。
+|
+**判定与边界**
+- `verdict`：**v0 成立且范围受限** —— 只含 HOMO / LUMO 两维，等权，适用域阈值 60.0 钉死；六通道里 4 条未过门的数据（ε / η / 氧化 / 还原）**不得进键、不得作排序依据**。
+- **生成闭环永久钉死（三条证据）**：① uniqueness 塌缩 —— ElectrolyteGPT（JACS Au 2026）在 10 性质条件化下 uniqueness 塌到 **0.349**；② 代理输出的审计缺口 —— 其 10 个性质全部为代理输出、`never subjected to a group-split audit`；③ 许可 —— 其数据许可为 `CC-BY-NC-ND` 4.0（不得改作）。**制度结论**：本项目不做生成闭环、不做候选生成器；其代理输出永不作为训练数据、永不入任何池、永不进特征或交付包；字段设计可借鉴（思想不受版权保护）。
+- **未来扩通道的唯一路径**：先把该通道推过自己的门，再改本件并重钉预注册；**先加通道再加门是禁止的**。
+- **与文献的对齐纪律**：10 篇扫描文献里 0 篇报告分组拆分 ε R2；本件不引用任何随机拆分文献数字做对照靶或晋升依据。
+- **不占主记分牌**：本件不产读数、不加主记分牌尝试；冻结基线 `0.4091179943351143` 与冻结头条 `0.4766400383507876` 未动（ε 的读数在本件里只作**门槛裁定输入**，不作比较对象）。
+|
+**产物清单**
+- `reports/w19_ranking_key_spec.md`（9,676 B；sha256 `f7cc41d6cac786a835cf8be4dee795dd8e50b465531cbc88f5e5b94f5b226dee`）
+- `probes/w19_ranking_key.py`（sha256 `041ed3ca9a27b4cb1fd94259cee293799f4a907a49aa12cf49305a2af5d090c1`）
+- `tests/test_w19_ranking_key.py`（9,081 B；sha256 `705b7440843485550b3bd4ff185414d6aa8bee2249e3c4f386a8e561bcc0071f`）
+|
+**数字出处**
+- 六通道门槛表（0.60 / 0.15 / 0.20 与六个实测值）← `reports/w19_ranking_key_spec.md::3` 输入通道表；实现内自检见 `probes/w19_ranking_key.py::CHANNEL_GATE_STATUS`；字面钉见 `tests/test_w19_ranking_key.py::GATE_TABLE`
+- 0.5 / 0.5 与 min / max 方向 ← `probes/w19_ranking_key.py::DEFAULT_WEIGHTS` / `DEFAULT_KEYS`；规范表述见 `reports/w19_ranking_key_spec.md::4`
+- 0.7833333333333333 / 0.41666666666666663 / 0.9 / 0.69 / 0.35 / 0.1 ← `reports/w19_ranking_key_spec.md::8` 示例（与 `tests/test_w19_ranking_key.py::BASELINE_SCORES` / `HEAVY_HOMO_SCORES` 一致）
+- 5 / 0/5 / 75.95675695251926 / 60.0 ← `reports/w19_ranking_key_spec.md::6`（引 `probes/dielectric_onsager_delta_summary.json`）；常量见 `probes/w19_ranking_key.py::HIGH_PERMITTIVITY_EPS`
+- 0.2010970559642009 / 0.23415453202842548 / 1.1 / 34 / 0.9876 / 0.9513 ← `reports/w19_ranking_key_spec.md::3` 补充读数（引 `reports/homo_lumo_baselines.md`）
+- 0.349 / `never subjected to a group-split audit` / `CC-BY-NC-ND` / 10 ← `reports/w19_ranking_key_spec.md::2`（证据三条）与 `::9`（10 篇扫描文献 0 篇报分组 ε R2）
+**数字自检**：片段内数值 token 已对 `reports/w19_ranking_key_spec.md` + `probes/w19_ranking_key.py` + `tests/test_w19_ranking_key.py` 逐字回搜（ISO 日期整段排除、digest 不作数值 token）。**推算值 / 运行值 / 外部常量**：`28.50`（节号，任务书指定）；`0.4091179943351143`（W18 冻结基线常量，本 lane 素材只含头条 `0.4766400383507876`）；`9,676` / `9,081`（两个交付件的**本机 stat 实测字节数**，文件正文不含自身字节数）；`11`（累计主记分牌尝试，W18 冻结记账）。其余全部数值 token 在本 lane 素材内逐字命中。
+|

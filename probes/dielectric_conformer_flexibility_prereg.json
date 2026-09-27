@@ -1,0 +1,59 @@
+{
+  "schema": "dielectric_conformer_flexibility/prereg@1",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-27T12:00:00Z",
+  "non_blind": true,
+  "non_blind_reason": "锚点 0.6080587938801277 已在 shot 16 / W17-27 公开；本枪是它的诊断性扩展，不是盲测。",
+  "lane": "Week 18 P3 (conformer spread / flexibility)",
+  "question": "lever 4 只把「构象平均偶极」搬进稠密块；同一均值、不同柔性的化合物在那个块里无法区分。把构象偶极的离散度（std / range）与构象数追加到该块，能否推动单表示读数？",
+  "frozen": {
+    "headline": 0.4766400383507876,
+    "baseline": 0.4091179943351143,
+    "single_representation_anchor": 0.6080587938801277,
+    "head_params": {
+      "n_estimators": 200,
+      "max_depth": 2,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "reg_lambda": 1,
+      "objective": "reg:squarederror",
+      "tree_method": "hist",
+      "max_bin": 64,
+      "n_jobs": 1
+    },
+    "random_state": 42,
+    "protocol": "5 folds x 10 repeats, GroupKFold by InChIKey, seed 42 anchor",
+    "seeds": [
+      42,
+      1234,
+      2026,
+      31337,
+      7
+    ],
+    "anchor_seed": 42,
+    "anchor_tolerance": 1e-9
+  },
+  "arms": {
+    "reference_lever4": "冻结头 + physical_lever4（13 列稠密块，构象均值偶极）；锚点臂",
+    "plus_flexibility": "冻结头 + physical_lever4 追加柔性列 dipole_D_conformer_std / dipole_D_conformer_range / n_conformers",
+    "flexibility_only": "冻结头 + 只放柔性列（对照臂）"
+  },
+  "flexibility_columns": [
+    "dipole_D_conformer_std",
+    "dipole_D_conformer_range",
+    "n_conformers"
+  ],
+  "flexibility_source": "probes/artifacts/dielectric_xtb_full_table_migration_conformers.csv（只取 status=ok 且 n_conformers 非空的行）",
+  "missing_fill": "化合物在构象表里没有可用行时，三个柔性列全部按 0.0 填充；覆盖率与「0 vs 8」的构象数指示效应必须写进报告，不得当作真实柔性。",
+  "decision_rule": {
+    "delta_definition": "cross_seed_mean_r2(plus_flexibility) - cross_seed_mean_r2(reference_lever4)，端点=5 种子均值",
+    "confirmed": "delta >= 0.02",
+    "partial": "0.005 <= delta < 0.02",
+    "refuted": "delta < 0.005"
+  },
+  "placebo_rule": "--placebo 用固定 rng 2026 只置换 scored 行的标签（其余行标签不动，与 shot 17 同构）；",
+  "placebo_collapse_rule": "placebo 下 reference_lever4 的跨种子均值 < 0.5 * 0.6080587938801277（即 < 0.304029）即记 collapsed=true。",
+  "promotion_rule": "本枪为诊断枪：任何读数都不 promote；冻结头条 0.4766400383507876 与冻结基线 0.4091179943351143 不动。",
+  "rerun_order": "先跑 --placebo 写出 _placebo_summary.json，再跑真实枪，真实枪会把它读进来做对照。"
+}

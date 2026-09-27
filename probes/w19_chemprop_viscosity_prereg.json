@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "task_id": "week19_w19d5_chemprop_viscosity_crosscheck",
+  "status": "locked_before_run",
+  "written_at_local": "2026-09-28",
+  "plan_reference": "E:/.../Week19立项计划_文献驱动三线.md §W19-3 eta channel cross-model consistency",
+  "purpose": "Cross-model consistency check of the eta channel: retrain a Chemprop D-MPNN on the frozen row-level viscosity pool under the SAME GroupShuffleSplit-by-InChIKey protocol as the incumbent XGB, and compare MAE on log10(cP).",
+  "correction_registered_before_run": {
+    "plan_sentence": "kinematic 存量 214 行仍冻结，待密度配对解冻 (W18-4 口径)；本枪只用已解冻数据",
+    "verdict": "doubly wrong",
+    "clause_1": "214 is a FAMILY-LEVEL exclusion count (reports/eta_epsilon_joint_table.md:88). The ROW-LEVEL kinematic residue is 86 rows, not 214.",
+    "clause_2": "The state is stale: reports/decisions_log.md 28.38 already unfroze those rows and judged the arm refuted, three pools at MAE 0.17477197208762 / 0.15698877870055475 / 0.15686276760094522, gate 0.15.",
+    "consequence": "The plan's dependency line is not usable as written and is NOT reused. This probe reuses the unfrozen pools as-is (no re-thaw, no new rows)."
+  },
+  "registered_pools": {
+    "primary": "row_level",
+    "secondary": "family_level",
+    "row_level": {
+      "rows": 4151,
+      "keys": 976,
+      "note": "frozen pool + 483 pure ThermoML Pa*s rows + 86 thawed rows"
+    },
+    "family_level": {
+      "rows": 3582,
+      "keys": 957,
+      "note": "the frozen pool itself, reproduced in place"
+    },
+    "never_mixed_with": "457 epsilon scoring rows / 97 compounds / 276 (compound,T) pairs / 2029 epsilon full-table training rows: the eta channel is a SEPARATE channel and its row and compound counts are reported only against eta pools."
+  },
+  "incumbent_reference": {
+    "model_name": "MorganTemperatureXGBoost",
+    "model_config": "XGBoost n_estimators=800, max_depth=10, learning_rate=0.05, subsample=0.8, colsample_bytree=0.6, reg_lambda=1.0, seed=42; features=Morgan_count_2048+T_K+1000/T_K",
+    "summary_path": "probes/viscosity_row_level_summary.json",
+    "summary_sha256": "3fd1014f5b7a02bea91e4db2db09901dae27fef2102edf4bd1bb951e11bd9bed",
+    "readings": {
+      "row_level": {
+        "split": "group_key",
+        "mae_log10_cP": 0.15686276760094522,
+        "r2_log10_cP": 0.752682215223955,
+        "train_rows": 3313,
+        "test_rows": 838,
+        "train_keys": 780,
+        "test_keys": 196,
+        "group_overlap_keys": 0,
+        "test_id_hash": "2dedfc6ae3ac"
+      },
+      "family_level": {
+        "split": "group_key",
+        "mae_log10_cP": 0.17477197208762,
+        "r2_log10_cP": 0.7481271437772365,
+        "train_rows": 2874,
+        "test_rows": 708,
+        "train_keys": 765,
+        "test_keys": 192,
+        "group_overlap_keys": 0,
+        "test_id_hash": "dfea9aa151cd"
+      }
+    },
+    "is_a_reference_layer": false,
+    "note": "This is a same-channel, same-protocol comparison, not a literature number. The incumbent MAE is an in-repo measured value, so the delta is meaningful."
+  },
+  "split_protocol": {
+    "function_reused_verbatim": "probes/viscosity_baseline.py::_group_key_split",
+    "splitter": "sklearn.model_selection.GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)",
+    "groups": "inchikey",
+    "identity_check": "the recomputed (train_id_hash, test_id_hash) must equal the incumbent's hashes bit-for-bit, otherwise the run is void",
+    "random_row_split": "NOT USED in this probe (row-level random CV is an in-distribution interpolation reading; it is excluded by W19-8)"
+  },
+  "chemprop_model": {
+    "library": "chemprop 2.1.0",
+    "python": "3.12.14",
+    "featurizer": "SimpleMoleculeMolGraphFeaturizer (multi-hot atom mode V2 default)",
+    "message_passing": "BondMessagePassing (D-MPNN), d_h=300, depth=3, dropout=0.0",
+    "aggregation": "norm",
+    "ffn": "RegressionFFN, hidden=300, n_layers=1, input = [d_h, 2 extra molecule descriptors]",
+    "extra_descriptors": [
+      "T_K",
+      "1000_over_T_K"
+    ],
+    "descriptor_scaling": "StandardScaler fitted on TRAIN rows only, then applied to train and test (no test statistics leak into training)",
+    "target": "log10(viscosity_cP) = log10(viscosity_Pa_s * 1000.0)",
+    "loss": "MSE (chemprop default) plus chemprop MAE metric",
+    "ensemble_seeds": [
+      42,
+      1234,
+      2026
+    ],
+    "prediction_rule": "primary reading = mean of the ensemble members' test predictions; per-member readings also reported"
+  },
+  "training": {
+    "epochs": 60,
+    "batch_size": 64,
+    "optimizer": "chemprop default NoamLR (warmup 2 epochs, init_lr 1e-4, max_lr 1e-3, final_lr 1e-4)",
+    "validation_split": "none (fixed epoch budget, no early stopping, no checkpoint selection) so that the test fold cannot influence any hyperparameter",
+    "gradient_clip": 5,
+    "deterministic_seed": "torch.manual_seed(seed); numpy default_rng(seed) for any shuffling",
+    "concurrency": "at most 2 training workers (two long W18 jobs are still running on this box)"
+  },
+  "metric": {
+    "name": "MAE",
+    "units": "log10(cP)",
+    "evaluation_set": "the grouped test fold only (838 rows / 196 keys at row_level)"
+  },
+  "gate": {
+    "value": 0.15,
+    "units": "log10(cP)",
+    "role": "reported for context; the D5 criterion is the DELTA, not the gate"
+  },
+  "tolerance_preregistered": {
+    "delta_definition": "delta = MAE_chemprop - MAE_incumbent_XGB (same pool, same split, same units)",
+    "abs_le_0_02": "consistency_confirmed -> the representation layer is not the ceiling on eta; confidence that the eta channel can cross the gate rises",
+    "le_minus_0_02": "chemprop_better -> the representation layer is not capped on eta; open a follow-up lane",
+    "ge_plus_0_02": "incumbent_confirmed -> the bottleneck is data / density pairing, not the representation layer"
+  },
+  "amendment_rule_declared_before_run": {
+    "trigger": "a timing probe (row_level, 1 member, 5 epochs) extrapolating to more than 60 minutes for the registered full run",
+    "allowed_reduction": "reduce epochs 60 -> 30, ensemble 3 -> 1, d_h 300 -> 150, in that order, stopping as soon as the extrapolation fits the budget",
+    "obligation": "whatever is reduced must be named in the summary and in the report",
+    "infeasible_path": "if training is not feasible inside the budget at all, the verdict is not_obtained_feasibility with measured timing evidence, and the infeasibility is NOT dressed up as a scientific conclusion"
+  },
+  "red_lines": {
+    "uses_no_reaxys_numbers": true,
+    "reaxys_values_enter_no_pool_no_feature_no_bundle": true,
+    "promotes_no_reading": true,
+    "main_scoreboard_attempts_added": 0,
+    "cumulative_main_scoreboard_attempts_after_this_shot": 11,
+    "frozen_numbers_not_touched": [
+      "0.4091179943351143",
+      "0.4766400383507876"
+    ],
+    "frozen_comparison_protocol_untouched": "457 rows / 97 compounds / 276 (compound,T) pairs / 2029 epsilon full-table training rows"
+  },
+  "inputs_sha256": {
+    "data/viscosity_v01.csv": "12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26",
+    "data/processed/viscosity_observations_thermoml.csv": "e0d647d6eadc0adc61ed05b222b9b4fc26ac13c9c84de63a1282e58823ccbf83",
+    "data/density_v01.csv": "47f920f773054ccd8789ac5679e3da5ca8ec732f8f6e79ba1f824cf68b2556ff",
+    "data/dielectric_v04.csv": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c",
+    "probes/viscosity_row_level_summary.json": "3fd1014f5b7a02bea91e4db2db09901dae27fef2102edf4bd1bb951e11bd9bed",
+    "probes/viscosity_baseline_summary.json": "b1061d75f5bb0df142d4f614059e32774c8cb7bbcd6f16e383dffeffff0686f9",
+    "probes/viscosity_row_level_prereg.json": "6ba63936499a18a002b29afc3f0d4fbdbd8ba13e17e363197e51fb308877777a",
+    "probes/viscosity_baseline.py": "b770f727e5b01c571383719b5c3695fafd7a51bea29d21c92aa5b79674aa19d9",
+    "probes/viscosity_row_level_unfreeze.py": "cff3418e13bde137abb53506430b940a266b4768413049a00cc69b707b586e89"
+  },
+  "expected_verdict_shape": "one of consistency_confirmed / chemprop_better / incumbent_confirmed / not_obtained_feasibility"
+}

@@ -1,0 +1,95 @@
+{
+ "schema_version": 1,
+ "task": "week18_w18b_dielectric_applicability_domain",
+ "title": "ε 分域记分牌：适用域声明在先，全域数照报",
+ "locked_at_utc": "2026-09-27T00:00:00Z",
+ "status": "locked_before_run",
+ "lock_rule": "域外判定规则、种子集、端点口径、安慰剂条款在第一次运行前冻结。任何一条事后要改，按更正登记，不在原地修改。",
+ "why": "主记分牌（457 行 / 97 化合物 / 276 个（化合物，T）对，GroupKFold by InChIKey，5 折 × 10 重复，seed 42）的冻结头条是 plus_both = Morgan+Physical + lever4 + lever8 的混合表示，读数 0.4766400383507876。核实过的机制是：少数自缔合质子性液体化合物承担了标签方差的近一半，而 GroupKFold 让它们整族留出，训练侧标签只到 p95 约 44。它们本来就不是电解液溶剂候选，所以按适用域声明把它们划到域外是合法的范围声明；但域内数不得替换全域数，也不得当作达标题。",
+ "frozen_headline": {
+  "arm": "plus_both",
+  "representation": "Morgan+Physical",
+  "r2": 0.4766400383507876,
+  "pool": {
+   "scored_rows": 457,
+   "compounds": 97,
+   "pairs": 276,
+   "folds": 50,
+   "repeats": 10
+  },
+  "source": "probes/dielectric_coordination_block_v3_summary.json"
+ },
+ "seeds": {
+  "set": [
+   42,
+   1234,
+   2026,
+   31337,
+   7
+  ],
+  "endpoint": "跨种子均值（种子集跑前锁定，seed 42 只是其一）",
+  "note": "多种子只消种子方差；组键折与模型超参一字不改。"
+ },
+ "protocol": {
+  "splitter": "dielectric_room_window_paired.masked_splits + dielectric_band_ablation.drop_thin_folds，与冻结记分牌同一套；只有 seed 变。",
+  "model": "dielectric_representation_ablation.fit_predict_representation 的冻结拟合器，XGB_PARAMS 原样（n_jobs=1）。",
+  "arm_features": "physical_v04（lever 4，probes/dielectric_xtb_full_table_migration.py 逐字复用）+ 五列 Li+ 配位阻塞（lever 8，v1.coordination_matrix），与 v3 的 plus_both 同构。",
+  "placebo": "v1.shuffled_target(target, scored)（洗牌 seed 在 v1 里钉死为 42，逐字复用）+ 同一 with_both 特征；地板 = v3.fold_mean_floor。",
+  "reading_scope": "每次重复先把该重复的测试行并成一个池，再在池上算指标，最后对 10 次重复取均值——与冻结头条同一算法，逐位可复现。"
+ },
+ "domain_rules": {
+  "D1": {
+   "id": "polar_protic",
+   "role": "主规则（预注册的域外判定）",
+   "definition": "域外 <=> RDKit NumHDonors(SMILES) >= 1 且 TPSA(SMILES) >= 20.0 埃^2",
+   "inputs": "只用池里冻结的 SMILES，任何标签都不看；测试时对任意新分子可算。",
+   "rationale": "自缔合质子性液体的必要条件是至少一个氢键给体 + 极性表面；该族是这条宽类别的尾部。规则故意取宽口径，避免用标签挑化合物。",
+   "expected_seed42": {
+    "out_of_domain_compounds": 40,
+    "out_of_domain_rows": 160,
+    "in_domain_rows": 297
+   },
+   "not_a_达标题": "域内读数不得当作达标题，全域读数照报。"
+  },
+  "D2": {
+   "id": "train_p95_classifier",
+   "role": "第二规则（训练侧标签 p95 的域分类器）",
+   "definition": "在每个折内，用该折的训练行标签的 p95 作阈值把训练行二分类；在标准化后的冻结 physical 块上拟合 LogisticRegression(C=1.0, solver=lbfgs, max_iter=1000)；测试化合物取该折测试行的平均概率，>= 0.5 判域外。",
+   "inputs": "只看训练侧的标签与特征；测试化合物只用特征打分。",
+   "fallback": "若某折训练标签只有一类，则该折全部判域内，并登记 fallback 折数。"
+  },
+  "D3": {
+   "id": "verified_high_eps_roster",
+   "role": "诊断件（不是预注册的域定义，只报读数）",
+   "definition": "冻结记分牌里核实过 ε_max >= 55 的 7 个键",
+   "roster": [
+    "OHLUUHNLEMFGTQ-UHFFFAOYSA-N",
+    "ZHNUHDYFZUAESO-UHFFFAOYSA-N",
+    "NEQXUPRFDXNNTA-UHFFFAOYSA-N",
+    "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
+    "LZJIBRSVPKKOSI-UHFFFAOYSA-O",
+    "RJQQOKKINHMXIM-UHFFFAOYSA-N",
+    "VVLAIYIMMFWRFW-UHFFFAOYSA-N"
+   ],
+   "why_diagnostic": "名册依赖标签幅度，所以它是诊断件而不是可部署规则；登记它是为了让 48% 方差那一族的读数单独可见。"
+  }
+ },
+ "decisions": {
+  "reproduce_first": "seed 42 的 plus_both 全域 R2 必须复现 0.4766400383507876（容差 1e-9）；不复现则抛错、拒绝报告任何域内数字。",
+  "both_scoreboards": "全域与域内两块记分牌同时报，永远并列，绝不用域内数替换全域数。",
+  "vocabulary": [
+   "domain_split_reported",
+   "unverified"
+  ],
+  "promoted": false,
+  "promotion_rule": "分域记分牌是范围声明，不是提升；任何提升要另开一次预注册。"
+ },
+ "outputs": {
+  "script": "probes/dielectric_applicability_domain.py",
+  "prereg": "probes/dielectric_applicability_domain_prereg.json",
+  "summary": "probes/dielectric_applicability_domain_summary.json",
+  "repeats_csv": "probes/artifacts/dielectric_applicability_domain_repeats.csv",
+  "report": "reports/dielectric_applicability_domain.md",
+  "tests": "tests/test_applicability_domain.py"
+ }
+}

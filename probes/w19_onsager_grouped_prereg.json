@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "probe": "w19_onsager_grouped",
+  "status": "locked_before_run",
+  "written_at": "2026-09-27T17:01:58.847Z",
+  "purpose": "D3: 把已冻结的 Onsager 残差 Δ-learning 探针从行级 RepeatedKFold 换到组外划分，回答三问；本枪不是晋升臂，只作封顶登记的正式附录证据与机制披露层。",
+  "plan_reference": "Week19立项计划_文献驱动三线.md §W19-5（三问与口径钉死）+ §W19-7（双分支承接）",
+  "promotes_no_reading": true,
+  "main_scoreboard_untouched": true,
+  "produces_deployable_model": false,
+  "onsager_is_label_free_and_deterministic": true,
+  "scoreboard_attempts_delta": 0,
+  "frozen_baseline": 0.4091179943351143,
+  "frozen_headline": 0.4766400383507876,
+  "reaxys_numeric_red_line": "Reaxys 数值禁止进入任何池、特征或交付包；本探针零 Reaxys 引用。",
+  "registry": {
+    "version": "data/dielectric_v03.csv 名册（E4 的 9 成员版 ε>=60 名单）",
+    "conflict_note": "原稿『6 个自缔合质子液』（含 NMF 169.8、水 80.0）是另一版名册；两版不得互引。本预注册固定采用 v03 版。",
+    "e4_nine_members": [
+      "N-methylacetamide 178.47",
+      "vinylene carbonate 126",
+      "formamide 106.14",
+      "ethylene carbonate 90.5",
+      "2-hydroxyethylammonium lactate 85.6",
+      "water 78.87",
+      "fluoroethylene carbonate 78.4",
+      "propylene carbonate 64.9",
+      "ethanolammonium nitrate 60.9"
+    ],
+    "dataset_path": "data/dielectric_v03.csv",
+    "dataset_sha256": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+    "input_path": "data/interim/v03_features_original.csv",
+    "input_sha256": "da82f748daeccbc9c7c045aa2369085b147c2124693c62dc72994a4cb629f5f4",
+    "in_pool_gt60_members": [
+      "N-methylacetamide 178.47 (OHLUUHNLEMFGTQ-UHFFFAOYSA-N)",
+      "formamide 106.14 (ZHNUHDYFZUAESO-UHFFFAOYSA-N)",
+      "2-hydroxyethylammonium lactate 85.6 (NEQXUPRFDXNNTA-UHFFFAOYSA-N)",
+      "water 78.87 (XLYOFNOQVPJJNP-UHFFFAOYSA-N)",
+      "ethanolammonium nitrate 60.9 (LZJIBRSVPKKOSI-UHFFFAOYSA-O)"
+    ],
+    "in_pool_gt60_count": 5,
+    "members_absent_from_pool": "vinylene carbonate 为 withheld 行；ethylene carbonate / fluoroethylene carbonate / propylene carbonate 不在本探针池。另有 4 行特征构建失败：1,3-dimethylimidazolium dimethylphosphate、1-butyl-3-methylimidazolium hexafluorophosphate、1-butyl-2,3-dimethylimidazolium hexafluorophosphate、Iron pentacarbonyl。"
+  },
+  "frozen_source": {
+    "row_level_summary_path": "probes/dielectric_onsager_delta_summary.json",
+    "row_level_summary_sha256": "3acd499b2653135556bcdd61a1bdb2e8977973821f8b00f804e2431edef1754b",
+    "row_level_probe_source_sha256": "b682e3c23ff3af110c55c10bdc6752f25cdd2bf1bc50ebee372176f0dabdad76",
+    "scaffold_helper_path": "probes/dielectric_target_and_scaffold.py",
+    "scaffold_helper_sha256": "43657fe1a8090402b70e47e10a436da7708c3549872627283cc1acd75df4716b"
+  },
+  "pool": {
+    "rows": 234,
+    "distinct_inchikey": 234,
+    "structure_groups": 111,
+    "singleton_groups": 76,
+    "max_group_size": 31,
+    "failed_rows": 4,
+    "withheld_rows": 1
+  },
+  "splitter": {
+    "row_level_reference": {
+      "class": "sklearn.model_selection.RepeatedKFold",
+      "n_splits": 5,
+      "n_repeats": 10,
+      "random_state": 42,
+      "status": "frozen; cited only, never mixed with the grouped readings"
+    },
+    "primary_grouped": {
+      "key": "murcko_butina_structure_family",
+      "key_source": "probes/dielectric_target_and_scaffold.py::scaffold_group_keys (MurckoScaffold for cyclic, Butina/Morgan-2/2048@0.5 for acyclic)",
+      "n_groups": 111,
+      "n_splits": 5,
+      "n_repeats": 10,
+      "group_assignment": "np.random.default_rng(SEED + repeat).permutation over the group order, then round-robin assignment to folds",
+      "fold_seed_rule": "SEED + split_index",
+      "n_folds_total": 50,
+      "rationale": "池内 234 行全部是不同化合物（234 个不同 InChIKey），因此『按 InChIKey 分组』在本池退化为行级留出；唯一能提供真实组外压力的分组键是结构族。"
+    },
+    "control_grouped": {
+      "key": "inchikey",
+      "n_groups": 234,
+      "degeneracy": "234 行 = 234 个不同 InChIKey，每组成员恰 1 个，故该臂与行级留出同构，先声明为退化对照，不计入组外压力。"
+    },
+    "row_level_reproduction": {
+      "class": "sklearn.model_selection.RepeatedKFold",
+      "n_splits": 5,
+      "n_repeats": 10,
+      "random_state": 42,
+      "fold_seed_rule": "SEED + split_index",
+      "role": "同一代码路径下重跑冻结的行级协议，用来 (a) 提供行级—组外并列基准，(b) 逐位核对冻结 summary。它不是新臂，不计入主记分牌，也不构成晋升依据。"
+    }
+  },
+  "arms": [
+    "O0_onsager",
+    "O1_structured_offset",
+    "R0_direct_regression",
+    "R1_direct_with_logg",
+    "D0_delta_core",
+    "D1_delta_core_morgan",
+    "D2_delta_log",
+    "D3_delta_leaky"
+  ],
+  "confirmatory_delta_arms": [
+    "D0_delta_core",
+    "D1_delta_core_morgan",
+    "D2_delta_log"
+  ],
+  "gates": {
+    "a_donor_mae_below_onsager": "mae_assoc(arm) < mae_assoc(O0_onsager)",
+    "b_ionic_mae_not_worse_than_onsager": "mae_ionic(arm) <= mae_ionic(O0_onsager)",
+    "c_high_permittivity_improved": "mae_gt60(arm) < mae_gt60(O0_onsager) 或 spearman_gt60(arm) > spearman_gt60(O0_onsager)",
+    "d_overall_mae_below_structured_offset": "mae(arm) < mae(O1_structured_offset)",
+    "e_donor_mae_below_structured_offset": "mae_assoc(arm) < mae_assoc(O1_structured_offset)",
+    "decision_level": "repeat-averaged point estimates",
+    "reused": "逐字复用 probes/dielectric_onsager_delta_probe.py::evaluate_gates 与 split_metrics；公式不重写。"
+  },
+  "questions": {
+    "q1": "把同一探针换到组外划分后，Δ 层是否仍过原有 5 门？判定：结构族组外（primary_grouped）下 headline 臂 5 门是否全真。",
+    "q2": "域反号分裂（assoc_only / ionic_only / both / none）在组外是否保持？判定：逐域偏置符号与符号正确率是否与行级同向；若反号消失则记『随机折内插值假象』。",
+    "q3": "ε > 60 区在组外折下是否仍不可解？判定：池内 5 行 gt60 的 mae_gt60 / bias_gt60 / Onsager 覆盖率是否仍为『不可解』态。"
+  },
+  "readings_not_mixed": "行级读数一律引用冻结 summary 的字节（附 sha256），组外读数一律由本探针当次产出；两者在 summary 里分列不同键，不合并、不平均、不互比。",
+  "honest_expectation": "结构族组外严格于行级随机折，预期 Δ 层收益收窄；无论结果正负都照实登记，且本枪不改变 ε 主记分牌与 W18 封顶结论。",
+  "artifacts": [
+    "probes/w19_onsager_grouped_prereg.json",
+    "probes/w19_onsager_grouped.py",
+    "probes/w19_onsager_grouped_summary.json",
+    "reports/w19_onsager_grouped.md",
+    "tests/test_w19_onsager_grouped.py"
+  ],
+  "pre_run_amendment": {
+    "registered_before_any_run": true,
+    "note": "本预注册在第一次执行之前做了一次增补：把『行级协议在同代码路径下的逐位复现』登记为并列基准。增补时仓内不存在本探针的任何结果；无事后修改。",
+    "added_reading": "row_level_reproduction"
+  }
+}
