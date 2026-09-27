@@ -6221,3 +6221,111 @@ MD / RDF 管线（整条新管线，循环 3 再评估）、介电谱反推 Deby
 - `28.53` ⇒ 本节号（任务书逐字指定）
 - **不可核登记（照实）**：许可（仓内 0 命中，`not_verifiable_in_repo`）；闪点链无单一打包版本号；安全窗口无独立模型出处；shots 19 / 20 归属属作者裁定。
 |
+
+## 28.54 Week 19 W19-1 步骤 2 轨道迁移决策门裁定：Batt-P30K 不升为 HOMO-LUMO 通道主源、仅作第二参考层，THEMol 主源不变（2026-09-28）
+|
+**定位**：本件是 `Week19立项计划_文献驱动三线.md` §W19-1「步骤 2 · 迁移决策门」的落地章——计划书原话：「交叉核对过门 → Batt-P30K 升为 HOMO-LUMO 通道主描述符源（`no_reference_orbital` 键优先补齐），THEMol 降为交叉核对层；不过门 → 查明分歧源（方法学/标识符/构象），Batt-P30K 仅作第二参考层。**决策与理由入册，不静默切换。**」行文版全文见 `reports/w19_orbital_migration_gate.md`。
+**纪律**：`read_only = true`、`writes_any_pool = false`、`reaxys_values_used = false`、`promoted = false`、主记分牌尝试 **0** 次、累计仍 **11** 次；不动任何冻结件；不做任何 git 操作。
+|
+**① 门槛（计划书修正 E3）**：**(样本外 MAE ≤ 0.35 eV) AND (r ≥ 0.80)**，双条件同时成立才可由 `reference_only` 升 `usable`。
+**② 池与跨水平硬约束（E2）**：冻结 ε 名册 `data/dielectric_v03.csv` = **246** 行；名册 ∩ Batt 身份 = **78** 键；我方 xTB 覆盖 **49** 键（主臂 n）；未覆盖 **29** 个命中键照实登记**不可核**。Batt-P30K = SMD(ε=18.5) 隐式溶剂化 ωB97X-V/def2-TZVPPD；THEMol = GFN2-xTB//B3LYP-D3(BJ)/DZVP **气相**单点 ⇒ 原始 MAE 一律 `cross_level = true`，泛函差与溶剂化差**不可分离归因**，只有线性映射后的样本外 MAE 与相关系数可作读数。
+|
+**③ 逐通道裁定（是否过双门槛 → 升到哪一档）**
+| 通道 | n | Pearson r | 留一 MAE（eV） | 斜率 | skill | E3 双门槛 | 档位 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **homo** | 49 | **0.8223** | **0.3475** | 1.0411 | 0.5293 | MAE ≤ 0.35 ✔ 且 r ≥ 0.80 ✔ → **过** | `usable`（**边界**） |
+| **lumo** | 49 | **0.4663** | **0.1984** | **0.0550** | 0.0504 | MAE ≤ 0.35 ✔ 但 r ≥ 0.80 ✘ → **不过** | `reference_only`（维持） |
+| **gap** | 49 | **0.1921** | **0.7445** | 0.0676 | −0.0210 | 双条件全 ✘ → **不过** | `reference_only`（维持） |
+- homo 唯一边界过门：留一 MAE **0.3475** 距门 **0.35** 仅 **0.0025 eV**；**16/49** 折超门；去掉最大一折后 0.3234。
+|
+**④ 迁移决策（结论一句话）**：**HOMO-LUMO 通道整体不过迁移门 ⇒ Batt-P30K 不升为主描述符源，仅作第二参考层；THEMol 保持现役主源不变，`no_reference_orbital` 键不优先补齐。** 理由：三子通道中仅 homo 过门且属边界；以「HOMO-LUMO 通道」为单位须按最弱通道裁定，否则等于用边界结果替换掉 lumo/gap 两不过门通道的主源地位；直接写入会把 Batt 的 **sd 0.3110 eV** 近常数 LUMO 列当目标值，属计划书禁止的**静默切换**。homo 允许作**带线性映射的第二参考层**，须显式携带 `cross_level` 与映射参数标记。
+|
+**⑤ 分歧源排查**
+| 类别 | 结论 | 可核证据 / 排除依据 |
+| --- | --- | --- |
+| 方法学（溶剂化 + 泛函差） | **确认存在、不可细分** | `lumo` 带符号差 **6.8704 eV**、`homo` **1.0708 eV**——空轨道错位远大于占轨道；按 E2 泛函差与溶剂化差不可分离归因 |
+| 标识符 | **已排除** | 主臂 **49/49** 例 canonical SMILES 逐字相同，不一致 **0** 例；`gap == lumo − homo` 全库最大偏差 0.000001 eV（n = 29519） |
+| 构象 | **未排除、不可分离** | 两源各自单构象，无构象系综，无法把散布拆成几何来源与方法学两部分 |
+| 第四候选 · Batt LUMO 语义 | **未排除（疑点登记）** | Batt `lumo` 近乎常数（**sd 0.3110 eV**，极差 [0.3562, 1.9299]），与 `homo` 全库相关仅 **0.1284**；只登记疑点，不裁定其定义 |
+|
+**⑥ 为什么 lumo 的 0.1984 不得升 `usable`**：留一 MAE **0.1984** 表面 < 0.35，但常数基线留一 MAE 0.2089、相对 skill 仅 **0.0504**、OLS 斜率仅 **0.0550**、Batt `lumo` 列 sd 仅 0.3110 eV ⇒ 低 MAE 来自**目标近乎常数**，是**空读数**而非迁移能力；E3 双条件中 **r 0.4663 < 0.80** 的失守是决定性的。
+**⑦ 敏感性臂与预测兑现**：臂 A（n = 4668）同向复现通道分裂（homo r 0.8549 / 0.3033；lumo 0.6141；gap 0.4343）；臂 B（n = 71）gap r 仅 0.0919 ⇒ 主臂结论非小样本噪声。PR-1~PR-4 兑现，**PR-5 被证伪**。敏感性臂不能把任何通道升为 `usable`。
+|
+**⑧ 稳定边界（自我澄清）**：本件**未抬高主记分牌**——`promoted = false`、主记分牌尝试 **0** 次、累计仍 **11** 次；冻结基线 `0.4091179943351143` 与冻结头条 `0.4766400383507876` **原位未动**；不引用任何 Reaxys 数值（§28.33 红线）；主臂 n = **49**、未覆盖 **29** 个命中键不可核；不做 git 操作。
+|
+**数字自检**（逐条列 token → 来源）
+- `0.35` / `0.80` ⇒ `probes/w19_batt_gap_crosscheck_summary.json::gate.loo_mae_ev_max` / `::gate.pearson_r_min`｜计划书 §W19-1「门槛修正（E3）」
+- `0.8223` / `0.3475` / `0.3234` / `1.0708` / `0.0025`（homo）⇒ `reports/w19_batt_gap_crosscheck.md::二、主臂读数` / `::七、裁定`（`0.0025` = 0.35 − 0.3475，本件推算）
+- `0.4663` / `0.1984` / `0.0550` / `0.0504` / `0.2089` / `0.3110`（lumo）⇒ `reports/w19_batt_gap_crosscheck.md::二、主臂读数` / `::五、分歧候选解释`
+- `0.1921` / `0.7445` / `−0.0210`（gap）⇒ `reports/w19_batt_gap_crosscheck.md::二、主臂读数`
+- `6.8704` / `0.1284` / `0.000001` / `29519` / `49/49` ⇒ `reports/w19_batt_gap_crosscheck.md::四、核验与一致性` / `::五、分歧候选解释`
+- `0.8549` / `0.3033` / `0.6141` / `0.4343` / `0.0919` / `4668` / `71` ⇒ `reports/w19_batt_gap_crosscheck.md::三、敏感性臂`
+- `78` / `246` / `49` / `29` ⇒ `probes/w19_batt_gap_crosscheck_summary.json::pool.{hits,roster_rows,primary_n,uncovered_hits}`｜`reports/w19_batt_direct_hit.md::1、直接命中`
+- `11`（累计主记分牌尝试）⇒ `reports/_w19_section_d5.md`（§28.49）｜`reports/decisions_log.md::§28.41`
+- `0.4091179943351143` / `0.4766400383507876` ⇒ `probes/four_channel_coverage_summary.json::pinned`
+- `no_reference_orbital` / `SMD(ε=18.5)` / `GFN2-xTB` ⇒ 计划书 §W19-1｜`reports/w19_state_audit.md::读数四·E2`
+- `28.54` ⇒ 本节号（任务书逐字指定）
+- **不可核登记（照实）**：**29** 个命中键无我方 xTB 值；构象来源不可分离；Batt `lumo` 语义可疑但不代为裁定；上游 Batt-SLM `LICENSE` 本机无副本，MIT 归属按计划书登记（见 `reports/w19_state_audit.md::读数四·E1`）。
+|
+
+## 28.55 Week 19 D9 shots 记账台账：shot 19 / 20 判「已用掉编号」、21 归抽取探针 Phase-0、下一支产读数枪取 22；主记分牌本周 0 次尝试、累计 11 次不变（2026-09-28）
+|
+**定位**：本件是 `Week19立项计划_文献驱动三线.md` §W19-9「纪律与 shots 记账」的落地章。机器可读台账 `probes/w19_shots_ledger.json`；行文版 `reports/w19_shots_ledger.md`；字面钉测试 `tests/test_w19_shots_ledger.py`。**本件不拟合任何模型、不产任何 R² / MAE、不动任何冻结件、不引用 Reaxys 数值**；`produces_reading = false`。
+|
+**① 占用判据（本件采用，且须作者确认）**
+- 判据来源是计划书 §W19-9 的**字面**判据：「shot 19 / 20 对应的资产在仓内已存在」（`reports/decisions_log.md:6071`；同文转述 `reports/w19_channel_transfer.md:47`）。本件沿用该字面判据，**不自造更复杂的占用规则**。
+- 一支枪的编号被「用掉」⇔ 其对应产出资产**在本周（W19 lane 周）之前已落盘并已入册**，或该编号被计划书**明文预分配**。
+- 审计 / 复核 / 外部交叉核对**不触发主记分牌（ε）晋升尝试**⇒ 按「**复核不占号**」处理。
+|
+**② 逐枪证据表**
+| shot | 归属（计划书原编号） | 对应资产 | 本周之前已在盘？ | 产读数？ | 状态 |
+| --- | --- | --- | --- | --- | --- |
+| 19 | Batt-P30K 交叉核对 | `reports/decisions_log.md` §28.17（Batt ↔ PubChemQC 标定 n = 111） | **是** | 是 | **consumed** |
+| 20 | Onsager 预检（条件性） | `probes/dielectric_onsager_delta_summary.json` | **是** | 是 | **consumed** |
+| 21 | 抽取探针 Phase-0（本周 = W19-D4） | `probes/w19_extraction_phase0_prereg.json` | 否（本周新落） | 否 | `taken_this_week_phase0_design_only` |
+- **shot 19**：`reports/decisions_log.md:4706`（§28.17 标题，W17 收口提交 `a6ed806` 引入）与 `:4748`（「判定 D：n ≥ 60 通过，**n = 111**；2 折样本外」）；`reports/w19_state_audit.md:28` 本机逐字复核「**一致**」；`probes/w19_batt_direct_hit_summary.json::shot_accounting_judgement.basis[2]` 独立登记该标定「**已被登记为已用资源**」。
+- **shot 20**：`probes/dielectric_onsager_delta_summary.json` 的 `generated_at = 2026-09-25T05:55:35.227743+00:00`（早于本周）、`decision.decision = "go"`；入册章节 `reports/decisions_log.md:5648`（§28.44）。
+- **shot 21**：`probes/w19_extraction_phase0_prereg.json::shot_accounting`（`planned_shot_in_the_plan = 21`、`plan_reference = "§W19-2 标题预分配 shot 21"`、`fallback_if_shot_19_20_counted = 22`、`this_file_consumes_a_shot = false`，rationale「占号发生在抽取执行时」）；顶层 `produces_reading = false`。
+|
+**③ 本周九项工作「复核不占号」**
+| lane | 字面标志 | 触发主记分牌晋升？ |
+| --- | --- | --- |
+| W19-D1 | 审计件，报告自述「未运行任何拟合或训练」（无 JSON） | 否 |
+| W19-D2 | `read_only = true`、`models_fitted = 0`、`reaxys_values_used = false`；`writes_any_pool = false` | 否 |
+| W19-D3 | `promotes_no_reading = true`、`main_scoreboard_untouched = true`、`scoreboard_attempts_delta = 0` | 否 |
+| W19-D4 | `produces_reading = false` | 否 |
+| W19-D5 | `promoted = false`（读数在 η 通道） | 否 |
+| W19-D6 | 报告自述「不拟合任何模型…不产生任何新性质预测值」（无 JSON） | 否 |
+| W19-D7 | `produces_reading = false`、`promotes_no_reading = true`、`shot_number_taken = null` | 否 |
+| W19-N2 | `promoted = false` | 否 |
+| W19-7 | 报告自述 `produces_reading = false`、`promoted = false`、不占 shot（无 JSON） | 否 |
+- **键表不统一的照实登记**：只有 D4 / D7 直接带 `produces_reading = false`；D2 / D5 / N2 带 `promoted = false`；D3 带 `promotes_no_reading` 一族；D1 / D6 / W19-7 无 JSON 产物（D3 报告 §0 已登记为 `vocabulary gap`）。本件不把这些**不等价**的字面键当成同一个字面，只把它们共同证明的事实当作依据。
+|
+**④ 裁定与两分支对照**
+| 分支 | 读法 | 依据 | 下一支产读数的枪 |
+| --- | --- | --- | --- |
+| A（**本件采用**） | shot 19 / 20 视为**已用** | 计划书 §W19-9「若视为已用，新工作取 shot 22 起」 | **22** |
+| B（备选） | shot 19 / 20 视为**复核性工作、不占号** | `probes/w19_extraction_phase0_prereg.json::shot_accounting.recommended_reading` / `fallback_if_shot_19_20_counted = 22` | **22** |
+- **分支稳健性**：两支读法在「下一支产新读数的枪」上**收敛到同一个数字 22**——裁定对该分支**不敏感**。须作者拍板的是 shot 19 / 20 的**标签**，不是 `next_shot_number` 的值。本件裁定 `next_shot_number = 22`。
+|
+**⑤ 未决项与冻结**
+- **须作者确认（唯一一条）**：shot 19 / shot 20 的编号归属——本件采用「**已用掉编号**」；若改判为「复核不占号」，须由作者在预注册层拍板后重写，且 `next_shot_number` 仍为 **22**。
+- `prereg_status = locked_pending_author_confirmation`（本件**不**声明 `locked_before_run`，因为它是在七条 lane 跑完之后才落笔的）。
+- `effective_after_author_confirmation = true`：确认前本件不得被单方引用为「已生效」。
+- `no_retroactive_edit = true`：生效后**不得事后改**（§W19-9 原文口径）。
+|
+**⑥ 主记分牌自证**
+- 冻结基线 `0.4091179943351143`、冻结头条 `0.4766400383507876` **原位未动**（`probes/export_week18_results.py:60` / `:62`）。
+- 累计主记分牌尝试 **11** 次（`probes/export_week18_results.py:65`；累加口径见 `:459-461`）。本周（W19）增量 **0** 次：`scoreboard_attempts_delta = 0`、`main_scoreboard_untouched = true`，九项工作逐条 `promoted = false`。
+- 本件**不占任何 shot 编号**（记账件，不产读数）。
+|
+**⑦ 数字自检（token → 来源）**
+- `19` / `20` / `21` / `22` ⇒ 计划书 §W19-9（`reports/decisions_log.md:6071`）｜本件 `next_shot_number`
+- `n = 111` ⇒ `reports/decisions_log.md:4748`｜`reports/w19_state_audit.md:28`
+- `decision = "go"` ⇒ `probes/dielectric_onsager_delta_summary.json::decision.decision`
+- `2026-09-25T05:55:35.227743+00:00` ⇒ `probes/dielectric_onsager_delta_summary.json::generated_at`
+- `0.4091179943351143` / `0.4766400383507876` / `11` ⇒ `probes/export_week18_results.py:60` / `:62` / `:65`
+- `4208fe8adf4ed6eee305b1a83ad322aada7f5bea01f538a57e45462a86899838` ⇒ `reports/w19_state_audit.md:28`
+- `28.55` ⇒ 本节号（任务书逐字指定）
+- **不可核登记（照实）**：计划书原文不在仓内（§W19-9 在仓内只有 `:6071` 与 `w19_channel_transfer.md:47` 两处转述）；任务书提到的 `probes/w19_state_audit*.json` 不存在（`git ls-files` 仅列 md 与测试）；`reports/w19_safety_channel_registry.json` 实际在 `probes/` 下。
+|
