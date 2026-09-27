@@ -24,6 +24,9 @@ from probes.export_week17_results import (
     LEVER_4_PLUS_LEVER_8_PROGRAMME_SHOTS_AFTER,
     MAIN_SCOREBOARD,
     MAIN_SCOREBOARD_CUMULATIVE_ATTEMPTS,
+    MAIN_SCOREBOARD_HEADLINE_DELTA_R2,
+    MAIN_SCOREBOARD_HEADLINE_R2,
+    MAIN_SCOREBOARD_VERSION,
     RANDOM_ROW_LEAK_REFERENCE_R2,
     README_TEXT,
     RESTRICTED_EXCLUDED,
@@ -54,6 +57,8 @@ RED_LINE_EXPECTATIONS = (
     ("data/viscosity_v01.csv", "12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26"),
 )
 FROZEN_BASELINE_R2 = 0.4091179943351143
+FROZEN_PROMOTED_HEADLINE_R2 = 0.4766400383507876
+FROZEN_PROMOTED_HEADLINE_DELTA_R2 = 0.0675220440156733
 FROZEN_LEAK_REFERENCE_R2 = 0.7385332681453336
 DIELECTRIC_V04_SHA256 = "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c"
 DENSITY_V01_SHA256 = "47f920f773054ccd8789ac5679e3da5ca8ec732f8f6e79ba1f824cf68b2556ff"
@@ -62,7 +67,7 @@ VISCOSITY_MAE_GATE = 0.15
 DN_AUDIT_SHA256 = "3a80daa9f74c423bfcd6d2cbd3f6c54a6ffe2516daab0c3147e33d92adf7dab6"
 
 # A mutant that rewrites one narrative number must move this line as well.
-README_SHA256 = "c4562e0ee3f3e515ffae1a2885a5f91668317d3132778dcc8b453c25c977b59f"
+README_SHA256 = "14d5b57d6c547e8eadcdd0fe604ce366d0727db0dc3650a47fe2dfab0ff3e32f"
 README_NARRATIVE_NUMBERS = (
     "0.4091179943351143",
     "0.7481271437772365",
@@ -258,6 +263,9 @@ def test_the_week_makes_exactly_one_scoreboard_attempt_and_counts_it(
     shots = summary["shots"]
 
     assert MAIN_SCOREBOARD == FROZEN_BASELINE_R2
+    assert MAIN_SCOREBOARD_VERSION == "v2"
+    assert MAIN_SCOREBOARD_HEADLINE_R2 == FROZEN_PROMOTED_HEADLINE_R2
+    assert MAIN_SCOREBOARD_HEADLINE_DELTA_R2 == FROZEN_PROMOTED_HEADLINE_DELTA_R2
     assert RANDOM_ROW_LEAK_REFERENCE_R2 == FROZEN_LEAK_REFERENCE_R2
     assert W17_MAIN_SCOREBOARD_ATTEMPTS == 1
     assert MAIN_SCOREBOARD_CUMULATIVE_ATTEMPTS == 11
@@ -270,7 +278,19 @@ def test_the_week_makes_exactly_one_scoreboard_attempt_and_counts_it(
     assert shots["r2_reported_anywhere"] is True
 
     scoreboard = summary["main_scoreboard"]
+    assert scoreboard["version"] == MAIN_SCOREBOARD_VERSION == "v2"
     assert scoreboard["value"] == FROZEN_BASELINE_R2
+    assert scoreboard["baseline"]["value"] == FROZEN_BASELINE_R2
+    assert scoreboard["baseline"]["status"] == "retained_unchanged"
+    assert scoreboard["headline"]["value"] == FROZEN_PROMOTED_HEADLINE_R2
+    assert scoreboard["headline"]["delta_vs_baseline"] == FROZEN_PROMOTED_HEADLINE_DELTA_R2
+    assert scoreboard["promoted_r2"] == FROZEN_PROMOTED_HEADLINE_R2
+    assert scoreboard["headline_minus_baseline_r2"] == FROZEN_PROMOTED_HEADLINE_DELTA_R2
+    assert scoreboard["headline"]["value"] - scoreboard["baseline"]["value"] == pytest.approx(
+        scoreboard["headline"]["delta_vs_baseline"]
+    )
+    assert "pass_merged_blocks" in scoreboard["headline"]["promotion_basis"]
+    assert len(scoreboard["caveats"]) == 3
     assert scoreboard["touched"] is True
     assert scoreboard["baseline_reproduced"] is True
     assert scoreboard["baseline_abs_delta"] == 0.0
@@ -513,7 +533,7 @@ def test_the_four_channel_board_lane_matches_its_own_summary(
     pins = lane["pinned"]
 
     assert pins == source["pinned"]
-    assert lane["board_rows"] == 29
+    assert lane["board_rows"] == 30
     assert lane["channels"] == source["channels"] == [
         "dielectric",
         "viscosity",
@@ -521,9 +541,14 @@ def test_the_four_channel_board_lane_matches_its_own_summary(
         "redox",
     ]
     assert lane["main_scoreboard"] == FROZEN_BASELINE_R2
+    assert lane["main_scoreboard_version"] == MAIN_SCOREBOARD_VERSION
+    assert lane["main_scoreboard_headline"] == FROZEN_PROMOTED_HEADLINE_R2
+    assert lane["main_scoreboard_headline_delta_r2"] == FROZEN_PROMOTED_HEADLINE_DELTA_R2
     assert lane["random_row_leak_reference_r2"] == FROZEN_LEAK_REFERENCE_R2
 
     assert pins["dielectric_main_scoreboard_r2"] == FROZEN_BASELINE_R2
+    assert pins["dielectric_main_scoreboard_headline_r2"] == FROZEN_PROMOTED_HEADLINE_R2
+    assert pins["dielectric_main_scoreboard_headline_delta_r2"] == FROZEN_PROMOTED_HEADLINE_DELTA_R2
     assert pins["dielectric_scoreboard_rows"] == 457
     assert pins["dielectric_scoreboard_compounds"] == 97
     assert pins["dielectric_scoreboard_pairs"] == 276

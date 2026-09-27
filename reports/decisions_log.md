@@ -4983,3 +4983,49 @@ gap r 0.4343 / MAE 0.5910 eV / `reference_only`；首次拿到轨道数 **291**�
 ⇒ 已就地转 LF（索引里的 blob 本来就是 LF，字节内容不变，Digest 不动）。
 
 **数字钉（勿混用）**：tracked **112** ＋ restricted **21** = **133**；去重 trace **89**；`added_since_repair` **12**；修复对照仍 **148 → 77 / 71 / 0**。
+
+## 28.28 主记分牌升版 v2：ε 头条提升为 W17-6 合并配置 0.4766400383507876（作者指示，2026-09-27）
+
+**触发**：作者指示「主记分牌 R² 仍 0.4091（未被触碰），现在碰一下，记得直接改某些图片或者文件」。
+处置：把 W17-6 **已经测得、且已通过预注册门**的合并枪从「臂读数」提升为**主记分牌头条**，并做成**版本化 v2 两行制**。
+
+**这不是新测量。** 提升只重报一个早已存在的数：
+
+- 合并枪 `plus_both`（hybrid Morgan+Physical ＋ 杠杆 4 构象平均偶极 2 列 ＋ 杠杆 8 Li⁺ 配位块 5 列）
+  分组 R² = **0.4766400383507876**，对基线 Δ **+0.0675220440156733**；
+- 预注册 `probes/dielectric_coordination_block_prereg_v3.json`（sha `4d02a99b4677334123cd29597a16d531343adf34d2224799d0ca54e3b373399b`），
+  判决 `pass_merged_blocks`，安慰剂塌缩、正向重复 **9/10**；
+- 池不变：**457 行 / 97 化合物 / 276 个（化合物, T）对**，GroupKFold by InChIKey，10×5 折，seed 42。
+
+**shots 台账不变**：本轮**不新增 shot**（主记分牌累计仍是 **11**；W17-6 那一枪早在 §28.5 登记）。
+提升改变的是**读取口径**，不是打分尝试数。
+
+**v2 两行制（永不混比）**
+
+| 行 | 读数 | 状态 |
+| --- | ---: | --- |
+| ε **头条**（v2） | **0.4766400383507876** | `promoted` |
+| ε **基线**（v1 冻结读数） | **0.4091179943351143** | `retained_unchanged`，逐位复现 `abs_delta = 0.0` |
+
+头条与基线**只许各自带配置引用并列出现**；禁止相除、相加、或当成两个模型比较；两者与 v1.0 headline **0.364** 也永不混用。
+
+**照实写的边界（不许省略）**
+
+1. 合并枪与两单枪**共用同一折号与同一打乱标签向量**，**不是独立样本**；
+2. 它相对**最强单枪**只多 **+0.011683591468432397**，**预注册未为这 0.0117 单独立门** ⇒ 不得读作已证增量；
+3. 按 §22.5「打 20 枪中 1 枪不是发现」——**11 枪 3 枪越线且同源**，故本次提升**不构成新发现**：
+   它买到的是「当前最优配置」这一陈述，不是「新机制」；
+4. 头条仍是**排序/分诊级**读数，不是适用域内的精度承诺；ε 天花板仍是**信息缺口**（缺 Kirkwood g 维）。
+
+**落地的文件与图（"改文件/改图"的清单）**
+
+- `probes/four_channel_coverage.py`：v2 常量 + 两行 emit；头条从 `probes/dielectric_coordination_block_v3_summary.json` 重读并断字面量钉，
+  且校验 `headline − baseline == delta`（三者对不上就报错，不静默重新基线化）。
+- `data/processed/four_channel_coverage.csv`（**29 → 30 行**）、`probes/four_channel_coverage_summary.json`、`reports/four_channel_coverage.md`。
+- `probes/export_week17_results.py`：`main_scoreboard` 升为 `schema_version: 2`（headline / baseline / mixing_rule / caveats 三条）＋ README 头条第 1 与第 7 句。
+- `probes/plot_week17_channels.py` ＋ `probes/artifacts/w17_channels_gate_board.png`：
+  ε 两根并排——实心 = 头条 **0.477**，斜纹 = 冻结基线 **0.409**（斜纹统一表示「冻结/参照档」）。
+- `tests/test_four_channel_coverage.py`、`tests/test_plot_week17_channels.py`、`tests/test_export_week17_results.py`。
+
+**数字钉（勿混用）**：头条 **0.4766400383507876**；基线 **0.4091179943351143**；Δ **+0.0675220440156733**；
+面板行数 **30**；主记分牌累计 shots 仍 **11**。

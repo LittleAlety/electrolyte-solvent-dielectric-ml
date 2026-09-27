@@ -142,6 +142,7 @@ def load_inputs() -> dict:
 # ---------------------------------------------------------------------------
 PINNED = {
     "dielectric_r2": 0.4091179943351143,
+    "dielectric_r2_headline": 0.4766400383507876,
     "viscosity_r2": 0.7481271437772365,
     "viscosity_mae": 0.17477197208762,
     "homo_mae": 0.19050925839013938,
@@ -176,7 +177,10 @@ def derive(data: dict) -> dict:
         return num(board[(channel, metric)]["value"])
 
     return {
-        "dielectric_r2": board_value("dielectric", "main_scoreboard_grouped_r2"),
+        "dielectric_r2": board_value("dielectric", "main_scoreboard_baseline_grouped_r2"),
+        "dielectric_r2_headline": board_value(
+            "dielectric", "main_scoreboard_headline_grouped_r2"
+        ),
         "viscosity_r2": board_value("viscosity", "group_key_r2"),
         "viscosity_mae": board_value("viscosity", "group_key_mae_log10_cP"),
         "homo_mae": board_value("homo_lumo", "HOMO_fold_mean_mae"),
@@ -301,35 +305,48 @@ def fig_gate_board(data: dict, path: Path) -> None:
                 frameon=False, fontsize=9, loc="lower right")
     style(left)
 
+    # The epsilon scoreboard is quoted twice on purpose: the promoted headline and the
+    # frozen baseline it was measured against.  They are the same pool, so they are drawn
+    # side by side in the same colour, with the frozen one hatched -- never merged.
     r2_specs = (
-        (("dielectric", "main_scoreboard_grouped_r2"),
-         t("epsilon 主记分牌 R2", "epsilon main scoreboard R2"), ACCENT,
-         t("排序级；无 0.15/0.2 类硬门", "sorting level; no 0.15/0.2 hard gate")),
+        (("dielectric", "main_scoreboard_headline_grouped_r2"),
+         t("ε 头条 R2\n（提升后）", "ε headline R2\n(promoted)"), ACCENT, False),
+        (("dielectric", "main_scoreboard_baseline_grouped_r2"),
+         t("ε 基线 R2\n（冻结）", "ε baseline R2\n(frozen)"), ACCENT, True),
         (("viscosity", "group_key_r2"),
-         t("eta 组键 R2", "eta group-key R2"), RED,
-         t("R2 好看，但门是 MAE -> 红", "R2 looks fine; the gate is MAE -> red")),
+         t("eta 组键 R2", "eta group-key R2"), RED, False),
         (("dielectric", "random_row_leak_reference_r2"),
-         t("行级泄漏参照 R2", "row-level leak reference R2"), LEAK,
-         t("只作参照，从不进判决", "reference only, never a verdict")),
+         t("行级泄漏\n参照 R2", "row-level leak\nreference R2"), LEAK, True),
     )
     labels = [spec[1] for spec in r2_specs]
     values = [num(board[spec[0]]["value"]) for spec in r2_specs]
     colours = [spec[2] for spec in r2_specs]
     bars = right.bar(range(len(labels)), values, color=colours, width=0.6)
-    bars[2].set_hatch("//")
+    for bar, spec in zip(bars, r2_specs, strict=True):
+        if spec[3]:
+            bar.set_hatch("//")
+            bar.set_edgecolor(INK)
+            bar.set_alpha(0.55)
     for index, value in enumerate(values):
         right.text(index, value + 0.02, f"{value:.3f}", ha="center", fontsize=9, color=INK)
+    right.annotate(
+        t("头条 = W17-6 合并枪；基线逐位未动", "headline = W17-6 merge arm; baseline bit-identical"),
+        xy=(0.5, 0.62), xycoords="data", ha="center", fontsize=8.5, color=INK,
+    )
     right.set_xticks(range(len(labels)))
-    right.set_xticklabels(labels, fontsize=8.5)
+    right.set_xticklabels(labels, fontsize=8)
     right.set_ylim(0, 1.0)
     right.set_ylabel("R2")
-    right.set_title(t("R2 类读数（口径不同，不与左图混比）",
-                      "R2 readouts (different scale; not comparable to the left panel)"),
-                    fontsize=11)
+    right.set_title(t("R2 类读数（口径不同，不与左图混比）\n"
+                      "斜纹 = 冻结/参照档，实心 = 当前头条",
+                      "R2 readouts (different scale; not comparable to the left panel)\n"
+                      "hatched = frozen or reference; solid = current headline"),
+                    fontsize=10)
     style(right)
 
-    fig.suptitle(t("W17 四通道看板：哪几门红了",
-                   "Week 17 four-channel board: which gates are red"), fontsize=14)
+    fig.suptitle(t("W17 四通道看板：哪几门红了（ε 头条已提升至合并配置）",
+                   "Week 17 four-channel board: which gates are red "
+                   "(epsilon headline promoted to the merged configuration)"), fontsize=14)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     fig.savefig(path, dpi=150)
     plt.close(fig)

@@ -17,6 +17,8 @@ from electrolyte_ml.exporting import canonical_text_sha256
 from probes.four_channel_coverage import (
     CHANNELS,
     MAIN_SCOREBOARD,
+    MAIN_SCOREBOARD_HEADLINE,
+    MAIN_SCOREBOARD_HEADLINE_DELTA,
     PINNED,
     build_board,
     scoreboard_shape,
@@ -53,10 +55,17 @@ def test_board_reproduces_from_the_shipped_artifacts() -> None:
 def test_main_scoreboard_is_quoted_never_recomputed() -> None:
     summary = json.loads(SUMMARY.read_text(encoding="utf-8"))
     assert summary["main_scoreboard"] == MAIN_SCOREBOARD
+    assert summary["main_scoreboard_version"] == "v2"
+    assert summary["main_scoreboard_headline"] == MAIN_SCOREBOARD_HEADLINE
+    assert summary["main_scoreboard_headline_delta_r2"] == MAIN_SCOREBOARD_HEADLINE_DELTA
     assert summary["run_telemetry"]["models_fitted"] == 0
     assert summary["run_telemetry"]["r2_reported"] is False
     values = {row["metric"]: row["value"] for row in _board()}
-    assert float(values["main_scoreboard_grouped_r2"]) == MAIN_SCOREBOARD
+    assert float(values["main_scoreboard_baseline_grouped_r2"]) == MAIN_SCOREBOARD
+    assert float(values["main_scoreboard_headline_grouped_r2"]) == MAIN_SCOREBOARD_HEADLINE
+    statuses = {row["metric"]: row["gate_status"] for row in _board()}
+    assert statuses["main_scoreboard_headline_grouped_r2"] == "promoted"
+    assert statuses["main_scoreboard_baseline_grouped_r2"] == "baseline_reference"
 
 
 def test_the_four_channels_and_the_added_dimensions_are_all_on_the_board() -> None:

@@ -7,8 +7,12 @@ reads, whether the gate passes, and where the bottleneck is** -- so the funnel's
 short board is read off one table instead of six reports.
 
 Every number on the board is re-read from the artefact that owns it and then
-asserted against a literal pinned here.  Nothing is retyped from prose, and the
-frozen main scoreboard 0.4091179943351143 is only ever *quoted*, never recomputed.
+asserted against a literal pinned here.  Nothing is retyped from prose.  The main
+scoreboard is only ever *quoted*, never recomputed, and it is now a two-row pair:
+the **headline** is the W17-6 merged configuration (0.4766400383507876, promoted on
+2026-09-27 on explicit author instruction) and the frozen **baseline**
+0.4091179943351143 is retained, unchanged and still bit-exact reproducible, beside
+it.  The two are never mixed and neither is ever compared with the v1.0 headline 0.364.
 Optional dimension arms (density, Li+ coordination) are read when their summaries
 exist and registered as ``pending_arm`` when they do not, so the board is honest
 about which Week 17 arms have landed.
@@ -31,13 +35,25 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
 
-MAIN_SCOREBOARD = 0.4091179943351143
+# The main scoreboard is a versioned pair since 2026-09-27.  The baseline is the
+# frozen W11/W12 grouped hybrid reading and never moves; the headline is the W17-6
+# pre-registered merged arm (lever 4 + lever 8) promoted to the front of the report
+# on explicit author instruction.  Both numbers are read out of their owning
+# artefacts and pinned; the promotion adds no measurement.
+MAIN_SCOREBOARD_BASELINE = 0.4091179943351143
+MAIN_SCOREBOARD_HEADLINE = 0.4766400383507876
+MAIN_SCOREBOARD_HEADLINE_DELTA = 0.0675220440156733
+MAIN_SCOREBOARD_PROMOTED_AT_UTC = "2026-09-27T01:34:06Z"
+# Kept so every older reader that imports MAIN_SCOREBOARD still gets the baseline.
+MAIN_SCOREBOARD = MAIN_SCOREBOARD_BASELINE
 RANDOM_ROW_LEAK_REFERENCE_R2 = 0.7385332681453336
 
 # Literal pins: each is asserted against the artefact that owns it before it is
 # written to the board.  A drifted artefact fails loudly instead of re-baselining.
 PINNED = {
     "dielectric_main_scoreboard_r2": 0.4091179943351143,
+    "dielectric_main_scoreboard_headline_r2": 0.4766400383507876,
+    "dielectric_main_scoreboard_headline_delta_r2": 0.0675220440156733,
     "dielectric_scoreboard_rows": 457,
     "dielectric_scoreboard_compounds": 97,
     "dielectric_scoreboard_pairs": 276,
@@ -133,6 +149,9 @@ def build_board() -> tuple[list[dict[str, str]], dict[str, object]]:
         "liquid_window": REPOSITORY_ROOT / "probes" / "liquid_window_gate_summary.json",
         "walden_dn": REPOSITORY_ROOT / "probes" / "walden_dn_channel_summary.json",
         "dielectric_v04": REPOSITORY_ROOT / "data" / "dielectric_v04.csv",
+        "merge_arm": REPOSITORY_ROOT
+        / "probes"
+        / "dielectric_coordination_block_v3_summary.json",
     }
     rows: list[dict[str, str]] = []
 
@@ -169,13 +188,32 @@ def build_board() -> tuple[list[dict[str, str]], dict[str, object]]:
     coverage = read_json(paths["coverage_summary"])
     main_r2 = coverage["reference"]["published_hybrid_r2"]
     _assert_pin("dielectric_main_scoreboard_r2", main_r2)
+    merge_arm = read_json(paths["merge_arm"])
+    headline_r2 = merge_arm["arms"]["plus_both"]["Morgan+Physical"]["r2"]["mean"]
+    headline_delta = merge_arm["verdict"]["delta_r2"]
+    _assert_pin("dielectric_main_scoreboard_headline_r2", headline_r2)
+    _assert_pin("dielectric_main_scoreboard_headline_delta_r2", headline_delta)
+    if abs((headline_r2 - main_r2) - headline_delta) > 1e-12:
+        raise SystemExit(
+            "the promoted headline and the frozen baseline do not differ by the "
+            f"registered delta: {headline_r2} - {main_r2} != {headline_delta}"
+        )
+    if merge_arm["verdict"]["decision"] != "pass_merged_blocks":
+        raise SystemExit("the promoted headline's owning arm is not the passing merge arm")
     ad = read_json(paths["applicability_domain"])
     ad_rate = ad["trigger_rate"]
     _assert_pin("dielectric_ad_trigger_rate", ad_rate)
 
-    emit("dielectric", "model", "main_scoreboard_grouped_r2", main_r2, "R2",
-         "probes/dielectric_coverage_paired_benchmark_summary.json", "", "quoted",
-         "frozen main scoreboard; never mixed with the v1.0 headline 0.364")
+    emit("dielectric", "model", "main_scoreboard_headline_grouped_r2", headline_r2, "R2",
+         "probes/dielectric_coordination_block_v3_summary.json", "", "promoted",
+         "epsilon headline since 2026-09-27: hybrid Morgan+Physical plus lever 4 "
+         "(conformer-average dipole) plus lever 8 (Li+ coordination block); 457 rows / "
+         "97 compounds / 276 pairs, GroupKFold by InChIKey; pre-registered merge arm, "
+         "placebo collapsed, 9/10 repeats positive; not an independent sample")
+    emit("dielectric", "model", "main_scoreboard_baseline_grouped_r2", main_r2, "R2",
+         "probes/dielectric_coverage_paired_benchmark_summary.json", "", "baseline_reference",
+         "frozen baseline, retained unchanged and still bit-exact; kept for comparability "
+         "and never mixed with the headline or with the v1.0 headline 0.364")
     emit("dielectric", "model", "random_row_leak_reference_r2", RANDOM_ROW_LEAK_REFERENCE_R2,
          "R2", "reports/decisions_log.md", "", "reference_only",
          "row-level leak reference; never enters a verdict")
@@ -325,6 +363,13 @@ def build_board() -> tuple[list[dict[str, str]], dict[str, object]]:
         "board_rows": len(rows),
         "pinned": PINNED,
         "main_scoreboard": MAIN_SCOREBOARD,
+        "main_scoreboard_version": "v2",
+        "main_scoreboard_headline": MAIN_SCOREBOARD_HEADLINE,
+        "main_scoreboard_headline_delta_r2": MAIN_SCOREBOARD_HEADLINE_DELTA,
+        "main_scoreboard_headline_source": (
+            "probes/dielectric_coordination_block_v3_summary.json#arms.plus_both.Morgan+Physical"
+        ),
+        "main_scoreboard_promoted_at_utc": MAIN_SCOREBOARD_PROMOTED_AT_UTC,
         "random_row_leak_reference_r2": RANDOM_ROW_LEAK_REFERENCE_R2,
         "inputs": inputs,
         "run_telemetry": {
@@ -339,6 +384,11 @@ def build_board() -> tuple[list[dict[str, str]], dict[str, object]]:
             "457 rows are 276 distinct (compound, temperature) pairs; the sample size is 276",
             "gate_status is a restatement of the owning artefact, not a new judgement",
             "optional arms register as pending_arm when their summary is absent",
+            (
+                "the promoted headline is a re-report of an already-measured, "
+                "pre-registered arm; it adds no measurement and no shot"
+            ),
+            "headline and baseline are versioned together (v2) and must never be mixed",
         ],
     }
     return rows, summary

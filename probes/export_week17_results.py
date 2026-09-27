@@ -18,8 +18,11 @@ Covers, in one package:
                  redox), which is where the HOMO/LUMO status is re-read.
 
 Week 17 quotes exactly one R2 figure, and it is the merge re-run's delta, not a
-new lever.  The frozen main scoreboard 0.4091179943351143 is reproduced to
-`abs_delta = 0.0` and is never quoted as a gain by any lane.
+new lever.  Since 2026-09-27 that same arm is also the *headline* of the main
+scoreboard: the frozen baseline 0.4091179943351143 is reproduced to
+`abs_delta = 0.0`, retained unchanged, and now sits beside the promoted headline
+0.4766400383507876 in a versioned v2 pair.  The promotion re-reports a number that
+was already measured and pre-registered; it adds no measurement and no shot.
 """
 
 from __future__ import annotations
@@ -56,7 +59,15 @@ FROZEN_RED_LINES = {
     "data/viscosity_v01.csv": "12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26",
 }
 
+# The main scoreboard is a versioned pair.  The baseline is the frozen W11/W12
+# grouped hybrid reading and never moves; the headline is the W17-6 pre-registered
+# merged arm (lever 4 + lever 8) that the author asked to be promoted on
+# 2026-09-27.  Both numbers were measured long before the promotion.
 MAIN_SCOREBOARD = 0.4091179943351143
+MAIN_SCOREBOARD_VERSION = "v2"
+MAIN_SCOREBOARD_HEADLINE_R2 = 0.4766400383507876
+MAIN_SCOREBOARD_HEADLINE_DELTA_R2 = 0.0675220440156733
+MAIN_SCOREBOARD_PROMOTED_AT_UTC = "2026-09-27T01:34:06Z"
 RANDOM_ROW_LEAK_REFERENCE_R2 = 0.7385332681453336
 
 # The v0.4 roster digest, so the package can prove the patch landed on top of
@@ -152,9 +163,12 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
 
 ## 头条（十九句话，都不许外推）
 
-1. **四大核心数据的现状到此一眼可查**（四通道覆盖板，`four_channel_coverage.csv`，29 行）：
-   **ε** 主记分牌 `0.4091179943351143`（457 行 / 97 化合物 = **276** 对），天花板是**信息缺口**
-   （缺 Kirkwood g 维）不是行数缺口；**η** `group_key` R² `0.7481271437772365`、MAE
+1. **四大核心数据的现状到此一眼可查**（四通道覆盖板，`four_channel_coverage.csv`，30 行）：
+   **ε** 主记分牌自 2026-09-27 起是**版本化 v2 两行制**：**头条 `0.4766400383507876`**
+   （Morgan+Physical ＋ 杠杆 4 ＋ 杠杆 8；457 行 / 97 化合物 = **276** 对），
+   冻结**基线 `0.4091179943351143`** 逐位未动、并列保留（Δ `+0.0675220440156733`）；
+   头条是**重报**已测得的预注册合并枪，**不新增测量、不新增 shot**，两个数字**只许各带配置引用、永不混比**；
+   天花板仍是**信息缺口**（缺 Kirkwood g 维）不是行数缺口；**η** `group_key` R² `0.7481271437772365`、MAE
    `0.17477197208762`（门 0.15，**红**，只许族级结论）；**HOMO** MAE `0.19050925839013938`
    与 **LUMO** MAE `0.13855083976437643`（门 0.2 eV，**两门都过**）；**redox** 氧化
    `0.2905180517963865` / 还原 `0.4096241620366996`（门 0.15 V，**红**，瓶颈是 **392** 条标签）。
@@ -175,10 +189,11 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
    pass 126 / unknown 111；把 unknown 一并算作保守触发则 59.87%（`0.5987261146496815`）。
    **EC 被正确拦下**（mp 36.4 °C ⇒ 25 °C 不是液体）——
    「Reaxys 把 EC 熔点标成 25 °C」的教训由此有了机器化纠错锚。
-7. **Li⁺ 配位块转正，且两枪合并已实测**：`plus_both` R² `0.4766400383507876`，
+7. **Li⁺ 配位块转正，两枪合并已实测，并已被提升为主记分牌头条**：`plus_both` R² `0.4766400383507876`，
    对基线 Δ **+0.0675220440156733**（门 +0.0200），安慰剂塌缩 ✅，正向重复 9/10。
    **合并非加和**：朴素相加 = +0.0998972687629372，实测**低 0.0323752247472639**；
-   合并枪相对最强单枪只多 +0.011683591468432397，**这一枪是本轮唯一一次主记分牌尝试**。
+   合并枪相对最强单枪只多 +0.011683591468432397，**这一枪是本轮唯一一次主记分牌尝试**——
+   提升不改这一条：它**不是新发现**（§22.5：11 枪 3 枪越线且同源），只是把已测得的数摆到头条。
 8. **Walden 耦合已建成、DN 通道不过门**：ε–η 联表复算 **8,359 行 / 1,043 键**通过，
    产出 **1,219 对**（同温度才配对、不平均）；**DN 可采信覆盖 0 / 1,043 = 0.00%**
    （门 30%）⇒ **不进特征表**（DN 只有实验 + 一手 DOI 才算可采信）。
@@ -782,15 +797,72 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
             ),
         },
         "main_scoreboard": {
+            "schema_version": 2,
+            "version": MAIN_SCOREBOARD_VERSION,
+            "headline": {
+                "value": MAIN_SCOREBOARD_HEADLINE_R2,
+                "configuration": (
+                    "hybrid Morgan+Physical 0.5*(Morgan+Physical) plus lever 4 "
+                    "(conformer-average dipole, 2 columns) plus lever 8 (Li+ coordination "
+                    "block, 5 columns)"
+                ),
+                "delta_vs_baseline": MAIN_SCOREBOARD_HEADLINE_DELTA_R2,
+                "source": (
+                    "probes/dielectric_coordination_block_v3_summary.json"
+                    "#arms.plus_both.Morgan+Physical"
+                ),
+                "pool": (
+                    "457 rows / 97 compounds / 276 distinct (compound, temperature) pairs"
+                ),
+                "folds": "GroupKFold by InChIKey, 10 repeats x 5 folds, seed 42",
+                "promoted_at_utc": MAIN_SCOREBOARD_PROMOTED_AT_UTC,
+                "promotion_basis": (
+                    "pre-registered merge arm (probes/dielectric_coordination_block_prereg_v3.json, "
+                    "sha256 4d02a99b4677334123cd29597a16d531343adf34d2224799d0ca54e3b373399b), "
+                    "verdict pass_merged_blocks, placebo collapsed, 9/10 repeats positive"
+                ),
+            },
+            "baseline": {
+                "value": MAIN_SCOREBOARD,
+                "reproduced_abs_delta": verdict["baseline_abs_delta"],
+                "reproduced": verdict["baseline_reproduced"],
+                "status": "retained_unchanged",
+                "still_used_as_the_comparability_anchor": True,
+            },
             "value": MAIN_SCOREBOARD,
             "touched": True,
-            "touched_by": "W17-6 only, as a re-run of the frozen baseline",
+            "touched_by": (
+                "W17-6 re-ran the frozen baseline and measured the merged arm; on "
+                "2026-09-27 an explicit author instruction promoted that already-measured, "
+                "pre-registered arm to the headline. The promotion adds no measurement."
+            ),
             "baseline_reproduced": verdict["baseline_reproduced"],
             "baseline_abs_delta": verdict["baseline_abs_delta"],
-            "note": (
-                "0.4091179943351143 is reproduced to abs_delta = 0.0 and used only as "
-                "the baseline of the merge shot. No lane quotes it as a gain."
+            "promoted_r2": MAIN_SCOREBOARD_HEADLINE_R2,
+            "headline_minus_baseline_r2": MAIN_SCOREBOARD_HEADLINE_DELTA_R2,
+            "mixing_rule": (
+                "the headline and the baseline may appear together only with this block's "
+                "own configuration lines; they are never divided, added, or compared as two "
+                "models, and neither is ever compared with the v1.0 headline 0.364"
             ),
+            "note": (
+                "0.4091179943351143 is reproduced to abs_delta = 0.0, is never quoted as a "
+                "gain, and is retained unchanged beside the promoted headline."
+            ),
+            "caveats": [
+                (
+                    "the merged arm shares folds and the shuffled-label vector with the two "
+                    "single arms; it is not an independent sample"
+                ),
+                (
+                    "the +0.011683591468432397 over the best single arm has no gate of its "
+                    "own and must not be read as a proven increment"
+                ),
+                (
+                    "per decisions_log section 22.5 -- 11 shots, 3 over the line, all in the "
+                    "same epsilon feature family -- this is not a new discovery"
+                ),
+            ],
         },
         "random_row_leak_reference_r2": RANDOM_ROW_LEAK_REFERENCE_R2,
         "lanes": {
@@ -1035,6 +1107,14 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                 "board_rows": board["board_rows"],
                 "pinned": pins,
                 "main_scoreboard": board["main_scoreboard"],
+                "main_scoreboard_version": board["main_scoreboard_version"],
+                "main_scoreboard_headline": board["main_scoreboard_headline"],
+                "main_scoreboard_headline_delta_r2": board[
+                    "main_scoreboard_headline_delta_r2"
+                ],
+                "main_scoreboard_headline_source": board[
+                    "main_scoreboard_headline_source"
+                ],
                 "random_row_leak_reference_r2": board["random_row_leak_reference_r2"],
                 "outputs": board["outputs"],
                 "boundaries": board["boundaries"],
@@ -1043,7 +1123,9 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                     "(0.19050925839013938 / 0.13855083976437643); IP and EA do not "
                     "(0.2010970559642009 / 0.23415453202842548) and stay coarse "
                     "screens; the viscosity line is red on MAE and stays family level; "
-                    "redox is red with 392 labels as the bottleneck."
+                    "redox is red with 392 labels as the bottleneck. The epsilon "
+                    "scoreboard is quoted as a v2 pair: the promoted merged-arm headline "
+                    "0.4766400383507876 beside the unchanged 0.4091179943351143 baseline."
                 ),
             },
             "w17_rx_reaxys_core_four_crosscheck": {

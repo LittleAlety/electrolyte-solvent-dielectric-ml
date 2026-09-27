@@ -23,7 +23,8 @@ from probes import plot_week17_channels as pack
 FROZEN_FIGURES = {"themol_expansion_coverage.png", "themol_expansion_calibration.png"}
 
 BOARD_KEYS = {
-    ("dielectric", "main_scoreboard_grouped_r2"),
+    ("dielectric", "main_scoreboard_headline_grouped_r2"),
+    ("dielectric", "main_scoreboard_baseline_grouped_r2"),
     ("viscosity", "group_key_r2"),
     ("viscosity", "group_key_mae_log10_cP"),
     ("homo_lumo", "HOMO_fold_mean_mae"),
@@ -37,6 +38,7 @@ BOARD_KEYS = {
 
 FROZEN_LITERALS = {
     "dielectric_r2": 0.4091179943351143,
+    "dielectric_r2_headline": 0.4766400383507876,
     "viscosity_r2": 0.7481271437772365,
     "viscosity_mae": 0.17477197208762,
     "homo_mae": 0.19050925839013938,
