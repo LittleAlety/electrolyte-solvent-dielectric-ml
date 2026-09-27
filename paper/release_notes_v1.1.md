@@ -2,9 +2,8 @@
 
 **Released:** 2026-09-28 · **Dataset:** v0.3.3, `data/dielectric_v03.csv` **unchanged**
 (digest `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`) · **Archived by:** Zenodo
-**DOI:** pending — Zenodo mints the version DOI from this GitHub release, so the DOI cannot
-exist before the release does; this line is backfilled in the next commit. Concept DOI
-(version-independent): https://doi.org/10.5281/zenodo.22957695.
+**DOI:** https://doi.org/10.5281/zenodo.23001299 (concept DOI
+https://doi.org/10.5281/zenodo.22957695), minted from this GitHub release.
 
 This release does **not** republish or amend anything from v1.0. It adds the Week 18 and
 Week 19 evidence bundles on top of the same frozen dataset.

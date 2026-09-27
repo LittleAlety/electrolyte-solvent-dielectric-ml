@@ -7,8 +7,9 @@ every reported number.
 
 **Release:** v1.1 (GitHub release 2026-09-28; Week 18 post-cap path ranking + Week 19
 three-line evidence, no lane promoted) · **Dataset:** v0.3.3 (unchanged) ·
-**DOI (concept, all versions):** https://doi.org/10.5281/zenodo.22957695 ·
+**DOI (v1.1):** https://doi.org/10.5281/zenodo.23001299 ·
 **DOI (v1.0):** https://doi.org/10.5281/zenodo.22957696 ·
+**Concept DOI (all versions):** https://doi.org/10.5281/zenodo.22957695 ·
 **Licences:** data CC BY 4.0 (`LICENSE-DATA.md`), code MIT (`LICENSE`)
 
 ## What is here
