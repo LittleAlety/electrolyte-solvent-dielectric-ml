@@ -1,0 +1,71 @@
+{
+ "schema": "dielectric_head_sweep/prereg@1",
+ "task": "w17_shot17_head_sweep",
+ "week": "week17",
+ "arm": "W17-27_head_sweep",
+ "status": "locked_before_run",
+ "locked_at_utc": "2026-09-27T10:55:00Z",
+ "non_blind": true,
+ "non_blind_reason": "the seed-42 single-head reading 0.6080587938801277 and every per-fold pre-scan number were known before this file was written",
+ "question": "on the frozen protocol (5 folds x 10 repeats, GroupKFold by InChIKey, Physical(lever4), frozen pool/mask/splitter/scorer), does swapping the model head clear 0.70?",
+ "representation": "Physical(lever4)",
+ "frozen_protocol": {
+  "n_splits": 5,
+  "n_repeats": 10,
+  "group_key": "InChIKey",
+  "context_builder": "dielectric_representation_seed_robustness.build_context",
+  "splitter": "dielectric_representation_seed_robustness.splits_for -> dielectric_room_window_paired.masked_splits",
+  "train_mask": "full_base (2029 base rows)",
+  "score_mask": "scored (457 rows over 97 compounds)",
+  "tail": "drop_thin_folds(min_test_rows=MIN_TEST_ROWS_PER_FOLD=2)",
+  "prediction_floor": 1,
+  "head_process": "ProcessPoolExecutor over (repeat, fold) tasks, one fold per task"
+ },
+ "arms": [
+  "xgb_reference",
+  "xgb_deep",
+  "extra_trees",
+  "kernel_ridge",
+  "mlp",
+  "blend_uniform",
+  "selected_inner_cv"
+ ],
+ "arm_definitions": {
+  "xgb_reference": "frozen head: XGBRegressor(**XGB_PARAMS) = 200 trees, max_depth 2, lr 0.05, random_state 42 (anchor, must reproduce bit for bit)",
+  "xgb_deep": "depth 8, 1200 trees, lr 0.03, rest of XGB_PARAMS inherited",
+  "extra_trees": "ExtraTreesRegressor(n_estimators=500, random_state=42, n_jobs=1)",
+  "kernel_ridge": "RBF KernelRidge(alpha=1.0, gamma=1/13) on training-fold-standardised features and z-scored target",
+  "mlp": "MLPRegressor(hidden_layer_sizes=(64,32), max_iter=1500, random_state=42) on the same standardised pair",
+  "blend_uniform": "arithmetic mean of the five single families, weights pinned in advance at 1/5 each",
+  "selected_inner_cv": "best single family by a 3-fold GroupKFold inside the training fold only (ties break on arm name), then refit on the whole training fold; the held-out fold is never seen by the choice"
+ },
+ "judged_arms": [
+  "blend_uniform",
+  "selected_inner_cv"
+ ],
+ "reference_arm": "xgb_reference",
+ "decision_rule": {
+  "pass_threshold_r2": 0.7,
+  "partial_target_r2": 0.6,
+  "improvement_bar_r2": 0.02,
+  "kill_bar_r2": 0.005,
+  "min_confirming_seeds": 3,
+  "confirmed": "best head (at the anchor seed) R2 >= 0.70 AND its improvement over xgb_reference >= 0.02 AND the cross-seed mean of that head >= 0.70 AND at least 3 seeds were run",
+  "partial": "best-head improvement over xgb_reference >= 0.005 but the 0.70 gate is not met",
+  "refuted": "best-head improvement over xgb_reference < 0.005",
+  "placebo": "verdict is placebo when --placebo is used; the target is permuted on the scored compounds only"
+ },
+ "anchors": {
+  "seed": 42,
+  "xgb_reference_physical_lever4": 0.6080587938801277,
+  "tolerance": 1e-9,
+  "fold_signature": "must equal dielectric_pool_expansion_benchmark.fold_signature of the frozen scoreboard splits",
+  "on_mismatch": "refuse to report anything else and exit non-zero"
+ },
+ "promotion_rule": "no reading from this probe is promoted; the frozen headline stays 0.4766400383507876 and the frozen baseline stays 0.4091179943351143 regardless of the outcome",
+ "outputs": [
+  "probes/dielectric_head_sweep_summary.json",
+  "reports/dielectric_head_sweep.md",
+  "probes/artifacts/dielectric_head_sweep_repeats.csv"
+ ]
+}

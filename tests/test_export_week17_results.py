@@ -67,7 +67,7 @@ VISCOSITY_MAE_GATE = 0.15
 DN_AUDIT_SHA256 = "3a80daa9f74c423bfcd6d2cbd3f6c54a6ffe2516daab0c3147e33d92adf7dab6"
 
 # A mutant that rewrites one narrative number must move this line as well.
-README_SHA256 = "6ee0689e12aa41561ec2424ac388c485fe6d0c2fff164683ba212b4c9e23547a"
+README_SHA256 = "ca2f09dddd9e84f00c0b7d238ca1061916bdeb31c9f638a4fdd400993a38e6d6"
 README_NARRATIVE_NUMBERS = (
     "0.4091179943351143",
     "0.7481271437772365",
@@ -185,6 +185,20 @@ README_NARRATIVE_NUMBERS = (
     # W17-22/W17-23 -- the Reaxys static-epsilon harvest and the red-line register.
     "读数作废",
     "§28.33",
+    # W17-27 -- the shot-17 model-head sweep (refuted) and its inner-CV finding.
+    "0.041024",
+    "0.567035",
+    "0.121422",
+    # W18-F -- the AUC sidecar, the splitter table and the ordering-vs-magnitude story.
+    "0.9579",
+    "0.7011",
+    "0.9337",
+    "0.1602",
+    "0.0860",
+    "0.8412",
+    "0.7358",
+    "1594",
+    "125.8 s",
 )
 
 
@@ -551,8 +565,143 @@ def test_the_seed_robustness_lane_never_promotes_the_6081(
     assert lane["promotable"] is False
 
 
-def test_the_coordination_block_lane_matches_its_own_summary(
+def test_the_head_sweep_lane_refutes_every_swap(exported: tuple[Path, dict]) -> None:
+    """Shot 17 swaps the model head at the frozen pool and no head wins.
+
+    The lane has to ship the anchor, the refutation of every alternative head and
+    the inner-CV finding that makes a W18 grid pre-registered rather than selected.
+    """
+
+    root, _ = exported
+    summary = _summary(root)
+    lane = summary["late_arms"]["W17-27_model_head_sweep"]
+
+    assert lane["verdict"] == "refuted"
+    assert lane["target_met"] is False
+    assert lane["promotable"] is False
+    assert lane["non_blind"] is True
+    assert lane["prereg"]["status"] == "locked_before_run"
+
+    anchors = lane["anchors"]
+    assert anchors["reproduced"] is True
+    assert anchors["rows"][0]["measured"] == 0.6080587938801277
+    assert anchors["rows"][0]["abs_gap"] == 0.0
+
+    assert lane["leakage_clean"] is True
+    assert lane["leakage_folds"] == {"42": 350}
+
+    heads = lane["head_r2"]
+    assert lane["reference_head"] == "xgb_reference"
+    assert lane["reference_r2"] == 0.6080587938801277
+    assert heads["xgb_reference"] == 0.6080587938801277
+    assert lane["best_head"] == "blend_uniform"
+    assert lane["best_r2"] == pytest.approx(0.567034657421033)
+    assert lane["best_improvement"] == pytest.approx(-0.04102413645909475)
+    assert heads["xgb_deep"] == pytest.approx(0.5521211165030482)
+    assert heads["extra_trees"] == pytest.approx(0.5162359988716283)
+    assert heads["kernel_ridge"] == pytest.approx(0.4580443557748957)
+    assert heads["mlp"] == pytest.approx(0.12142151511869281)
+    # no swapped head reaches the frozen reference, let alone the target
+    rivals = {name: r2 for name, r2 in heads.items() if name != lane["reference_head"]}
+    assert max(rivals.values()) < lane["reference_r2"] < 0.70
+    assert lane["best_head"] != lane["reference_head"]
+    assert lane["best_improvement"] < 0.0
+
+    assert lane["inner_cv_choices"] == {
+        "42": {
+            "mlp": 10,
+            "kernel_ridge": 25,
+            "xgb_reference": 3,
+            "xgb_deep": 8,
+            "extra_trees": 4,
+        }
+    }
+    assert "frozen head only 3" in lane["inner_cv_finding"]
+
+
+def test_the_auc_sidecar_lane_adds_ordering_without_moving_magnitude(
     exported: tuple[Path, dict],
+) -> None:
+    """The AUC columns are restored from shipped rows and no frozen byte moves.
+
+    The sidecar reads the shipped prediction rows, so its R2 must match the shipped
+    repeats bit-for-bit and the shipped metric name list must stay untouched.
+    """
+
+    root, _ = exported
+    summary = _summary(root)
+    lane = summary["late_arms"]["W18-F1_auc_sidecar"]
+
+    assert lane["promotable"] is False
+    assert lane["worst_r2_abs_gap"] == 0
+    assert lane["r2_tolerance"] == 1e-9
+    assert "auc_gt15" not in lane["metric_names_shipped"]
+    assert "auc_gt30" not in lane["metric_names_shipped"]
+    assert lane["metric_names_extended"][-2:] == ["auc_gt15", "auc_gt30"]
+    assert lane["metric_names_extended"][:7] == lane["metric_names_shipped"]
+
+    sources = lane["sources"]
+    assert len(sources) == 5
+    assert all(block["max_r2_abs_gap"] == 0 for block in sources.values())
+    assert sources["dielectric_coordination_block_v3"]["scored_groups"] == 230
+    assert sources["dielectric_coordination_block_v3"]["auc_gt30_mean"] == pytest.approx(
+        0.7010835698619533
+    )
+    assert sources["dielectric_coverage_paired_benchmark"]["scored_groups"] == 180
+    assert sources["dielectric_band_ablation"]["scored_groups"] == 150
+    assert lane["table"] == "probes/artifacts/dielectric_auc_sidecar.csv"
+
+
+def test_the_splitter_lane_keeps_ordering_while_magnitude_collapses(
+    exported: tuple[Path, dict],
+) -> None:
+    """R2 collapses under compound and scaffold holdout while AUC>30 largely holds.
+
+    The lane has to ship the leak reference as a leak reference, keep the pool
+    caveat, and never promote the leak reference row as a result.
+    """
+
+    root, _ = exported
+    summary = _summary(root)
+    lane = summary["late_arms"]["W18-F2_splitters_auc"]
+
+    assert lane["promotable"] is False
+    assert lane["random_row_is_a_leak_reference"] is True
+    assert lane["reused_max_r2_abs_gap"] == 0
+
+    pool = lane["pool"]
+    assert pool["rows"] == 1594
+    assert pool["compounds"] == 98
+    assert pool["scaffold_groups"] == 50
+    assert pool["leak"]["folds_with_a_straddling_compound"] == 0
+    assert "NOT the 457-row / 97-compound" in lane["pool_caveat"]
+
+    by_protocol = lane["by_protocol"]
+    assert lane["protocol_order"] == [
+        "random_row",
+        "grouped",
+        "scaffold",
+        "grouped_single_row",
+    ]
+
+    leak = by_protocol["random_row"]["Morgan+Physical"]
+    honest = by_protocol["grouped"]["Morgan+Physical"]
+    scaffold = by_protocol["scaffold"]["Morgan+Physical"]
+
+    assert leak["r2"] == pytest.approx(0.9336667897786656)
+    assert honest["r2"] == pytest.approx(0.1601650045731296, abs=1e-9)
+    assert scaffold["r2"] == pytest.approx(-0.08604221437905275, abs=1e-9)
+
+    # the ordering metric survives compound and scaffold holdout far better
+    assert leak["auc_gt30"] == pytest.approx(0.993801699471083)
+    assert honest["auc_gt30"] == pytest.approx(0.841177924217463, abs=1e-9)
+    assert scaffold["auc_gt30"] == pytest.approx(0.735817111766236, abs=1e-9)
+    assert leak["r2"] > honest["r2"] > scaffold["r2"]
+    assert leak["auc_gt30"] > honest["auc_gt30"] > scaffold["auc_gt30"]
+    assert honest["auc_gt30"] - scaffold["auc_gt30"] < honest["r2"] - scaffold["r2"] + 1.0
+
+
+def test_the_coordination_block_lane_matches_its_own_summary(    exported: tuple[Path, dict],
 ) -> None:
     root, _ = exported
     lane = _lane(root, "w17_6_coordination_block_merge")

@@ -335,6 +335,35 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
     - **跨种子平均 Physical = 0.586114**（sd 0.0175，range 0.565349–0.608059）⇒ **0.6081 含种子 42 的运气**，5 个种子里**只有 1 个** >0.60，**R² > 0.60 仍未达到**；
     - **反例（不许省略）**：在 `full_table_hybrid` 臂上方向**相反**（跨种子均值混合 **0.523136** > Physical **0.486277**）⇒ 结论**只在 lever4 配置下成立**，不是普适结论。
     本枪**非盲、诊断性**：任何读数**一律不提升**，冻结头条保持 **0.4766400383507876**、基线 **0.4091179943351143**。图：`probes/artifacts/w17_representation_seed_robustness.png`。
+24. **换模型头一枪（shot 17）被否决：深度 2 是正则化器，不是欠拟合**（W17-27，`probes/dielectric_head_sweep.py`）。
+    冻结头（200 棵树 / 深度 2 / lr 0.05）当年是为 **2048 维稀疏 Morgan** 定的；胜出的 `Physical(lever4)` 只有 **13–15** 列稠密特征，
+    深度 2 = 每树 4 叶，**先验上几乎必然欠拟合**。本枪**只换头**，池 / 折 / 锚点全部冻结：
+    锚点 `xgb_reference` 逐位复现 **0.6080587938801277**（`abs_gap = 0.0`）、50 折折签名与冻结折一致、泄漏审计 **350 折全 0**。
+    seed 42 七臂：`xgb_reference` **0.608059** > `blend_uniform` **0.567035** > `xgb_deep`（d8 / 1200 / lr.03）**0.552121** >
+    `extra_trees` **0.516236** > `kernel_ridge` **0.458044** > `selected_inner_cv` **0.372442** > `mlp` **0.121422**。
+    ⇒ `verdict = refuted`，最佳增益 **−0.041024**（`blend_uniform`），**七臂无一超过冻结头**、`promoted = false`。
+    **关键新负结果**：`selected_inner_cv` 在 50 折里选族 = `kernel_ridge` 25 / `mlp` 10 / `xgb_deep` 8 / `extra_trees` 4 / **冻结头只 3**
+    ⇒ **内层选族系统性地选中表现最差的族**，在 97 化合物 / 276 样本的量级上内层 GroupKFold 选族**不可迁移**；
+    ⇒ 由此得出 Week 18 的方法论约束：**网格必须预注册锁死，不得依赖内层 CV 选族**。
+    本枪**非盲、诊断性**（对 seed 42），任何读数**一律不提升**。图：`probes/artifacts/w17_head_sweep.png`。
+25. **AUC 侧车 ＋ 三档划分表：我们不是「模型差」，是「排序学会了、量级学不会」**（W18-F1 / W18-F2）。
+    主链路 `evaluate_repeat` 其实一直在算 `auc_gt15` / `auc_gt30`，但 `METRIC_NAMES` 只带 7 个指标，**驱动冻结的 `REPEAT_COLUMNS_OUT`，于是所有 `*_repeats.csv` 都把两列丢了**。
+    **侧车（W18-F1，`probes/dielectric_auc_sidecar.py`，零重拟合）**：从**已随包的** `*_predictions.csv` 重算 AUC，**不改 `METRIC_NAMES`、不改任何冻结字节**；
+    5 个源里 R² 最大偏差 **0.00e+00**（逐位一致），最差源 `dielectric_coordination_block_v3`（230 组）**auc_gt30 = 0.7011**；
+    **冻结头条臂 `plus_both` 的 auc_gt30 = 0.9579**（`baseline` 0.9401）、安慰剂 `placebo_shuffled_target` **0.5131**、`no_information_floor` **0.4647**。
+    **三档划分 × AUC（W18-F2，`probes/dielectric_splitters_auc.py`）**：前三档**零重拟合重算**（最大 R² 差 0）＋ `scaffold` 本轮新跑（125.8 s）。
+    **池是 1594 行 / 98 化合物 / 50 骨架族**（`dielectric_observations_v11` ＋ `dielectric_physical_features_v03`），**不是 457/97 的 ε 主记分牌池，两块池永不混比**。
+    | 划分器 | Morgan r2/auc30 | Physical r2/auc30 | Morgan+Physical r2/auc30 |
+    | --- | --- | --- | --- |
+    | `random_row`（**泄漏参考，不可引用**） | +0.9010/0.9865 | +0.9383/0.9960 | **+0.9337/0.9938** |
+    | `grouped`（化合物留出，唯一诚实口径） | −0.0678/0.6480 | −0.0880/0.8699 | **+0.1602/0.8412** |
+    | `scaffold`（骨架留出，最苛刻） | −0.4104/0.5093 | −0.3904/0.8122 | **−0.0860/0.7358** |
+    | `grouped_single_row`（温度扩表对照） | +0.0755/0.7416 | +0.1317/0.8718 | **+0.1861/0.8571** |
+    ⇒ **叙事成立**：R² 从 `random_row` 的 **0.9337** 塌到 `grouped` 的 **0.1602**、再塌到 `scaffold` 的 **−0.0860**，
+    而同一行的 **auc_gt30 只从 0.9938 → 0.8412 → 0.7358**（Spearman 同步塌：0.9676 → 0.4595 → 0.2084）。
+    **结论：R² 量的是「量级」，AUC 量的是「排序」；我们排序学会了、量级没学会。**
+    两块都**不提升任何冻结数**（`promoted = false`）；`random_row` 的 **0.9337 是泄漏参考、绝不可当达标题**。
+    图：`probes/artifacts/w17_ordering_vs_magnitude.png`。
 ## 本周目录
 
 | 臂 | 内容 | 落点 |
@@ -364,6 +393,8 @@ README_TEXT = """# Week 17 交付包（扩物质与多维度：黏度 v0.2 / 密
 | W17-24 | 介电扩池第 15 枪 ＋ 22 个开放源 96 行入库（**未过 0.60**） | probes/dielectric_anchor_summary.json |
 | W17-25 | 扩池对抗审计 ＋ 交付前一致性收口（普查重钉 / xTB 暂存复核） | reports/dielectric_pool_expansion_audit.md |
 | W17-26 | 单表示 0.6081 的换折种子复验（5 种子；**非盲、不提升**） | probes/dielectric_representation_seed_robustness_summary.json |
+| W17-27 | 换模型头扫描（7 臂；**refuted、不提升**）＋ 内层选族不可迁移 | probes/dielectric_head_sweep_summary.json |
+| W18-F | AUC 侧车（零重拟合）＋ 三档划分 × AUC 表（**排序 vs 量级**） | probes/dielectric_splitters_auc_summary.json |
 
 ## 复跑方式
 
@@ -772,6 +803,35 @@ ARTIFACTS = (
         "w17_representation_seed_robustness.png",
     ),
     ("tests/test_representation_seed_robustness.py", "test_representation_seed_robustness.py"),
+    # W17-27 -- the model-head sweep (refuted) and its inner-CV transferability finding.
+    ("probes/dielectric_head_sweep.py", "dielectric_head_sweep.py"),
+    ("probes/dielectric_head_sweep_prereg.json", "dielectric_head_sweep_prereg.json"),
+    ("probes/dielectric_head_sweep_summary.json", "dielectric_head_sweep_summary.json"),
+    ("probes/plot_head_sweep.py", "plot_head_sweep.py"),
+    ("reports/dielectric_head_sweep.md", "dielectric_head_sweep.md"),
+    (
+        "probes/artifacts/dielectric_head_sweep_repeats.csv",
+        "dielectric_head_sweep_repeats.csv",
+    ),
+    ("probes/artifacts/w17_head_sweep.png", "w17_head_sweep.png"),
+    ("tests/test_head_sweep.py", "test_head_sweep.py"),
+    # W18-F1 -- the AUC sidecar rebuilt from the shipped prediction rows, zero refits.
+    ("probes/dielectric_auc_sidecar.py", "dielectric_auc_sidecar.py"),
+    ("probes/dielectric_auc_sidecar_summary.json", "dielectric_auc_sidecar_summary.json"),
+    ("probes/artifacts/dielectric_auc_sidecar.csv", "dielectric_auc_sidecar.csv"),
+    ("reports/dielectric_auc_sidecar.md", "dielectric_auc_sidecar.md"),
+    # W18-F2 -- the leak reference / honest / scaffold splitter table and its figure.
+    ("probes/dielectric_splitters_auc.py", "dielectric_splitters_auc.py"),
+    ("probes/dielectric_splitters_auc_summary.json", "dielectric_splitters_auc_summary.json"),
+    ("probes/plot_splitters_auc.py", "plot_splitters_auc.py"),
+    ("probes/artifacts/dielectric_splitters_auc.csv", "dielectric_splitters_auc.csv"),
+    (
+        "probes/artifacts/w17_ordering_vs_magnitude.png",
+        "w17_ordering_vs_magnitude.png",
+    ),
+    ("reports/dielectric_splitters_auc.md", "dielectric_splitters_auc.md"),
+    ("tests/test_auc_sidecar_and_splitters.py", "test_auc_sidecar_and_splitters.py"),
+    ("reports/w17_core_property_coverage_audit.md", "w17_core_property_coverage_audit.md"),
     (".gitignore", ".gitignore"),
     (".github/workflows/ci.yml", "ci.yml"),
     ("probes/export_results_common.py", "export_results_common.py"),
@@ -878,6 +938,15 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
     )
     seed_robust = read_json(
         REPOSITORY_ROOT / "probes" / "dielectric_representation_seed_robustness_summary.json"
+    )
+    head_sweep = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_head_sweep_summary.json"
+    )
+    auc_sidecar = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_auc_sidecar_summary.json"
+    )
+    splitters = read_json(
+        REPOSITORY_ROOT / "probes" / "dielectric_splitters_auc_summary.json"
     )
 
     frozen = _frozen_red_lines()
@@ -1619,6 +1688,119 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
                 "promotable": False,
                 "report": "reports/dielectric_representation_seed_robustness.md",
                 "figure": "probes/artifacts/w17_representation_seed_robustness.png",
+            },
+            "W17-27_model_head_sweep": {
+                "probe": "probes/dielectric_head_sweep.py",
+                "prereg": {
+                    "path": head_sweep["prereg"]["path"],
+                    "sha256": head_sweep["prereg"]["sha256"],
+                    "status": head_sweep["prereg"]["status"],
+                },
+                "question": (
+                    "the frozen head (200 trees / depth 2 / lr 0.05) was chosen for a "
+                    "2048-dim sparse Morgan matrix; the winning Physical(lever4) "
+                    "configuration has only 13-15 dense columns, so is depth 2 simply "
+                    "underfitting? swap the head at the same frozen pool, folds and anchors"
+                ),
+                "pool": head_sweep["pool"],
+                "anchors": head_sweep["anchors"],
+                "leakage_clean": head_sweep["leakage"]["clean"],
+                "leakage_folds": head_sweep["leakage"]["folds_by_seed"],
+                "heads": [row["head"] for row in head_sweep["cross_seed"]],
+                "head_r2": {
+                    row["head"]: row["r2_seed_mean"] for row in head_sweep["cross_seed"]
+                },
+                "head_improvement_vs_reference": {
+                    row["head"]: row["improvement_vs_reference"]
+                    for row in head_sweep["cross_seed"]
+                },
+                "reference_head": head_sweep["answers"]["reference_head"],
+                "reference_r2": head_sweep["answers"]["reference_r2"],
+                "best_head": head_sweep["answers"]["best_head"],
+                "best_r2": head_sweep["answers"]["best_r2"],
+                "best_improvement": head_sweep["answers"]["best_improvement"],
+                "target_r2": head_sweep["answers"]["target_r2"],
+                "partial_target_r2": head_sweep["answers"]["partial_target_r2"],
+                "verdict": head_sweep["verdict"],
+                "target_met": head_sweep["answers"]["target_met_at_anchor_seed"],
+                "inner_cv_choices": head_sweep["inner_cv_choices"],
+                "finding": (
+                    "no head beats the frozen reference: the best is blend_uniform at "
+                    "0.567035 against the reference 0.608059, a gain of -0.041024, so "
+                    "depth 2 is a regulariser rather than an underfit knob and capacity "
+                    "is not the ceiling; the deeper tree loses 0.055938 and the MLP "
+                    "collapses to 0.121422"
+                ),
+                "inner_cv_finding": (
+                    "selected_inner_cv picked kernel_ridge in 25 of 50 folds, mlp in 10, "
+                    "xgb_deep in 8, extra_trees in 4 and the frozen head only 3 -- the "
+                    "inner GroupKFold systematically picks the worst families, so family "
+                    "selection is not transferable at the 97-compound / 276-sample scale "
+                    "and any W18 grid must be pre-registered and locked"
+                ),
+                "non_blind": True,
+                "promotable": False,
+                "report": "reports/dielectric_head_sweep.md",
+                "figure": "probes/artifacts/w17_head_sweep.png",
+                "repeats": "probes/artifacts/dielectric_head_sweep_repeats.csv",
+            },
+            "W18-F1_auc_sidecar": {
+                "probe": "probes/dielectric_auc_sidecar.py",
+                "why": auc_sidecar["why"],
+                "metric_names_shipped": auc_sidecar["metric_names_shipped"],
+                "metric_names_extended": auc_sidecar["metric_names_extended"],
+                "r2_tolerance": auc_sidecar["r2_tolerance"],
+                "worst_r2_abs_gap": auc_sidecar["worst_r2_abs_gap"],
+                "sources": {
+                    name: {
+                        "scored_groups": block["counts"]["scored_groups"],
+                        "max_r2_abs_gap": block["max_r2_abs_gap"],
+                        "auc_gt15_mean": block["auc_gt15_mean"],
+                        "auc_gt30_mean": block["auc_gt30_mean"],
+                    }
+                    for name, block in auc_sidecar["sources"].items()
+                },
+                "finding": (
+                    "the AUC columns can be restored from the shipped prediction rows "
+                    "with zero refits: the largest R2 deviation from the shipped repeats "
+                    "is 0.00e+00 across all five sources, so the magnitude metric is "
+                    "unchanged and only the ordering metric is added"
+                ),
+                "frozen_repeats_untouched": auc_sidecar["frozen_repeats_untouched"]["note"],
+                "promotable": False,
+                "table": "probes/artifacts/dielectric_auc_sidecar.csv",
+                "report": "reports/dielectric_auc_sidecar.md",
+            },
+            "W18-F2_splitters_auc": {
+                "probe": "probes/dielectric_splitters_auc.py",
+                "question": splitters["question"],
+                "frozen_side": splitters["frozen_side"],
+                "pool": splitters["new_run"],
+                "protocol_notes": splitters["protocol_notes"],
+                "protocol_order": splitters["protocol_order"],
+                "primary": splitters["primary"],
+                "reused_from_shipped_predictions": splitters["reused_from_shipped_predictions"],
+                "reused_max_r2_abs_gap": splitters["reused_max_r2_abs_gap"],
+                "shipped_predictions_sha256": splitters["shipped_predictions_sha256"],
+                "by_protocol": splitters["by_protocol"],
+                "pool_caveat": (
+                    "this pool is 1594 rows / 98 compounds / 50 scaffold groups from "
+                    "dielectric_observations_v11 + dielectric_physical_features_v03; it is "
+                    "NOT the 457-row / 97-compound epsilon scoreboard pool, and the two "
+                    "must never be subtracted or mixed"
+                ),
+                "finding": (
+                    "R2 collapses from 0.9337 (random_row) to 0.1602 (grouped) to "
+                    "-0.0860 (scaffold) while auc_gt30 only falls from 0.9938 to 0.8412 "
+                    "to 0.7358 on the same arm and representation: the ordering metric "
+                    "survives compound and scaffold holdout far better than the magnitude "
+                    "metric, i.e. the ranking is learned and the magnitude is not"
+                ),
+                "random_row_is_a_leak_reference": True,
+                "promotable": False,
+                "report": "reports/dielectric_splitters_auc.md",
+                "figure": "probes/artifacts/w17_ordering_vs_magnitude.png",
+                "table": "probes/artifacts/dielectric_splitters_auc.csv",
             },
         },
         "frozen_red_lines": frozen,
