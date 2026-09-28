@@ -1,0 +1,260 @@
+{
+ "schema": "w20_epsilon_second_stage/prereg@1",
+ "task": "w20_w204_epsilon_second_stage",
+ "week": "week20",
+ "lane": "W20-4",
+ "section": "28.60",
+ "status": "locked_before_run",
+ "locked_at_utc": "2026-09-28T00:00:00Z",
+ "non_blind": true,
+ "non_blind_reason": "the seed-42 reading 0.6080587938801277 and the whole W18 first-stage grid (including hp_d4_n200 = 0.5998203128630835) were known before this file was written; this is a within-family second-stage hyperparameter fine-tune, not an external test",
+ "question": "on the frozen protocol (5 folds x 10 repeats, GroupKFold by InChIKey, Physical(lever4), train_mask full_base 2029 rows, score_mask scored 457 rows / 97 compounds), does the pre-registered second-stage arm push the cross-seed mean R2 to >= 0.60 with a five-seed lower bound (min of the five per-seed repeat means) > 0.55?",
+ "mechanism": "P0 second stage: hold max_depth = 4 and n_estimators in 200-400 and probe min_child_weight / colsample_bytree / max_bin around the W18 winning arm; inner-fold tuning (GroupKFold inside every training fold) is reported as a side arm; the outer folds do not move; a placebo run permutes the scored targets before fitting",
+ "representation": "Physical(lever4)",
+ "frozen_protocol": {
+  "n_splits": 5,
+  "n_repeats": 10,
+  "group_key": "InChIKey",
+  "context_builder": "dielectric_representation_seed_robustness.build_context",
+  "splitter": "dielectric_representation_seed_robustness.splits_for -> dielectric_room_window_paired.masked_splits",
+  "train_mask": "full_base (2029 base rows)",
+  "score_mask": "scored (457 rows over 97 compounds)",
+  "tail": "drop_thin_folds(min_test_rows=MIN_TEST_ROWS_PER_FOLD=2)",
+  "prediction_floor": 1,
+  "model_process": "one process per seed; inside each seed a nested process pool over (repeat, fold) tasks"
+ },
+ "grid": {
+  "family": "xgboost.XGBRegressor",
+  "inherited_from_frozen_XGB_PARAMS": {
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 64,
+   "n_jobs": 1,
+   "random_state": 42
+  },
+  "factors": {
+   "max_depth": [
+    4
+   ],
+   "n_estimators": [
+    200,
+    300,
+    400
+   ],
+   "min_child_weight": [
+    1,
+    5
+   ],
+   "colsample_bytree": [
+    0.8,
+    1
+   ],
+   "max_bin": [
+    64,
+    128
+   ]
+  },
+  "full_cartesian_size": 60,
+  "arm_count": 9,
+  "max_arms_cap": 24,
+  "selection_rule": "seven fixed second-stage arms (7 x 5 seeds = 35 readings) plus the frozen reference arm plus one inner-fold arm; the arm names below are the registered set and the run refuses any other order",
+  "side_information_rule": "only the registered_arm decides the verdict; every other arm of the grid, including the inner-fold arm and the highest side arm, is side information and may not revise it",
+  "cost_note": "one fit of the dense Physical(lever4) design matrix costs about 0.6-1.0 s CPU (measured before the first fit; the frozen head is n_jobs = 1)"
+ },
+ "arms": [
+  "xgb_reference",
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs0.8_bin64",
+  "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin64",
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs0.8_bin128",
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs1.0_bin64",
+  "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+  "hp2_d4_n300_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+  "hp2_d4_n400_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+  "hp2_inner_cv"
+ ],
+ "arm_params": {
+  "xgb_reference": {
+   "n_estimators": 200,
+   "max_depth": 2,
+   "learning_rate": 0.05,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 64,
+   "n_jobs": 1,
+   "min_child_weight": 1
+  },
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs0.8_bin64": {
+   "n_estimators": 200,
+   "max_depth": 4,
+   "learning_rate": 0.05,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 64,
+   "n_jobs": 1,
+   "min_child_weight": 1
+  },
+  "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin64": {
+   "n_estimators": 200,
+   "max_depth": 4,
+   "learning_rate": 0.05,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 64,
+   "n_jobs": 1,
+   "min_child_weight": 5
+  },
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs0.8_bin128": {
+   "n_estimators": 200,
+   "max_depth": 4,
+   "learning_rate": 0.05,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 128,
+   "n_jobs": 1,
+   "min_child_weight": 1
+  },
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs1.0_bin64": {
+   "n_estimators": 200,
+   "max_depth": 4,
+   "learning_rate": 0.05,
+   "subsample": 0.8,
+   "colsample_bytree": 1,
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 64,
+   "n_jobs": 1,
+   "min_child_weight": 1
+  },
+  "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin128": {
+   "n_estimators": 200,
+   "max_depth": 4,
+   "learning_rate": 0.05,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 128,
+   "n_jobs": 1,
+   "min_child_weight": 5
+  },
+  "hp2_d4_n300_lr0.05_mcw5_ss0.8_cs0.8_bin128": {
+   "n_estimators": 300,
+   "max_depth": 4,
+   "learning_rate": 0.05,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 128,
+   "n_jobs": 1,
+   "min_child_weight": 5
+  },
+  "hp2_d4_n400_lr0.05_mcw5_ss0.8_cs0.8_bin128": {
+   "n_estimators": 400,
+   "max_depth": 4,
+   "learning_rate": 0.05,
+   "subsample": 0.8,
+   "colsample_bytree": 0.8,
+   "reg_lambda": 1,
+   "objective": "reg:squarederror",
+   "tree_method": "hist",
+   "max_bin": 128,
+   "n_jobs": 1,
+   "min_child_weight": 5
+  }
+ },
+ "registered_arm": "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+ "single_arm_discipline": "single-arm pre-registration: the verdict is computed from REGISTERED_ARM alone; picking the maximum of the grid is nearly certain to clear 0.60 and is explicitly not a threshold pass",
+ "side_arms": [
+  "xgb_reference",
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs0.8_bin64",
+  "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin64",
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs0.8_bin128",
+  "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs1.0_bin64",
+  "hp2_d4_n300_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+  "hp2_d4_n400_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+  "hp2_inner_cv"
+ ],
+ "inner_fold_arm": {
+  "arm": "hp2_inner_cv",
+  "inner_folds": 3,
+  "inner_seed": 2026,
+  "candidates": [
+   "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs0.8_bin64",
+   "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin64",
+   "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs0.8_bin128",
+   "hp2_d4_n200_lr0.05_mcw1_ss0.8_cs1.0_bin64",
+   "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+   "hp2_d4_n300_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+   "hp2_d4_n400_lr0.05_mcw5_ss0.8_cs0.8_bin128"
+  ],
+  "role": "side information; never decides the verdict"
+ },
+ "seeds": [
+  42,
+  1234,
+  2026,
+  31337,
+  7
+ ],
+ "anchor_seed": 42,
+ "anchor_tolerance": 1e-9,
+ "anchors": {
+  "seed": 42,
+  "xgb_reference_physical_lever4": 0.6080587938801277,
+  "tolerance": 1e-9,
+  "fold_signature": "must equal dielectric_pool_expansion_benchmark.fold_signature of the frozen scoreboard splits",
+  "on_mismatch": "refuse to report anything else and exit non-zero"
+ },
+ "decision_rule": {
+  "endpoint": "cross_seed_mean",
+  "registered_arm": "hp2_d4_n200_lr0.05_mcw5_ss0.8_cs0.8_bin128",
+  "pass_threshold_r2": 0.6,
+  "five_seed_lower_bound_min": 0.55,
+  "five_seed_lower_bound_definition": "the minimum over the five locked seeds of that seed's 10-repeat mean R2 (r2_seed_min)",
+  "promoted": "the registered arm has cross-seed mean R2 >= 0.60 AND its five-seed lower bound > 0.55",
+  "not_promoted": "either gate fails",
+  "placebo": "verdict is placebo when --placebo is used; the scored-row target is permuted before fitting",
+  "secondary_only": "the one-sided 95% t lower confidence bound of the cross-seed mean is reported but does not gate"
+ },
+ "placebo_rule": {
+  "seed": 2026,
+  "permutation": "np.random.default_rng(2026).permutation over the scored rows",
+  "collapse": "collapsed = (placebo cross-seed mean < 0.60) AND (placebo cross-seed mean < the real cross-seed mean of the same arm)"
+ },
+ "caliber_anchors": {
+  "frozen_baseline": 0.4091179943351143,
+  "frozen_headline": 0.4766400383507876,
+  "frozen_single_representation_cross_seed": 0.5861142332208197,
+  "w18_best_arm": "hp_d4_n200_lr0.05_mcw1_ss0.8_cs0.8",
+  "w18_best_cross_seed": 0.5998203128630835,
+  "note": "these five are the frozen caliber; they may not be mixed with each other"
+ },
+ "main_scoreboard_rule": "only if the gate is met: attempts_this_week = 1 and attempts_cumulative = 12 (this repository's 12th main-scoreboard attempt); otherwise attempts_this_week = 0 and attempts_cumulative stays 11",
+ "promotion_rule": "the frozen headline stays 0.4766400383507876 and the frozen baseline stays 0.4091179943351143; promotion is recorded on the main-scoreboard ledger but never rewrites them",
+ "outputs": [
+  "probes/w20_epsilon_second_stage.py",
+  "probes/w20_epsilon_second_stage_summary.json",
+  "probes/w20_epsilon_second_stage_placebo_summary.json",
+  "probes/artifacts/w20_epsilon_second_stage_repeats.csv",
+  "reports/w20_epsilon_second_stage.md",
+  "tests/test_w20_epsilon_second_stage.py",
+  "reports/_w20_section_w204.md"
+ ]
+}

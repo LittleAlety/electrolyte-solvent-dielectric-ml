@@ -1,0 +1,66 @@
+{
+  "schema_version": "w20_refusal_prereg_v0",
+  "task": "week20_w20_5_high_epsilon_refusal",
+  "status": "locked_before_run",
+  "locked_at_local": "2026-09-28",
+  "author_lane": "W20-5 / decision log 28.61",
+  "purpose": "把 epsilon > 60 区的不可解从硬预测改成正式拒答；拒答必须是可执行规则（谁被拒、拒答后出口是什么），不是态度声明。",
+  "produces_reading": false,
+  "promoted": false,
+  "main_scoreboard_untouched": true,
+  "scoreboard_attempts_delta": 0,
+  "shot_number_taken": null,
+  "models_fitted": 0,
+  "frozen_inputs": [
+    {
+      "path": "data/processed/four_core_key_registry.csv",
+      "sha256": "e42885eb43779b7a4d472da88fefe018fe94150ff5b6fba86b3ed9bc83dc8bee",
+      "bytes": 6815039,
+      "role": "refusal census (descriptive)"
+    },
+    {
+      "path": "probes/dielectric_applicability_domain_summary.json",
+      "sha256": "99f297555531e2a2e705224ce3a34684f9eba1ec6a76f1b981d55d88d65e6476",
+      "role": "second scoreboard endpoints"
+    },
+    {
+      "path": "probes/dielectric_onsager_delta_summary.json",
+      "role": "high-permittivity evidence (5 compounds, 0/5 Onsager coverage, MAE 75.95675695251926)"
+    },
+    {
+      "path": "probes/w19_ranking_key.py",
+      "sha256": "041ed3ca9a27b4cb1fd94259cee293799f4a907a49aa12cf49305a2af5d090c1",
+      "role": "owner of the HIGH_PERMITTIVITY_EPS constant"
+    }
+  ],
+  "rules": [
+    {
+      "reason": "high_permittivity_region",
+      "rule_id": "w20_refusal_high_eps_v1",
+      "predicate": "epsilon > 60.0",
+      "threshold_owner": "probes/w19_ranking_key.py::HIGH_PERMITTIVITY_EPS",
+      "exit": "refused_experimental_queue"
+    },
+    {
+      "reason": "outside_applicability_domain",
+      "rule_id": "w20_refusal_domain_d1_v1",
+      "predicate": "not (NumHDonors >= 1 and TPSA >= 20.0)",
+      "threshold_owner": "probes/dielectric_applicability_domain_summary.json::domain_rules.D1.definition",
+      "exit": "refused_experimental_queue"
+    }
+  ],
+  "hypothesis": "在筛选语境里，域外拒答比域外错答值钱：错误答案静默进入短名单，拒答可见并可分流到实验队列。",
+  "judgement": [
+    "拒答规则是一条对 (epsilon, donor_count, tpsa) 的纯函数，可被测试直接调用；",
+    "拒答行不给低分——score_produced = false，exit = refused_experimental_queue；",
+    "登记被拒规模：registry 上 epsilon 行 247 中 187 被拒（187/247 = 0.757085020242915）；",
+    "登记分域衔接：D1 域内端点 0.524012313223719 / 域外 0.3198024498133034 / 全域 0.45401075998423623；",
+    "不产生任何 R2 / MAE / 排序读数；不占主记分牌（累计 11 不变）。"
+  ],
+  "forbidden": [
+    "不改写任何既有冻结件；",
+    "不拟合模型、不产 R2 / MAE；",
+    "不引用任何 Reaxys 数值；",
+    "不把拒答实现成对不可解区的硬预测或低分。"
+  ]
+}

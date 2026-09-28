@@ -1,0 +1,121 @@
+{
+  "schema_version": "w20_label_provenance_prereg_v0",
+  "task": "week20_w20_7_label_provenance_sidecar",
+  "status": "locked_before_run",
+  "locked_at_local": "2026-09-28",
+  "author_lane": "W20-7 / decision log 28.63",
+  "purpose": "三层标签规范入册 + 给注册表加统一 provenance sidecar；本步只统一散落的 role 列，不造新科学。",
+  "produces_reading": false,
+  "promoted": false,
+  "main_scoreboard_untouched": true,
+  "scoreboard_attempts_delta": 0,
+  "shot_number_taken": null,
+  "models_fitted": 0,
+  "label_rule_sentence": "一个通道的标签必须**同源同水平**；引入另一理论水平的值时必须先做跨水平标定并登记 `calibration_id`；**标定不过门则该列整列留空、只作 `reference_only`**；**ML 预测值永不入池**；**受限许可值永不入池**。",
+  "dft_is_the_label": {
+    "orbitals_primary": "Batt-P30K = wB97X-V/def2-TZVPPD/SMD(epsilon=18.5)",
+    "orbitals_second": "PubChemQC = B3LYP/6-31G*//PM6",
+    "orbitals_third": "THEMol = repository-run GFN2-xTB single point",
+    "banned": [
+      "ML/QSAR predictions (predicted_not_experimental), circular",
+      "different levels mixed into one column without a registered calibration",
+      "licence-restricted values"
+    ]
+  },
+  "sidecar": {
+    "path": "data/processed/four_core_label_provenance_sidecar.csv",
+    "columns": [
+      "channel",
+      "source_layer",
+      "role",
+      "reference_level",
+      "calibration_id",
+      "source_doi",
+      "locator_table_figure",
+      "access_class",
+      "n_rows"
+    ],
+    "row_key": "(channel, source_layer, role, calibration_id)",
+    "charter_fields": [
+      "channel",
+      "role",
+      "reference_level",
+      "calibration_id",
+      "source_doi",
+      "locator_table_figure",
+      "access_class"
+    ],
+    "extensions": [
+      "source_layer",
+      "n_rows"
+    ],
+    "roles": [
+      "primary_reference",
+      "calibrated_estimate",
+      "reference_only",
+      "feature_only"
+    ],
+    "access_classes": [
+      "open",
+      "attribution_required",
+      "noncommercial",
+      "unknown"
+    ],
+    "role_aliases": {
+      "paired_anchor": "reference_only",
+      "uncalibrated_reference": "reference_only"
+    }
+  },
+  "frozen_inputs": [
+    {
+      "path": "data/processed/four_core_key_registry.csv",
+      "sha256": "e42885eb43779b7a4d472da88fefe018fe94150ff5b6fba86b3ed9bc83dc8bee",
+      "role": "coverage target"
+    },
+    {
+      "path": "data/processed/redox_merged.csv",
+      "sha256": "5b0731db9f1af784e6dc672212bcfe5d2fa68219a2832dafac6063dff9062b65"
+    },
+    {
+      "path": "data/processed/orbital_second_source_layer.csv",
+      "sha256": "ba55897a296181267cc0673cbf2d4d98d17b3e5de8280958b7896556e053abfe"
+    },
+    {
+      "path": "data/processed/themol_orbital_layer.csv",
+      "sha256": "6e05f02e755c57ab09d73a784687b2c1deb757f80e43c5746358f1f7a5ecde80"
+    },
+    {
+      "path": "data/processed/themol_orbital_layer_expanded.csv",
+      "sha256": "8b10b23f3da60c48cafc96cf783605180869b890ff0c5a4df7d0dd9c2036703b"
+    },
+    {
+      "path": "data/dielectric_v04.csv",
+      "sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c"
+    },
+    {
+      "path": "data/viscosity_v02.csv",
+      "sha256": "907f5368ff6d4d6c15fa26c8c2b57e8bbc8c7ac7a7b3db06ec2c689b283bf3a5"
+    },
+    {
+      "path": "data/density_v01.csv",
+      "sha256": "47f920f773054ccd8789ac5679e3da5ca8ec732f8f6e79ba1f824cf68b2556ff"
+    },
+    {
+      "path": "data/processed/liquid_window_features.csv",
+      "sha256": "a27386787f4c81981fd2489e12139518c29619a13fd9da92a18b28f10ff94fb2"
+    }
+  ],
+  "judgement": [
+    "sidecar 只由既有冻结表读出，不新增任何科学判断；",
+    "role 词汇表封闭且带别名映射，未登记拼写直接报错而非静默通过；",
+    "报告必须给出统一前后的列数/覆盖数对照；",
+    "ML 预测值（predicted_not_experimental）与受限许可值不得出现在 role 的入池角色上；",
+    "不改写任何既有冻结件；不占主记分牌。"
+  ],
+  "forbidden": [
+    "不改写既有冻结件（含注册表本身）；",
+    "不把 ML 预测值或受限许可值登记为可入池角色；",
+    "不引用任何 Reaxys 数值；",
+    "不借 sidecar 造新科学或新词汇。"
+  ]
+}

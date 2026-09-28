@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "task_id": "week20_w20_1_eta_fairness",
+  "generated_at_utc": "2026-09-28T12:49:06Z",
+  "preregistration": {
+    "path": "probes/w20_eta_fairness_prereg.json",
+    "sha256": "5fa919d0aa4a5a2e631a4774bba44a9295ea1507c18c76e4d0abd175de632d19",
+    "status": "locked_before_run"
+  },
+  "plan_reference": "reports/week20_project_charter.md | section 1 | W20-1",
+  "lane_section": "28.57",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows-11-10.0.26100",
+    "chemprop": "2.1.0",
+    "torch": "2.14.0+cpu",
+    "xgboost": "3.4.1",
+    "numpy": "1.26.4"
+  },
+  "registered_config": {
+    "n_splits": 5,
+    "n_repeats": 5,
+    "repeat_seeds": [
+      42,
+      1234,
+      2026,
+      31337,
+      7
+    ],
+    "ensemble_seeds": [
+      42,
+      1234,
+      2026
+    ],
+    "inner_splits": 3,
+    "chemprop_epochs": 30,
+    "chemprop_epochs_registered_in_w19": 60,
+    "incumbent_grid": [
+      "frozen_default",
+      "shallow_wide",
+      "shallow_slow"
+    ],
+    "placebo_seed": 20260928,
+    "workers": 4,
+    "torch_threads_per_worker": 2
+  },
+  "pools": {
+    "row_level": {
+      "pool": "row_level",
+      "rows": 4151,
+      "keys": 976,
+      "cells": 25,
+      "test_rows_pooled": 20755,
+      "incumbent_in_place_reproduction": {
+        "split": "GroupShuffleSplit(test_size=0.2, random_state=42) by inchikey",
+        "model": "MorganTemperatureXGBoost",
+        "mae_log10_cP": 0.15686276760094522,
+        "frozen_mae_log10_cP": 0.15686276760094522,
+        "abs_gap": 0.0,
+        "matches_frozen": true,
+        "train_id_hash": "48b17e76c1edcdce0369d8118ad21ea0beb1b472ec744cee3c579c02fa6e3111",
+        "test_id_hash": "2dedfc6ae3ac3dae98e7404556535030d5d3fd000b8119c25d230db791507119"
+      },
+      "incumbent_aligned": {
+        "label": "incumbent_aligned",
+        "model": "MorganTemperatureXGBoost",
+        "budget": "three-config grid selected by inner GroupKFold(3) on training rows, then a three-seed ensemble",
+        "ensemble_seeds": [
+          42,
+          1234,
+          2026
+        ],
+        "cross_seed_mean_mae_log10_cP": 0.15963939692814613,
+        "cross_seed_sd_mae_log10_cP": 0.0009067403502844617,
+        "cross_seed_min_mae_log10_cP": 0.1585952380556532,
+        "cross_seed_max_mae_log10_cP": 0.1602283886172296,
+        "seed_values": {
+          "42": 0.1602283886172296,
+          "1234": 0.16009456411155557,
+          "2026": 0.1585952380556532
+        },
+        "selected_config_counts": {
+          "shallow_wide": 15,
+          "shallow_slow": 10
+        },
+        "gate_0_15_passed_by_cross_seed_mean": false,
+        "gate_0_15_passed_by_cross_seed_min": false
+      },
+      "chemprop_aligned": {
+        "label": "chemprop_aligned",
+        "model": "Chemprop D-MPNN (BondMessagePassing, NormAggregation, RegressionFFN)",
+        "budget": "registered W19-D5 configuration, three-seed ensemble, no search",
+        "ensemble_seeds": [
+          42,
+          1234,
+          2026
+        ],
+        "epochs": 30,
+        "cross_seed_mean_mae_log10_cP": 0.1054414994165841,
+        "cross_seed_sd_mae_log10_cP": 0.0005546046724777142,
+        "cross_seed_min_mae_log10_cP": 0.10480157137745644,
+        "cross_seed_max_mae_log10_cP": 0.10578280403800894,
+        "seed_values": {
+          "42": 0.10480157137745644,
+          "1234": 0.1057401228342869,
+          "2026": 0.10578280403800894
+        },
+        "per_cell_mae_log10_cP": {
+          "mean": 0.1047981538792024,
+          "sd": 0.010267939444531853,
+          "min": 0.0878376173489894,
+          "max": 0.1189841891317288
+        },
+        "gate_0_15_passed_by_cross_seed_mean": true,
+        "gate_0_15_passed_by_cross_seed_min": true
+      },
+      "delta": {
+        "definition": "MAE_chemprop_cross_seed_mean - MAE_incumbent_cross_seed_mean, pooled over the 5x5 grouped grid, in log10(cP)",
+        "mean": -0.05419789751156204,
+        "min": -0.05542681723977316,
+        "max": -0.052812434017644266,
+        "seed_values": {
+          "42": -0.05542681723977316,
+          "1234": -0.05435444127726867,
+          "2026": -0.052812434017644266
+        }
+      },
+      "gate": {
+        "value": 0.15,
+        "units": "log10(cP)",
+        "tolerance": 0.02,
+        "chemprop_cross_seed_mean_passed": true,
+        "incumbent_cross_seed_mean_passed": false,
+        "gate_state_unchanged_vs_w19": true
+      },
+      "placebo": {
+        "arm": "placebo_shuffled_target",
+        "seed": 20260928,
+        "members": 1,
+        "cells": 25,
+        "mae_log10_cP": 0.3952143564868206,
+        "rmse_log10_cP": 0.49160510841539434,
+        "r2_log10_cP": 0.009307463449441555,
+        "constant_predictor_mae_log10_cP": 0.39910182316678505,
+        "collapsed": false
+      },
+      "verdict": "eta_crosses_gate_out_of_fold"
+    },
+    "family_level": {
+      "pool": "family_level",
+      "rows": 3582,
+      "keys": 957,
+      "cells": 25,
+      "test_rows_pooled": 17910,
+      "incumbent_in_place_reproduction": {
+        "split": "GroupShuffleSplit(test_size=0.2, random_state=42) by inchikey",
+        "model": "MorganTemperatureXGBoost",
+        "mae_log10_cP": 0.17477197208762,
+        "frozen_mae_log10_cP": 0.17477197208762,
+        "abs_gap": 0.0,
+        "matches_frozen": true,
+        "train_id_hash": "e9a63ff49a3f54380ad1241be8db156c8bd7f4c3c9c0308859f8dcaa121c9506",
+        "test_id_hash": "dfea9aa151cd5b0f86eede1d6929b8fe5a1e0ab34926a851e90d3f7de6d4d63f"
+      },
+      "incumbent_aligned": {
+        "label": "incumbent_aligned",
+        "model": "MorganTemperatureXGBoost",
+        "budget": "three-config grid selected by inner GroupKFold(3) on training rows, then a three-seed ensemble",
+        "ensemble_seeds": [
+          42,
+          1234,
+          2026
+        ],
+        "cross_seed_mean_mae_log10_cP": 0.1471395849716971,
+        "cross_seed_sd_mae_log10_cP": 0.0013691323541229691,
+        "cross_seed_min_mae_log10_cP": 0.14563072278438924,
+        "cross_seed_max_mae_log10_cP": 0.14830270247066776,
+        "seed_values": {
+          "42": 0.14748532966003428,
+          "1234": 0.14563072278438924,
+          "2026": 0.14830270247066776
+        },
+        "selected_config_counts": {
+          "shallow_wide": 20,
+          "shallow_slow": 5
+        },
+        "gate_0_15_passed_by_cross_seed_mean": true,
+        "gate_0_15_passed_by_cross_seed_min": true
+      },
+      "chemprop_aligned": {
+        "label": "chemprop_aligned",
+        "model": "Chemprop D-MPNN (BondMessagePassing, NormAggregation, RegressionFFN)",
+        "budget": "registered W19-D5 configuration, three-seed ensemble, no search",
+        "ensemble_seeds": [
+          42,
+          1234,
+          2026
+        ],
+        "epochs": 30,
+        "cross_seed_mean_mae_log10_cP": 0.1014586835798006,
+        "cross_seed_sd_mae_log10_cP": 0.000933499727805846,
+        "cross_seed_min_mae_log10_cP": 0.10048136581675947,
+        "cross_seed_max_mae_log10_cP": 0.10234111807553159,
+        "seed_values": {
+          "42": 0.10155356684711075,
+          "1234": 0.10234111807553159,
+          "2026": 0.10048136581675947
+        },
+        "per_cell_mae_log10_cP": {
+          "mean": 0.10155390582911568,
+          "sd": 0.004159983661585035,
+          "min": 0.09534860859245509,
+          "max": 0.10538272648315318
+        },
+        "gate_0_15_passed_by_cross_seed_mean": true,
+        "gate_0_15_passed_by_cross_seed_min": true
+      },
+      "delta": {
+        "definition": "MAE_chemprop_cross_seed_mean - MAE_incumbent_cross_seed_mean, pooled over the 5x5 grouped grid, in log10(cP)",
+        "mean": -0.0456809013918965,
+        "min": -0.047821336653908295,
+        "max": -0.04328960470885765,
+        "seed_values": {
+          "42": -0.04593176281292352,
+          "1234": -0.04328960470885765,
+          "2026": -0.047821336653908295
+        }
+      },
+      "gate": {
+        "value": 0.15,
+        "units": "log10(cP)",
+        "tolerance": 0.02,
+        "chemprop_cross_seed_mean_passed": true,
+        "incumbent_cross_seed_mean_passed": true,
+        "gate_state_unchanged_vs_w19": false
+      },
+      "placebo": null,
+      "verdict": "incumbent_budget_closes_gate"
+    }
+  },
+  "verdict": "eta_crosses_gate_out_of_fold",
+  "delta_mae_log10_cP": -0.05419789751156204,
+  "gate_log10_cP": 0.15,
+  "tolerance": 0.02,
+  "w20_3_eta_authorised": true,
+  "w20_3_rule_text": "Only a verdict of eta_crosses_gate_out_of_fold authorises W20-3 to fold eta into the ranking key v1. Every other verdict means W20-3 must NOT fold eta in.",
+  "promoted": false,
+  "main_scoreboard_attempts_added": 0,
+  "cumulative_main_scoreboard_attempts": 11,
+  "uses_no_reaxys_numbers": true,
+  "telemetry": {
+    "total_seconds": 4668.0981777000125,
+    "chemprop_fits": 150,
+    "chemprop_fit_seconds_total": 11082.867919899873,
+    "chemprop_fit_seconds_max": 96.86241919999884,
+    "pool_census_keys": [
+      "family_level",
+      "row_level",
+      "thaw_only"
+    ]
+  },
+  "honest_boundaries": [
+    "The eta channel is a separate channel from epsilon: its row and compound counts are never mixed with 457 / 97 / 276 / 2029.",
+    "The split is GroupKFold by InChIKey, five folds by five repeats, so there is fold-level variance here that the W19-D5 single hold-out could not give. The folds are group-disjoint by construction and that is asserted before any arm is fitted.",
+    "The incumbent arm is granted strictly MORE budget than the Chemprop arm: a three-config grid with inner grouped selection plus a three-seed ensemble, against the Chemprop arm registered configuration plus a three-seed ensemble with no search. The design is conservative against the Chemprop arm.",
+    "The Chemprop epoch budget was reduced 60 -> 30 before the run under the declared amendment rule, because the registered 60-epoch grid extrapolated to several hours. The split, the pools and the arms were not reduced.",
+    "The Chemprop configuration was registered in W19-D5 and was never searched: this is still an untuned neural arm against a budget-aligned fingerprint arm, not the best that either family can do.",
+    "A verdict of eta_crosses_gate_out_of_fold authorises W20-3 to fold eta into the ranking key v1. It promotes nothing, and it moves no epsilon number."
+  ],
+  "unverifiable": [
+    "Whether a hyperparameter search on the Chemprop arm would move the verdict is not verifiable from this design: the search budget was spent on the incumbent.",
+    "The upstream provenance of the pooled rows (extraction, density pairing, unit conversion) is reused and not re-verified here.",
+    "GroupKFold removes group leakage by InChIKey but does not remove scaffold or chemistry-family similarity, so new-chemistry generalisation is not verified.",
+    "The placebo probes permuted labels only; permuted features and permuted groups are not probed, so the placebo is a one-sided collapse check.",
+    "The incumbent in-place reproduction is exact on the W19-D5 GroupShuffleSplit split only; it is not a reproduction of the 5x5 grid, which has no prior.",
+    "Per-seed readings pair a Chemprop seed with the incumbent seed of the same index; that pairing is a reporting convenience and carries no physical meaning."
+  ],
+  "outputs": {
+    "summary": "probes/w20_eta_fairness_summary.json",
+    "report": "reports/w20_eta_fairness.md",
+    "repeats": "probes/artifacts/w20_eta_fairness_repeats.csv"
+  },
+  "artifacts": {
+    "w20_eta_fairness_repeats.csv": "1eb7ea9ea7782ec9616e7eecc863bb1c17188c55713914f6e63575c2998aa485",
+    "w20_eta_fairness.md": "fb0bb2f0fb51a23dee248aebb64b4a3e328706ce41616ec74750229aa05120f7"
+  }
+}

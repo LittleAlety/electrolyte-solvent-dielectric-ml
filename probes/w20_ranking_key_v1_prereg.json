@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "task": "week20_w20_3_ranking_key_v1",
+  "lane": "W20-3",
+  "section": "28.59",
+  "title": "ranking key v1 plus the Tier C intersection fill over Batt-SLM",
+  "prereg_status": "locked_before_run",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-09-28T04:42:40.052Z",
+  "authority": [
+    "reports/week20_project_charter.md::section 0",
+    "reports/week20_project_charter.md::section 1 W20-3",
+    "reports/week20_project_charter.md::section 5",
+    "reports/week20_project_charter.md::section 7",
+    "reports/w19_ranking_key_spec.md (spec v0)",
+    "probes/w19_ranking_key.py"
+  ],
+  "main_scoreboard_untouched": true,
+  "scoreboard_attempts_delta": 0,
+  "produces_reading": false,
+  "promoted": false,
+  "shot_number_taken": null,
+  "reaxys_values_used": 0,
+  "writes_any_pool": false,
+
+  "key": {
+    "rule": "the key contains gated channels only; an eligible-but-blocked extension channel is refused until its verdict is on disk AND a new preregistration pins its column and direction",
+    "dimensions": [
+      {"channel": "homo", "column": "HOMO_eV", "direction": "min", "weight": 0.5},
+      {"channel": "lumo", "column": "LUMO_eV", "direction": "max", "weight": 0.5}
+    ],
+    "weights_source": "no_cost_ratio_evidence",
+    "weights_rule": "with no measured cost or benefit ratio between channels the only non-arbitrary choice is equal weight; any other weighting needs a falsifiable reason registered before the run",
+    "weight_change_is_a_prereg_change": true
+  },
+
+  "extension_policy": {
+    "treated_as_not_passed_when_no_verdict_is_on_disk": true,
+    "lanes": {
+      "viscosity": {
+        "owner_lane": "W20-1",
+        "merge_condition": "delta <= -0.02 with both arms gate status unchanged",
+        "verdict_on_disk_at_lock": false,
+        "action_at_lock": "not merged; eta stays out of the key at its W19 reading 0.17477197208762 against the 0.15 gate"
+      },
+      "safety": {
+        "owner_lane": "W20-2 (Step 2)",
+        "merge_condition": "the Step-2 modelling verdict is on disk and passes its own gate",
+        "verdict_on_disk_at_lock": false,
+        "action_at_lock": "not merged; safety has no gate reading and no pinned key column, so nothing about it can be scored"
+      }
+    }
+  },
+
+  "dedup": {
+    "kept_columns": ["HOMO_eV", "LUMO_eV"],
+    "dropped_columns": ["IP_eV", "EA_eV"],
+    "collinearity": [
+      {"columns": ["HOMO_eV", "IP_eV"], "pearson_r": -0.9876},
+      {"columns": ["LUMO_eV", "EA_eV"], "pearson_r": -0.9513}
+    ],
+    "rule": "at most one column per collinearity group may carry weight; a key that names two columns of one group is refused"
+  },
+
+  "domain_gate": {
+    "rule": "NumHDonors(SMILES) >= 1 and TPSA(SMILES) >= 20.0 (D1, from the frozen SMILES alone)",
+    "high_permittivity_eps": 60.0,
+    "out_of_domain_policy": "no score, no rank, never on the Pareto front; min-max normalisation runs inside the in-domain set only, so a rejected row cannot move a kept row score",
+    "scoreboard": {
+      "global_r2": 0.45401075998423623,
+      "d1_in_domain_r2": 0.524012313223719,
+      "d1_out_of_domain_r2": 0.3198024498133034,
+      "d1_pool_compounds": 97,
+      "d1_out_of_domain_compounds": 40
+    }
+  },
+
+  "fill": {
+    "input": "data/external/Batt-SLM.smi",
+    "input_bytes": 1879361,
+    "input_sha256": "c2ec78256ce6189366aebd9f7f0403e669c963e911cf51f7732083bce6374a1d",
+    "input_candidates": 115756,
+    "layer": "Tier C (frozen features plus frozen model predictions)",
+    "features": "rdkit morgan count r2 2048 + 30 rdkit 2D descriptors, the frozen l3 feature block",
+    "prediction_targets": {
+      "HOMO_eV": "models/homo_lumo_homo.ubj",
+      "LUMO_eV": "models/homo_lumo_lumo.ubj"
+    },
+    "ranking_channel": "orbitals",
+    "per_candidate_exit": ["domain verdict", "provenance string", "ranking channel"],
+    "output": "probes/artifacts/w20_batt_slm_tier_c_candidates.csv",
+    "summary": "probes/w20_ranking_key_v1_summary.json",
+    "predictions_are_labels": false,
+    "predictions_enter_any_pool": false
+  },
+
+  "planned_validations": [
+    "the example ordering and scores are pinned literally in tests/test_w20_ranking_key_v1.py",
+    "the weights are pinned literally and a weight change must move the ranking",
+    "an out-of-domain row receives score None, rank None and is never on the front",
+    "a key that names two columns of one collinearity group is refused",
+    "the module gate table is cross-checked against probes/w19_ranking_key.py",
+    "all new files are LF and carry no BOM"
+  ]
+}

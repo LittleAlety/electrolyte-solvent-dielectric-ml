@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "task_id": "week20_w20_1_eta_fairness",
+  "status": "locked_before_run",
+  "written_at_local": "2026-09-28",
+  "plan_reference": "reports/week20_project_charter.md | section 1 | W20-1 eta fairness review",
+  "lane_section": "28.57",
+  "purpose": "Remove the two non-removable self-declared boundaries of W19-D5 (single-config single-seed frozen XGB incumbent vs three-seed Chemprop ensemble; a single 20 percent grouped hold-out with no fold-level variance) and re-ask whether the eta channel crosses its 0.15 gate out of fold.",
+  "motivation": {
+    "w19_d5_self_declared_boundaries": [
+      "The incumbent was a frozen single-configuration, single-seed XGBoost while the Chemprop arm was a three-seed ensemble, so part of the gap could be ensembling or re-tuning rather than representation.",
+      "The grouped protocol was a single 20 percent hold-out draw, so there was no fold-level variance; the three Chemprop seeds probed initialization variance only, not split variance."
+    ],
+    "w19_d5_primary_reading": {
+      "incumbent_row_level_mae_log10_cP": 0.15686276760094522,
+      "chemprop_row_level_mae_log10_cP": 0.08506361044387624,
+      "delta_mae_log10_cP": -0.07179915715706899,
+      "gate": 0.15,
+      "incumbent_family_level_mae_log10_cP": 0.17477197208762,
+      "chemprop_family_level_mae_log10_cP": 0.08908094784092072
+    }
+  },
+  "design": {
+    "budget_alignment": {
+      "rule": "The incumbent arm is granted the tuning and multi-seed budget it was denied in W19-D5, so that any surviving delta cannot be attributed to ensembling or to a frozen configuration.",
+      "incumbent_arm": "MorganTemperatureXGBoost: a pre-registered three-configuration grid, selected inside each training fold by an inner GroupKFold(3) by InChIKey (training rows only), then refit with a three-seed ensemble on the full training rows.",
+      "chemprop_arm": "Chemprop D-MPNN with the W19-D5 registered configuration, three-seed ensemble, no search (the search budget is spent on the incumbent, the arm that was denied it).",
+      "asymmetry_declared": "The incumbent arm receives strictly more fitting budget than the Chemprop arm (grid search plus ensemble vs ensemble only). The design is therefore conservative against the Chemprop arm: any surviving Chemprop advantage survives a more generously funded incumbent."
+    },
+    "split_upgrade": {
+      "previous_protocol": "sklearn.model_selection.GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42) by inchikey (the incumbent viscosity split, W19-D5).",
+      "new_protocol": "sklearn.model_selection.GroupKFold by inchikey, 5 folds times 5 repeats.",
+      "n_splits": 5,
+      "n_repeats": 5,
+      "repeat_seeds": [
+        42,
+        1234,
+        2026,
+        31337,
+        7
+      ],
+      "repeat_mechanism": "Repeat r draws a row permutation with numpy.random.default_rng(seed_r).permutation(n), then GroupKFold(n_splits=5).split(...) is run over the row order induced by that permutation. Different repeats therefore assign different groups to different folds while every fold remains group-disjoint and the five folds of a repeat partition the rows.",
+      "identity_assertions": [
+        "no inchikey appears in both the train and the test side of any fold",
+        "the five test folds of a repeat partition the row set exactly"
+      ],
+      "why": "Five folds give fold-level variance that a single 20 percent draw cannot give; five repeats average over split draws so a single lucky or unlucky group assignment cannot decide the verdict."
+    },
+    "pools_unchanged": {
+      "source_function": "probes/viscosity_row_level_unfreeze.py::build_pools",
+      "primary": "row_level",
+      "secondary": "family_level",
+      "row_level": {
+        "rows": 4151,
+        "keys": 976
+      },
+      "family_level": {
+        "rows": 3582,
+        "keys": 957
+      },
+      "rule": "The pools, the target and the units are reused verbatim; no row is added, removed or reweighted."
+    },
+    "target_and_units_unchanged": {
+      "target": "log10(viscosity_cP) = log10(viscosity_Pa_s * 1000.0)",
+      "metric": "MAE in log10(cP)",
+      "rule": "identical to the incumbent viscosity baseline and to W19-D5"
+    },
+    "incumbent_in_place_reproduction": {
+      "role": "prior / drift anchor, registered before the run",
+      "procedure": "Rebuild the incumbent XGBoost on the W19-D5 GroupShuffleSplit(seed 42) split and compare with the frozen readings.",
+      "frozen_row_level_mae_log10_cP": 0.15686276760094522,
+      "frozen_family_level_mae_log10_cP": 0.17477197208762,
+      "assertion": "abs_gap == 0.0 for both pools; a non-zero gap voids the run"
+    }
+  },
+  "arms": {
+    "incumbent_aligned": {
+      "model": "MorganTemperatureXGBoost",
+      "features": "Morgan count radius 2 fpSize 2048 + T_K + 1000/T_K (frozen viscosity_baseline.build_feature_matrix)",
+      "grid": [
+        {
+          "name": "frozen_default",
+          "n_estimators": 800,
+          "max_depth": 10,
+          "learning_rate": 0.05,
+          "subsample": 0.8,
+          "colsample_bytree": 0.6,
+          "reg_lambda": 1
+        },
+        {
+          "name": "shallow_wide",
+          "n_estimators": 1200,
+          "max_depth": 6,
+          "learning_rate": 0.05,
+          "subsample": 0.8,
+          "colsample_bytree": 0.6,
+          "reg_lambda": 1
+        },
+        {
+          "name": "shallow_slow",
+          "n_estimators": 1500,
+          "max_depth": 4,
+          "learning_rate": 0.03,
+          "subsample": 0.9,
+          "colsample_bytree": 0.8,
+          "reg_lambda": 2
+        }
+      ],
+      "selection": "inner GroupKFold(3) by InChIKey on the training rows only; the configuration with the lowest mean inner-validation MAE is selected; ties break by grid order",
+      "ensemble_seeds": [
+        42,
+        1234,
+        2026
+      ],
+      "prediction_rule": "mean of the three members of the selected configuration"
+    },
+    "chemprop_aligned": {
+      "model": "Chemprop D-MPNN (BondMessagePassing d_h=300 depth=3, NormAggregation, RegressionFFN hidden 300 n_layers 1)",
+      "extra_descriptors": [
+        "T_K",
+        "1000_over_T_K"
+      ],
+      "descriptor_scaling": "StandardScaler fitted on the training rows of the fold only",
+      "ensemble_seeds": [
+        42,
+        1234,
+        2026
+      ],
+      "prediction_rule": "mean of the three members"
+    }
+  },
+  "criterion": {
+    "gate": {
+      "value": 0.15,
+      "units": "log10(cP)"
+    },
+    "tolerance": 0.02,
+    "delta_definition": "delta = MAE_chemprop_cross_seed_mean - MAE_incumbent_cross_seed_mean, both pooled over the 5x5 grid of grouped out-of-fold test cells, in log10(cP)",
+    "registered_w19_gate_states_on_the_primary_pool": {
+      "chemprop_row_level_passed": true,
+      "incumbent_row_level_passed": false
+    },
+    "gate_state_unchanged_definition": "the Chemprop arm still clears 0.15 (cross-seed mean) AND the incumbent arm still fails 0.15 (cross-seed mean), exactly as in W19-D5",
+    "branches": [
+      {
+        "condition": "abs(delta) <= 0.02",
+        "verdict": "representation_sensitive_gate_undetermined",
+        "reading": "The two arms are not resolvable at the registered tolerance under the upgraded protocol."
+      },
+      {
+        "condition": "delta <= -0.02 and gate_state_unchanged",
+        "verdict": "eta_crosses_gate_out_of_fold",
+        "reading": "The eta channel crosses its gate out of fold under a five-fold by five-repeat grouped protocol with a budget-aligned incumbent."
+      },
+      {
+        "condition": "delta <= -0.02 and not gate_state_unchanged",
+        "verdict": "incumbent_budget_closes_gate",
+        "reading": "The Chemprop arm still leads, but the gate-pass pattern changed once the incumbent was budget-aligned."
+      },
+      {
+        "condition": "delta >= +0.02",
+        "verdict": "incumbent_confirmed",
+        "reading": "The budget-aligned incumbent wins by more than the tolerance."
+      }
+    ],
+    "branch_precedence": "the abs(delta) <= 0.02 branch is evaluated first; the remaining branches are mutually exclusive by construction",
+    "cross_seed_reporting": "For each arm the pooled 5x5 grid MAE is computed per ensemble seed; the cross-seed mean is the primary reading and the cross-seed minimum is the reported lower bound. delta is also reported per paired seed with its own minimum and maximum."
+  },
+  "verdict_vocabulary": [
+    "eta_crosses_gate_out_of_fold",
+    "incumbent_budget_closes_gate",
+    "representation_sensitive_gate_undetermined",
+    "incumbent_confirmed"
+  ],
+  "w20_3_dependency_rule": {
+    "rule": "Only a verdict of eta_crosses_gate_out_of_fold authorises W20-3 to fold eta into the ranking key v1. Any other verdict means W20-3 must NOT fold eta in.",
+    "explicit": "If the verdict is representation_sensitive_gate_undetermined, W20-3 must not fold eta in."
+  },
+  "placebo": {
+    "arm": "placebo_shuffled_target",
+    "description": "The Chemprop arm with the log10(cP) target permuted across rows with a registered seed, scored on the identical 5x5 grouped grid with one member (seed 42).",
+    "seed": 20260928,
+    "collapse_reference": "the per-cell training-mean predictor MAE pooled over the same grid; the placebo is collapsed when its grid MAE is not better (not smaller) than that constant-predictor MAE",
+    "obligation": "report the placebo behaviour as measured whether or not it collapses"
+  },
+  "amendment_rule_declared_before_run": {
+    "trigger": "a timing probe extrapolating the registered full run beyond the box budget",
+    "measured_timing_evidence_before_the_run": {
+      "chemprop_one_member_60_epochs_2_threads_seconds": 162.34,
+      "chemprop_one_member_30_epochs_8_threads_seconds": 86.8,
+      "incumbent_one_fit_seconds": 12.64
+    },
+    "allowed_reduction": "reduce the Chemprop epoch budget 60 -> 30 (declared below); the split (5 folds x 5 repeats), the pools and the arms are NOT reduced",
+    "applied": "epochs 60 -> 30, declared in the summary and the report",
+    "infeasible_path": "if the run is not feasible at all the verdict is not_obtained_feasibility with measured timing evidence, and infeasibility is not dressed up as a scientific conclusion"
+  },
+  "registered_config": {
+    "n_splits": 5,
+    "n_repeats": 5,
+    "repeat_seeds": [
+      42,
+      1234,
+      2026,
+      31337,
+      7
+    ],
+    "ensemble_seeds": [
+      42,
+      1234,
+      2026
+    ],
+    "chemprop_epochs": 30,
+    "chemprop_batch_size": 64,
+    "message_hidden_dim": 300,
+    "message_depth": 3,
+    "ffn_hidden_dim": 300,
+    "ffn_num_layers": 1,
+    "gradient_clip": 5,
+    "placebo_seed": 20260928,
+    "parallel_workers": 8,
+    "torch_threads_per_worker": 2
+  },
+  "red_lines": {
+    "uses_no_reaxys_numbers": true,
+    "promotes_no_reading": true,
+    "main_scoreboard_attempts_added": 0,
+    "cumulative_main_scoreboard_attempts_after_this_shot": 11,
+    "frozen_numbers_not_touched": [
+      "0.4091179943351143",
+      "0.4766400383507876"
+    ],
+    "frozen_comparison_protocol_untouched": "457 rows / 97 compounds / 276 (compound,T) pairs / 2029 epsilon full-table training rows",
+    "writes_no_shared_files": "does not write reports/decisions_log.md, README.md, paper/ or any frozen data/ artifact"
+  },
+  "inputs_sha256": {
+    "probes/w19_chemprop_viscosity.py": "2e2a582b8627aafcbfd5547ba8151c6d1612441cd3a0ad9036d4bb35ea98b15c",
+    "probes/w19_chemprop_viscosity_prereg.json": "c42846ccb9c898ebfd7da429e40247132134c90089b0d41d684ce6c5f313f7b9",
+    "probes/w19_chemprop_viscosity_summary.json": "6fb74468dfa4844f5feeb012ec652ef3d08b70ede355293b60691b32173f7796",
+    "reports/w19_chemprop_viscosity.md": "ca3213a76897f88a188e5b92324756f6764ce617906ec16ff2a887e1820da118",
+    "tests/test_w19_chemprop_viscosity.py": "c7dd58c72fce682c2f88bf328ecf9f4283bebc3878065f86d5615f057d7faae1",
+    "data/viscosity_v01.csv": "12dfa03f34284c93204d1054f75b5a342fd82094da0ca17cee372b4c581c5b26",
+    "data/viscosity_v02.csv": "907f5368ff6d4d6c15fa26c8c2b57e8bbc8c7ac7a7b3db06ec2c689b283bf3a5",
+    "data/processed/viscosity_observations_thermoml.csv": "e0d647d6eadc0adc61ed05b222b9b4fc26ac13c9c84de63a1282e58823ccbf83",
+    "data/density_v01.csv": "47f920f773054ccd8789ac5679e3da5ca8ec732f8f6e79ba1f824cf68b2556ff",
+    "probes/viscosity_baseline.py": "b770f727e5b01c571383719b5c3695fafd7a51bea29d21c92aa5b79674aa19d9",
+    "probes/viscosity_row_level_unfreeze.py": "cff3418e13bde137abb53506430b940a266b4768413049a00cc69b707b586e89",
+    "probes/viscosity_row_level_summary.json": "3fd1014f5b7a02bea91e4db2db09901dae27fef2102edf4bd1bb951e11bd9bed"
+  },
+  "reference_baselines_on_record_not_modified": {
+    "incumbent_row_level_mae_log10_cP": 0.15686276760094522,
+    "incumbent_family_level_mae_log10_cP": 0.17477197208762,
+    "chemprop_row_level_mae_log10_cP": 0.08506361044387624,
+    "chemprop_family_level_mae_log10_cP": 0.08908094784092072
+  },
+  "expected_verdict_shape": [
+    "eta_crosses_gate_out_of_fold",
+    "incumbent_budget_closes_gate",
+    "representation_sensitive_gate_undetermined",
+    "incumbent_confirmed",
+    "not_obtained_feasibility"
+  ]
+}

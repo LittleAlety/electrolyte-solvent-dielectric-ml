@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "task": "week20_w20_3_ranking_key_v1",
+  "section": "28.59",
+  "generated_at_utc": "2026-09-28T12:58:05.574177+00:00",
+  "position": "这是排序键，不是候选生成器",
+  "position_en": "this is a ranking key, not a candidate generator",
+  "key": {
+    "gated_channels": [
+      "homo",
+      "lumo"
+    ],
+    "eligible_channels": [
+      "homo",
+      "lumo"
+    ],
+    "dimensions": [
+      {
+        "channel": "homo",
+        "column": "HOMO_eV",
+        "direction": "min",
+        "weight": 0.5
+      },
+      {
+        "channel": "lumo",
+        "column": "LUMO_eV",
+        "direction": "max",
+        "weight": 0.5
+      }
+    ],
+    "weights": {
+      "homo": 0.5,
+      "lumo": 0.5
+    },
+    "weights_source": "no_cost_ratio_evidence"
+  },
+  "dedup": {
+    "kept_columns": [
+      "HOMO_eV",
+      "LUMO_eV"
+    ],
+    "dropped_columns": [
+      "IP_eV",
+      "EA_eV"
+    ],
+    "collinearity": [
+      {
+        "columns": [
+          "HOMO_eV",
+          "IP_eV"
+        ],
+        "pearson_r": -0.9876,
+        "source": "reports/homo_lumo_baselines.md label-space diagnostics"
+      },
+      {
+        "columns": [
+          "LUMO_eV",
+          "EA_eV"
+        ],
+        "pearson_r": -0.9513,
+        "source": "reports/homo_lumo_baselines.md label-space diagnostics"
+      }
+    ]
+  },
+  "extension_status": {
+    "viscosity": {
+      "owner_lane": "W20-1",
+      "verdict_present": true,
+      "verdict": "eta_crosses_gate_out_of_fold",
+      "conservative_default": "treated as not passed while no verdict is on disk",
+      "detected_artifacts": [
+        "probes/w20_eta_fairness_summary.json",
+        "reports/_w20_section_w201.md",
+        "reports/w20_eta_fairness.md"
+      ],
+      "note": "W20-1 landed on 2026-09-28 with verdict eta_crosses_gate_out_of_fold (row-level delta -0.05419789751156204 against the +/-0.02 tolerance, both gate states unchanged), so the merge condition of EXTENSION_CONDITIONS is met.  The channel still does NOT enter the key, for two separately registered reasons: KEY_CHANNEL_SPECS pins no eta column and direction, and the locked W20-3 pre-registration requires a NEW pre-registration to pin them before the key may widen; and CHANNEL_GATE_STATUS still reads eta at the frozen W19 group-key value 0.17477197208762, which is above the 0.15 gate, so the channel would be filtered out even if a column were pinned.  The authorisation is registered here and the widening is deferred.",
+      "condition": "merged only if the W20-1 fairness recheck is on disk and passes (delta <= -0.02 with both arms' gate status unchanged)",
+      "merged": false
+    },
+    "safety": {
+      "owner_lane": "W20-2 (Step 2)",
+      "verdict_present": true,
+      "verdict": "passed",
+      "conservative_default": "treated as not passed while no verdict is on disk",
+      "detected_artifacts": [
+        "probes/w20_safety_model_summary.json",
+        "reports/_w20_section_w202.md",
+        "reports/w20_safety_model.md"
+      ],
+      "note": "W20-2 Step 2 (section 28.58, shot 22) landed on 2026-09-28 with verdict modelable_all and no blocking conditions, so the merge condition is met; the key still cannot weight safety because safety has no declared gate reading and no pinned key column, so KEY_CHANNEL_SPECS is unchanged and the key stays on the two orbital channels; per the W20-2 domain declaration safety may only ever enter the eps-side key, never the eta side",
+      "condition": "merged only if the W20-2 Step-2 modelling verdict is on disk and passes its own gate",
+      "merged": true
+    }
+  },
+  "domain": {
+    "rule": "NumHDonors(SMILES) >= 1 and TPSA(SMILES) >= 20.0",
+    "high_permittivity_eps": 60.0,
+    "out_of_domain_policy": "no score, no rank, never on the front",
+    "scoreboard": {
+      "global_r2": 0.45401075998423623,
+      "d1_in_domain_r2": 0.524012313223719,
+      "d1_out_of_domain_r2": 0.3198024498133034,
+      "d1_pool_compounds": 97,
+      "d1_out_of_domain_compounds": 40,
+      "rule": "NumHDonors(SMILES) >= 1 and TPSA(SMILES) >= 20.0",
+      "source": "probes/dielectric_applicability_domain_summary.json; reports/_w18_section_domain.md (28.45)"
+    }
+  },
+  "preregistration": {
+    "path": "probes/w20_ranking_key_v1_prereg.json",
+    "sha256": "cc53ac7d032d2b6b16f2db291501621836f93dea118e1ba48d307647f6a8fd6f",
+    "status": "locked_before_run"
+  },
+  "extension_verdict_scan_at_run": {
+    "viscosity": {
+      "verdict_present": true,
+      "detected_artifacts": [
+        "probes/w20_eta_fairness_summary.json",
+        "reports/_w20_section_w201.md",
+        "reports/w20_eta_fairness.md"
+      ]
+    },
+    "safety": {
+      "verdict_present": true,
+      "detected_artifacts": [
+        "probes/w20_safety_model_summary.json",
+        "reports/_w20_section_w202.md",
+        "reports/w20_safety_model.md"
+      ]
+    }
+  },
+  "registry_reference": {
+    "path": "data/processed/four_core_key_registry.csv",
+    "registry_rows": 31949,
+    "rows_with_two_key_dimensions": 29519,
+    "rows_with_four_core_channels": 7
+  },
+  "fill": {
+    "smiles_file": "data/external/Batt-SLM.smi",
+    "smiles_file_sha256": "c2ec78256ce6189366aebd9f7f0403e669c963e911cf51f7732083bce6374a1d",
+    "candidates_in_file": 115756,
+    "candidates_read": 115756,
+    "limit_applied": null,
+    "smiles_parsed": 115756,
+    "smiles_invalid": 0,
+    "invalid_source_lines": [],
+    "unique_inchikey": 115756,
+    "duplicate_inchikey_rows": 0,
+    "in_domain": 0,
+    "out_of_domain": 115756,
+    "out_of_domain_share": 1.0,
+    "key_dimensions": [
+      "HOMO_eV",
+      "LUMO_eV"
+    ],
+    "key_dimensions_per_candidate": 2,
+    "core_channels_filled": [
+      "orbitals"
+    ],
+    "core_channels_not_filled": [
+      "dielectric",
+      "viscosity",
+      "liquid_window"
+    ],
+    "scoreable_on_key_dimensions_rows": 0,
+    "scoreable_on_core_channels": 1,
+    "front_size": 0,
+    "top_20": []
+  },
+  "candidate_artifact": {
+    "path": "E:/Claude Code/电解质ML/电解质ML/probes/artifacts/w20_ranking_key_v1_candidates.csv",
+    "bytes": 45093401,
+    "rows": 115756,
+    "sha256": "b52f720bfa904a1c71e730e0d8fb2bb7ec7d4041ce9aae7ce7b1835c518ae6c5",
+    "columns": [
+      "inchikey",
+      "smiles",
+      "canonical_smiles",
+      "source_line",
+      "NumHDonors",
+      "TPSA",
+      "HOMO_eV",
+      "LUMO_eV",
+      "gap_eV",
+      "domain",
+      "ranking_channels",
+      "key_score",
+      "rank",
+      "on_front",
+      "excluded_reason",
+      "provenance"
+    ]
+  },
+  "discipline": {
+    "promoted": false,
+    "main_scoreboard_attempts_this_week": 0,
+    "main_scoreboard_attempts_cumulative": 11,
+    "frozen_baseline": 0.4091179943351143,
+    "frozen_headline": 0.4766400383507876,
+    "predictions_written_to_any_pool": false,
+    "generation_loop": "welded_shut (uniqueness 0.349 on record)",
+    "reaxys_values_used": false
+  }
+}
