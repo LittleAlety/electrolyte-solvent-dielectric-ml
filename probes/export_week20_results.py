@@ -247,6 +247,7 @@ CARRY_FORWARD = (
     ("reports/week20_project_charter.md", "week20_project_charter.md"),
     ("paper/release_notes_v1.2.1.md", "release_notes_v1.2.1.md"),
     ("paper/release_notes_v1.3.md", "release_notes_v1.3.md"),
+    ("paper/paper_zh_draft.md", "paper_zh_draft.md"),
 )
 
 
