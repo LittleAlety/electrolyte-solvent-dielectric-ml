@@ -246,6 +246,7 @@ CARRY_FORWARD = (
     ("data/external/Batt-SLM-RX-392.csv", "Batt-SLM-RX-392.csv"),
     ("reports/week20_project_charter.md", "week20_project_charter.md"),
     ("paper/release_notes_v1.2.1.md", "release_notes_v1.2.1.md"),
+    ("paper/release_notes_v1.3.md", "release_notes_v1.3.md"),
 )
 
 

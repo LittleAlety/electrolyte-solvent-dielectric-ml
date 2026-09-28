@@ -5,7 +5,9 @@ An auditable, machine-learning-ready dataset of static dielectric constants
 temperature, together with the frozen benchmark and the verifiers that recompute
 every reported number.
 
-**Release:** v1.2.1 (GitHub release 2026-09-28; archive correction — no lane, no reading) ·
+**Release:** v1.3 (GitHub release 2026-09-28; Week 20 — one epsilon second-stage lane
+promoted, eta fairness check, safety channel, ranking key v1, high-epsilon refusal rule,
+ceiling probes) ·
 **Dataset:** v0.3.3 (unchanged) ·
 **DOI (v1.2.1):** https://doi.org/10.5281/zenodo.23006276 ·
 **DOI (v1.2):** https://doi.org/10.5281/zenodo.23001632 ·
@@ -24,6 +26,7 @@ every reported number.
 | `paper/release_notes_v1.1.md` | the Week 18 and Week 19 evidence bundle: eight pre-registered lanes, none promoted |
 | `paper/release_notes_v1.2.md` | the Week 19 close-out: orbital migration gate, safety-channel registry, shots ledger |
 | `paper/release_notes_v1.2.1.md` | the archive correction: no lane, no reading; why a tag cannot be moved |
+| `paper/release_notes_v1.3.md` | the Week 20 evidence bundle: one promoted lane and eleven that are not |
 | `probes/` | every probe behind every number and figure |
 | `probes/artifacts/` | the six paper figures and their pinned summaries |
 | `scripts/` | build scripts and the verifiers listed below |
