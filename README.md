@@ -5,8 +5,9 @@ An auditable, machine-learning-ready dataset of static dielectric constants
 temperature, together with the frozen benchmark and the verifiers that recompute
 every reported number.
 
-**Release:** v1.2 (GitHub release 2026-09-28; Week 19 close-out — orbital migration gate,
-safety-channel registry and shots ledger, no lane promoted) · **Dataset:** v0.3.3 (unchanged) ·
+**Release:** v1.2.1 (GitHub release 2026-09-28; archive correction — no lane, no reading) ·
+**Dataset:** v0.3.3 (unchanged) ·
+**DOI (v1.2.1):** https://doi.org/10.5281/zenodo.23006276 ·
 **DOI (v1.2):** https://doi.org/10.5281/zenodo.23001632 ·
 **DOI (v1.1):** https://doi.org/10.5281/zenodo.23001408 ·
 **DOI (v1.0):** https://doi.org/10.5281/zenodo.22957696 ·
@@ -22,6 +23,7 @@ safety-channel registry and shots ledger, no lane promoted) · **Dataset:** v0.3
 | `paper/release_notes_v1.0.md` | what this release contains and what it admits to |
 | `paper/release_notes_v1.1.md` | the Week 18 and Week 19 evidence bundle: eight pre-registered lanes, none promoted |
 | `paper/release_notes_v1.2.md` | the Week 19 close-out: orbital migration gate, safety-channel registry, shots ledger |
+| `paper/release_notes_v1.2.1.md` | the archive correction: no lane, no reading; why a tag cannot be moved |
 | `probes/` | every probe behind every number and figure |
 | `probes/artifacts/` | the six paper figures and their pinned summaries |
 | `scripts/` | build scripts and the verifiers listed below |
