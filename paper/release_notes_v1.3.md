@@ -4,11 +4,12 @@
 (digest `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`) · **Archived by:** Zenodo
 **DOI:** https://doi.org/10.5281/zenodo.22957695 — the version-independent concept DOI, which
 resolves to the newest version of this archive.
-**Version DOI (v1.3):** minted by Zenodo from this GitHub release. A version DOI cannot exist
-before the release that mints it, and this file sits *inside* the tree that release archives, so
-the live `v1.3` line is deliberately absent here; `README.md` on `main` carries it from the
-backfill commit onward. This is the Week 20 structural fix to the defect recorded in
-`reports/decisions_log.md` section 28.65 item 5, which v1.1 and v1.2 both shipped.
+**Version DOI (v1.3):** https://doi.org/10.5281/zenodo.23019467 — record `23019467`, created
+`2026-09-28T15:44:02Z`, minted by Zenodo from the `v1.3` GitHub release. This line is written by
+the backfill commit, after the tag froze: a version DOI cannot exist before the release that
+mints it, and the archived tree at `v1.3` therefore names only the concept DOI. This is the Week
+20 structural fix to the defect recorded in `reports/decisions_log.md` section 28.65 item 5,
+which v1.1 and v1.2 both shipped.
 
 This release closes **Week 20**. It publishes twelve lanes, and for the first time since the
 headline was frozen it promotes one of them onto the main scoreboard.

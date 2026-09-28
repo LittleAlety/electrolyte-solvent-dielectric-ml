@@ -9,6 +9,7 @@ every reported number.
 promoted, eta fairness check, safety channel, ranking key v1, high-epsilon refusal rule,
 ceiling probes) ·
 **Dataset:** v0.3.3 (unchanged) ·
+**DOI (v1.3):** https://doi.org/10.5281/zenodo.23019467 ·
 **DOI (v1.2.1):** https://doi.org/10.5281/zenodo.23006276 ·
 **DOI (v1.2):** https://doi.org/10.5281/zenodo.23001632 ·
 **DOI (v1.1):** https://doi.org/10.5281/zenodo.23001408 ·
