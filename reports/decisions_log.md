@@ -6544,3 +6544,20 @@ MD / RDF 管线（整条新管线，循环 3 再评估）、介电谱反推 Deby
 - **风险照实报**：删除对外**不可逆**（Zenodo `grace-period-v1` 留 410 墓碑）；本仓证据只能证明**本仓未引** `22958270` / `22958541`，**不能**证明外部未引。删除动作属外部不可逆写操作，**留给作者在网页端执行**。
 **⑦ 台账规则入册（charter §6.4，作者口述）**：**每个版本号只留一条在册记录**；版本号相同的多条，保留**铸造最早且被引用**的那条，其余按 `duplicate` 处置；不同版本号各留一条、不合并。现状核对：v1.0 **3 条 ❌ 待作者收敛**、v1.1 **1 条 ✔**、v1.2 **1 条 ✔**、v1.2.1 **1 条 ✔**（`23006276`）。
 |
+
+## 28.66 v1.3 发布与 Zenodo 铸 DOI 断点存档（2026-09-28）
+|
+**定位**：本件是 Week 20 交付后的发布章，接续 §28.65 的发布线冻结与结构性修正规则。`produces_reading = false`、不占 shot 编号、不动主记分牌（累计 12 次不变）、不引用 Reaxys 数值。
+**① 发布前置提交**：`5aa3151`（Week 20 发布前置）：`README.md` 的 `**Release:**` 行由 v1.2.1 改为 v1.3（Week 20 十二 lane 摘要），DOI 块**只保留五条活链**（v1.2.1 `23006276` / v1.2 `23001632` / v1.1 `23001408` / v1.0 `22957696` / concept `22957695`），**不写本版本自指占位符**；`paper/release_notes_v1.3.md` 新建（9,890 B，UTF-8/LF/无 BOM，全篇无 `pending` 字样）；`probes/export_week20_results.py` 的 `CARRY_FORWARD` 增加该文件。
+**② tag / release（实测）**：tag `v1.3` = `5aa315169f22f3adb8d88365cd1bcfa763b4e0d6`（= 发布前置提交，与当时 `origin/main` tip 一致）；GitHub Release 由 `gh release create v1.3 --target main --title "v1.3: Week 20 - epsilon second-stage promotion (cross-seed 0.6217), eta fairness, safety channel" --notes-file paper/release_notes_v1.3.md` 建立；`createdAt = 2026-09-28T13:58:55Z`、`publishedAt = 2026-09-28T13:59:07Z`、`isDraft = false`、`isPrerelease = false`。URL：`https://github.com/LittleAlety/electrolyte-solvent-dielectric-ml/releases/tag/v1.3`。
+**③ 事件投递（实测）**：仓库 webhook `685484825`（`events = ["release"]`、`active = true`、指向 `https://zenodo.org/api/hooks/receivers/github/events/`）在 `2026-09-28T13:59:08Z` 收到三笔投递，状态码 **`409 / 409 / 202`**，其中 `202` 为已入队。同形先例：v1.2.1 在 `2026-09-28T04:35:52Z` 的投递为 `500 / 202`，该 `202` 之后 **13 秒**铸出记录 `23006276`。
+**④ DOI 状态（断点存档）**：截至 `2026-09-28T14:25Z` **尚未铸出**。`https://zenodo.org/api/records/23006276/versions` 仍返回 **6** 条：v1.2.1 `23006276` / v1.2 `23001632` / v1.1 `23001408` / v1.0 `22957696` / `22958270` / `22958541`；按 `related_identifiers.identifier = https://github.com/LittleAlety/electrolyte-solvent-dielectric-ml/tree/v1.3` 检索为 **0** 条。故本件**不写任何版本 DOI 数字**，回填留待铸出后单独提交（照 §28.65 ⑤：被归档文件里不放占位符，版本 DOI 只出现在回填提交）。
+**⑤ 发布纪律（照实）**：不移动任何既有 tag（`v1.0` / `v1.1` / `v1.2` / `v1.2.1` 的提交均未变）；**未编辑、也不得编辑** v1.3 Release 正文（§C 第 7 条的已测重复归档触发机制）；tag 树内 `README.md` 与 `paper/release_notes_v1.3.md` **均无** `pending` 字样与本版本 DOI 自指行 —— 这是 §28.65 ⑤ 规则自 v1.1 / v1.2 两次发作后的**首次落地**。
+**⑥ 待作者裁定项（不处置）**：concept `10.5281/zenodo.22957695` 下 v1.0 的三条同版本号记录（`22957696` / `22958270` / `22958541`）按 §28.65 ⑥ 收敛到 `22957696`，删除动作仍留作者在网页端执行。
+**⑦ 恢复清单（铸出后按序执行，勿跳步）**：
+1. 轮询 `https://zenodo.org/api/records/23006276/versions`（或 concept `10.5281/zenodo.22957695`），取 `metadata.version = "v1.3"` 的记录 id 与 `doi`；判据：该列表由 6 条变 7 条，且 `related_identifiers` 指向 `.../tree/v1.3`。
+2. **回填提交**：`README.md` 在 `**Release:**` 块内、`**DOI (v1.2.1):**` 行**之前**插入 `**DOI (v1.3):** https://doi.org/10.5281/zenodo.<新id> ·`；`paper/release_notes_v1.3.md` 的 `**Version DOI (v1.3):**` 段由「刻意缺席」改写为真实 DOI；本件 ④ 补记真实数字与 `created` 时间戳；`paper/submission_checklist.md` §C 的 v1.3 行同步改判。
+3. `git add` → `git commit` → `git -c http.proxy=http://127.0.0.1:10809 -c https.proxy=http://127.0.0.1:10809 push origin main`。
+4. **末次干净重导**：`python probes/export_week20_results.py --overwrite`；确认 `worktree_dirty = false` 且 `artifacts_commit` = 回填提交 SHA。
+5. **未铸出前不得**把任何 v1.3 DOI 数字写进 `README.md` / `paper/release_notes_v1.3.md`（避免重演 v1.1 / v1.2 的自指占位符缺陷）。
+|

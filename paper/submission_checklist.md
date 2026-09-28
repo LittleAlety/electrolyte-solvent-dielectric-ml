@@ -81,6 +81,15 @@ python scripts/check_release_readiness.py --phase released
         作者已按 `removal_reason = duplicate` 删除 `23001299` 与 `23001424`，保留 `23001408` 为唯一在册版本。
         本仓 `README.md` 与 `paper/release_notes_v1.1.md` 原引的 `23001299` 因此变成 HTTP `410` 断链，
         已一并更正为 `23001408`。详见 `reports/decisions_log.md` §28.56。
+   - [v1.3 2026-09-28] **第五次发布（Week 20 交付）**。发布前置提交 `5aa3151`；tag `v1.3` =
+        `5aa315169f22f3adb8d88365cd1bcfa763b4e0d6`；Release 由
+        `gh release create v1.3 --target main --notes-file paper/release_notes_v1.3.md` 建立，
+        `publishedAt = 2026-09-28T13:59:07Z`、`isDraft = false`；webhook `685484825` 于
+        `13:59:08Z` 投递 `409 / 409 / 202`。**版本 DOI 尚未铸出**（截至 `2026-09-28T14:25Z`，
+        `.../23006276/versions` 仍返回 6 条），铸出后按 `reports/decisions_log.md` §28.66 ⑦
+        的回填清单执行；**v1.3 Release 正文未编辑、也不得编辑**（同本条已测触发机制）。
+        tag 树内被归档文件（`README.md`、`paper/release_notes_v1.3.md`）**无** `pending` 字样与
+        本版本 DOI 自指行 —— §28.65 ⑤ 规则的首次落地。
 
 > 顺序由 Zenodo 的机制决定：DOI 由 release 铸出，所以被归档的 v1.0 快照里 DOI 行写的是
 > `pending`，仓库里的真实 DOI 从回填提交开始生效。
