@@ -8,7 +8,7 @@ every reported number.
 **Release:** v1.2 (GitHub release 2026-09-28; Week 19 close-out — orbital migration gate,
 safety-channel registry and shots ledger, no lane promoted) · **Dataset:** v0.3.3 (unchanged) ·
 **DOI (v1.2):** https://doi.org/10.5281/zenodo.23001632 ·
-**DOI (v1.1):** https://doi.org/10.5281/zenodo.23001299 ·
+**DOI (v1.1):** https://doi.org/10.5281/zenodo.23001408 ·
 **DOI (v1.0):** https://doi.org/10.5281/zenodo.22957696 ·
 **Concept DOI (all versions):** https://doi.org/10.5281/zenodo.22957695 ·
 **Licences:** data CC BY 4.0 (`LICENSE-DATA.md`), code MIT (`LICENSE`)
