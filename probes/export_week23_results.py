@@ -286,8 +286,7 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
     }
     write_json(week_root / "week23_summary.json", summary)
     write_json(week_root / "verification.json", verification)
-    (week_root / "README.md").write_text(README_TEXT, encoding="utf-8", newline="
-")
+    (week_root / "README.md").write_text(README_TEXT, encoding="utf-8", newline="\n")
     write_sha256s(week_root)
     return summary
 
