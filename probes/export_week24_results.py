@@ -131,6 +131,8 @@ LANES: dict[str, dict[str, object]] = {
             "probes/artifacts/w24_3_topk_decoupling.csv",
             "probes/artifacts/w24_3_data_adequacy.png",
             "probes/artifacts/w24_3_screening_reading.png",
+            "probes/artifacts/w24_3_level_crosscheck.csv",
+            "probes/artifacts/w24_3_level_crosscheck.png",
         ),
         "produces_reading": False,
         "promoted": False,
@@ -157,6 +159,7 @@ FIGURES: tuple[str, ...] = (
     "probes/artifacts/w24_2_orca_bridge.png",
     "probes/artifacts/w24_3_data_adequacy.png",
     "probes/artifacts/w24_3_screening_reading.png",
+    "probes/artifacts/w24_3_level_crosscheck.png",
 )
 
 VERIFIERS = (

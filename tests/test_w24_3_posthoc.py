@@ -143,12 +143,24 @@ def test_born_failure_is_the_small_response_regime():
     assert rho > 0.40
 
 
+def test_the_cross_level_control_separates_the_cause():
+    cross = w243.level_crosscheck(w243.read_rows(w243.W23_LAYER),
+                                  w243.read_rows(w243.W24_2_LAYER))
+    assert cross["n_paired"] >= 20
+    assert abs(cross["ox_move"]) < 0.10, "the oxidation axis must be level-insensitive"
+    assert cross["red_move"] < -1.0, "the reduction axis must flip when the level moves"
+    assert cross["same_red_gfn2"][0] > 0.70
+    assert cross["same_red_orca"][0] < -0.40
+    assert cross["dispersion_ratio"] > 4.0
+    assert cross["unbound_share_paired_orca"] > 0.95
+
+
 def test_the_committed_conclusions_match_a_fresh_recompute():
     payload = json.loads(CONCLUSIONS.read_text(encoding="utf-8"))
     assert payload["post_hoc"] is True
     assert payload["new_shot"] is False
     assert payload["scoreboard_shots"] == 0
-    assert len(payload["readings"]) == 8
+    assert len(payload["readings"]) == 9
     fresh = {entry["series"]: round(entry["sigma"], 6) for entry in _sigma()}
     stored = {entry["series"]: round(entry["sigma"], 6) for entry in payload["paper_sigma"]}
     assert stored == fresh
@@ -170,7 +182,8 @@ def test_every_committed_table_is_lf_only():
                  ARTIFACTS / "w24_3_sampling_law.csv",
                  ARTIFACTS / "w24_3_paper_axis_sigma.csv",
                  ARTIFACTS / "w24_3_axis_flip.csv",
-                 ARTIFACTS / "w24_3_topk_decoupling.csv"):
+                 ARTIFACTS / "w24_3_topk_decoupling.csv",
+                 ARTIFACTS / "w24_3_level_crosscheck.csv"):
         assert b"\r\n" not in path.read_bytes(), path.name
 
 

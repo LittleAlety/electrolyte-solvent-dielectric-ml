@@ -9,6 +9,8 @@
 #   R3  the ox/red ordering asymmetry flips sign at the Li+ coordination rung
 #   R4  tau_b and the top-decile overlap decouple; f_unresolved reads screening better
 #   R5  the Born failure is a small-response-coefficient regime, i.e. the neutral state
+#   R6  hold the compounds fixed and move only the level: oxidation barely moves,
+#       reduction flips sign, so R2's cause is the level and not the compound set
 
 from __future__ import annotations
 
@@ -36,6 +38,13 @@ SAMPLING_CSV = ARTIFACTS / "w24_3_sampling_law.csv"
 SIGMA_CSV = ARTIFACTS / "w24_3_paper_axis_sigma.csv"
 FLIP_CSV = ARTIFACTS / "w24_3_axis_flip.csv"
 TOPK_CSV = ARTIFACTS / "w24_3_topk_decoupling.csv"
+CROSSCHECK_CSV = ARTIFACTS / "w24_3_level_crosscheck.csv"
+FIGURE_LEVEL = ARTIFACTS / "w24_3_level_crosscheck.png"
+W23_LAYER = ROOT / "data" / "processed" / "w23_redox_dscf_layer.csv"
+W24_2_LAYER = ROOT / "data" / "processed" / "w24_2_orca_dft_layer.csv"
+
+# The parent paper reads -0.467 on the reduction axis of this rung
+PAPER_REDUCTION_RUNG = -0.467
 
 PREFERRED_FONTS = ("Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "Source Han Sans SC")
 AXIS_COLOUR = {"ox": "#1f4e79", "red": "#c0392b"}
@@ -256,6 +265,97 @@ def born_regimes(born_rows):
     return entries, spearman(all_slope, all_r2)
 
 
+def kendall_tau_b(pairs):
+    from scipy.stats import kendalltau
+
+    pairs = [(a, b) for a, b in pairs if a is not None and b is not None]
+    if len(pairs) < 3:
+        return None, len(pairs)
+    result = kendalltau([p[0] for p in pairs], [p[1] for p in pairs])
+    return float(result.statistic), len(pairs)
+
+
+def level_crosscheck(census_rows, orca_rows):
+    # R2 measured the paper gap on the GFN2 census.  This is the control that
+    # separates the two remaining causes: hold the compounds fixed, move only the
+    # electronic-structure level, and see which axis the level actually moves.
+    # The GFN2 P0->P1 rung pairs the neutral Koopmans orbital against the GFN2
+    # dSCF energy; the ORCA rung pairs the same Koopmans source against the
+    # r2SCAN-3c vertical dSCF energy.  Both read the same two column families,
+    # so the same compound can be scored at both levels.
+    census = {row["inchikey"]: row for row in census_rows}
+    paired = []
+    for row in orca_rows:
+        key = row["inchikey"]
+        if key not in census:
+            continue
+        if as_float(row["orca_ip_gas_eV"]) is None or as_float(row["orca_ea_gas_eV"]) is None:
+            continue
+        paired.append((key, row))
+
+    def negated(row, column):
+        value = as_float(row[column])
+        return None if value is None else -value
+
+    census_ox = kendall_tau_b([(negated(r, "gas_neutral_homo_eV"), as_float(r["ip_gas_eV"]))
+                               for r in census_rows])
+    census_red = kendall_tau_b([(negated(r, "gas_neutral_lumo_eV"), as_float(r["ea_gas_eV"]))
+                                for r in census_rows])
+    same_ox_gfn2 = kendall_tau_b([(negated(census[k], "gas_neutral_homo_eV"),
+                                   as_float(census[k]["ip_gas_eV"])) for k, _ in paired])
+    same_red_gfn2 = kendall_tau_b([(negated(census[k], "gas_neutral_lumo_eV"),
+                                    as_float(census[k]["ea_gas_eV"])) for k, _ in paired])
+    same_ox_orca = kendall_tau_b([(as_float(row["p0_ox_eV"]), as_float(row["orca_ip_gas_eV"]))
+                                  for _, row in paired])
+    same_red_orca = kendall_tau_b([(as_float(row["p0_red_eV"]), as_float(row["orca_ea_gas_eV"]))
+                                   for _, row in paired])
+
+    def shifts(level):
+        out = []
+        for key, row in paired:
+            if level == "gfn2":
+                source, target = negated(census[key], "gas_neutral_lumo_eV"), as_float(census[key]["ea_gas_eV"])
+            else:
+                source, target = as_float(row["p0_red_eV"]), as_float(row["orca_ea_gas_eV"])
+            if source is not None and target is not None:
+                out.append(target - source)
+        return sorted(out)
+
+    def spread(values):
+        return values[-1] - values[0]
+
+    gfn2_shifts = shifts("gfn2")
+    orca_shifts = shifts("orca")
+    unbound_census = sum(1 for r in census_rows
+                         if str(r["anion_unbound_gas"]).strip() == "yes")
+    unbound_paired = sum(1 for k, _ in paired
+                         if str(census[k]["anion_unbound_gas"]).strip() == "yes")
+    unbound_orca = sum(1 for _, row in paired
+                       if str(row["orca_anion_unbound_gas"]).strip() == "yes")
+    return {
+        "n_paired": len(paired),
+        "census_ox": census_ox,
+        "census_red": census_red,
+        "same_ox_gfn2": same_ox_gfn2,
+        "same_red_gfn2": same_red_gfn2,
+        "same_ox_orca": same_ox_orca,
+        "same_red_orca": same_red_orca,
+        "paper_red_rung": PAPER_REDUCTION_RUNG,
+        "ox_move": same_ox_orca[0] - same_ox_gfn2[0],
+        "red_move": same_red_orca[0] - same_red_gfn2[0],
+        "gfn2_red_shift_min": gfn2_shifts[0],
+        "gfn2_red_shift_max": gfn2_shifts[-1],
+        "gfn2_red_shift_spread": spread(gfn2_shifts),
+        "orca_red_shift_min": orca_shifts[0],
+        "orca_red_shift_max": orca_shifts[-1],
+        "orca_red_shift_spread": spread(orca_shifts),
+        "dispersion_ratio": spread(orca_shifts) / spread(gfn2_shifts),
+        "unbound_share_census": unbound_census / len(census_rows),
+        "unbound_share_paired_gfn2": unbound_paired / len(paired),
+        "unbound_share_paired_orca": unbound_orca / len(paired),
+    }
+
+
 def write_csv(path: Path, fieldnames, rows) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
@@ -399,6 +499,66 @@ def figure_screening(flip_entries, decoupling, offenders, born_entries, rho_c_r2
     plt.close(figure)
 
 
+def figure_level(cross, font_name: str) -> None:
+    figure, (left, right) = plt.subplots(1, 2, figsize=(15.0, 6.2))
+    figure.suptitle(
+        "W24-3 C\u00b7\u540c\u5316\u5408\u7269\u8de8\u5c42\u7ea7\u5bf9\u7167\uff1a\u53ea\u6362\u7535\u5b50\u7ed3\u6784\u5c42\u7ea7\uff0c\u54ea\u6761\u8f74\u4f1a\u52a8\uff1f",
+        fontsize=15)
+
+    pairs = (("\u6c27\u5316\u8f74", cross["same_ox_gfn2"][0], cross["same_ox_orca"][0]),
+             ("\u8fd8\u539f\u8f74", cross["same_red_gfn2"][0], cross["same_red_orca"][0]))
+    positions = np.arange(len(pairs))
+    for position, (label, gfn2, orca) in zip(positions, pairs):
+        left.plot([position - 0.16, position + 0.16], [gfn2, orca],
+                  color="#888888", linewidth=1.6, zorder=2)
+        left.scatter([position - 0.16], [gfn2], color="#1f4e79", s=110, zorder=3,
+                     label="GFN2-xTB" if position == 0 else None)
+        left.scatter([position + 0.16], [orca], color="#c0392b", s=110, zorder=3,
+                     label="ORCA r2SCAN-3c" if position == 0 else None)
+        left.annotate(f"{gfn2:.3f}", xy=(position - 0.16, gfn2), xytext=(-4, -16),
+                      textcoords="offset points", ha="center", fontsize=10, color="#1f4e79")
+        left.annotate(f"{orca:.3f}", xy=(position + 0.16, orca), xytext=(4, 10),
+                      textcoords="offset points", ha="center", fontsize=10, color="#c0392b")
+    left.axhline(cross["paper_red_rung"], color="#7f7f7f", linestyle="--", linewidth=1.2)
+    left.annotate("\u8bba\u6587\u8fd8\u539f\u8f74\u8bfb\u6570 -0.467",
+                  xy=(-0.42, cross["paper_red_rung"] + 0.04), fontsize=9.5, color="#7f7f7f")
+    left.axhline(0, color="#333333", linewidth=1.0)
+    left.set_xticks(positions)
+    left.set_xticklabels([label for label, _, _ in pairs], fontsize=12)
+    left.set_xlim(-0.5, 1.5)
+    left.set_ylabel("P0->P1 \u7684 tau_b\uff08\u540c\u4e00\u6279\u5316\u5408\u7269\uff09")
+    left.set_title("A  \u6c27\u5316\u8f74\u51e0\u4e4e\u4e0d\u52a8\uff0c\u8fd8\u539f\u8f74\u7ffb\u53f7\uff08n = "
+                   + str(cross["n_paired"]) + "\uff09", fontsize=12)
+    left.legend(fontsize=10, loc="upper right")
+    left.grid(axis="y", alpha=0.25)
+
+    height = 0.42
+    rows = (("GFN2-xTB", cross["gfn2_red_shift_min"], cross["gfn2_red_shift_max"], "#1f4e79"),
+            ("ORCA r2SCAN-3c", cross["orca_red_shift_min"], cross["orca_red_shift_max"], "#c0392b"))
+    for position, (label, low, high, colour) in enumerate(rows):
+        right.barh(position, high - low, left=low, height=height, color=colour, alpha=0.75)
+        right.annotate(f"{low:.2f}", xy=(low, position), xytext=(8, 0),
+                       textcoords="offset points", ha="left", va="center", fontsize=9.5,
+                       color="white")
+        right.annotate(f"{high:.2f}", xy=(high, position), xytext=(6, 0),
+                       textcoords="offset points", ha="left", va="center", fontsize=9.5)
+    right.set_yticks([0, 1])
+    right.set_yticklabels(["GFN2-xTB", "ORCA r2SCAN-3c"], fontsize=11)
+    right.set_xlabel("\u8fd8\u539f\u8f74\u4f4d\u79fb\u7684\u6781\u5dee / eV\uff08\u540c\u4e00\u6279\u5316\u5408\u7269\uff09")
+    right.set_title("B  \u540c\u4e00\u6279\u5316\u5408\u7269\uff0cDFT \u5c42\u7684\u8fd8\u539f\u4f4d\u79fb\u6da8\u4e86 "
+                    + f"{cross['dispersion_ratio']:.1f}" + " \u500d", fontsize=12)
+    right.annotate(f"\u6c14\u76f8\u9634\u79bb\u5b50\u4e0d\u675f\u7f1a\u5360\u6bd4\uff1a\u666e\u67e5 "
+                   + f"{cross['unbound_share_census']:.3f}"
+                   + "\uff0cORCA " + f"{cross['unbound_share_paired_orca']:.3f}",
+                   xy=(0.03, 0.06), xycoords="axes fraction", fontsize=10,
+                   bbox={"facecolor": "white", "alpha": 0.85, "edgecolor": "#999999"})
+    right.grid(axis="x", alpha=0.25)
+
+    figure.tight_layout(rect=(0, 0, 1, 0.93))
+    figure.savefig(FIGURE_LEVEL, dpi=170)
+    plt.close(figure)
+
+
 def main() -> int:
     font_name = configure_fonts()
     rung_rows = read_rows(RUNG_TABLE)
@@ -407,6 +567,7 @@ def main() -> int:
     flip = axis_flip(rung_rows)
     cuts, offenders = topk_decoupling(rung_rows)
     born_entries, rho_c_r2 = born_regimes(read_rows(BORN))
+    cross = level_crosscheck(read_rows(W23_LAYER), read_rows(W24_2_LAYER))
 
     rung_points = [
         {
@@ -441,6 +602,13 @@ def main() -> int:
                "unresolved_ox", "unresolved_red"),
               flip)
     write_csv(TOPK_CSV, ("cut", "column", "rho_tau_b", "rho_unresolved"), cuts)
+    cross_fields = ("n_paired", "same_ox_gfn2", "same_ox_orca", "ox_move",
+                    "same_red_gfn2", "same_red_orca", "red_move", "paper_red_rung",
+                    "gfn2_red_shift_spread", "orca_red_shift_spread", "dispersion_ratio",
+                    "unbound_share_census", "unbound_share_paired_orca")
+    write_csv(CROSSCHECK_CSV, cross_fields,
+              [{key: (cross[key][0] if isinstance(cross[key], tuple) else cross[key])
+                for key in cross_fields}])
 
     ox_sigma = [abs(entry["sigma"]) for entry in sigma if entry["axis"] == "ox"]
     red_sigma = [abs(entry["sigma"]) for entry in sigma if entry["axis"] == "red"]
@@ -518,6 +686,17 @@ def main() -> int:
             "unit": "\u8fbe\u6807\u7387\u5dee",
             "support": "\u4e2d\u6027\u6001 |C| \u4ec5\u79bb\u5b50\u6001\u7684 0.15 \u500d\uff0c\u6b8b\u5dee\u76f8\u5bf9\u91cf\u5374\u5927 1.7 \u500d",
         },
+        {
+            "id": "R6",
+            "reading": "同化合物跨层级对照给出 R2 的因果",
+            "statistic": "固定化合物、只换电子结构层级时的 tau_b 变化",
+            "value": cross["red_move"],
+            "unit": "tau_b 变化量（还原轴）",
+            "support": "氧化轴只动 " + f"{cross['ox_move']:+.3f}"
+                         + "；还原轴从 " + f"{cross['same_red_gfn2'][0]:.3f}"
+                         + " 翻到 " + f"{cross['same_red_orca'][0]:.3f}"
+                         + "，贴近论文的 -0.467 —— 因是层级，不是化合物集合、也不是抽样拖动",
+        },
     ]
 
     payload = {
@@ -532,6 +711,7 @@ def main() -> int:
         "topk_offenders": offenders,
         "born_regimes": born_entries,
         "rho_absC_r2": rho_c_r2,
+        "level_crosscheck": cross,
         "readings": readings,
     }
     CONCLUSIONS_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2),
@@ -541,6 +721,7 @@ def main() -> int:
               readings)
 
     figure_adequacy(law, sigma, font_name)
+    figure_level(cross, font_name)
     figure_screening(
         flip,
         {"rungs": rung_points, "cuts": cuts, "born_rows": born_points},
@@ -554,7 +735,9 @@ def main() -> int:
         "readings": {entry["id"]: round(entry["value"], 4) for entry in readings},
         "sd_at_n12": {entry["series"]: round(entry["sd_at_n12"], 4) for entry in law},
         "sigma": {entry["series"]: round(entry["sigma"], 3) for entry in sigma},
-        "figures": [FIGURE_ADEQUACY.name, FIGURE_SCREENING.name],
+        "level_crosscheck": {key: cross[key] for key in ("n_paired", "ox_move", "red_move",
+                                                          "dispersion_ratio")},
+        "figures": [FIGURE_ADEQUACY.name, FIGURE_SCREENING.name, FIGURE_LEVEL.name],
     }, ensure_ascii=False, indent=2))
     return 0
 
