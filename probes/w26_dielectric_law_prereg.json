@@ -1,0 +1,141 @@
+{
+  "task": "w26_dielectric_law",
+  "title": "W26：介电响应律的稠密实测（ddCOSMO 任意 ε + 刚性几何）、阴离子束缚闸门与隐式模型层级对照",
+  "status": "locked_before_run",
+  "frozen_by": "reports/week26_project_charter.md",
+  "nature": "new electronic-structure calculation at the GFN2-xTB/ddCOSMO level plus a rigid-vs-relaxed geometry control; no main-scoreboard shot",
+  "engine": {
+    "xtb": "6.7.1 (resolved by probes/w21_li_coordination.resolve_xtb)",
+    "continuum": "--cosmo EPSILON (ddCOSMO, arbitrary epsilon)",
+    "geometry": "gas-phase GFN2 optimisation of the neutral molecule, --opt --gfn 2 --chrg 0 --uhf 0, one geometry shared by every epsilon and every charge state (rigid scan)",
+    "single_point": "no --opt; --gfn 2 --chrg C --uhf U plus --cosmo EPSILON for epsilon > 1"
+  },
+  "pool": {
+    "source": "data/processed/w21_li_coordination_layer.csv",
+    "rule": "rows with non-empty canonical_smiles, homo_free_eV, lumo_free_eV and total_energy_free_hartree",
+    "expected_n": 242,
+    "rdkit_seed": "the frozen seed column of the source table, so the gas-phase anchor is byte-comparable with the frozen layer"
+  },
+  "epsilon_grid": [
+    1,
+    2,
+    4,
+    7.58,
+    12,
+    18,
+    25,
+    35.688,
+    50,
+    80.4,
+    120,
+    200,
+    400,
+    1000
+  ],
+  "named_solvent_cross_check": {
+    "7.58": "thf",
+    "18.0": "benzaldehyde",
+    "80.4": "water"
+  },
+  "charge_states": {
+    "neutral": [
+      0,
+      0
+    ],
+    "cation": [
+      1,
+      1
+    ],
+    "anion": [
+      -1,
+      1
+    ]
+  },
+  "relaxed_geometry_subset": {
+    "n": 24,
+    "stratification": "motif_class, proportional allocation on the 242 pool, deterministic seed 20261002",
+    "epsilon": 80.4,
+    "rule": "for each charge state, optimise that state in the gas phase and take the 80.4 single point on its own optimum"
+  },
+  "arms": {
+    "W26-1": {
+      "claim": "on a ddCOSMO grid with the geometry held rigid, the solvation shift of every charge state follows the Born one-parameter form dE = -C (1 - 1/eps)",
+      "criteria": {
+        "H1a_ion_born_r2_median_min": 0.99,
+        "H1b_residual_at_eps200_median_eV_max": 0.02,
+        "H1c_travel_eps200_to_1000_median_eV_max": 0.015,
+        "H1d_abs_dE_times_eps_cv_median_max": 0.35,
+        "H1e_relaxation_contribution_median_eV_max": 0.05,
+        "H1f_anchor_orbital_max_abs_dev_eV": 0.005,
+        "H1f_anchor_total_energy_max_abs_dev_hartree": 0.000005
+      },
+      "band_start_epsilon": 20,
+      "criteria_operational_notes": {
+        "H1b": "residual_born_200_eV = |C_fit| / 200",
+        "H1c": "travel_200_1000_eV = |dE(1000) - dE(200)|，实测",
+        "H1d": "residual(eps) = |C_fit| - |dE(eps)|，band_cv = sd(residual*eps)/mean(residual*eps) over eps in [20,1000]",
+        "H1e": "只在 cationic 与 anionic 的 (molecule, state) 对上取中位"
+      }
+    },
+    "W26-2": {
+      "claim": "a vertical electron affinity computed in a continuum turns positive above a per-molecule gate epsilon; gas-phase anions are unbound",
+      "criteria": {
+        "H2a_share_with_gate_within_80p4_min": 0.5,
+        "H2b_gate_epsilon_median_max": 40
+      },
+      "bound_rule": "EA(eps) = E(neutral, eps) - E(anion, eps) > 0 at a fixed geometry",
+      "grid_ceiling_for_gate_search": 80.4,
+      "criteria_operational_notes": {
+        "H2a": "分母 = 气相 EA(eps=1) <= 0 的分子；分子 = 这些分子中在 eps in (1,1000] 内出现 EA(eps) > 0 的占比",
+        "H2b": "闸门 epsilon 的中位，仅在存在闸门的分子上取"
+      }
+    },
+    "W26-3": {
+      "claim": "ddCOSMO and ALPB differ at a matched epsilon, and the difference is a model difference rather than a physics difference",
+      "criteria": {
+        "H3_matched_epsilon_median_abs_diff_eV_max": 0.15
+      },
+      "matched_epsilons": [
+        7.58,
+        18,
+        80.4
+      ],
+      "extra_probe": "CPCM-X at epsilon = 35.688"
+    },
+    "W26-4": {
+      "claim": "cost measurement only",
+      "criteria": {},
+      "note": "no holds / fails verdict; the arm exists to price a future G1->G2 geometry rung"
+    }
+  },
+  "bootstrap": {
+    "draws": 5000,
+    "seed": 20261002
+  },
+  "threshold_notes": {
+    "H1b_origin": "v6 reports 19.6 meV as an EXTRAPOLATED residual at eps = 200; W26 measures it instead",
+    "H1d_origin": "v6 reports the power law |dE| * eps ~ 2.1 eV; W26 tests constancy of |dE| * eps directly on the band eps in [20, 1000]",
+    "H1e_origin": "W24-1 re-optimised the geometry in every medium; this arm prices that choice"
+  },
+  "red_lines": [
+    "frozen readings unchanged",
+    "no Reaxys number enters any pool or deliverable",
+    "THEMol (CC BY-NC 4.0) stays out of the delivery package",
+    "main scoreboard shots = 0 this round (cumulative stays 12)",
+    "cross-level absolute values are never compared",
+    "the frozen W24-1 tables are never modified; any reinterpretation is registered as W26 commentary",
+    "the gas-phase anchor H1f gates every other reading: if it breaks, the round is void"
+  ],
+  "revision": 2,
+  "revision_note": "修订 2 发生在**生产运行开始之前**：当时只跑过两次冒烟（3 分子与 8 分子），242 分子的生产扫描尚未提交。 修订动机是定义缺陷，不是结果导向：第一次冒烟发现 (a) Born 拟合把首点错锚在 epsilon=2 而不是气相点，导致离子态 R2 假性塌到 0.70；(b) 冻结层锚点按原文口径必然为假，因为 w21.parse_arm 读的是 xTB --opt 日志里的**首个 ISCF 块**（输入几何），不是优化后几何。 改动清单：(1) H1b 明确为 Born 腔残余 |C_fit|/epsilon 在 epsilon=200 的取值（与 W24-1 同口径）；(2) H1c 保持实测再走量 |dE(1000)-dE(200)|；(3) H1d 的‘残余’明确为 |C_fit|-|dE(epsilon)|，带内 epsilon 属于 [20,1000]；(4) H1b/H1c/H1d 的裁决集合明确为离子曲线（阳离子+阴离子），三态合并值并列报出；(5) H1e 只在离子对上评（中性对按构造恒为 0）；(6) H1f 拆成 H1f（原文口径：优化几何单点对冻结层）与 H1g（冻结层实际口径：--opt 日志首个 ISCF 块对冻结层），其中 H1g 是本轮的复现性闸门；(7) H2a 的分母明确为‘气相电子亲和为负（未束缚）的分子’。 没有任何阈值被移动：0.99 / 0.020 eV / 0.015 eV / 0.35 / 0.05 eV / 0.50 / 40.0 / 0.15 eV 全部与修订 1 相同。",
+  "smoke_pilot_evidence": {
+    "n_molecules": 8,
+    "note": "生产前冒烟（probes/artifacts 已被随后覆盖，数值只作修订依据记录）",
+    "readings_used_for_the_revision": {
+      "H1a_ion_r2_median_before_anchor_fix": 0.704919628705224,
+      "H1a_ion_r2_median_after_anchor_fix": 0.9999521081746362,
+      "H1f_literal_max_orbital_dev_eV": 6.9114,
+      "H1g_convention_max_orbital_dev_eV": 0
+    }
+  }
+}
