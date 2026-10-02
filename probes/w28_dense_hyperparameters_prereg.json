@@ -1,0 +1,156 @@
+{
+  "schema": "w28_dense_hyperparameters/prereg@1",
+  "task": "week28_dense_hyperparameters",
+  "title": "稠密 13 列物理块的 XGB 超参重调：嵌套内层选择（第 1 枪）与固定档位阶梯（第 2 枪）",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-10-03T02:00:00Z",
+  "lock_rule": "网格、内层选择规则、阶梯规则、池、切分器、种子集、判据、安慰剂与对照在第一次生产运行之前冻结。任何事后要改，按『更正』另立登记，不在原地修改。",
+  "why": "W27 测出容量惩罚：13 列响应块接在 13 列稠密块之后掉 0.096956，但同宽度的行打乱块仍掉 0.006099（超过 0.005 惰性线）。剩下的 0.0061 只能是拟合对宽度的反应，而不是信息损失。冻结超参（max_depth 2 / 200 树 / lr 0.05 / max_bin 64）是当年为 2048 列稀疏 Morgan 定的，深度 2 每棵树只有 4 个叶。本轮问两件事：(1) 在每个外层折内部按化合物做内层选择，能不能把单表示 Physical 的五种子端点从 0.5861142332208197 抬起来、甚至越过 0.60；(2) 不管选择器行不行，网格里是否存在某个固定档位本身就比冻结档位好。第 2 问与第 1 问必须分开，因为『有没有更好的配置』与『选择器能不能找到它』是两个不同的事实。",
+  "reuses": {
+    "scoreboard_pool": "probes/dielectric_representation_seed_robustness.py 的 build_context()，逐字复用；评分 457 行 / 97 化合物，训练掩码 full_base（2391 行）",
+    "splits": "同文件的 splits_for(seed, groups, score_mask, train_mask)，逐字复用；5 折 x 10 重复，GroupKFold by InChIKey，drop_thin_folds",
+    "fitter": "dielectric_representation_ablation.XGB_PARAMS 与同一估计器；random_state 固定为 SEED = 42（冻结折任务用的就是这个常量，不是循环种子）",
+    "response_block": "probes/w27_dielectric_response.py 的 build_block() 与 response_matrix()，逐字复用；同一块、同样 NaN 不插补",
+    "no_new_dependency": "不安装新依赖、不联网、不跑 xTB；全部由盘上已有产物派生"
+  },
+  "arms": {
+    "lever4_physical_frozen": "锚臂：physical_lever4（13 列）单表示，冻结档位（网格第 0 档），不搜索",
+    "lever4_physical_retuned": "本枪 1：physical_lever4 单表示，档位由外层折内部的嵌套选择决定",
+    "lever4_plus_response_frozen": "参照臂：physical_lever4 + W27 的 13 列响应块，冻结档位；用于复现 W27 的 Physical 读数",
+    "lever4_plus_response_retuned": "本枪 1 的第二块读数：同一响应块，档位由嵌套选择决定（同容量对照）",
+    "grid_fixed_<label>": "本枪 2：网格每一档作为固定超参，在同样的折上各拟合一次（6 个读数）",
+    "lever4_physical_retuned_shuffled_target": "安慰剂：同本枪 1 的过程，但外层折内的训练靶值被打乱（测试靶值保持真实）",
+    "lever4_morgan_retuned": "过程对照：Morgan 稀疏表示走同一重调过程（seed 42、仅 repeat 0）",
+    "lever4_morgan_frozen": "过程对照的冻结基线：Morgan 稀疏表示、冻结档位（seed 42、仅 repeat 0）"
+  },
+  "grid": [
+    {
+      "index": 0,
+      "label": "frozen_d2_n200_lr05",
+      "max_depth": 2,
+      "n_estimators": 200,
+      "learning_rate": 0.05
+    },
+    {
+      "index": 1,
+      "label": "deep_d3_n200_lr05",
+      "max_depth": 3,
+      "n_estimators": 200,
+      "learning_rate": 0.05
+    },
+    {
+      "index": 2,
+      "label": "deep_d4_n200_lr05",
+      "max_depth": 4,
+      "n_estimators": 200,
+      "learning_rate": 0.05
+    },
+    {
+      "index": 3,
+      "label": "deep_d3_n400_lr05",
+      "max_depth": 3,
+      "n_estimators": 400,
+      "learning_rate": 0.05
+    },
+    {
+      "index": 4,
+      "label": "deep_d4_n400_lr05",
+      "max_depth": 4,
+      "n_estimators": 400,
+      "learning_rate": 0.05
+    },
+    {
+      "index": 5,
+      "label": "slow_d2_n400_lr02",
+      "max_depth": 2,
+      "n_estimators": 400,
+      "learning_rate": 0.02
+    }
+  ],
+  "frozen_keys_not_moved": [
+    "subsample 0.8",
+    "colsample_bytree 0.8",
+    "reg_lambda 1.0",
+    "objective reg:squarederror",
+    "tree_method hist",
+    "max_bin 64",
+    "n_jobs 1"
+  ],
+  "selection_rule": {
+    "inner_folds": 3,
+    "splitter": "sklearn.model_selection.GroupKFold(n_splits=3)，直接作用在该外层折的训练行上，按化合物分组",
+    "score": "网格每一档的三个内层留出的合并 R2（先拼接靶值与预测，再算 R2）",
+    "tie_break": "np.argmax 的语义——平局取网格里更早的一档",
+    "refit": "赢家在整个外层训练集上重拟合，再预测外层测试行；外层测试行从未参与选择"
+  },
+  "ladder_rule": "网格每一档在同样的折上各拟合一次，没有选择、没有用测试行做任何决定；每一档都是一个诚实读数",
+  "seeds": [
+    42,
+    1234,
+    2026,
+    31337,
+    7
+  ],
+  "placebo": {
+    "rng_seed": 2026,
+    "scope": "只打乱外层折内的训练靶值",
+    "seeds": [
+      42
+    ]
+  },
+  "control": {
+    "seeds": [
+      42
+    ],
+    "repeats": [
+      0
+    ],
+    "note": "Morgan 走同一重调过程，用来判断重调的增量是不是某个表示特有的"
+  },
+  "criteria": {
+    "H28a": "复现锚：seed 42 的冻结 Physical 单表示逐位复现 0.6080587938801277，容差 1e-09",
+    "H28b": "复现锚：冻结晶格的五种子端点逐位复现 0.5861142332208197，容差 1e-09",
+    "H28c": "跨折泄漏：全部臂与种子的含跨界化合物折数为 0",
+    "H28d": "端点升级：重调臂五种子均值减去冻结臂五种子均值 > 0",
+    "H28e": "过门：重调臂五种子均值 >= 0.60",
+    "H28f": "安慰剂塌缩：重调 + 打乱训练靶值的 seed 42 读数 <= 0.00",
+    "H28g": "机制预测：至少在 4/5 个种子上，被内层选择选中次数最多的 max_depth > 2",
+    "H28h": "同容量响应块净效应：重调(物理+响应) 五种子均值减 重调(物理) 五种子均值 > 0",
+    "H28i": "交叉验证：冻结(物理+响应) 的 Physical 读数复现 W27 交付的 0.5003081615487617，容差 1e-06",
+    "H28j": "固定档位阶梯：最佳档位的五种子均值高于冻结臂五种子均值",
+    "H28k": "固定档位阶梯过门：最佳档位的五种子均值 >= 0.60"
+  },
+  "bars": {
+    "reproduction": 1e-9,
+    "w27_cross_check": 0.000001,
+    "gate_r2": 0.6,
+    "placebo_ceiling": 0,
+    "deep_mode_seeds": 4,
+    "pass_depth": 2
+  },
+  "shot_accounting": {
+    "lanes": 2,
+    "this_week": 2,
+    "cumulative_after": 15,
+    "note": "第 1 枪 = 嵌套重调（含同容量响应块与安慰剂）；第 2 枪 = 固定档位阶梯。两枪都触及冻结池与评分掩码，各自单独记账；W21-W26 各计 0，W27 计 1"
+  },
+  "red_lines": [
+    "不改任何冻结表、不改任何冻结读数（0.4091179943351143 / 0.4766400383507876 / 0.5861142332208197 / 0.6216672295270079）",
+    "不改 METRIC_NAMES（它驱动被锁 CSV 的表头），AUC 走既有侧车路线",
+    "不读任何介电常数标签进特征；响应块与 W27 逐字相同",
+    "缺行不插补、不丢弃评分行",
+    "不动主记分牌别的臂；两枪的 shot 各自记账"
+  ],
+  "smoke_pilot_evidence": {
+    "scope": "只跑 seed 42、每个臂只跑 repeat 0（15 折）；不写任何结论，只验证管线与测成本",
+    "plumbing": "冻结臂 13.3 s（15 折），第 0 折读数 0.634700；重调臂 96.4 s（15 折），第 0 折读数 0.517082；冻结(物理+响应) 10.9 s，第 0 折 0.447564；重调(物理+响应) 96.1 s，第 0 折 0.443620",
+    "diagnostic": "在 seed 42 的前三个外层折上同时算出『每一档的内层选择分』与『每一档的折外 R2』：三个折上内层 argmax 与折外 argmax 全部不一致（d3 对 d4、d3 对 d2/n1000、d3 对冻结档）。内层选择分本身经常为负（-0.08 到 -1.02），因为内层留出只有训练行的 1/3，R2 被少数极端 epsilon 化合物主导",
+    "grid_shrunk_for_cost": "冒烟显示 1000 树与深度 6 的档位既贵（每折 18 次拟合里最慢的一档）又不在内层选择里胜出；最终网格按其成本与信息量裁剪为 6 档（深度 2/3/4，树数 200/400，lr 0.05/0.02）。判据、阈值、安慰剂规则一个未动，网格清单在此冻结",
+    "thresholds_moved": false
+  },
+  "revision": 1,
+  "revision_note": {
+    "what_moved": "无——这是第 1 版；网格在冒烟之后定稿并在此冻结",
+    "thresholds_moved": false
+  }
+}
