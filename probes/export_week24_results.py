@@ -128,7 +128,7 @@ CARRY_FORWARD = (
     ("reports/w21_framework_slot_map.md", "w21_framework_slot_map.md"),
     ("reports/week23_2_project_charter.md", "week23_2_project_charter.md"),
     ("probes/export_week24_results.py", "export_week24_results.py"),
-),
+)
 
 EXTERNAL_DELIVERABLES: tuple[tuple[str, str], ...] = ()
 
@@ -143,7 +143,7 @@ VERIFIERS = (
         "-m pytest tests/test_repo_hygiene.py tests/test_w24_condition_redox.py "
         "tests/test_w24_2_orca_dft.py -q -p no:cacheprovider"
     ),
-),
+)
 
 
 def _utc_now() -> str:
