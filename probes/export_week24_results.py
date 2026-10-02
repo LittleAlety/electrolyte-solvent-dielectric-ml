@@ -149,6 +149,17 @@ CARRY_FORWARD = (
     ("reports/w24_delivery_readme.md", "w24_delivery_readme.md"),
     ("reports/w21_framework_slot_map.md", "w21_framework_slot_map.md"),
     ("reports/week23_2_project_charter.md", "week23_2_project_charter.md"),
+    ("paper/paper_zh_draft_v2.md", "paper_zh_draft_v2.md"),
+    ("paper/build_paper_v2.py", "build_paper_v2.py"),
+    ("paper/make_paper_docx.py", "make_paper_docx.py"),
+    ("paper/_v2_head.md", "paper_v2_head.md"),
+    ("paper/_v2_front.md", "paper_v2_front.md"),
+    ("paper/_v2_sec29.md", "paper_v2_sec29.md"),
+    ("paper/_v2_body_a.md", "paper_v2_body_a.md"),
+    ("paper/_v2_body_b.md", "paper_v2_body_b.md"),
+    ("paper/_v2_disc_extra.md", "paper_v2_disc_extra.md"),
+    ("paper/_v2_concl.md", "paper_v2_concl.md"),
+    ("paper/_v2_appendix.md", "paper_v2_appendix.md"),
     ("probes/export_week24_results.py", "export_week24_results.py"),
 )
 

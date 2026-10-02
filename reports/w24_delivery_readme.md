@@ -159,3 +159,18 @@ W24-2 的 `nitrogen dioxide` 六臂全失败：NO2 是稳定自由基，预注�
 | `probes/artifacts/w24_condition_redox_layer_firstpass.csv` | 首跑 layer（缺陷证据：24 个 Li 列全空） |
 | `probes/artifacts/w24_condition_redox_records_firstpass.jsonl` | 首跑 checkpoint（同上） |
 | `probes/artifacts/w24_firstpass_reproduction.csv` / `.json` | 比对结果（0 差异 + Li 填充统计） |
+
+
+## 8. 论文交付（Week 24 结题稿 v2）
+
+| 路径 | 内容 |
+| --- | --- |
+| `paper/paper_zh_draft_v2.md` | 全文 Markdown（19 图 / 15 表 / 10 章）。主线＝**描述符决策稳定性**：层级伪影、轴锁定分歧与筛查可用性 |
+| `paper/build_paper_v2.py` | 装配脚本：把 v1 稿的 §3.1–3.14、§4.1–4.5 与新写的 §1、§2.9、§3.15–3.20、§4.6–4.7、§5 与附录拼成 v2 |
+| `paper/make_paper_docx.py` | 渲染脚本：标题样式 / 表格 / 19 张图按序插入，CJK 字体（宋体正文、黑体标题） |
+| `paper/_v2_*.md` | 装配用的分节片段（head / front / sec29 / body_a / body_b / disc_extra / concl / appendix） |
+
+- **成品 docx**：`成果输出/论文_电解液溶剂筛选中的描述符决策稳定性.docx`（3,895,232 B，sha256 `050ceed915bbaa843caecec62fca22dc81e868a72e58930cc841d6e0d2a27919`），19 张内嵌图、15 张表、54 个标题。
+- **重新生成**：`python paper/build_paper_v2.py` → `python paper/make_paper_docx.py`（docx 渲染需 `python-docx`，项目 venv 未装，使用捆绑运行时 Python）。
+- **口径**：§3.18–§3.20 是后验再分析，正文与附录 B 已逐条标注「不得引用为预注册结论」，且不占 shot；四个冻结读数不动。
+- **与母体论文的关系**：同一套 `P`/`C` 台阶与 `tau_b` 口径，把 N=10–22 的挑选样本放大到 N=246 普查；母体论文读数保持原位、不被修订（§4.7 三条「不宣称」）。
