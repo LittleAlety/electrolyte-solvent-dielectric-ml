@@ -87,6 +87,20 @@ LANES: dict[str, dict[str, object]] = {
         "produces_reading": True,
         "promoted": False,
     },
+    "w25_7_delta_learning": {
+        "title": "W25-7（后验，未预注册）：直接学习 vs 位移学习 —— 母体论文 v6 方向 9 的本仓对照（x0 退化控制组 + off_free 实质比较）",
+        "probe": "probes/w25_7_delta_learning.py",
+        "prereg": None,
+        "summary": "probes/w25_7_delta_learning_summary.json",
+        "report": "reports/w25_7_delta_learning.md",
+        "tests": ("tests/test_w25_7_delta_learning.py",),
+        "artifacts": (
+            "probes/artifacts/w25_7_delta_learning.csv",
+            "probes/artifacts/w25_7_delta_learning.png",
+        ),
+        "produces_reading": True,
+        "promoted": False,
+    },
 }
 
 LANE_KEYS = tuple(LANES)
@@ -117,7 +131,7 @@ VERIFIERS = (
     "scripts/verify_four_core_registry.py --check",
     (
         "-m pytest tests/test_repo_hygiene.py tests/test_w25_v6_alignment.py "
-        "-q -p no:cacheprovider"
+        "tests/test_w25_7_delta_learning.py -q -p no:cacheprovider"
     ),
 )
 
@@ -309,6 +323,9 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
             "W25-3 的 tau_b >= 0.80 在 120 步上限处右删失（四臂中位 n_T 全为 121），因此 H3a 与 H3c 是空判据，只有 H3b 携带信息。",
             "W25-3 的 X0 特征是本仓口径下的代理，池是 246 名册里特征齐全的 237 行，与 v6 的 18 分子池 / 12 项 X0 不可相加。",
             "W25-5（几何台阶 G1→G2）与 W25-6（介电层 1/ε 律）登记但本轮不执行，理由与设计见交付说明 §7。",
+            "W25-7 是后验追加臂，未预注册：不得引用为预注册结论，也不占用任何主记分牌 shot。",
+            "W25-7 的 x0 特征集本身就含自由层能级，那一对 direct/shift 是退化控制组、不是证据；实质比较只在 off_free 那一对上。",
+            "W25-7 在原尺度 R2 上的表现与排序相反（reduction 轴 delta R2 < 0）：排序改善不等于量级校准改善。",
         ],
     }
     write_json(week_root / "week25_summary.json", summary)
