@@ -56,7 +56,7 @@ FROZEN_RED_LINES = {
     "data/processed/w21_li_coordination_layer.csv":
         "48864109573f919ab320aa10d2b7b8e78532115e1f65228b16e75a76123eeedc",
     "probes/artifacts/w24_born_curves.csv":
-        "e65d0d0f6b9c8d1c1b6a5b0a3a0a8a4c0e1b0d0f0a0b0c0d0e0f00112233445566",
+        "8f667824e89336524996c826885dddd6c2c0470ae6cb654d0633d6611b03b260",
 }
 
 FROZEN_READINGS = {
