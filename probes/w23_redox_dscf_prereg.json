@@ -1,0 +1,241 @@
+{
+  "schema_version": "w23_redox_dscf_prereg@1",
+  "task": "w23_redox_dscf",
+  "title": "Axis A P_1 首次实例化：GFN2-xTB dSCF 电离能/电子亲和能（气相 + 三档 ALPB）—— 氧化还原轴",
+  "status": "locked_before_run",
+  "locked_at_local": "2026-10-02",
+  "framework_slots": {
+    "primary": "docs/framework/ranking-electrolyte-materials-v2.md 3 Axis A `P_1` gas-phase redox thermodynamics",
+    "secondary": [
+      "4.1 方向量（ox/red 分开）的轨道侧载体",
+      "W22 评审矩阵 A5 的仓内可比部分：还原轴结论只以有连续介质的层为载体"
+    ],
+    "non_goals": [
+      "不是 DFT 级",
+      "不产生 10.3 threshold decision error",
+      "不构造综合电解液分数（18 禁止）"
+    ]
+  },
+  "inputs": {
+    "roster": {
+      "path": "data/processed/w21_chemical_space_metadata.csv",
+      "rows": 246,
+      "sha256": "fba4a7b287f38018dd30500ff34dc6132c6eec5a17490789b562a1e99868a27f",
+      "role": "池与顺序来源（seed = 42 + row_index）"
+    },
+    "orbital_medium_layer": {
+      "path": "data/processed/w23_orbital_medium_layer.csv",
+      "sha256_role": "中性臂的回归锚（只比对、不取值）：本臂自行重算 4 个介质的中性态，要求与 W23-1 的 homo/lumo/gap 逐位一致",
+      "sha256": "0649924ed3925eec0032072c292ac16b271a5202914845cad9971213b94f2d4e"
+    },
+    "redox_reference": {
+      "path": "data/processed/redox_merged.csv",
+      "role": "外部参考层 RX-392（392 行，wB97X-V/def2-TZVPPD/SMD(eps=18.5)，redox_free_ener.py 自由能约定）；与冻结名册交集只有 10 个化合物，**极薄**，如实标注",
+      "rows": 29911
+    },
+    "dielectric_roster": {
+      "path": "data/dielectric_v03.csv",
+      "sha256": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+      "role": "RX-392 交集的成员过滤"
+    }
+  },
+  "geometry_protocol": {
+    "embedder": "RDKit ETKDGv3 + MMFF94（缺参时 UFF），useRandomCoords=True",
+    "seed_rule": "seed = 42 + row_index（与 W21 C_1 / W23-1 完全一致）",
+    "note": "本臂不新建几何构造代码；三个电荷态共用一个起始几何，各自在 xTB 内自行弛豫"
+  },
+  "xtb_protocol": {
+    "binary": "xtb 6.7.1（冻结 runner electrolyte_ml.xtb_runner，OMP_NUM_THREADS=1，独立 scratch）",
+    "closed_shell": "xtb_optimisation_arguments（--opt --gfn 2 --chrg <Q> --uhf 0），**冻结函数不动**",
+    "open_shell": "xtb_open_shell_arguments（W23-2 新增的兄弟函数，--opt --gfn 2 --chrg <Q> --uhf 1），冻结的闭壳层函数与其单测逐字不变",
+    "medium_flag": "ALPB（--alpb <solvent>），与 W23-1 同三档同一隐式模型",
+    "media": [
+      {
+        "key": "gas",
+        "alpb_name": null,
+        "epsilon": 1
+      },
+      {
+        "key": "thf",
+        "alpb_name": "thf",
+        "epsilon": 7.58
+      },
+      {
+        "key": "benzaldehyde",
+        "alpb_name": "benzaldehyde",
+        "epsilon": 18
+      },
+      {
+        "key": "water",
+        "alpb_name": "water",
+        "epsilon": 80.4
+      }
+    ]
+  },
+  "arms": {
+    "count_per_compound": 12,
+    "list": [
+      {
+        "key": "gas_neutral",
+        "medium": "gas",
+        "role": "neutral",
+        "charge": "net",
+        "uhf": 0
+      },
+      {
+        "key": "gas_cation",
+        "medium": "gas",
+        "role": "cation",
+        "charge": "net+1",
+        "uhf": 1
+      },
+      {
+        "key": "gas_anion",
+        "medium": "gas",
+        "role": "anion",
+        "charge": "net-1",
+        "uhf": 1
+      },
+      {
+        "key": "thf_neutral",
+        "medium": "thf",
+        "role": "neutral",
+        "charge": "net",
+        "uhf": 0
+      },
+      {
+        "key": "thf_cation",
+        "medium": "thf",
+        "role": "cation",
+        "charge": "net+1",
+        "uhf": 1
+      },
+      {
+        "key": "thf_anion",
+        "medium": "thf",
+        "role": "anion",
+        "charge": "net-1",
+        "uhf": 1
+      },
+      {
+        "key": "benzaldehyde_neutral",
+        "medium": "benzaldehyde",
+        "role": "neutral",
+        "charge": "net",
+        "uhf": 0
+      },
+      {
+        "key": "benzaldehyde_cation",
+        "medium": "benzaldehyde",
+        "role": "cation",
+        "charge": "net+1",
+        "uhf": 1
+      },
+      {
+        "key": "benzaldehyde_anion",
+        "medium": "benzaldehyde",
+        "role": "anion",
+        "charge": "net-1",
+        "uhf": 1
+      },
+      {
+        "key": "water_neutral",
+        "medium": "water",
+        "role": "neutral",
+        "charge": "net",
+        "uhf": 0
+      },
+      {
+        "key": "water_cation",
+        "medium": "water",
+        "role": "cation",
+        "charge": "net+1",
+        "uhf": 1
+      },
+      {
+        "key": "water_anion",
+        "medium": "water",
+        "role": "anion",
+        "charge": "net-1",
+        "uhf": 1
+      }
+    ],
+    "planned_runs": 2952,
+    "execution": "ProcessPoolExecutor，每分子一个任务、任务内十二臂串行；单臂仍是冻结 runner + 单线程 xTB"
+  },
+  "observables": {
+    "IP_adiabatic_eV": "E(cation) - E(neutral)，同一介质内，三态各自 --opt（绝热口径）",
+    "EA_adiabatic_eV": "E(neutral) - E(anion)，同上",
+    "koopmans_offset_eV": "IP_dSCF - (-eps_HOMO(neutral)) 与 EA_dSCF - (-eps_LUMO(neutral))",
+    "anion_bound_signature": "阴离子 SCF 收敛后其最高占据轨道能 > 0（正）即判为「电子未束缚」的签名"
+  },
+  "hypotheses_locked_before_run": [
+    {
+      "id": "H1",
+      "text": "溶剂化降低电离能：IP(medium) < IP(gas)",
+      "threshold": "三档介质中满足 dIP < 0 的化合物占比 >= 0.90",
+      "falsified_if": "任一档低于阈值则判否"
+    },
+    {
+      "id": "H2",
+      "text": "溶剂化提高电子亲和能：EA(medium) > EA(gas)",
+      "threshold": "三档介质中满足 dEA > 0 的化合物占比 >= 0.80",
+      "falsified_if": "任一档低于阈值则判否"
+    },
+    {
+      "id": "H3",
+      "text": "|dIP| 随 eps 逐化合物单调递增（thf -> benzaldehyde -> water）",
+      "threshold": "占比 >= 0.60",
+      "falsified_if": "低于阈值则判否"
+    },
+    {
+      "id": "H4",
+      "text": "A5 可证伪形式：气相阴离子多数「不束缚」（阴离子最高占据轨道能 > 0）",
+      "threshold": "气相 dEA 口径下 anion_unbound 占比 >= 0.50，且在 water 档显著下降（差值 >= 0.20）",
+      "falsified_if": "不满足则判否，并据此修订「还原轴只以连续介质层为载体」的说法"
+    },
+    {
+      "id": "H5",
+      "text": "系统性偏差：dSCF IP 与 RX-392 参考层之间量级偏差大而排序相关",
+      "threshold": "n=10 交集上，|mean(IP_dSCF(gas) - IP_RX392)| >= 1.0 eV 且 Spearman rho >= 0.60",
+      "falsified_if": "若 rho < 0.60 则判否（排序也学不会）"
+    },
+    {
+      "id": "H6",
+      "text": "中性臂回归锚：4 个介质的中性态与 W23-1 层逐位一致",
+      "threshold": "max|d| <= 1e-6 eV（homo/lumo/gap，逐介质）",
+      "falsified_if": "不通过则本臂整体作废"
+    }
+  ],
+  "readouts": [
+    "R1 IP/EA 四介质分布（均值/标准差/符号计数）",
+    "R2 dIP/dEA 相对气相：逐化合物符号占比与 eps 单调性（H1/H2/H3 的判据）",
+    "R3 Koopmans 对照：IP vs -HOMO、EA vs -LUMO 的 rho 与平均偏差",
+    "R4 阴离子束缚签名计数（气相 vs 三档），H4 的判据表",
+    "R5 排序稳定性：IP 与 EA 在四介质间的 rho / tau_b / Top-k 重叠",
+    "R6 RX-392 外部对照（n=10，自由能约定 vs 能量差口径，必须标注不可直接比）",
+    "R7 中性臂回归锚证据表（vs W23-1，4 介质）",
+    "R8 失败与重试登记，含 scf_retry post_hoc"
+  ],
+  "qc_rules": {
+    "positive_homo_signature": "占据轨道能 > 0 eV 记 unbound_signature=yes",
+    "reference_convention_warning": "RX-392 的 IP/EA 来自自由能约定（redox_free_ener.py），本臂是能量差；两者之差含约定差，不得读成纯方法误差"
+  },
+  "declared_limits": [
+    "层级：GFN2-xTB 半经验 --opt，不是 DFT 级；P_1 只被低层级实例化",
+    "绝热口径（三态各自优化）与垂直口径不同，不得与本仓历史数值混比",
+    "RX-392 交集只有 10 个化合物，属于极薄外部对照，不得当作验证结论",
+    "气相阴离子在无外部束缚时物理上可能不成立；H4 正是测这一件事，而不是回避它",
+    "只对 246 名册成立；离子液体类化合物（净电荷非零）的阴阳离子臂是二阶电离/电子附着，含义与中性分子不同，必须分开统计"
+  ],
+  "forbidden": [
+    "不引用任何 Reaxys 数值",
+    "不把 RX-392 / Batt 参考层折进任何训练池或标签",
+    "不动四个冻结读数（0.4091179943351143 / 0.4766400383507876 / 0.5861142332208197 / 0.6216672295270079）",
+    "不占主记分牌 shot",
+    "不改动冻结的 xtb_optimisation_arguments（开壳层走新增函数）",
+    "不把 IP/EA 的绝对量级与参考层直接对比而不声明约定差",
+    "不把净电荷非零化合物的阴阳离子臂与中性分子的阴阳离子臂混在同一统计里"
+  ],
+  "main_scoreboard_attempts_delta": 0
+}

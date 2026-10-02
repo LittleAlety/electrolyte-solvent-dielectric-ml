@@ -2,14 +2,14 @@
 
 - **权威输入**：`docs/framework/ranking-electrolyte-materials-v2.md`（逐字节副本，sha256 `e55c1b07a127ef7d…`，54,147 B / 1,779 行）
 - **本件性质**：接线与编址。**不产读数之外的新模型、不动任何冻结件、不占 shot**（本周主记分牌尝试 **0** 次，累计仍 **12** 次）。
-- **配套读数**：`reports/w21_rank_stability.md`（§9/§10）、`reports/w21_split_taxonomy.md`（§13）、`reports/w21_feature_cost.md` 的内容并入 `reports/w21_framework_alignment.md`（§11/§5.2）、`reports/w21_eta_thaw.md`、**`reports/w21_li_coordination.md`（Tier 3：§3 Axis B `C_1` / §11 `X2`）**。
+- **配套读数**：`reports/w21_rank_stability.md`（§9/§10）、`reports/w21_split_taxonomy.md`（§13）、`reports/w21_feature_cost.md` 的内容并入 `reports/w21_framework_alignment.md`（§11/§5.2）、`reports/w21_eta_thaw.md`、**`reports/w21_li_coordination.md`（Tier 3：§3 Axis B `C_1` / §11 `X2`）**；**W23-1 `reports/w23_orbital_medium.md`（§3 Axis A `P_2`）**；**W23-2 `reports/w23_redox_dscf.md`（§3 Axis A `P_1`）**。
 
 ## 0. 一张表看完「框架要什么 / 我们已经有什么」
 
 | 框架槽位 | 本仓资产（evidence path） | 落点 | 缺口 | 判词 |
 | --- | --- | --- | --- | --- |
 | §3 Axis A `P_0` cheap scalar proxy | `data/processed/themol_orbital_layer.csv`（GFN2-xTB 气相单点，166 行）；13 维物理块 `data/processed/dielectric_physical_features_v03.csv` | 已作便宜层 | 无 | **在役** |
-| §3 Axis A `P_1` gas-phase redox thermodynamics | 无自算；`data/processed/four_core_key_registry.csv` 的 IP/EA 列来自外部参考层 | — | 本仓无 free-molecule DFT | **未执行** |
+| §3 Axis A `P_1` gas-phase redox thermodynamics | **W23-2 首次实例化**：`data/processed/w23_redox_dscf_layer.csv`（246 化合物 × 12 臂 = **2,952 次 GFN2-xTB** ΔSCF；气相 + 三档 ALPB；**绝热**口径）；此前 `four_core_key_registry.csv` 的 IP/EA 列全部来自外部参考层，本仓无自算量 | **W23-2 首次实例化** | 层级**只到 GFN2-xTB 半经验**，不是框架 §7 要求的 DFT 级；口径是**绝热**，与框架 §2.3 的**垂直**三点法不可混比 | **已执行（低层级，如实标注）** |
 | §3 Axis A `P_2` fixed-background continuum | `data/processed/w23_orbital_medium_layer.csv`（246 化合物 × 3 档 ALPB = **738 次溶剂臂 GFN2-xTB**）；`probes/w23_orbital_medium_summary.json` | **W23-1 首次实例化** | 层级**只到 GFN2-xTB + ALPB**，不是框架 §7 要求的 SMD 级 DFT；近 ε 档用的是 ALPB(苯甲醛, ε=18.0) 而非 SMD(ε=18.5) | **已执行（低层级，如实标注）** |
 | §3 Axis B `C_0` free molecular state | 等同 `P_0` 的母分子态 | 在役 | 无 | **在役** |
 | §3 Axis B `C_1` Li⁺ 配位条件态 | `data/processed/w21_li_coordination_layer.csv`（气相 2 臂）；**W23-1 补齐三档 ALPB 介质（`data/processed/w23_orbital_medium_layer.csv`）** ⇒ 条件态由「仅气相」升级为「气相 + 三档介质」 | Tier 3 首次实例化；W23-1 加介质维 | 层级**只到 GFN2-xTB 半经验**，不是框架 §7 要求的 DFT 级；C_1 侧**没有外部参考层** | **已执行（低层级，如实标注；介质维已补）** |
@@ -29,7 +29,7 @@
 | §13.2 三拆分并排 | 同上 + `reports/dielectric_splitters_auc.md`（ε 侧三拆分） | 轨道侧首次并排 | LOFO 只够 4 个家族（成员 ≥5） | **已产读数** |
 | §14 active learning | 无 | — | 需要昂贵标签预算 | **未执行** |
 | §18 多目标不构造综合分 | `reports/w20_ranking_key_v1_spec.md`、四通道交集 7 分子 | 遵守 | — | **成立** |
-| §19 Stage 0 / Stage 1 gate | `probes/artifacts/w21_stage_gate_verdicts.csv`（14 条：成立 8 / 部分成立 3 / 未执行 3）；Tier 3 后 `C_1` 不再计入「未执行」；**W23-1 后 `P_2` 亦不再计入「未执行」** | 本件落判词 | Gate 1 **仍未闭合**（C_1 侧无外部参考层），但缺口性质由「空的」→「低层级已实例化」→「Axis A 与 Axis B 都已有介质维」 | **已落判词（W23-1 后修订）** |
+| §19 Stage 0 / Stage 1 gate | `probes/artifacts/w21_stage_gate_verdicts.csv`（14 条：成立 8 / 部分成立 3 / 未执行 3）；Tier 3 后 `C_1` 不再计入「未执行」；**W23-1 后 `P_2` 亦不再计入「未执行」**；**W23-2 后 `P_1` 亦不再计入「未执行」** | 本件落判词 | Gate 1 **仍未闭合**（C_1 侧无外部参考层），但缺口性质由「空的」→「低层级已实例化」→「**Axis A 三槽（P_0/P_1/P_2）与 Axis B `C_1` 都已有内容**」 | **已落判词（W23-2 后修订）** |
 | §22 情形分支 | ε 主记分牌 + 分域记分牌 + 本件 §9 读数 | 见下节 | — | **已归属** |
 | 判据机器（预注册 / 安慰剂 / 泄漏 / shot 台账） | `reports/decisions_log.md`、`probes/w19_shots_ledger.json` | 整体复用 | — | **全仓最贵资产** |
 
@@ -45,6 +45,6 @@
 
 ## 2. 本件不做的（写清为什么）
 
-- **`C_1` 已由 Tier 3 在 GFN2-xTB 层级实例化、`P_2` 已由 W23-1（`probes/w23_orbital_medium.py`，ALPB 三档）在 GFN2-xTB + 隐式溶剂层级实例化**；`C_2`（显式微溶剂化）与 `P_1`（free-molecule DFT）仍不做。本仓不假装做过这两者。
+- **`C_1` 已由 Tier 3 在 GFN2-xTB 层级实例化、`P_2` 已由 W23-1（`probes/w23_orbital_medium.py`，ALPB 三档）实例化、`P_1` 已由 W23-2（`probes/w23_redox_dscf.py`，GFN2-xTB ΔSCF 绝热）实例化**。**仍不做**：`C_2`（显式微溶剂化，需要新建团簇几何管线）与 **DFT 级**的 `P_1` / `P_2`（ORCA / r2SCAN-3c 不在本仓工具链里）。本仓不假装做过这两者。
 - **不做 §14 active-learning replay**：它需要「昂贵标签预算 → 决策精度」曲线，而本仓的昂贵标签（Batt 层）只有 49 个可核点。
 - **不发 v1.4**：本周无晋升、无冻结件移动，发布线不动。

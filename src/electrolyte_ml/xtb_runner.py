@@ -86,6 +86,38 @@ def xtb_optimisation_arguments(input_name: str, *, formal_charge: int) -> list[s
     ]
 
 
+def xtb_open_shell_arguments(
+    input_name: str, *, formal_charge: int, unpaired_electrons: int
+) -> list[str]:
+    """The same frozen GFN2 command line, but with the spin state made explicit.
+
+    `xtb_optimisation_arguments` hard-codes `--uhf 0` because every feature
+    table in this repository is a closed-shell molecule (the Week 21 C_1 arm is a
+    closed-shell [LiM]+ adduct: Li+ contributes no electrons).  The Week 23-2
+    redox arm needs the two open-shell states of the same molecule -- the radical
+    cation (one electron removed) and the radical anion (one electron added) --
+    and those are doublets, so `--uhf 1` must be passed.
+
+    This function exists instead of a new keyword on the frozen one so that
+    `tests/test_xtb_thread_determinism.py` keeps pinning the closed-shell command
+    line byte for byte.  Nothing else changes: the caller still goes through
+    `run_xtb_subprocess`, so the thread pin and the scratch discipline are identical.
+    """
+
+    if unpaired_electrons < 0:
+        raise ValueError("unpaired_electrons must not be negative")
+    return [
+        input_name,
+        "--opt",
+        "--gfn",
+        "2",
+        "--chrg",
+        str(formal_charge),
+        "--uhf",
+        str(unpaired_electrons),
+    ]
+
+
 def run_xtb_subprocess(
     executable: Path | str,
     arguments: Sequence[str],

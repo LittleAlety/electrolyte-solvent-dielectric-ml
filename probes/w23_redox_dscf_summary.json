@@ -1,0 +1,2382 @@
+{
+  "schema_version": "w23_redox_dscf_summary@1",
+  "task": "w23_redox_dscf",
+  "generated_at_utc": "2026-10-02T10:12:27Z",
+  "prereg": {
+    "path": "probes/w23_redox_dscf_prereg.json",
+    "sha256": "70c355f59cf01103e2766a156d391ae6f5b684e415c59ace4303f8b7b76fc5f1",
+    "status": "locked_before_run"
+  },
+  "inputs": {
+    "roster": {
+      "path": "data/processed/w21_chemical_space_metadata.csv",
+      "rows": 246,
+      "sha256": "fba4a7b287f38018dd30500ff34dc6132c6eec5a17490789b562a1e99868a27f",
+      "role": "池与顺序来源（seed = 42 + row_index）"
+    },
+    "orbital_medium_layer": {
+      "path": "data/processed/w23_orbital_medium_layer.csv",
+      "sha256_role": "中性臂的回归锚（只比对、不取值）：本臂自行重算 4 个介质的中性态，要求与 W23-1 的 homo/lumo/gap 逐位一致",
+      "sha256": "0649924ed3925eec0032072c292ac16b271a5202914845cad9971213b94f2d4e"
+    },
+    "redox_reference": {
+      "path": "data/processed/redox_merged.csv",
+      "role": "外部参考层 RX-392（392 行，wB97X-V/def2-TZVPPD/SMD(eps=18.5)，redox_free_ener.py 自由能约定）；与冻结名册交集只有 10 个化合物，**极薄**，如实标注",
+      "rows": 29911
+    },
+    "dielectric_roster": {
+      "path": "data/dielectric_v03.csv",
+      "sha256": "ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4",
+      "role": "RX-392 交集的成员过滤"
+    }
+  },
+  "pool": {
+    "n_compounds": 246,
+    "arms_per_compound": 12,
+    "arm_keys": [
+      "gas_neutral",
+      "gas_cation",
+      "gas_anion",
+      "thf_neutral",
+      "thf_cation",
+      "thf_anion",
+      "benzaldehyde_neutral",
+      "benzaldehyde_cation",
+      "benzaldehyde_anion",
+      "water_neutral",
+      "water_cation",
+      "water_anion"
+    ],
+    "planned_runs": 2952,
+    "actual_runs": 2952,
+    "media": [
+      {
+        "key": "gas",
+        "alpb_name": null,
+        "epsilon": 1.0
+      },
+      {
+        "key": "thf",
+        "alpb_name": "thf",
+        "epsilon": 7.58
+      },
+      {
+        "key": "benzaldehyde",
+        "alpb_name": "benzaldehyde",
+        "epsilon": 18.0
+      },
+      {
+        "key": "water",
+        "alpb_name": "water",
+        "epsilon": 80.4
+      }
+    ],
+    "execution": "ProcessPoolExecutor，每分子一个任务、任务内十二臂串行；单臂仍是冻结 runner + 单线程 xTB",
+    "xtb_version": "6.7.1pre",
+    "charge_classes": {
+      "neutral": 246
+    },
+    "n_charge_class_neutral": 246,
+    "n_charge_class_charged": 0,
+    "n_ip_complete_neutral": 238,
+    "n_ea_complete_neutral": 237,
+    "matches_prereg": true
+  },
+  "ip_ea_stats": {
+    "ip": {
+      "gas": {
+        "n": 238,
+        "mean_eV": 13.38246491384416,
+        "sd_eV": 2.2060271123660424,
+        "min_eV": 4.01842108086,
+        "max_eV": 18.2846330054
+      },
+      "thf": {
+        "n": 238,
+        "mean_eV": 11.425102358295002,
+        "sd_eV": 2.1342192330017284,
+        "min_eV": 1.79843325317,
+        "max_eV": 15.7519723056
+      },
+      "benzaldehyde": {
+        "n": 238,
+        "mean_eV": 11.589511923303782,
+        "sd_eV": 2.090690375182975,
+        "min_eV": 2.0293798305,
+        "max_eV": 15.7880387113
+      },
+      "water": {
+        "n": 238,
+        "mean_eV": 11.124808869482186,
+        "sd_eV": 2.092022332601972,
+        "min_eV": 1.56785206825,
+        "max_eV": 15.2630687887
+      }
+    },
+    "ea": {
+      "gas": {
+        "n": 237,
+        "mean_eV": 0.4709295935231813,
+        "sd_eV": 3.124070841112967,
+        "min_eV": -6.45007270507,
+        "max_eV": 6.14924664123
+      },
+      "thf": {
+        "n": 237,
+        "mean_eV": 2.333580787752232,
+        "sd_eV": 3.126625228118608,
+        "min_eV": -3.89825952901,
+        "max_eV": 7.97582502673
+      },
+      "benzaldehyde": {
+        "n": 237,
+        "mean_eV": 2.34459551740847,
+        "sd_eV": 3.136363369853394,
+        "min_eV": -3.4984419098,
+        "max_eV": 8.15991337937
+      },
+      "water": {
+        "n": 237,
+        "mean_eV": 2.767710874436431,
+        "sd_eV": 3.1050635497299055,
+        "min_eV": -3.02409171924,
+        "max_eV": 8.41457054119
+      }
+    }
+  },
+  "displacements": {
+    "ip_thf": {
+      "n": 238,
+      "mean_eV": -1.95736255554916,
+      "sd_eV": 0.2386955309340583,
+      "share_negative": 1.0,
+      "share_positive": 0.0,
+      "share_in_predicted_direction": 1.0,
+      "threshold": 0.9,
+      "holds": true
+    },
+    "ip_benzaldehyde": {
+      "n": 238,
+      "mean_eV": -1.792952990540378,
+      "sd_eV": 0.30302389071278485,
+      "share_negative": 0.9957983193277311,
+      "share_positive": 0.004201680672268907,
+      "share_in_predicted_direction": 0.9957983193277311,
+      "threshold": 0.9,
+      "holds": true
+    },
+    "ip_water": {
+      "n": 238,
+      "mean_eV": -2.2576560443619753,
+      "sd_eV": 0.31313793776143656,
+      "share_negative": 1.0,
+      "share_positive": 0.0,
+      "share_in_predicted_direction": 1.0,
+      "threshold": 0.9,
+      "holds": true
+    },
+    "ea_thf": {
+      "n": 237,
+      "mean_eV": 1.8626511942290844,
+      "sd_eV": 0.24734898987793438,
+      "share_negative": 0.0,
+      "share_positive": 1.0,
+      "share_in_predicted_direction": 1.0,
+      "threshold": 0.8,
+      "holds": true
+    },
+    "ea_benzaldehyde": {
+      "n": 237,
+      "mean_eV": 1.8736659238854223,
+      "sd_eV": 0.3469954143947159,
+      "share_negative": 0.0,
+      "share_positive": 1.0,
+      "share_in_predicted_direction": 1.0,
+      "threshold": 0.8,
+      "holds": true
+    },
+    "ea_water": {
+      "n": 237,
+      "mean_eV": 2.296781280913291,
+      "sd_eV": 0.3495399879042285,
+      "share_negative": 0.0,
+      "share_positive": 1.0,
+      "share_in_predicted_direction": 1.0,
+      "threshold": 0.8,
+      "holds": true
+    }
+  },
+  "monotonicity": {
+    "n": 238,
+    "strictly_increasing_count": 11,
+    "share": 0.046218487394957986,
+    "binom_p_greater": 1.0,
+    "threshold": 0.6,
+    "holds": false
+  },
+  "koopmans": {
+    "gas": {
+      "ip_vs_koopmans": {
+        "n": 242,
+        "spearman_rho": 0.8463312025489821,
+        "pearson_r": 0.9808410356214042,
+        "mean_offset_eV": 2.946332440544959,
+        "mean_abs_offset_eV": 2.946332440544959
+      },
+      "ea_vs_koopmans": {
+        "n": 240,
+        "spearman_rho": 0.9491579714925603,
+        "pearson_r": 0.9826593433395245,
+        "mean_offset_eV": -3.245174236125833,
+        "mean_abs_offset_eV": 3.245174236125833
+      }
+    },
+    "thf": {
+      "ip_vs_koopmans": {
+        "n": 239,
+        "spearman_rho": 0.8983702658004566,
+        "pearson_r": 0.9888890650525219,
+        "mean_offset_eV": 1.037039615271632,
+        "mean_abs_offset_eV": 1.0394513444097908
+      },
+      "ea_vs_koopmans": {
+        "n": 240,
+        "spearman_rho": 0.9621399677077724,
+        "pearson_r": 0.9912937315062997,
+        "mean_offset_eV": -1.3322201673933587,
+        "mean_abs_offset_eV": 1.3322201673933587
+      }
+    },
+    "benzaldehyde": {
+      "ip_vs_koopmans": {
+        "n": 240,
+        "spearman_rho": 0.9006753589472039,
+        "pearson_r": 0.9866679488071595,
+        "mean_offset_eV": 1.127272008866,
+        "mean_abs_offset_eV": 1.131562484011417
+      },
+      "ea_vs_koopmans": {
+        "n": 241,
+        "spearman_rho": 0.9616208291896713,
+        "pearson_r": 0.9899019610055008,
+        "mean_offset_eV": -1.4055955906146542,
+        "mean_abs_offset_eV": 1.4055955906146542
+      }
+    },
+    "water": {
+      "ip_vs_koopmans": {
+        "n": 242,
+        "spearman_rho": 0.915600691690565,
+        "pearson_r": 0.9917512501163896,
+        "mean_offset_eV": 0.6670879438610743,
+        "mean_abs_offset_eV": 0.671694161608595
+      },
+      "ea_vs_koopmans": {
+        "n": 241,
+        "spearman_rho": 0.9726226809780188,
+        "pearson_r": 0.9933717024868631,
+        "mean_offset_eV": -0.9504118314771319,
+        "mean_abs_offset_eV": 0.9504118314771319
+      }
+    }
+  },
+  "anion_signature": {
+    "by_medium": {
+      "gas": {
+        "n": 241,
+        "unbound": 188,
+        "share": 0.7800829875518672
+      },
+      "thf": {
+        "n": 242,
+        "unbound": 86,
+        "share": 0.35537190082644626
+      },
+      "benzaldehyde": {
+        "n": 242,
+        "unbound": 87,
+        "share": 0.359504132231405
+      },
+      "water": {
+        "n": 241,
+        "unbound": 80,
+        "share": 0.33195020746887965
+      }
+    },
+    "gas_share": 0.7800829875518672,
+    "water_share": 0.33195020746887965,
+    "gas_minus_water": 0.44813278008298757,
+    "thresholds": {
+      "gas_share": 0.5,
+      "gap": 0.2
+    },
+    "holds": true
+  },
+  "rank_rows": [
+    {
+      "channel": "ip",
+      "charge_class": "neutral",
+      "left": "gas",
+      "right": "thf",
+      "n": 238,
+      "spearman_rho": 0.9704411397523366,
+      "kendall_tau_b": 0.8607240364500229,
+      "pearson_r": 0.9944968581535915,
+      "mean_signed_shift_eV": -1.9573625555491596,
+      "mean_abs_shift_eV": 1.9573625555491596,
+      "naive_inversions": 1964,
+      "f_naive_inversion": 0.06963798177498848,
+      "pairs": 28203,
+      "topk_10": 0.875,
+      "topk_20": 0.875,
+      "topk_30": 0.9154929577464789
+    },
+    {
+      "channel": "ip",
+      "charge_class": "neutral",
+      "left": "gas",
+      "right": "benzaldehyde",
+      "n": 238,
+      "spearman_rho": 0.9758175819451239,
+      "kendall_tau_b": 0.8762542991880294,
+      "pearson_r": 0.9914875457125261,
+      "mean_signed_shift_eV": -1.792952990540378,
+      "mean_abs_shift_eV": 1.7945614182288654,
+      "naive_inversions": 1745,
+      "f_naive_inversion": 0.061872850405985176,
+      "pairs": 28203,
+      "topk_10": 0.9166666666666666,
+      "topk_20": 0.8958333333333334,
+      "topk_30": 0.9154929577464789
+    },
+    {
+      "channel": "ip",
+      "charge_class": "neutral",
+      "left": "gas",
+      "right": "water",
+      "n": 238,
+      "spearman_rho": 0.9493813308385693,
+      "kendall_tau_b": 0.8190263447151012,
+      "pearson_r": 0.9907847010237354,
+      "mean_signed_shift_eV": -2.2576560443619753,
+      "mean_abs_shift_eV": 2.2576560443619753,
+      "naive_inversions": 2552,
+      "f_naive_inversion": 0.09048682764244939,
+      "pairs": 28203,
+      "topk_10": 0.8333333333333334,
+      "topk_20": 0.8333333333333334,
+      "topk_30": 0.8028169014084507
+    },
+    {
+      "channel": "ip",
+      "charge_class": "neutral",
+      "left": "thf",
+      "right": "benzaldehyde",
+      "n": 238,
+      "spearman_rho": 0.9935749735517322,
+      "kendall_tau_b": 0.9382335212566038,
+      "pearson_r": 0.9946968009251592,
+      "mean_signed_shift_eV": 0.1644095650087815,
+      "mean_abs_shift_eV": 0.18310668552197473,
+      "naive_inversions": 871,
+      "f_naive_inversion": 0.030883239371698047,
+      "pairs": 28203,
+      "topk_10": 0.9166666666666666,
+      "topk_20": 0.9583333333333334,
+      "topk_30": 0.9577464788732394
+    },
+    {
+      "channel": "ip",
+      "charge_class": "neutral",
+      "left": "thf",
+      "right": "water",
+      "n": 238,
+      "spearman_rho": 0.9923243276443041,
+      "kendall_tau_b": 0.9427011310853454,
+      "pearson_r": 0.9976315312945196,
+      "mean_signed_shift_eV": -0.3002934888128152,
+      "mean_abs_shift_eV": 0.3159013117712185,
+      "naive_inversions": 808,
+      "f_naive_inversion": 0.028649434457327233,
+      "pairs": 28203,
+      "topk_10": 0.9583333333333334,
+      "topk_20": 0.9583333333333334,
+      "topk_30": 0.8591549295774648
+    },
+    {
+      "channel": "ip",
+      "charge_class": "neutral",
+      "left": "benzaldehyde",
+      "right": "water",
+      "n": 238,
+      "spearman_rho": 0.9894269237804757,
+      "kendall_tau_b": 0.9216395418927064,
+      "pearson_r": 0.994536121801875,
+      "mean_signed_shift_eV": -0.46470305382159666,
+      "mean_abs_shift_eV": 0.47311973286226894,
+      "naive_inversions": 1105,
+      "f_naive_inversion": 0.03918022905364678,
+      "pairs": 28203,
+      "topk_10": 0.9166666666666666,
+      "topk_20": 0.9166666666666666,
+      "topk_30": 0.8873239436619719
+    },
+    {
+      "channel": "ea",
+      "charge_class": "neutral",
+      "left": "gas",
+      "right": "thf",
+      "n": 237,
+      "spearman_rho": 0.9930975608436896,
+      "kendall_tau_b": 0.937638561109919,
+      "pearson_r": 0.9968685371320394,
+      "mean_signed_shift_eV": 1.8626511942290502,
+      "mean_abs_shift_eV": 1.8626511942290502,
+      "naive_inversions": 872,
+      "f_naive_inversion": 0.031180719445040406,
+      "pairs": 27966,
+      "topk_10": 0.9166666666666666,
+      "topk_20": 0.9574468085106383,
+      "topk_30": 0.9014084507042254
+    },
+    {
+      "channel": "ea",
+      "charge_class": "neutral",
+      "left": "gas",
+      "right": "benzaldehyde",
+      "n": 237,
+      "spearman_rho": 0.9892952246335136,
+      "kendall_tau_b": 0.9332761210040763,
+      "pearson_r": 0.9938634417900118,
+      "mean_signed_shift_eV": 1.8736659238852884,
+      "mean_abs_shift_eV": 1.8736659238852884,
+      "naive_inversions": 933,
+      "f_naive_inversion": 0.03336193949796181,
+      "pairs": 27966,
+      "topk_10": 0.9166666666666666,
+      "topk_20": 0.9361702127659575,
+      "topk_30": 0.8873239436619719
+    },
+    {
+      "channel": "ea",
+      "charge_class": "neutral",
+      "left": "gas",
+      "right": "water",
+      "n": 237,
+      "spearman_rho": 0.9831004274698509,
+      "kendall_tau_b": 0.907673603661589,
+      "pearson_r": 0.9937210608533468,
+      "mean_signed_shift_eV": 2.29678128091325,
+      "mean_abs_shift_eV": 2.29678128091325,
+      "naive_inversions": 1291,
+      "f_naive_inversion": 0.046163198169205465,
+      "pairs": 27966,
+      "topk_10": 0.9166666666666666,
+      "topk_20": 0.8723404255319149,
+      "topk_30": 0.8309859154929577
+    },
+    {
+      "channel": "ea",
+      "charge_class": "neutral",
+      "left": "thf",
+      "right": "benzaldehyde",
+      "n": 237,
+      "spearman_rho": 0.9898973964183398,
+      "kendall_tau_b": 0.9617392548094112,
+      "pearson_r": 0.9937761413583031,
+      "mean_signed_shift_eV": 0.011014729656237973,
+      "mean_abs_shift_eV": 0.12917281951393925,
+      "naive_inversions": 535,
+      "f_naive_inversion": 0.019130372595294286,
+      "pairs": 27966,
+      "topk_10": 0.875,
+      "topk_20": 0.9574468085106383,
+      "topk_30": 0.9577464788732394
+    },
+    {
+      "channel": "ea",
+      "charge_class": "neutral",
+      "left": "thf",
+      "right": "water",
+      "n": 237,
+      "spearman_rho": 0.9950050391321514,
+      "kendall_tau_b": 0.9605950082242722,
+      "pearson_r": 0.9987540751709645,
+      "mean_signed_shift_eV": 0.43413008668419956,
+      "mean_abs_shift_eV": 0.442530391894208,
+      "naive_inversions": 551,
+      "f_naive_inversion": 0.019702495887863835,
+      "pairs": 27966,
+      "topk_10": 1.0,
+      "topk_20": 0.8936170212765957,
+      "topk_30": 0.9295774647887324
+    },
+    {
+      "channel": "ea",
+      "charge_class": "neutral",
+      "left": "benzaldehyde",
+      "right": "water",
+      "n": 237,
+      "spearman_rho": 0.9825920069808657,
+      "kendall_tau_b": 0.9384967460487734,
+      "pearson_r": 0.9922340037365103,
+      "mean_signed_shift_eV": 0.42311535702796155,
+      "mean_abs_shift_eV": 0.5015554361419844,
+      "naive_inversions": 860,
+      "f_naive_inversion": 0.030751626975613244,
+      "pairs": 27966,
+      "topk_10": 0.875,
+      "topk_20": 0.8723404255319149,
+      "topk_30": 0.9295774647887324
+    }
+  ],
+  "reference_step": {
+    "n": 10,
+    "note": "RX-392 交集极薄；约定为自由能，本臂为能量差",
+    "usable": true,
+    "ip_gas": {
+      "n": 10,
+      "spearman_rho": 0.34545454545454546,
+      "pearson_r": 0.5089188085765821,
+      "mean_signed_difference_eV": 6.777011557634441,
+      "mean_abs_difference_eV": 6.777011557634441
+    },
+    "ip_thf": {
+      "n": 10,
+      "spearman_rho": 0.4787878787878787,
+      "pearson_r": 0.6027181137082149,
+      "mean_signed_difference_eV": 4.481390660484442,
+      "mean_abs_difference_eV": 4.481390660484442
+    },
+    "ip_benzaldehyde": {
+      "n": 10,
+      "spearman_rho": 0.4666666666666666,
+      "pearson_r": 0.5857673701052825,
+      "mean_signed_difference_eV": 4.646708607674442,
+      "mean_abs_difference_eV": 4.646708607674442
+    },
+    "ip_water": {
+      "n": 10,
+      "spearman_rho": 0.4787878787878787,
+      "pearson_r": 0.6148516438026012,
+      "mean_signed_difference_eV": 4.065381092594441,
+      "mean_abs_difference_eV": 4.065381092594441
+    },
+    "ea_water": {
+      "n": 10,
+      "spearman_rho": -0.24848484848484845,
+      "mean_signed_difference_eV": 1.5840625046734034
+    },
+    "H5_holds": false,
+    "H5_thresholds": {
+      "offset_eV": 1.0,
+      "rho": 0.6
+    }
+  },
+  "anchor": {
+    "n_compounds_compared": 243,
+    "max_abs_delta_eV": 0.0,
+    "tolerance_eV": 1e-06,
+    "holds": true
+  },
+  "failures": {
+    "total": 45,
+    "by_arm": {
+      "thf_neutral": 6,
+      "benzaldehyde_neutral": 4,
+      "benzaldehyde_cation": 5,
+      "gas_neutral": 4,
+      "gas_anion": 5,
+      "thf_anion": 4,
+      "benzaldehyde_anion": 4,
+      "water_neutral": 3,
+      "water_anion": 5,
+      "thf_cation": 2,
+      "water_cation": 2,
+      "gas_cation": 1
+    }
+  },
+  "retry": {
+    "attempted": 45,
+    "recovered": 13,
+    "post_hoc": "not_preregistered"
+  },
+  "hypotheses": {
+    "H1": {
+      "verdict": "成立",
+      "by_medium": {
+        "thf": {
+          "n": 238,
+          "mean_eV": -1.95736255554916,
+          "sd_eV": 0.2386955309340583,
+          "share_negative": 1.0,
+          "share_positive": 0.0,
+          "share_in_predicted_direction": 1.0,
+          "threshold": 0.9,
+          "holds": true
+        },
+        "benzaldehyde": {
+          "n": 238,
+          "mean_eV": -1.792952990540378,
+          "sd_eV": 0.30302389071278485,
+          "share_negative": 0.9957983193277311,
+          "share_positive": 0.004201680672268907,
+          "share_in_predicted_direction": 0.9957983193277311,
+          "threshold": 0.9,
+          "holds": true
+        },
+        "water": {
+          "n": 238,
+          "mean_eV": -2.2576560443619753,
+          "sd_eV": 0.31313793776143656,
+          "share_negative": 1.0,
+          "share_positive": 0.0,
+          "share_in_predicted_direction": 1.0,
+          "threshold": 0.9,
+          "holds": true
+        }
+      }
+    },
+    "H2": {
+      "verdict": "成立",
+      "by_medium": {
+        "thf": {
+          "n": 237,
+          "mean_eV": 1.8626511942290844,
+          "sd_eV": 0.24734898987793438,
+          "share_negative": 0.0,
+          "share_positive": 1.0,
+          "share_in_predicted_direction": 1.0,
+          "threshold": 0.8,
+          "holds": true
+        },
+        "benzaldehyde": {
+          "n": 237,
+          "mean_eV": 1.8736659238854223,
+          "sd_eV": 0.3469954143947159,
+          "share_negative": 0.0,
+          "share_positive": 1.0,
+          "share_in_predicted_direction": 1.0,
+          "threshold": 0.8,
+          "holds": true
+        },
+        "water": {
+          "n": 237,
+          "mean_eV": 2.296781280913291,
+          "sd_eV": 0.3495399879042285,
+          "share_negative": 0.0,
+          "share_positive": 1.0,
+          "share_in_predicted_direction": 1.0,
+          "threshold": 0.8,
+          "holds": true
+        }
+      }
+    },
+    "H3": {
+      "verdict": "判否"
+    },
+    "H4": {
+      "verdict": "成立"
+    },
+    "H5": {
+      "verdict": "判否"
+    },
+    "H6": {
+      "verdict": "成立"
+    }
+  },
+  "elapsed_seconds": 237.35387039999478,
+  "main_scoreboard_attempts_delta": 0,
+  "declared_limits": [
+    "层级：GFN2-xTB 半经验 --opt，不是 DFT 级；P_1 只被低层级实例化",
+    "绝热口径（三态各自优化）与垂直口径不同，不得与本仓历史数值混比",
+    "RX-392 交集只有 10 个化合物，属于极薄外部对照，不得当作验证结论",
+    "气相阴离子在无外部束缚时物理上可能不成立；H4 正是测这一件事，而不是回避它",
+    "只对 246 名册成立；离子液体类化合物（净电荷非零）的阴阳离子臂是二阶电离/电子附着，含义与中性分子不同，必须分开统计"
+  ],
+  "forbidden": [
+    "不引用任何 Reaxys 数值",
+    "不把 RX-392 / Batt 参考层折进任何训练池或标签",
+    "不动四个冻结读数（0.4091179943351143 / 0.4766400383507876 / 0.5861142332208197 / 0.6216672295270079）",
+    "不占主记分牌 shot",
+    "不改动冻结的 xtb_optimisation_arguments（开壳层走新增函数）",
+    "不把 IP/EA 的绝对量级与参考层直接对比而不声明约定差",
+    "不把净电荷非零化合物的阴阳离子臂与中性分子的阴阳离子臂混在同一统计里"
+  ],
+  "boundaries": [
+    "半经验 GFN2-xTB --opt，不是 DFT 级",
+    "绝热口径（三态各自优化）",
+    "RX-392 交集只有 10 个化合物且为自由能约定",
+    "净电荷非零化合物单独统计，不与中性分子混合",
+    "四个冻结读数未动、主记分牌尝试 0 次"
+  ],
+  "anchor_entries": [
+    {
+      "inchikey": "AFBPFSWMIHJQDM-UHFFFAOYSA-N",
+      "name": "N-methylaniline",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ALYCOCULEAWWJO-UHFFFAOYSA-N",
+      "name": "triethylpentylammonium bis(trifluoromethylsulfonyl)imide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "AMQJEAYHLZJPGS-UHFFFAOYSA-N",
+      "name": "pentan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BAPJBEWLBFYGME-UHFFFAOYSA-N",
+      "name": "methyl propenoate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BBMCTIGTTCKYKF-UHFFFAOYSA-N",
+      "name": "heptan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BDERNNFJNOPAEC-UHFFFAOYSA-N",
+      "name": "propan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BGTOWKSIORTVQH-UHFFFAOYSA-N",
+      "name": "cyclopentanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BKIMMITUMNQMOS-UHFFFAOYSA-N",
+      "name": "nonane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BMRWNKZVCUKKSR-UHFFFAOYSA-N",
+      "name": "1,2-butanediol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BTANRVKWQNVYAZ-UHFFFAOYSA-N",
+      "name": "butan-2-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BTGRAWJCKBQKAO-UHFFFAOYSA-N",
+      "name": "hexanedinitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BTNXBLUGMAMSSH-UHFFFAOYSA-N",
+      "name": "octanedinitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "CBTVGIZVANVGBH-UHFFFAOYSA-N",
+      "name": "2-amino-2-methylpropan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "CGZZMOTZOONQIA-UHFFFAOYSA-N",
+      "name": "cycloheptanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "CQEYYJKEWSMYFG-UHFFFAOYSA-N",
+      "name": "butyl 2-propenoate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "CRVGTESFCCXCTH-UHFFFAOYSA-N",
+      "name": "N-methyldiethanolamine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DKGAVHZHDRPRBM-UHFFFAOYSA-N",
+      "name": "2-methylpropan-2-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DNIAPMSPPWPWGF-UHFFFAOYSA-N",
+      "name": "1,2-propanediol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DURPTKYDGMDSBL-UHFFFAOYSA-N",
+      "name": "dibutyl ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "FRZPYEHDSAQGAS-UHFFFAOYSA-M",
+      "name": "1-butyl-3-methylimidazolium trifluoromethanesulfonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "FXHOOIRPVKKKFG-UHFFFAOYSA-N",
+      "name": "N,N-dimethylethanamide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "FYIRUPZTYPILDH-UHFFFAOYSA-N",
+      "name": "1,1,1,2,3,3-hexafluoropropane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GRYUVYIMDGRRLN-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3,4,5-tetramethylimidazolium bis(trifluoromethylsulfonyl)imide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GSEJCLTVZPLZKY-UHFFFAOYSA-N",
+      "name": "triethanolamine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HPXRVTGHNJAIIH-UHFFFAOYSA-N",
+      "name": "cyclohexanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HQWOEDCLDNFWEV-UHFFFAOYSA-M",
+      "name": "1-ethyl-3-methylimidazolium diethyl phosphate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HXJUTPCZVOIRIF-UHFFFAOYSA-N",
+      "name": "sulfolane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HZAXFHJVJLSVMW-UHFFFAOYSA-N",
+      "name": "2-aminoethan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HZKDSQCZNUUQIF-UHFFFAOYSA-M",
+      "name": "1-ethyl-3-methylimidazolium hydrogen sulfate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "IAZDPXIOMUYVGZ-UHFFFAOYSA-N",
+      "name": "dimethyl sulfoxide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "IEJIGPNLZYLLBP-UHFFFAOYSA-N",
+      "name": "dimethyl carbonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "IIRFCWANHMSDCG-UHFFFAOYSA-N",
+      "name": "cyclooctanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "IMNFDUFMRHMDMM-UHFFFAOYSA-N",
+      "name": "heptane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JHIVVAPYMSGYDF-UHFFFAOYSA-N",
+      "name": "cyclohexanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JIGUQPWFLRLWPJ-UHFFFAOYSA-N",
+      "name": "ethyl propenoate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JWFPQAXAGSAKRF-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethylimidazolium hexafluorophosphate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JYPJLAPMBJKRDG-UHFFFAOYSA-M",
+      "name": "1-ethyl-3-methylimidazolium butylsulfonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KBPLFHHGFOOTCA-UHFFFAOYSA-N",
+      "name": "octan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KFZMGEQAYNKOFK-UHFFFAOYSA-N",
+      "name": "propan-2-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KLTUZFZUYLXTFF-UHFFFAOYSA-N",
+      "name": "1-(2-hydroxyethyl)-3-methylimidazolium tetrafluoroborate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LBHLGZNUPKUZJC-UHFFFAOYSA-N",
+      "name": "1-butyl-1-methylpyrrolidinium dicyanamide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",
+      "name": "ethanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LLEVMYXEJUDBTA-UHFFFAOYSA-N",
+      "name": "heptanedinitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LRHPLDYGYMQRHN-UHFFFAOYSA-N",
+      "name": "butan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LSBXQLQATZTAPE-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium tetrafluoroborate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LVTYICIALWPMFW-UHFFFAOYSA-N",
+      "name": "N-(2-hydroxypropyl)-2-hydroxy-1-propanamine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LYCAIKOWRPUZTN-UHFFFAOYSA-N",
+      "name": "1,2-ethanediol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LZJIBRSVPKKOSI-UHFFFAOYSA-O",
+      "name": "ethanolammonium nitrate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "MCTWTZJPVLRJOU-UHFFFAOYSA-N",
+      "name": "1-methylimidazole",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "MTHSVFCYNBDYFN-UHFFFAOYSA-N",
+      "name": "diethylene glycol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "MWKFXSUHUHTGQN-UHFFFAOYSA-N",
+      "name": "decan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "NEQXUPRFDXNNTA-UHFFFAOYSA-N",
+      "name": "2-hydroxyethylammonium lactate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "OHLUUHNLEMFGTQ-UHFFFAOYSA-N",
+      "name": "N-methylacetamide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "OIFBSDVPJOWBCH-UHFFFAOYSA-N",
+      "name": "diethyl carbonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "OKKJLVBELUTLKV-UHFFFAOYSA-N",
+      "name": "methanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "OOKUTCYPKPJYFV-UHFFFAOYSA-N",
+      "name": "1-methylimidazolium bromide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "PEDCQBHIVMGVHV-UHFFFAOYSA-N",
+      "name": "glycerol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QRCRANRUHQKZME-UHFFFAOYSA-N",
+      "name": "3-butyl-1,2,4,5-tetramethyl-1H-imidazol-3-ium tetrafluoroborate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QTBSBXVTEAMEQO-UHFFFAOYSA-N",
+      "name": "acetic acid",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RJQQOKKINHMXIM-UHFFFAOYSA-N",
+      "name": "triethanolamine lactate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RYHBNJHYFVUHQT-UHFFFAOYSA-N",
+      "name": "1,4-dioxane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SBZXBUIDTXKZTM-UHFFFAOYSA-N",
+      "name": "2,5,8-trioxanonane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SHQSVMDWKBRBGB-UHFFFAOYSA-N",
+      "name": "cyclobutanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SIXHYMZEOJSYQH-UHFFFAOYSA-M",
+      "name": "1-butyl-3-methylimidazolium thiocyanate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "STCBHSHARMAIOM-UHFFFAOYSA-N",
+      "name": "1-methylimidazolium chloride",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "TVMXDCGIABBOFY-UHFFFAOYSA-N",
+      "name": "octane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UAEPNZWRGJTJPN-UHFFFAOYSA-N",
+      "name": "methylcyclohexane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UCCKRVYTJPMHRO-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethyl-1H-imidazolium bis(trifluoromethylsulfonyl)amide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UEEJHVSXFDXPFK-UHFFFAOYSA-N",
+      "name": "2-(N,N-dimethylamino)ethanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UODQEMVTULZGKO-UHFFFAOYSA-N",
+      "name": "1-pentyl-1-methylpyrrolidinium 1,1,1-trifluoro-N-[(trifluoromethyl)sulfonyl]methanesulfonamide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UPCXAARSWVHVLY-UHFFFAOYSA-N",
+      "name": "triethanolammonium acetate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UWHCKJMYHZGTIT-UHFFFAOYSA-N",
+      "name": "tetraethylene glycol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "VCAIYEJBOWHUGP-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethylimidazolium tetrafluoroborate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "VFTFKUDGYRBSAL-UHFFFAOYSA-N",
+      "name": "1,4,7,10,13-pentaoxacyclopentadecane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "VRFOKYHDLYBVAL-UHFFFAOYSA-M",
+      "name": "1-ethyl-3-methylimidazolium ethyl sulfate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "VVLAIYIMMFWRFW-UHFFFAOYSA-N",
+      "name": "2-hydroxyethylammonium acetate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WYJOVVXUZNRJQY-UHFFFAOYSA-N",
+      "name": "2-acetylthiophene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WZLFPVPRZGTCKP-UHFFFAOYSA-N",
+      "name": "1,1,1,3,3-pentafluorobutane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XDJYSDBSJWNTQT-UHFFFAOYSA-N",
+      "name": "1-ethyl-2,3-dimethylimidazolium bis[(trifluoromethyl)sulfonyl]imide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XDTMQSROBMDMFD-UHFFFAOYSA-N",
+      "name": "cyclohexane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
+      "name": "water",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XQQZRZQVBFHBHL-UHFFFAOYSA-N",
+      "name": "1,4,7,10-tetraoxacyclododecane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XTHFKEDIFFGKHM-UHFFFAOYSA-N",
+      "name": "1,2-dimethoxyethane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+      "name": ".gamma.-butyrolactone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YEYKMVJDLWJFOA-UHFFFAOYSA-N",
+      "name": "2-propoxyethanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YFMFNYKEUDLDTL-UHFFFAOYSA-N",
+      "name": "1,1,1,2,3,3,3-heptafluoropropane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YFNKIDBQEZZDLK-UHFFFAOYSA-N",
+      "name": "2,5,8,11-tetraoxadodecane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YIWUKEYIRIRTPP-UHFFFAOYSA-N",
+      "name": "2-ethyl-1-hexanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YXFVVABEGXRONW-UHFFFAOYSA-N",
+      "name": "toluene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZBCBWPMODOFKDW-UHFFFAOYSA-N",
+      "name": "diethanolamine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZHNUHDYFZUAESO-UHFFFAOYSA-N",
+      "name": "formamide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZIBGPFATKBEMQZ-UHFFFAOYSA-N",
+      "name": "triethylene glycol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZMXDDKWLCZADIW-UHFFFAOYSA-N",
+      "name": "dimethylformamide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZPTRYWVRCNOTAS-UHFFFAOYSA-M",
+      "name": "1-ethyl-3-methylimidazolium trifluoromethanesulfonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZSIAUFGUXNUGDI-UHFFFAOYSA-N",
+      "name": "hexan-1-ol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZTOMUSMDRMJOTH-UHFFFAOYSA-N",
+      "name": "pentanedinitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZUHZGEOKBKGPSW-UHFFFAOYSA-N",
+      "name": "2,5,8,11,14-pentaoxapentadecane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZXEKIIBDNHEJCQ-UHFFFAOYSA-N",
+      "name": "2-methyl-1-propanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HXDLWJWIAHWIKI-UHFFFAOYSA-N",
+      "name": "beta-Hydroxyethyl acetate (Glycol monoacetate)",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "IYXGSMUGOJNHAZ-UHFFFAOYSA-N",
+      "name": "Diethyl malonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SVONRAPFKPVNKG-UHFFFAOYSA-N",
+      "name": "beta-Ethoxyethyl acetate (\"Cellosolve\" acetate)",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KXKVLQRXCPHEJC-UHFFFAOYSA-N",
+      "name": "Methyl acetate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XEKOWRVHYACXOJ-UHFFFAOYSA-N",
+      "name": "Ethyl acetate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DIQMPQMYFZXDAX-UHFFFAOYSA-N",
+      "name": "Amyl formate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DKPFZGUDAPQIHT-UHFFFAOYSA-N",
+      "name": "Butyl acetate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GJRQTCIYDGXPES-UHFFFAOYSA-N",
+      "name": "Isobutyl acetate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XNWFRZJHXBZDAG-UHFFFAOYSA-N",
+      "name": "2-Methoxyethanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SWXVUIWOUIDPGS-UHFFFAOYSA-N",
+      "name": "4-Hydroxy-4-methyl-2-pentanone (Diacetone alcohol)",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "CSCPPACGZOOCGX-UHFFFAOYSA-N",
+      "name": "Acetone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RTZKZFJDLAIYFH-UHFFFAOYSA-N",
+      "name": "Ethyl ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XNLICIUVMPYHGG-UHFFFAOYSA-N",
+      "name": "2-Pentanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "FDPIMTJIUBPUKL-UHFFFAOYSA-N",
+      "name": "3-Pentanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "NTIZESTWPVYFNL-UHFFFAOYSA-N",
+      "name": "4-Methyl-2-pentanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JFDZBHWFFUWGJE-UHFFFAOYSA-N",
+      "name": "Benzonitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DTQVDTLACAAQTR-UHFFFAOYSA-N",
+      "name": "Trifluoroacetic acid",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HEBKCHPVOIAQTA-NGQZWQHPSA-N",
+      "name": "Xylitol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "NVJBFARDFTXOTO-UHFFFAOYSA-N",
+      "name": "Ethyl sulfite",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SQYNKIJPMDEDEG-UHFFFAOYSA-N",
+      "name": "Paraldehyde",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WFCLYEAZTHWNEH-UHFFFAOYSA-N",
+      "name": "Ethyl thiocyanate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YPFDHNVEDLHUCE-UHFFFAOYSA-N",
+      "name": "1,3-Propanediol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "FERIUCNNQQJTOY-UHFFFAOYSA-N",
+      "name": "Butyric acid",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YNAVUWVOSKDBBP-UHFFFAOYSA-N",
+      "name": "Morpholine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WERYXYBDKMZEQL-UHFFFAOYSA-N",
+      "name": "1,4-Butanediol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SPEUIVXLLWOEMJ-UHFFFAOYSA-N",
+      "name": "1,1-Dimethoxyethane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "NQPDZGIKBAWPEJ-UHFFFAOYSA-N",
+      "name": "Valeric acid",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GWYFCOCPABKNJV-UHFFFAOYSA-N",
+      "name": "Isovaleric acid",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ISPYQTSUDJAMAB-UHFFFAOYSA-N",
+      "name": "o-Chlorophenol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SVTBMSDMJJWYQN-UHFFFAOYSA-N",
+      "name": "2-Methyl-2,4-pentanediol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DHKHKXVYLBGOIT-UHFFFAOYSA-N",
+      "name": "1,1-Diethoxyethane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QJPJQTDYNZXKQF-UHFFFAOYSA-N",
+      "name": "p-Bromoanisole",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WEVYAHXRMPXWCK-UHFFFAOYSA-N",
+      "name": "Acetonitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LCGLNKUTAGEVQW-UHFFFAOYSA-N",
+      "name": "Methyl ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "FVSKHRXBFJPNKK-UHFFFAOYSA-N",
+      "name": "Propionitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "NKKMVIVFRUYPLQ-NSCUHMNNSA-N",
+      "name": "Crotononitrile (bp 108 C)",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZWEHNKRNPOVVGH-UHFFFAOYSA-N",
+      "name": "2-Butanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "XCIXKGXIYUWCLL-UHFFFAOYSA-N",
+      "name": "Cyclopentanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "PHTQWCKDNZKARW-UHFFFAOYSA-N",
+      "name": "3-Methyl-1-butanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "MSXVEPNJUHWQHW-UHFFFAOYSA-N",
+      "name": "2-Methyl-2-butanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "POLCUAVZOMRGSN-UHFFFAOYSA-N",
+      "name": "Propyl ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZAFNJMIOTHYJRJ-UHFFFAOYSA-N",
+      "name": "Isopropyl ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WVDDGKGOMKODPV-UHFFFAOYSA-N",
+      "name": "Benzyl alcohol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QWVGKYWNOKOFNN-UHFFFAOYSA-N",
+      "name": "o-Cresol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RLSSMJSEOOYNOY-UHFFFAOYSA-N",
+      "name": "m-Cresol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RDOXTESZEPMUJZ-UHFFFAOYSA-N",
+      "name": "Methoxybenzene (Anisole)",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LFSAPCRASZRSKS-UHFFFAOYSA-N",
+      "name": "2-Methylcyclohexanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UJBOOUHRTQVGRU-UHFFFAOYSA-N",
+      "name": "3-Methylcyclohexanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "VGVHNLRUAMRIEW-UHFFFAOYSA-N",
+      "name": "4-Methylcyclohexanone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "NDVWOBYBJYUSMF-UHFFFAOYSA-N",
+      "name": "2-Methylcyclohexanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HTSABYAWKQAHBT-UHFFFAOYSA-N",
+      "name": "3-Methylcyclohexanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "MQWCXKGKQLNYQG-UHFFFAOYSA-N",
+      "name": "4-Methylcyclohexanol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QGJOPFRUJISHPQ-UHFFFAOYSA-N",
+      "name": "Carbon disulfide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LCZUOKDVTBMCMX-UHFFFAOYSA-N",
+      "name": "2,5-Dimethylpyrazine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "MVPPADPHJFYWMZ-UHFFFAOYSA-N",
+      "name": "Chlorobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YWAKXRMUMFPDSH-UHFFFAOYSA-N",
+      "name": "1-Pentene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "MHNNAWXXUZQSNM-UHFFFAOYSA-N",
+      "name": "2-Methyl-1-butene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RGSFGYAAUTVSQA-UHFFFAOYSA-N",
+      "name": "Cyclopentane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "FOTXAJDDGPYIFU-UHFFFAOYSA-N",
+      "name": "Ethylcyclopropane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "OFBQJSOFQDEBGM-UHFFFAOYSA-N",
+      "name": "n-Pentane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QWTDNUCVQCZILF-UHFFFAOYSA-N",
+      "name": "2-Methylbutane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UHOVQNZJYSORNB-UHFFFAOYSA-N",
+      "name": "Benzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HGCIXCUEYOPUTN-UHFFFAOYSA-N",
+      "name": "Cyclohexene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GDOPTJXRTPNYNR-UHFFFAOYSA-N",
+      "name": "Methylcyclopentane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "NEZRFXZYPAIZAD-UHFFFAOYSA-N",
+      "name": "Ethylcyclobutane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZQDPJFUHLCOCRG-WAYWQWQTSA-N",
+      "name": "cis-3-Hexene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZQDPJFUHLCOCRG-AATRIKPKSA-N",
+      "name": "trans-3-Hexene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "VLKZOEOYAKHREP-UHFFFAOYSA-N",
+      "name": "n-Hexane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RWNKSTSCBHKHTB-UHFFFAOYSA-N",
+      "name": "Hexachloro-1,3-butadiene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "CYTYCFOTNPOANT-UHFFFAOYSA-N",
+      "name": "Tetrachloroethylene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UQEAIHBTYFGYIE-UHFFFAOYSA-N",
+      "name": "Hexamethyldisiloxane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GETTZEONDQJALK-UHFFFAOYSA-N",
+      "name": "alpha,alpha,alpha-Trifluorotoluene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KFUSEUYYWQURPO-UPHRSURJSA-N",
+      "name": "cis-1,2-Dichloroethylene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KFUSEUYYWQURPO-OWOJBTEDSA-N",
+      "name": "trans-1,2-Dichloroethylene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "PIICEJLVQHRZGT-UHFFFAOYSA-N",
+      "name": "1,2-Ethanediamine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HBNYJWAFDZLWRS-UHFFFAOYSA-N",
+      "name": "Ethyl isothiocyanate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QBELEDRHMPMKHP-UHFFFAOYSA-N",
+      "name": "1-Bromo-2-chlorobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JRGGUPZKKTVKOV-UHFFFAOYSA-N",
+      "name": "1-Bromo-3-chlorobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WQONPSCCEXUXTQ-UHFFFAOYSA-N",
+      "name": "o-Dibromobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JSRLURSZEMLAFO-UHFFFAOYSA-N",
+      "name": "m-Dibromobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RFFLAFLAYFXFSW-UHFFFAOYSA-N",
+      "name": "o-Dichlorobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZPQOPVIELGIULI-UHFFFAOYSA-N",
+      "name": "m-Dichlorobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SFPQFQUXAJOWNF-UHFFFAOYSA-N",
+      "name": "m-Diiodobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ROSDSFDQCJNGOL-UHFFFAOYSA-N",
+      "name": "Dimethylamine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GETQZCLCWQTVFV-UHFFFAOYSA-N",
+      "name": "Trimethylamine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YLQBMQCUIZJEEH-UHFFFAOYSA-N",
+      "name": "Furan",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WQAQPCDUOCURKW-UHFFFAOYSA-N",
+      "name": "1-Butanethiol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "LJSQFQKUNVCTIA-UHFFFAOYSA-N",
+      "name": "Ethyl sulfide",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JUJWROOIHBZHMG-UHFFFAOYSA-N",
+      "name": "Pyridine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "OEPRBXUJOQLYID-UHFFFAOYSA-N",
+      "name": "1-Fluoropentane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HLLCNVLEVVFTJB-UHFFFAOYSA-N",
+      "name": "2-Fluoro-2-methylbutane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZRKMQKLGEQPLNS-UHFFFAOYSA-N",
+      "name": "1-Pentanethiol",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QARVLSVVCXYDNA-UHFFFAOYSA-N",
+      "name": "Bromobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "PYLWMHQQBFSUBP-UHFFFAOYSA-N",
+      "name": "Fluorobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SNHMUERNLJLMHN-UHFFFAOYSA-N",
+      "name": "Iodobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "PAYRUJLWNCNPSJ-UHFFFAOYSA-N",
+      "name": "Aniline",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZMANZCXQSJIPKH-UHFFFAOYSA-N",
+      "name": "Triethylamine",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "IBSQPLPBRSHTTG-UHFFFAOYSA-N",
+      "name": "o-Chlorotoluene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "OSOUNOBYRMOXQQ-UHFFFAOYSA-N",
+      "name": "m-Chlorotoluene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "NPDACUSDTOMAMK-UHFFFAOYSA-N",
+      "name": "p-Chlorotoluene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "MMZYCBHLNZVROM-UHFFFAOYSA-N",
+      "name": "o-Fluorotoluene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BTQZKHUEUDPRST-UHFFFAOYSA-N",
+      "name": "m-Fluorotoluene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WRWPPGUCZBJXKX-UHFFFAOYSA-N",
+      "name": "p-Fluorotoluene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "QQONPFPTGQHPMA-UHFFFAOYSA-N",
+      "name": "Propene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "PMJHHCWVYXUKFD-SNAWJCMRSA-N",
+      "name": "1,3-Pentadiene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RRHGJUQNOFWUDK-UHFFFAOYSA-N",
+      "name": "2-Methyl-1,3-butadiene (Isoprene)",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "APPOKADJQUIAHP-UHFFFAOYSA-N",
+      "name": "2,4-Hexadiene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RCJMVGJKROQDCB-UHFFFAOYSA-N",
+      "name": "2-Methyl-1,3-pentadiene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BOGRNZQRTNVZCZ-AATRIKPKSA-N",
+      "name": "3-Methyl-1,3-pentadiene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KVNRLNFWIYMESJ-UHFFFAOYSA-N",
+      "name": "butanenitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RFFFKMOABOFIDF-UHFFFAOYSA-N",
+      "name": "pentanenitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "AILKHAQXUAOOFU-UHFFFAOYSA-N",
+      "name": "hexanenitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YSIMAPNUZAVQER-UHFFFAOYSA-N",
+      "name": "octanenitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HBZDPWBWBJMYRY-UHFFFAOYSA-N",
+      "name": "decanenitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SZKKNEOUHLFYNA-UHFFFAOYSA-N",
+      "name": "undecanenitrile",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "CJSBUWDGPXGFGA-UHFFFAOYSA-N",
+      "name": "4-methyl-1,3-pentadiene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SDJHPPZKZZWAKF-UHFFFAOYSA-N",
+      "name": "2,3-dimethyl-1,3-butadiene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZGEGCLOFRBLKSE-UHFFFAOYSA-N",
+      "name": "1-heptene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "BWEKDYGHDCHWEN-UHFFFAOYSA-N",
+      "name": "2-methyl-2-hexene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RUOJZAUFBMNUDX-UHFFFAOYSA-N",
+      "name": "propylene carbonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KMTRUDSVKNLOMY-UHFFFAOYSA-N",
+      "name": "ethylene carbonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JBTWLSYIZRCDFO-UHFFFAOYSA-N",
+      "name": "ethyl methyl carbonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WNXJIVFYUVYPPR-UHFFFAOYSA-N",
+      "name": "1,3-dioxolane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WYURNTSHIVDZCO-UHFFFAOYSA-N",
+      "name": "tetrahydrofuran",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "JWUJQDFVADABEY-UHFFFAOYSA-N",
+      "name": "2-methyltetrahydrofuran",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GAEKPEKOJKCEMS-UHFFFAOYSA-N",
+      "name": "gamma-valerolactone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "CWIFAKBLLXGZIC-UHFFFAOYSA-N",
+      "name": "1,1,2,2-tetrafluoroethyl 2,2,2-trifluoroethyl ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "HCBRSIIGBBDDCD-UHFFFAOYSA-N",
+      "name": "1,1,2,2-tetrafluoroethyl 2,2,3,3-tetrafluoropropyl ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KGPPDNUWZNWPSI-UHFFFAOYSA-N",
+      "name": "bis(2,2,2-trifluoroethyl) ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "VAYTZRYEBVHVLE-UHFFFAOYSA-N",
+      "name": "vinylene carbonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "RJUFJBKOKNCXHH-UHFFFAOYSA-N",
+      "name": "methyl propionate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "UUIQMZJEGPQKFD-UHFFFAOYSA-N",
+      "name": "methyl butyrate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "GOYDNIKZWGIXJT-UHFFFAOYSA-N",
+      "name": "1,2-difluorobenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DLRJIFUOBPOJNS-UHFFFAOYSA-N",
+      "name": "ethoxybenzene",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SECXISVLQFMRJM-UHFFFAOYSA-N",
+      "name": "N-methylpyrrolidone",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WSLDOOZREJYCGB-UHFFFAOYSA-N",
+      "name": "1,2-dichloroethane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "ZNSMNVMLTJELDZ-UHFFFAOYSA-N",
+      "name": "2,2'-dichlorodiethyl ether",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KNKRKFALVUDBJE-UHFFFAOYSA-N",
+      "name": "1,2-dichloropropane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YHRUOJUYPBUZOS-UHFFFAOYSA-N",
+      "name": "1,3-dichloropropane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "KJDRSWPQXHESDQ-UHFFFAOYSA-N",
+      "name": "1,4-dichlorobutane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "YMWUJEATGCHHMB-UHFFFAOYSA-N",
+      "name": "dichloromethane",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "DQWPFSLDHJDLRL-UHFFFAOYSA-N",
+      "name": "triethyl phosphate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "WVLBCYQITXONBZ-UHFFFAOYSA-N",
+      "name": "trimethyl phosphate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "SBLRHMKNNHXPHG-UHFFFAOYSA-N",
+      "name": "fluoroethylene carbonate",
+      "max_abs_delta_eV": 0.0
+    },
+    {
+      "inchikey": "OOWFYDWAMOKVSF-UHFFFAOYSA-N",
+      "name": "3-methoxypropionitrile",
+      "max_abs_delta_eV": 0.0
+    }
+  ],
+  "retry_entries": [
+    {
+      "inchikey": "ALYCOCULEAWWJO-UHFFFAOYSA-N",
+      "name": "triethylpentylammonium bis(trifluoromethylsulfonyl)imide",
+      "arm": "thf_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GRYUVYIMDGRRLN-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3,4,5-tetramethylimidazolium bis(trifluoromethylsulfonyl)imide",
+      "arm": "thf_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GRYUVYIMDGRRLN-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3,4,5-tetramethylimidazolium bis(trifluoromethylsulfonyl)imide",
+      "arm": "benzaldehyde_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GRYUVYIMDGRRLN-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3,4,5-tetramethylimidazolium bis(trifluoromethylsulfonyl)imide",
+      "arm": "benzaldehyde_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "gas_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "gas_anion",
+      "recovered": "yes",
+      "homo_eV": "-7.8586",
+      "lumo_eV": "-6.5157",
+      "total_E_hartree": "47.4212159862",
+      "error": ""
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "thf_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "thf_anion",
+      "recovered": "yes",
+      "homo_eV": "-4.7487",
+      "lumo_eV": "-3.131",
+      "total_E_hartree": "47.2948354373",
+      "error": ""
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "benzaldehyde_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "benzaldehyde_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "benzaldehyde_anion",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "water_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "arm": "water_anion",
+      "recovered": "yes",
+      "homo_eV": "-4.5769",
+      "lumo_eV": "-2.8384",
+      "total_E_hartree": "47.2938958873",
+      "error": ""
+    },
+    {
+      "inchikey": "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium hexafluorophosphate",
+      "arm": "gas_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium hexafluorophosphate",
+      "arm": "gas_anion",
+      "recovered": "yes",
+      "homo_eV": "-10.4438",
+      "lumo_eV": "-8.2957",
+      "total_E_hartree": "-49.5672670205",
+      "error": ""
+    },
+    {
+      "inchikey": "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium hexafluorophosphate",
+      "arm": "thf_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium hexafluorophosphate",
+      "arm": "thf_anion",
+      "recovered": "yes",
+      "homo_eV": "-7.1676",
+      "lumo_eV": "-4.9224",
+      "total_E_hartree": "-49.6533757217",
+      "error": ""
+    },
+    {
+      "inchikey": "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium hexafluorophosphate",
+      "arm": "benzaldehyde_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium hexafluorophosphate",
+      "arm": "benzaldehyde_anion",
+      "recovered": "yes",
+      "homo_eV": "-7.8141",
+      "lumo_eV": "-5.6737",
+      "total_E_hartree": "-49.6277923449",
+      "error": ""
+    },
+    {
+      "inchikey": "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium hexafluorophosphate",
+      "arm": "water_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "IXQYBUDWDLYNMA-UHFFFAOYSA-N",
+      "name": "1-butyl-3-methylimidazolium hexafluorophosphate",
+      "arm": "water_anion",
+      "recovered": "yes",
+      "homo_eV": "-7.1948",
+      "lumo_eV": "-5.1031",
+      "total_E_hartree": "-49.6453290481",
+      "error": ""
+    },
+    {
+      "inchikey": "JWFPQAXAGSAKRF-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethylimidazolium hexafluorophosphate",
+      "arm": "gas_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "JWFPQAXAGSAKRF-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethylimidazolium hexafluorophosphate",
+      "arm": "thf_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "JWFPQAXAGSAKRF-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethylimidazolium hexafluorophosphate",
+      "arm": "thf_anion",
+      "recovered": "yes",
+      "homo_eV": "-7.4348",
+      "lumo_eV": "-7.0191",
+      "total_E_hartree": "-60.6247835192",
+      "error": ""
+    },
+    {
+      "inchikey": "JWFPQAXAGSAKRF-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethylimidazolium hexafluorophosphate",
+      "arm": "water_anion",
+      "recovered": "yes",
+      "homo_eV": "-7.1262",
+      "lumo_eV": "-6.6653",
+      "total_E_hartree": "-60.64273266",
+      "error": ""
+    },
+    {
+      "inchikey": "KLTUZFZUYLXTFF-UHFFFAOYSA-N",
+      "name": "1-(2-hydroxyethyl)-3-methylimidazolium tetrafluoroborate",
+      "arm": "gas_anion",
+      "recovered": "yes",
+      "homo_eV": "-9.3475",
+      "lumo_eV": "-7.2441",
+      "total_E_hartree": "-40.9490677101",
+      "error": ""
+    },
+    {
+      "inchikey": "OOKUTCYPKPJYFV-UHFFFAOYSA-N",
+      "name": "1-methylimidazolium bromide",
+      "arm": "benzaldehyde_anion",
+      "recovered": "yes",
+      "homo_eV": "-9.1341",
+      "lumo_eV": "-8.3228",
+      "total_E_hartree": "-20.8620226953",
+      "error": ""
+    },
+    {
+      "inchikey": "OOKUTCYPKPJYFV-UHFFFAOYSA-N",
+      "name": "1-methylimidazolium bromide",
+      "arm": "water_anion",
+      "recovered": "yes",
+      "homo_eV": "-9.5979",
+      "lumo_eV": "-8.6364",
+      "total_E_hartree": "-20.8426324855",
+      "error": ""
+    },
+    {
+      "inchikey": "UCCKRVYTJPMHRO-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethyl-1H-imidazolium bis(trifluoromethylsulfonyl)amide",
+      "arm": "thf_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "UCCKRVYTJPMHRO-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethyl-1H-imidazolium bis(trifluoromethylsulfonyl)amide",
+      "arm": "benzaldehyde_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "UCCKRVYTJPMHRO-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethyl-1H-imidazolium bis(trifluoromethylsulfonyl)amide",
+      "arm": "water_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "UPCXAARSWVHVLY-UHFFFAOYSA-N",
+      "name": "triethanolammonium acetate",
+      "arm": "gas_anion",
+      "recovered": "yes",
+      "homo_eV": "-7.7857",
+      "lumo_eV": "-6.0218",
+      "total_E_hartree": "-37.5061812306",
+      "error": ""
+    },
+    {
+      "inchikey": "VCAIYEJBOWHUGP-UHFFFAOYSA-N",
+      "name": "1-butyl-2,3-dimethylimidazolium tetrafluoroborate",
+      "arm": "benzaldehyde_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- scf: Self consistent charge iterator did not converge"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "gas_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "gas_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "gas_anion",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "thf_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "thf_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "thf_anion",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "benzaldehyde_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "benzaldehyde_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "benzaldehyde_anion",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "water_neutral",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "water_cation",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    },
+    {
+      "inchikey": "FYOFOKCECDGJBF-UHFFFAOYSA-N",
+      "name": "Iron pentacarbonyl",
+      "arm": "water_anion",
+      "recovered": "no",
+      "homo_eV": "",
+      "lumo_eV": "",
+      "total_E_hartree": "",
+      "error": "returncode=128 sentinel=False: -1- Found *very* short distance of  0.000E+00 for C1-C3"
+    }
+  ]
+}

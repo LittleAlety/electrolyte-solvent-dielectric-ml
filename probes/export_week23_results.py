@@ -1,12 +1,13 @@
-"""Export the Week 23 deliverables -- the Axis A `P_2` arm.
+"""Export the Week 23 deliverables -- the Axis A `P_2` and `P_1` arms.
 
-Week 23 buys one new cheap-layer column family: the orbital layer under a fixed
-dielectric background.  The frozen framework left section 3 Axis A `P_2`
-("fixed-background continuum") empty, so every cheap orbital number in this
-repository was a gas-phase single point -- for an electrolyte-solvent screen the
-wrong quantity, because oxidation stability is set by the solvated orbital.
+Week 23 buys two new cheap-layer column families and closes the frozen framework
+section 3 Axis A: `P_2` (the orbital layer under a fixed dielectric background,
+so that oxidation stability is read off the solvated rather than the gas-phase
+orbital) and `P_1` (the gas-phase redox thermodynamics themselves -- the
+ionisation energy and the electron affinity, which the registry had until now
+only ever quoted from an external reference layer).
 
-One lane, not promoted, and none of the frozen numbers moves:
+Two lanes, not promoted, and none of the frozen numbers moves:
 0.4091179943351143, 0.4766400383507876, 0.5861142332208197 and
 0.6216672295270079 keep their own definitions, and the main scoreboard gets 0
 attempts this week (cumulative stays at 12).
@@ -56,6 +57,31 @@ FROZEN_READINGS = {
 }
 
 LANES: dict[str, dict[str, object]] = {
+    "w23_2_redox_dscf": {
+        "title": "W23-2：Axis A P_1 首次实例化 —— GFN2-xTB ΔSCF 电离能/电子亲和能（绝热口径，气相 + 三档 ALPB）",
+        "probe": "probes/w23_redox_dscf.py",
+        "prereg": "probes/w23_redox_dscf_prereg.json",
+        "summary": "probes/w23_redox_dscf_summary.json",
+        "report": "reports/w23_redox_dscf.md",
+        "tests": ("tests/test_w23_redox_dscf.py",),
+        "artifacts": (
+            "data/processed/w23_redox_dscf_layer.csv",
+            "probes/artifacts/w23_redox_dscf_delta_stats.csv",
+            "probes/artifacts/w23_redox_dscf_monotonicity.csv",
+            "probes/artifacts/w23_redox_dscf_koopmans.csv",
+            "probes/artifacts/w23_redox_dscf_anion_bound_signature.csv",
+            "probes/artifacts/w23_redox_dscf_rank_pairs.csv",
+            "probes/artifacts/w23_redox_dscf_topk.csv",
+            "probes/artifacts/w23_redox_dscf_reference_step.csv",
+            "probes/artifacts/w23_redox_dscf_neutral_anchor.csv",
+            "probes/artifacts/w23_redox_dscf_scf_retry_posthoc.csv",
+            "probes/artifacts/w23_redox_dscf_qc.csv",
+            "probes/artifacts/w23_redox_dscf_shift.png",
+            "probes/w23_redox_dscf_figures.py",
+        ),
+        "produces_reading": True,
+        "promoted": False,
+    },
     "w23_1_orbital_medium": {
         "title": "W23-1：Axis A P_2 首次实例化 —— ALPB 三档介电阶梯下的轨道条件位移（自由态 / Li⁺ 配位态）",
         "probe": "probes/w23_orbital_medium.py",
@@ -87,6 +113,7 @@ CARRY_FORWARD = (
     ("README.md", "README.md"),
     ("reports/decisions_log.md", "decisions_log.md"),
     ("reports/week23_project_charter.md", "week23_project_charter.md"),
+    ("reports/week23_2_project_charter.md", "week23_2_project_charter.md"),
     ("reports/week23_delivery_readme.md", "week23_delivery_readme.md"),
     ("reports/w21_framework_slot_map.md", "w21_framework_slot_map.md"),
     ("probes/export_week23_results.py", "export_week23_results.py"),
@@ -101,7 +128,8 @@ VERIFIERS = (
     "scripts/verify_themol_orbital_layer.py --check",
     (
         "-m pytest tests/test_repo_hygiene.py tests/test_w23_orbital_medium.py "
-        "tests/test_al_round4_new_compound_backfill.py -q -p no:cacheprovider"
+        "tests/test_w23_redox_dscf.py tests/test_al_round4_new_compound_backfill.py "
+        "-q -p no:cacheprovider"
     ),
 )
 
