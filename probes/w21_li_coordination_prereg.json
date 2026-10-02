@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "task_id": "week21_w21_3_li_coordination",
+  "title": "Axis B C_1：Li⁺ 配位条件态首次实例化（GFN2-xTB 级）——框架 §11 X2 层由空转有",
+  "status": "locked_before_run",
+  "charter": "reports/week21_project_charter.md | section 4 | C_1 (framework section 3 Axis B / section 11 X2 layer)",
+  "framework": "docs/framework/ranking-electrolyte-materials-v2.md",
+  "run_mode": "offline",
+  "channel": "orbitals",
+  "arms": {
+    "C_0": "母分子自由态：neutral（Q = 名册净电荷），RDKit ETKDGv3 几何，GFN2-xTB --opt",
+    "C_1": "[LiM]⁺ 配位条件态：Q = 名册净电荷 + 1，同一构象起点 + 预注册基序位点置 Li，GFN2-xTB --opt"
+  },
+  "pool": {
+    "definition": "冻结 ε 名册全集 = data/processed/w21_chemical_space_metadata.csv 全部 246 行（含 canonical_smiles；该表为已入库的冻结件）",
+    "expected_n": 246,
+    "expected_runs": 492,
+    "expected_motif_n": 224,
+    "expected_unbound_reference_n": 22,
+    "motif_class_counts": {
+      "lone_pair": 178,
+      "anion_halide": 6,
+      "aromatic_pi": 21,
+      "alkene_pi": 19,
+      "no_motif": 22
+    }
+  },
+  "motif_rules": {
+    "step_0_fragments": "按 RDKit 分子片段计算净电荷；若存在净负片段，则给体候选一律限制在净负片段内；否则限制在净 0 片段内。净正片段上的原子永不作为给体。",
+    "step_1_lone_pair": "SMARTS [#8,#7,#16] 且形式电荷 <= 0 且在允许片段内；优先级 O(0) > N(1) > S(2)，同类取最小原子序号",
+    "step_2_anion_halide": "第 1 步为空且存在净负片段时，取该片段内形式电荷 <= 0 的 F；取最小原子序号",
+    "step_3_aromatic_pi": "第 1/2 步为空时，取允许片段内的芳环（全原子芳香，环大小 <= 6），取最小环首原子序号",
+    "step_4_alkene_pi": "前 3 步皆空时，取允许片段内的 C=C（双键、两端皆碳），取最小键起始原子序号",
+    "step_5_no_motif": "以上皆无 → unbound_reference（Li 起点由 no_motif_placement 决定）",
+    "lone_pair_placement": "Li = pos_donor + 2.0 Å * normalize( Σ_neighbors (pos_donor − pos_neighbor) )",
+    "anion_halide_placement": "与 lone_pair_placement 同式（以 F 为给体）",
+    "aromatic_pi_placement": "Li = 环质心 + 2.0 Å * 环法向，法向取背离环外原子质心的一侧",
+    "alkene_pi_placement": "Li = C=C 中点 + 2.0 Å * 平面法向（平面由 C1、C2 及其余邻居定义），法向取背离其余原子质心的一侧",
+    "no_motif_placement": "Li = 分子质心 + 3.0 Å * normalize(最远重原子 − 质心)",
+    "determinism": "全部位点由 SMILES + 原子序号唯一决定，无随机"
+  },
+  "conformer_protocol": {
+    "engine": "RDKit",
+    "steps": [
+      "Chem.AddHs",
+      "AllChem.ETKDGv3(randomSeed = 42 + i, useRandomCoords=True)",
+      "MMFFOptimizeMolecule(maxIters=1000)，无 MMFF 参数时 UFF(maxIters=1000)"
+    ],
+    "index_definition": "i = 该化合物在 data/processed/w21_chemical_space_metadata.csv 中的 0 基行序号；沿用 scripts/run_xtb_physical_features.py 的 42 + index 惯例",
+    "rule": "C_0 与 C_1 共用同一个重原子起点构象；Li 只在 C_1 上追加为最后一行",
+    "failure_policy": "RDKit 无法嵌入 → status=embed_failed，两臂皆不跑；MMFF/UFF 未收敛不排除化合物，记录 ff_status"
+  },
+  "xtb_protocol": {
+    "executable": "冻结本地 xTB 6.7.1（scripts/run_xtb_physical_features.py::_resolve_xtb）",
+    "arguments": "xtb_optimisation_arguments(name, formal_charge=Q) -> [name, --opt, --gfn, 2, --chrg, Q, --uhf, 0]",
+    "runner": "src/electrolyte_ml/xtb_runner.py::run_xtb_subprocess（OMP pin 1 线程 + 每次清 scratch）",
+    "timeout_seconds": 900
+  },
+  "parsing_rules": {
+    "canonical_parser": "electrolyte_ml.xtb_features.parse_xtb_output（total energy / HL-Gap / dipole / alpha(0)）",
+    "termination_sentinel": "xTB 6.7.1 不在 stdout 打印 'normal termination of xtb'，但成功优化会落盘 .xtboptok；与 scripts/run_xtb_physical_features.py::_parse_xtb_run 同法，检测到该哨兵即补该句后交给 canonical parser",
+    "homo_lumo_lines": "行尾 (HOMO)/(LUMO) 的 eV = split()[-2]",
+    "gap": "HL-Gap 行尾 eV（由 canonical parser 给出，与 (HOMO)−(LUMO) 互相印证）",
+    "li_mulliken_charge": "xTB 落盘文件 'charges' 的最后一行（Li 是输入 XYZ 的最后一行）",
+    "li_min_distance": "xtbopt.xyz 中 Li 到任一重原子的最小距离（Å）"
+  },
+  "qc_thresholds": {
+    "intact": "li_min_dist_A <= 2.60 且 li_mulliken_q >= 0.30",
+    "loose": "2.60 < li_min_dist_A <= 3.50 或 0.10 <= li_mulliken_q < 0.30",
+    "dissociated": "li_min_dist_A > 3.50 或 li_mulliken_q < 0.10",
+    "expected_pattern": "lone_pair / anion_halide / pi 类应多为 intact；no_motif 类应为 dissociated（unbound_reference）"
+  },
+  "readings": {
+    "r1_delta_stats": "ΔHOMO / ΔLUMO / Δgap 的均值与标准差，以及 var(Δ)/var(P_0) 方差比（§12 direct vs conditional-shift 对照）",
+    "r2_internal_rank_stability": "C_0 与 C_1 之间的 Spearman ρ、Kendall τ_b、Top-k overlap（k/N = 10/20/30%）与 naive 换序率；池 = 224 有基序化合物",
+    "r3_x2_recompute": "在 W21-1 的 49 化合物 Batt 子集上，用 P_0(C_1) 重算 §9 的 robust inversion / f_unresolved / Kendall τ_b，与 W21-1 的 P_0(C_0) 读数（robust inversion = 0 / 451）并排",
+    "r4_gate1": "Gate 1（§19 Stage 1）是否因此闭合；只报事实，不自动改判"
+  },
+  "bootstrap": {
+    "n_resamples": 5000,
+    "seed": 20261002,
+    "unit": "compound"
+  },
+  "promotion": {
+    "promoted": false,
+    "main_scoreboard_attempts": 0,
+    "frozen_untouched": [
+      "0.4091179943351143",
+      "0.4766400383507876",
+      "0.5861142332208197",
+      "0.6216672295270079"
+    ]
+  },
+  "declared_limits": [
+    "层级只到 GFN2-xTB 半经验，不是框架 §7 要求的 DFT 级；本臂是 X2 槽位的『首次实例化』，不是等价替换。",
+    "单 Li⁺、单一预注册构象、真空气相；不是显式微溶剂化（C_2），也不是 SMD 连续介质。",
+    "C_1 侧没有外部参考层，故 R_sol 只用于 49 化合物子集的 §9 复核；不得与 ε 主记分牌混比。",
+    "溶剂化自由能 / 配位能 ΔG 未算（缺热化学与溶剂化处理），本臂只报轨道能与基序几何。"
+  ],
+  "forbidden": [
+    "reaxys_values",
+    "batt_labels_into_any_training_pool",
+    "cross_pool_comparison",
+    "frozen_reading_mutation"
+  ]
+}

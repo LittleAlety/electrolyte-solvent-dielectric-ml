@@ -6,11 +6,12 @@ framework's own decision vocabulary (uncertainty-aware rank stability, Top-k
 overlap, selection regret, the three splits, feature-cost accounting) gets
 instantiated on the orbital channel for the first time.
 
-Three lanes, none of them promoted, none of them touching a frozen number:
+Four lanes, none of them promoted, none of them touching a frozen number:
 
 * W21-0 -- framework ingest + feature-cost map + multi-axis chemical space + Stage 0/1 verdicts;
 * W21-1 -- sections 9 / 10 / 13 on P_0 (GFN2-xTB gas) vs R_sol (Batt, SMD eps=18.5);
-* W21-2 -- the Walden kinematic_thaw close-out in the data layer.
+* W21-2 -- the Walden kinematic_thaw close-out in the data layer;
+* W21-3 -- Axis B C_1: the Li+ coordination condition state, first instantiation.
 
 Nothing on the frozen side moves: 0.4091179943351143, 0.4766400383507876,
 0.5861142332208197 and 0.6216672295270079 keep their own definitions, and the
@@ -96,6 +97,26 @@ LANES: dict[str, dict[str, object]] = {
         "produces_reading": True,
         "promoted": False,
     },
+    "w21_3_li_coordination": {
+        "title": "Tier 3：Axis B C_1 Li⁺ 配位条件态首次实例化（GFN2-xTB 级，X2 层由空转有）",
+        "probe": "probes/w21_li_coordination.py",
+        "prereg": "probes/w21_li_coordination_prereg.json",
+        "summary": "probes/w21_li_coordination_summary.json",
+        "report": "reports/w21_li_coordination.md",
+        "tests": ("tests/test_w21_li_coordination.py",),
+        "artifacts": (
+            "data/processed/w21_li_coordination_layer.csv",
+            "probes/artifacts/w21_li_coordination_inversions.csv",
+            "probes/artifacts/w21_li_coordination_delta_stats.csv",
+            "probes/artifacts/w21_li_coordination_topk.csv",
+            "probes/artifacts/w21_li_coordination_qc.csv",
+            "probes/artifacts/w21_li_coordination_batt_step.csv",
+            "probes/artifacts/w21_li_coordination_binding_posthoc.csv",
+            "probes/artifacts/w21_li_coordination_scf_retry_posthoc.csv",
+        ),
+        "produces_reading": True,
+        "promoted": False,
+    },
     "w21_2_eta_thaw": {
         "title": "Tier 2：Walden kinematic_thaw 解冻（数据层）",
         "probe": "probes/w21_eta_thaw.py",
@@ -117,6 +138,8 @@ CARRY_FORWARD = (
     ("probes/w21_framework_alignment.py", "w21_framework_alignment.py"),
     ("probes/w21_rank_stability.py", "w21_rank_stability.py"),
     ("probes/w21_eta_thaw.py", "w21_eta_thaw.py"),
+    ("probes/w21_li_coordination.py", "w21_li_coordination.py"),
+    ("probes/w21_li_coordination_figures.py", "w21_li_coordination_figures.py"),
     ("probes/w21_figures.py", "w21_figures.py"),
 )
 
@@ -124,6 +147,7 @@ FIGURES = (
     "probes/artifacts/w21_rank_stability_matrix.png",
     "probes/artifacts/w21_rank_flow_map.png",
     "probes/artifacts/w21_split_taxonomy.png",
+    "probes/artifacts/w21_li_coordination_shift.png",
 )
 
 VERIFIERS = (
@@ -131,7 +155,7 @@ VERIFIERS = (
     "scripts/verify_four_core_registry.py --check",
     (
         "-m pytest tests/test_repo_hygiene.py "
-        "tests/test_w21_framework_alignment.py tests/test_w21_rank_stability.py tests/test_w21_eta_thaw.py"
+        "tests/test_w21_framework_alignment.py tests/test_w21_rank_stability.py tests/test_w21_eta_thaw.py tests/test_w21_li_coordination.py"
         " -q -p no:cacheprovider"
     ),
 )
@@ -192,7 +216,7 @@ def _missing_lane_keys() -> tuple[str, ...]:
     return tuple(key for key in LANE_KEYS if not (REPOSITORY_ROOT / str(LANES[key]["report"])).is_file())
 
 
-README_TEXT = """# Week 21 交付包（框架接线：资产 → v2 槽位 / §9 §10 §13 首次实例化 / η 解冻数据层结清）
+README_TEXT = """# Week 21 交付包（框架接线：资产 → v2 槽位 / §9 §10 §13 首次实例化 / η 解冻数据层结清 / C_1 Li⁺ 条件态首次实例化）
 
 数据血缘: 冻结表 `data/dielectric_v03.csv` **未改动**（digest `ff2142936e…35ccce4`）；week1–week20 交付包与已发布工件未被触碰。
 冻结**基线 `0.4091179943351143`**、冻结**头条 `0.4766400383507876`**、单表示端点 `0.5861142332208197`、W20-4 晋升臂 `0.6216672295270079` **一个字都不动**。
@@ -221,17 +245,24 @@ W21 不买新读数，买**可寻址性**：把已经做出来的资产按《Und
    - KRR 按冻结超参跑会炸（−164.8），单列一条 `krr_tuned`（训练折内选参）后回到 −26.8，如实并列。
 8. **η 解冻（数据层结清）**：Walden 臂的唯一依赖 `data/density_v01.csv` 已在盘上，176 条运动黏度行按**冻结配对规则**全部精确折成 η（`η = ν × ρ`，176/176 exact，0 unmatched），但只覆盖 **5** 个化合物、且 **0** 个新键 ⇒ **模型层明确不重拟合**（176 行撑不起通道级读数，且重拟合要另立预注册）。
 9. **一条立项章笔误被纠正**：立项章 Tier 2 第 11 项写「把 `auc_gt15`/`auc_gt30` 加进 `METRIC_NAMES`」——该条**不执行**：问题已由 W18 的 AUC sidecar 解决，且 `tests/test_auc_sidecar_and_splitters.py` 断言 `METRIC_NAMES` 冻结为七项。改登记在 `reports/w21_framework_notes.md` 第 11 条。
+10. **Tier 3：Axis B `C_1`（Li⁺ 配位条件态）首次实例化** —— 冻结 ε 名册 246 化合物 × 2 臂（free / [LiM]⁺）共 **492** 次 GFN2-xTB：
+    - `X2` 槽位由「**整层为空**」变为「**有内容**」；`C_1` 由红字「未执行」变为「已实例化（低层级）」，层级**只到半经验**，如实标注，不冒充框架 §7 要求的 DFT 级；
+    - HOMO 通道：Δ 均值 **−4.05 eV**、ρ(C_0,C_1) = **0.627**、Top-10% overlap = **10/11** ⇒ 配位**保住**了 HOMO 排序；
+    - LUMO 通道：ρ = **0.230**、Top-10% overlap = **0/22** ⇒ 配位**摧毁**了 LUMO 排序（本臂最尖锐的一条）；
+    - §9 三层并排（49 化合物 Batt 子集）：C_0 **0/482**、C_1 **0/329**，且 `P0` 行逐位复现 W21-1 的 `0/451`（回归核验通过）；
+    - 质控与两条**事后**诊断（明确标 `post_hoc_not_preregistered`，不进任何主读数）：9 个臂 SCF 不收敛（离子液体盐 / Iron pentacarbonyl）、`no_motif` 类在结构判据下被判 `intact` 而结合能体检把它们标为 `not_a_bound_state`。
+
 
 ## 交付内容
 
-- 三条 lane 各自的 `probe / summary / report / tests / artifacts`（见 `week21_summary.json` 的 `lanes`；缺件记在 `lanes_missing`，本周应为空）。
-- 图 3 张：`w21_rank_stability_matrix.png`、`w21_rank_flow_map.png`、`w21_split_taxonomy.png`。
+- 四条 lane 各自的 `probe / summary / report / tests / artifacts`（见 `week21_summary.json` 的 `lanes`；缺件记在 `lanes_missing`，本周应为空）。
+- 图 4 张：`w21_rank_stability_matrix.png`、`w21_rank_flow_map.png`、`w21_split_taxonomy.png`、`w21_li_coordination_shift.png`。
 - 框架原文副本 + sha256 侧车、槽位映射表、框架补丁清单。
 - 冻结证据与红线清单（`frozen_red_lines`，逐文件 sha256 实测比对）。
 - `verification.json`：逐条校验命令退出码。
-- `decisions_log.md`：含 §28.67–§28.69。
+- `decisions_log.md`：含 §28.67–§28.70。
 
-*Week 21 交付包 · 生成脚本 `probes/export_week21_results.py` · 三条 lane 独立预注册（或声明无读数）· 本周 0 次主记分牌尝试（累计 12）· 冻结读数未动*
+*Week 21 交付包 · 生成脚本 `probes/export_week21_results.py` · 四条 lane 独立预注册（或声明无读数）· 本周 0 次主记分牌尝试（累计 12）· 冻结读数未动*
 """
 
 

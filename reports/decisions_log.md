@@ -6616,3 +6616,27 @@ MD / RDF 管线（整条新管线，循环 3 再评估）、介电谱反推 Deby
 **④ 买到多少**：**5 个化合物**，其中**原本就在联合表内的 5 个、新增 0 个键**。⇒ **数据层结清，模型层明确不做**：176 行 / 5 键撑不起任何通道级读数，且重拟合等于铸一个新模型版本，需另立预注册。判词 `walden_kinematic_thaw_flag = closeable_in_data_layer`。
 
 **⑤ 收口（AF-12 顺序）**：封树提交 → 干净重导 → 补修复提交。交付包 `E:\Claude Code\电解质ML\成果输出\week21\`，验收要求与 week18–week20 同构：`lanes_missing = []`、`promoted_lanes = []`、`worktree_dirty = false`、`artifacts_commit` 指向最新提交、`verification_passed = true`。**本周不发 v1.4**（无晋升、无冻结件移动，发布线不动）。
+
+## 28.70 Week 21 Tier 3：Axis B `C_1`（Li⁺ 配位条件态）首次实例化 —— §11 `X2` 由空转有（2026-10-02）
+
+**定位**：本件是 Week 21 的第 4 条 lane（`w21_3_li_coordination`），在立项章之外追加，把框架 §3 Axis B 的 `C_1` 与 §11 的 `X2` 槽位由「未执行 / 整层为空」推进到「已实例化」。`produces_reading = true`（真读数，与 W21-1 并列）、`promoted = false`、**不占 shot**、主记分牌累计仍 **12** 次。全文 `reports/w21_li_coordination.md`；预注册 `probes/w21_li_coordination_prereg.json`（`locked_before_run`，跑前冻结）。
+
+**① 池与协议**：冻结 ε 名册 **246** 化合物 × 2 臂 = **492** 次 GFN2-xTB `--opt`（C_0 = 中性母体；C_1 = `[LiM]⁺`，Li 按预注册基序规则置于给体位点、初始距离 2.0 Å）。基序分类：`lone_pair` 178 / `anion_halide` 6 / `aromatic_pi` 21 / `alkene_pi` 19 / `no_motif` 22（unbound_reference）⇒ 带基序 **224**。逐类命中预注册，`matches_prereg = true`。
+
+**② 质控**：`intact` 234 / `loose` 1 / `dissociated` 2 / `not_available` 9。**9 个臂失败**（`returncode=128`：SCF 不收敛 6 例 + 优化炸掉 2 例 + Iron pentacarbonyl 的 `very short distance` 1 例），失败清单与原因逐条入册。
+
+**③ Δ 分布（§12 的 direct vs conditional-shift 对照，n = 217）**：ΔHOMO 均值 **−4.0459 eV**（sd 0.8747，`var(Δ)/var(free)` = **0.1645**）；ΔLUMO **−7.6960 eV**（sd 3.1894，比值 **1.0085**）；Δgap **−3.6501 eV**（sd 3.4318，比值 0.9193）。⇒ 配位把两条轨道都压低，但 **LUMO 的位移大 2 倍、且弥散得多**。
+
+**④ C_0 → C_1 排序稳定性（§9 内部台阶，n = 217 / 23,436 pair）**：HOMO **ρ = 0.6273**、τ_b = 0.4721、Top-k overlap **0.909 / 0.651 / 0.631**；LUMO **ρ = 0.2296**、**Top-10% overlap = 0/22**；gap ρ = 0.2737。⇒ **配位保住 HOMO 排序、摧毁 LUMO 排序** —— 本件最尖锐也最可证伪的一条。
+
+**⑤ §9 三层并排（49 化合物 Batt 子集，n = 49 / 1,176 pair）**：`P0_themol_geometry_w21_1` **robust inversion = 0 / 451**（**逐位复现 W21-1**，兼作本文件的回归核验）、`C0_this_arm_free` **0 / 482**、`C1_this_arm_li` **0 / 329**；ρ 依次 0.8640 / 0.8606 / **0.8062**。⇒ 条件态台阶**没有**在预注册容差下制造 robust inversion。
+
+**⑥ 一致性核验**：本臂 C_0（RDKit ETKDGv3 嵌入 + GFN2-xTB 优化）与既有 `dielectric_physical_features_v03.csv` 的 gap（同协议、不同构象种子）**n = 237，Pearson r = 0.99995，平均绝对差 0.0058 eV**。
+
+**⑦ 两条事后诊断（明确标 `post_hoc_not_preregistered`，不进任何主读数）**：
+- **结合能体检** `binding = E([LiM]⁺) − E(M) − E(Li⁺)`：真实给体配位在 −1 至 −2 eV 量级（`lone_pair` 中位数 **−2.16 eV**、`alkene_pi` −1.43、`aromatic_pi` −1.17）；**24 行结合能为正**（`no_motif` 20 行、带基序 4 行），标 `not_a_bound_state`。⇒ **预注册的「Li–X 距离 + Mulliken 电荷」结构判据不足以区分真配位与半经验方法在无给体分子上的虚假粘附**。剔除这 4 个带基序行后 HOMO ρ 0.6273 → **0.6115**，**结论不变**。
+- **SCF 重试**：11 个失败臂换用 `--iterations 1000 --etemp 1000` 后恢复 **3**、仍失败 **8**。⇒ 过半是方法层面的真实失败，不是设置伪失败；冻结层读数不因此改变。
+
+**⑧ Gate 1 判词**：**仍未闭合，但缺口性质改变** —— `X2` 由「整层为空」变为「已有内容（GFN2-xTB 级）」；`C_1` 侧仍无外部参考层。框架原文 §3/§11 不改一个字节，修订只落在 `reports/w21_framework_slot_map.md` 与 `reports/w21_framework_notes.md`（第 13–16 条）。
+
+**⑨ 红线未触碰**：不引用 Reaxys 数值；不把 Batt 参考层当训练标签；不动 `0.4091179943351143` / `0.4766400383507876` / `0.5861142332208197` / `0.6216672295270079`；不发 v1.4。

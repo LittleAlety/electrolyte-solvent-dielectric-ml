@@ -23,6 +23,11 @@
 | 10 | §9.4 probabilistic pair ordering 的 `p_ij` 完全由单点 σ 假设决定；本仓 σ 取「留一残差绝对值」，是异方差且被离群点支配 | 本件照报（p>0.9 占 0.2755、p<0.1 占 0.2313、中间带 0.4932），并把 σ 的来源写进 prereg 的 `registered_limit`，**不掩饰** |
 | 11 | 立项章 Tier 2 第 11 项写「把 `auc_gt15` / `auc_gt30` 加进 `METRIC_NAMES`」——**这条不该执行** | 该问题已由 W18 的 AUC sidecar 解决（`probes/artifacts/dielectric_auc_sidecar.csv` + `dielectric_splitters_auc.csv`），且 `tests/test_auc_sidecar_and_splitters.py` 明确断言 `METRIC_NAMES` 冻结为七项、不得含 AUC。**本件不执行该条**，登记为「立项章笔误」 |
 | 12 | §13.3 的「60–100 个 core points 统计薄区」警告在本仓**实测触发** | 49 个可核点里只有 4 个家族成员 ≥5（aromatic_hydrocarbon / ester / ether / other），LOFO 只能报这 4 个家族；全部读数标 `machinery pilot` |
+| 13 | Tier 3 把 §3 Axis B 的 `C_1` 在 **GFN2-xTB** 层级实例化，**层级低于框架 §7 要求的 DFT 级** | 槽位表如实改为「已执行（低层级）」，判词不写成「`C_1` 已完成」；边界随读数一起报告（`reports/w21_li_coordination.md` 第 6、7 节） |
+| 14 | 预注册的**结构判据**（Li–X 距离 + Mulliken 电荷）**不足以**区分「设计过的给体配位」与「半经验方法在无给体分子上的虚假粘附」 | `no_motif`（饱和烃/卤代烷）**22** 个里有 **20** 个被结构判据判成 `intact`/`loose`，而一条**事后（非预注册）**结合能体检把它们**全部**标为 `not_a_bound_state`（该基序类结合能中位数 **+107.68 eV**）。两条判据并列登记，**预注册判据不改** |
+| 15 | 冻结协议下有 **9 个臂 SCF 不收敛**（`returncode=128`，xTB `-1- scf: Self consistent charge iterator did not converge`），集中在离子液体盐与 Iron pentacarbonyl | 失败清单照实入册；另做一条**事后** SCF 重试（`--iterations 1000 --etemp 1000`）只用来区分「设置导致的伪失败」与「方法层面的真实失败」，冻结层读数**不因此改变** |
+| 16 | 本仓第一次有条件检验「条件态是不是主要瓶颈」（本文第 3 节的待议命题） | **结果分裂、必须分开说**：HOMO 通道配位后 ρ = **0.627**、Top-10% overlap = **10/11**（排序大体保住）；LUMO 通道 ρ = **0.230**、Top-10% overlap = **0/22**（排序被摧毁）。因此该命题**既未被证实也未被推翻**，判词留空 |
+
 
 ## 3. 待议：核心命题的反向证伪条件
 
