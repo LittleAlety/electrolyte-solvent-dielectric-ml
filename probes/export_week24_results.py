@@ -115,6 +115,26 @@ LANES: dict[str, dict[str, object]] = {
         "produces_reading": True,
         "promoted": False,
     },
+    "w24_3_posthoc": {
+        "title": "W24-3\uff1a\u628a\u300c\u6570\u636e\u4e0d\u8db3\u300d\u672c\u8eab\u53d8\u6210\u8bfb\u6570 \u2014\u2014 \u5bf9 W24-1 / W24-2 \u51bb\u7ed3\u4ea7\u7269\u7684\u540e\u9a8c\u518d\u5206\u6790\uff08\u4e0d\u65b0\u589e\u67aa\u3001\u4e0d\u5360 shot\uff09",
+        "probe": "probes/w24_3_posthoc.py",
+        "prereg": None,
+        "summary": None,
+        "report": "reports/w24_3_posthoc_findings.md",
+        "tests": ("tests/test_w24_3_posthoc.py",),
+        "artifacts": (
+            "probes/artifacts/w24_3_conclusions.csv",
+            "probes/artifacts/w24_3_conclusions.json",
+            "probes/artifacts/w24_3_sampling_law.csv",
+            "probes/artifacts/w24_3_paper_axis_sigma.csv",
+            "probes/artifacts/w24_3_axis_flip.csv",
+            "probes/artifacts/w24_3_topk_decoupling.csv",
+            "probes/artifacts/w24_3_data_adequacy.png",
+            "probes/artifacts/w24_3_screening_reading.png",
+        ),
+        "produces_reading": False,
+        "promoted": False,
+    },
 }
 
 LANE_KEYS = tuple(LANES)
@@ -135,13 +155,16 @@ EXTERNAL_DELIVERABLES: tuple[tuple[str, str], ...] = ()
 FIGURES: tuple[str, ...] = (
     "probes/artifacts/w24_condition_redox_ladder.png",
     "probes/artifacts/w24_2_orca_bridge.png",
+    "probes/artifacts/w24_3_data_adequacy.png",
+    "probes/artifacts/w24_3_screening_reading.png",
 )
 
 VERIFIERS = (
     "scripts/verify_four_core_registry.py --check",
     (
         "-m pytest tests/test_repo_hygiene.py tests/test_w24_condition_redox.py "
-        "tests/test_w24_2_orca_dft.py -q -p no:cacheprovider"
+        "tests/test_w24_2_orca_dft.py tests/test_w24_3_posthoc.py "
+        "-q -p no:cacheprovider"
     ),
 )
 
@@ -323,6 +346,7 @@ def export_results(*, output_root: Path, overwrite: bool) -> dict:
             "负结果照实进交付物：W24-1 的 H1 / H2 / H4 / H5 / H9 判否，W24-2 的 O3 判否。",
             "W24-1 首跑把 24 个 Li 列写成空、H2 成假阴性（n = 0）；已按同一份预注册重跑，45,018 个非 Li 单元逐位回放一致。",
             "W24-2 的 nitrogen dioxide 因自由基基态与预注册的中性态闭壳单重态冲突而按 QC 排除（读数一律 n = 27）。",
+            "W24-3 是后验再分析：只读冻结产物、不新增预注册臂、不占 shot；其 R1–R5 不得被引用为预注册结论。",
             "H2 修复后判否的是一条真负结果：达到 0.5 e 的占比 c1 = 0.340 / c2 = 0.258（阈值 0.50，论文 11/12 但 N = 12）。",
         ],
     }
