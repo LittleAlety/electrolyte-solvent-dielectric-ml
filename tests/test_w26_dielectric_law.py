@@ -13,6 +13,7 @@
 #   * the Born reading quoted in the report can be recomputed from the stored
 #     per-point table, so the delivered numbers are not a black box;
 #   * no Reaxys number, no frozen reading and no main-scoreboard shot moves.
+#   * the delivered gate table and the figure rebuild agree on every gate.
 from __future__ import annotations
 
 import hashlib
@@ -211,3 +212,43 @@ def test_contrast_and_scan_never_enter_a_frozen_pool() -> None:
     assert Path(w26.LAYER).name == "w21_li_coordination_layer.csv"
     assert w26.SCAN_CSV.parent.name == "artifacts"
 
+
+def test_gate_table_agrees_with_the_summary() -> None:
+    # The stored gate table is the delivered evidence behind H2a/H2b, so its own
+    # counts have to reproduce the numbers the summary quotes from memory.
+    rows = w26.read_rows(GATE_CSV)
+    summary = _summary()["anion_gate"]
+    bound = [str(row.get("already_bound") or "").strip() == "True" for row in rows]
+    known = [str(row.get("gas_known") or "").strip() == "True" for row in rows]
+    candidates = [row for row, is_bound, is_known in zip(rows, bound, known)
+                  if is_known and not is_bound]
+    gated = [row for row in candidates if (row.get("gate_epsilon") or "").strip() != ""]
+    assert len(rows) == summary["n_molecules"]
+    assert sum(bound) == summary["n_already_bound"]
+    assert len(candidates) == summary["n_candidates"]
+    assert len(gated) == summary["n_with_gate"]
+    assert len(gated) == 10
+    assert summary["share_with_gate"] == pytest.approx(len(gated) / float(len(candidates)))
+
+
+def test_gate_rows_rebuilt_from_the_scan_match_the_stored_table() -> None:
+    # The figure path rebuilds every per-molecule gate from the scan table alone.
+    # That rebuild has to land on the same molecules and the same epsilon values
+    # as the delivered table: a column the writer forgets to register shifts the
+    # whole row, and the shift is exactly what this guard refuses to accept.
+    rows = w26.read_rows(GATE_CSV)
+    assert "ea_at_1000_eV" in rows[0]
+    stored = {row["inchikey"]: row for row in rows}
+    rebuilt = {row["inchikey"]: row for row in w26.gate_rows_from_scan(_scan_rows())}
+    assert set(rebuilt) == set(stored)
+    gated = 0
+    for inchikey, row in rebuilt.items():
+        raw = (stored[inchikey].get("gate_epsilon") or "").strip()
+        gate = row.get("gate_epsilon")
+        if gate is None:
+            assert raw == "", inchikey
+            continue
+        assert raw != "", inchikey
+        assert float(raw) == pytest.approx(float(gate), rel=1e-12)
+        gated += 1
+    assert gated == 10

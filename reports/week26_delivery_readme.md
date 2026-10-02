@@ -67,7 +67,7 @@ W26 是本仓第一次用**任意相对介电常数**的连续介质（xTB 6.7.1
 | probes/artifacts/w26_anion_gate.png | 图 B1/B2：EA(ε) 与闸门分布 |
 | reports/w26_dielectric_law.md | 结题报告（自动渲染） |
 | reports/week26_project_charter.md | 立项章 |
-| tests/test_w26_dielectric_law.py | 19 条守卫（含「存储行可重算」） |
+| tests/test_w26_dielectric_law.py | 17 条守卫（含「存储行可重算」） |
 | probes/export_week26_results.py | 导出器（两条输入红线 sha256 复核） |
 
 ## 8. 复现命令

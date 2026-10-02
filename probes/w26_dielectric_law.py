@@ -655,8 +655,8 @@ def render_report(summary):
     return lines
 
 
-def gate_curves_from_scan(raw_rows):
-    """Rebuild the per-molecule EA(epsilon) curves from the stored scan table."""
+def gate_rows_from_scan(raw_rows):
+    """Rebuild the per-molecule EA(epsilon) rows (with the gate) from the stored scan table."""
     table = {}
     for row in raw_rows:
         epsilon = as_float(row.get("epsilon"))
@@ -664,17 +664,29 @@ def gate_curves_from_scan(raw_rows):
         if epsilon is None or total is None:
             continue
         table.setdefault(row["inchikey"], {}).setdefault(row["charge_state"], {})[epsilon] = total
-    curves = []
+    rows = []
+    grid = sorted({eps for states in table.values() for eps in (states.get("neutral") or {})})
     for inchikey, states in sorted(table.items()):
         neutral = states.get("neutral") or {}
         anion = states.get("anion") or {}
         curve = {}
-        for epsilon, value in neutral.items():
-            if epsilon in anion:
-                curve[epsilon] = (value - anion[epsilon]) * HARTREE_TO_EV
-        if curve:
-            curves.append({"inchikey": inchikey, "curve": curve})
-    return curves
+        for epsilon in grid:
+            if epsilon in neutral and epsilon in anion:
+                curve[epsilon] = (neutral[epsilon] - anion[epsilon]) * HARTREE_TO_EV
+        if not curve:
+            continue
+        gas_ea = curve.get(1.0)
+        already_bound = bool(gas_ea is not None and gas_ea > 0.0)
+        gate = None
+        if not already_bound:
+            for epsilon in sorted(curve):
+                if epsilon <= 1.0:
+                    continue
+                if curve[epsilon] > 0.0:
+                    gate = epsilon
+                    break
+        rows.append({"inchikey": inchikey, "curve": curve, "gate_epsilon": gate})
+    return rows
 
 
 def regenerate_figures():
@@ -688,7 +700,7 @@ def regenerate_figures():
                   "C_eV": as_float(row["C_eV"])} for row in read_rows(BORN_CSV)]
     plt = configure_fonts()
     figure_a(plt, scan_rows, born_rows)
-    figure_b(plt, gate_curves_from_scan(raw))
+    figure_b(plt, gate_rows_from_scan(raw))
     return True
 
 
@@ -812,7 +824,8 @@ def main(argv=None):
                     if left is not None and right is not None:
                         curve[key] = (float(left) - float(right)) * HARTREE_TO_EV
             gates.update({"inchikey": result["inchikey"], "name": result["name"],
-                          "motif_class": result["motif_class"], "donor_symbol": result["donor_symbol"]})
+                          "motif_class": result["motif_class"], "donor_symbol": result["donor_symbol"],
+                          "curve": curve})
             gate_rows.append(gates)
             gate_curves.append({"inchikey": result["inchikey"], "curve": curve})
         if with_contrast:
@@ -1011,7 +1024,7 @@ def main(argv=None):
                for row in born_rows])
     write_csv(GATE_CSV,
               ["inchikey", "name", "motif_class", "donor_symbol", "gas_ea_eV", "ea_at_80p4_eV",
-               "gate_epsilon", "gate_epsilon_le_80p4", "already_bound", "gas_known", "gate_span"],
+               "ea_at_1000_eV", "gate_epsilon", "gate_epsilon_le_80p4", "already_bound", "gas_known", "gate_span"],
               [[row.get(field) for field in ("inchikey", "name", "motif_class", "donor_symbol",
                                              "gas_ea_eV", "ea_at_80p4_eV", "ea_at_1000_eV", "gate_epsilon", "gate_epsilon_le_80p4",
                                              "already_bound", "gas_known", "gate_span")]
@@ -1032,7 +1045,7 @@ def main(argv=None):
     try:
         plt = configure_fonts()
         figure_a(plt, scan_rows, born_rows)
-        figure_b(plt, gate_curves)
+        figure_b(plt, gate_rows)
         figures_ok = True
     except Exception as error:
         figures_ok = False

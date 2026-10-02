@@ -6929,6 +6929,20 @@ NO₂ 是**稳定自由基**（`O=[N+][O-]`，1 个自由基电子），预注�
 
 **⑦ 预注册纪律**：修订 2 的**操作化改写发生在生产运行之前**（当时只跑过 8 分子冒烟），**没有任何阈值被移动**（0.99 / 0.020 / 0.015 / 0.35 / 0.05 / 0.50 / 40.0 / 0.15 全部与修订 1 相同），修订依据逐条记在 `probes/w26_dielectric_law_prereg.json` 的 `revision_note` 与 `smoke_pilot_evidence` 里。改动清单：Born 拟合首点锚回气相（冒烟里这一处 bug 曾让离子态 R² 假性塌到 0.705）；H1b/H1c/H1d 明确操作化；裁决集合明确为离子曲线；H1e 只在离子对上取中位；H1f 拆出 H1g；H2a 分母明确为气相未束缚分子。
 
-**⑧ 产物与自检**：探针 `probes/w26_dielectric_law.py`；预注册 `probes/w26_dielectric_law_prereg.json`（revision 2，`locked_before_run`）；summary `probes/w26_dielectric_law_summary.json`；artifact `probes/artifacts/w26_dielectric_scan.csv`（10,164 行）、`w26_born_fit.csv`（726 行）、`w26_anion_gate.csv`、`w26_model_contrast.csv`（2,904 行）、图 `w26_dielectric_law.png`（位移衰减 + 幂律直测）、`w26_anion_gate.png`（EA(ε) + 闸门分布）；报告 `reports/w26_dielectric_law.md`；测试 `tests/test_w26_dielectric_law.py`（19 条，含「存储行可重算」「冻结口径锚点逐位成立」「幂律负结果带归因」「CSV 无 BOM 无 CRLF」「图非平凡」）。
+**⑧ 产物与自检**：探针 `probes/w26_dielectric_law.py`；预注册 `probes/w26_dielectric_law_prereg.json`（revision 2，`locked_before_run`）；summary `probes/w26_dielectric_law_summary.json`；artifact `probes/artifacts/w26_dielectric_scan.csv`（10,164 行）、`w26_born_fit.csv`（726 行）、`w26_anion_gate.csv`、`w26_model_contrast.csv`（2,904 行）、图 `w26_dielectric_law.png`（位移衰减 + 幂律直测）、`w26_anion_gate.png`（EA(ε) + 闸门分布）；报告 `reports/w26_dielectric_law.md`；测试 `tests/test_w26_dielectric_law.py`（17 条，含「存储行可重算」「冻结口径锚点逐位成立」「幂律负结果带归因」「CSV 无 BOM 无 CRLF」「图非平凡」）。
 
 **⑨ 判词**：介电层「ε ≥ 200 可以省」这条结论在本仓由**外推**升级为**实测**并复现（10.52 meV vs v6 的 10.81 meV）；幂律口径按残余读法复现（2.61 eV vs 2.1 eV）；几何弛豫的贡献第一次被定价（阴离子轴 ~0.1 eV，约 4%）；阴离子束缚闸门被判否并归因到方法自身的 EA 跨距。**仍不能**：把 GFN2/ddCOSMO 的绝对值与 r2SCAN-3c/CPCM 的绝对值相比；把 W26-4 当作已完成的几何台阶；用 H2b 的 10 个样本宣读闸门位置。**下一轮的自然入口**：W26-4 的几何台阶定价、在 r2SCAN-3c 的 28 分子池上做一次 W26-2 的同构检验、把 ddCOSMO 的 ε 轴当特征列接进 ε 主记分牌。
+
+## 28.80 Week 26 收口：闸门表写入器少登记一列 —— 整表右移一列（AF-12 同族，2026-10-03）
+
+**这一件是什么**：W26 交付封存前的**产物自检**抓到的真实缺陷，属 AF-12 同族（**交付字节与声明 schema 不一致**）。`probes/w26_dielectric_law.py` 里 `write_csv(GATE_CSV, ...)` 的表头登记了 **11 列**，而同一次调用的取值元组按 **12 个字段**取名（`ea_at_1000_eV` 从未登记）。`write_csv` 走的是 `csv.writer`（不是 `DictWriter`），多出来的值**不会被丢掉**，于是 `w26_anion_gate.csv` 的每一行都比表头多一个字段，**整表右移一列**。
+
+**① 缺陷的具体形态**：交付表里 `gate_epsilon` 这一列装的其实是 `ea_at_1000_eV`，真正的 `gate_epsilon` 掉进了 `gate_epsilon_le_80p4` 列，`already_bound` / `gas_known` / `gate_span` 依次右移，`gate_span` 成了没有表头的尾随字段。以 `AFBPFSWMIHJQDM-UHFFFAOYSA-N`（N-甲基苯胺）为例：按表头读 `gate_epsilon = 4.9328`，而 4.9328 是它在 epsilon=1000 处的 EA；真正的 `gate_epsilon` 应为空 —— 该分子气相 EA 为 +2.498 eV，**气相即已束缚**，按构造没有闸门。
+
+**② 影响边界（必须并报）**：**summary 与全部裁决不受影响** —— `gate_share` / `gate_median` / `n_with_gate` 等一律由内存里的 `gate_rows` 算出，不回读 CSV；图 A / 图 B 也不受影响。**其余三个产物表与表头严格一一对应**（`w26_dielectric_scan.csv` 14/14、`w26_born_fit.csv` 17/17、`w26_model_contrast.csv` 9/9，逐个核对过）。受影响的只有 `w26_anion_gate.csv` 这一件交付字节，以及它在 `成果输出/week26` 里的副本。
+
+**③ 修复**：在表头里补登记 `ea_at_1000_eV`（取值元组一个字未动），并**加两条守卫**让这类错位不可能再无声通过：`test_gate_table_agrees_with_the_summary`（交付表自数必须复现 summary 的 `n_molecules` / `n_already_bound` / `n_candidates` / `n_with_gate` / `share_with_gate`）与 `test_gate_rows_rebuilt_from_the_scan_match_the_stored_table`（图路径**从扫描表重建**的每分子闸门必须与交付表**同分子、同 epsilon 值**，并显式断言 `ea_at_1000_eV` 在表头里）。W26 守卫数由 15 增到 **17**（两份文档里原先误记的「19 条」一并在本次提交里更正）。
+
+**④ 流程纪律**：本次修复**不改任何读数、不动任何阈值、不动任何冻结件、不占主记分牌 shot**（W26 计 0，累计仍 **12**）。收口按 AF-12 三步走：修复后的探针重跑全池（`--workers 12`，242 分子）→ **提交含修复的代码** → 用该提交的代码**干净重导**并校验 `worktree_dirty = false`；导出器同时逐条复核两条输入红线 sha256（`w21_li_coordination_layer.csv`、`w24_born_curves.csv`），因此导出的 `artifacts_commit` 能标识交付字节。
+
+**⑤ 判词**：这不是新结论，是一次**产物一致性修复**。值得登记的理由有两条：(a) 它是 AF-12 的同族缺陷，说明「表头 = 取值元组」这条约束在本仓**仍要靠守卫兜住**，而不是靠写代码时的注意力；(b) 它反过来证明 W26 的**结论层是稳的** —— 值算对了、表存歪了，两者必须分开定价。
