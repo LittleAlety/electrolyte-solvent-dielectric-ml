@@ -1,0 +1,185 @@
+{
+  "schema": "w27_dielectric_response/prereg@1",
+  "task": "week27_dielectric_response_block",
+  "title": "介电响应描述符块接入冻结主记分牌池：把 W26 的 13 列 ddCOSMO 响应列当作第四个表示家族",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-10-03T00:00:00Z",
+  "lock_rule": "臂、列清单、池、切分器、拟合器、种子集、判据与安慰剂规则在第一次生产运行之前冻结。任何一条事后要改，按『更正』另立登记，不在原地修改。",
+  "why": "W26 在 242 个化合物上把「电子结构对连续介质的响应」算了出来（14 档 epsilon 的 ddCOSMO 扫描 + 每化合物 Born 曲线 + 阴离子闸门 + 轨道能对 1/epsilon 的斜率）。该 242 化合物池经查就是介电建模名册 246 行里的 242 行，因此这组响应列可以直接广播到冻结主记分牌池上：行级覆盖 1768/2391（0.7394），评分化合物覆盖 97/97。这是本记分牌从未测过的表示家族：不是静态描述符（偶极、极化率、间隙），而是响应量。问题只有一个：把这块接在稠密 lever4 块之后，Physical 表示动不动。",
+  "reuses": {
+    "scoreboard_pool": "probes/dielectric_coordination_block.py 的 build_scoreboard()，逐字复用；评分 457 行 / 97 化合物，训练池 full_base（2029 行基础 + 362 行外源 = 2391 行）",
+    "splits": "probes/dielectric_representation_seed_robustness.py 的 splits_for(seed, groups, score_mask, train_mask)，逐字复用；masked_splits + drop_thin_folds，5 折 x 10 重复，GroupKFold by InChIKey",
+    "fitter": "probes/dielectric_representation_ablation.py 的 fit_predict_representation / XGB_PARAMS（max_depth 2、200 树、lr 0.05、hist、max_bin 64、n_jobs 1），逐字复用",
+    "evaluator": "probes/dielectric_coordination_block.py 的 evaluate_arm，逐字复用",
+    "metrics": "dielectric_observations_grouped_benchmark.METRIC_NAMES；本条臂的判据只读 r2（原尺度），AUC 与本条无关",
+    "context": "probes/dielectric_representation_seed_robustness.py 的 build_context()，逐字复用（它已经把 lever4 块与 fold_signature 准备好）",
+    "no_new_dependency": "不安装新依赖、不联网、不调用 xTB；块完全由盘上已有的 W26 产物派生"
+  },
+  "inputs": {
+    "w26_scan": {
+      "path": "probes/artifacts/w26_dielectric_scan.csv",
+      "role": "轨道能对 1/epsilon 斜率的来源",
+      "read_only": true
+    },
+    "w26_born": {
+      "path": "probes/artifacts/w26_born_fit.csv",
+      "role": "Born 前因子、腔残余、幂律带内变异系数",
+      "read_only": true
+    },
+    "w26_gate": {
+      "path": "probes/artifacts/w26_anion_gate.csv",
+      "role": "气相 EA、epsilon=80.4 处 EA、EA 位移窗口",
+      "read_only": true
+    },
+    "w26_layer": {
+      "path": "data/processed/w21_li_coordination_layer.csv",
+      "role": "W26 名册的来源（本枪不读它，只登记它定义了 W26 池）",
+      "read_only": true
+    }
+  },
+  "arms": {
+    "lever4": {
+      "role": "冻结锚",
+      "physical": "context['physical_lever4']",
+      "train_mask": "full_base",
+      "score_mask": "scored"
+    },
+    "lever4_plus_dielectric_response": {
+      "role": "本枪",
+      "physical": "context['physical_lever4'] 与 13 列响应块按行水平拼接",
+      "train_mask": "full_base",
+      "score_mask": "scored"
+    },
+    "lever4_plus_shuffled_response": {
+      "role": "安慰剂",
+      "physical": "同本枪，但响应块的行顺序被冻结种子的置换打乱",
+      "train_mask": "full_base",
+      "score_mask": "scored"
+    }
+  },
+  "response_columns": [
+    "born_c_neutral_eV",
+    "born_c_cation_eV",
+    "born_c_anion_eV",
+    "born_resid_cation_200_eV",
+    "born_resid_anion_200_eV",
+    "born_band_cv_cation",
+    "born_band_cv_anion",
+    "ea_gas_eV",
+    "ea_at_80p4_eV",
+    "ea_window_eV",
+    "homo_slope_neutral_eV",
+    "lumo_slope_neutral_eV",
+    "gap_slope_neutral_eV"
+  ],
+  "column_construction": {
+    "born_c_neutral_eV": "w26_born_fit.csv 中该化合物 charge_state=neutral 的 |C_eV|",
+    "born_c_cation_eV": "charge_state=cation 的 |C_eV|",
+    "born_c_anion_eV": "charge_state=anion 的 |C_eV|",
+    "born_resid_cation_200_eV": "charge_state=cation 的 residual_born_200_eV",
+    "born_resid_anion_200_eV": "charge_state=anion 的 residual_born_200_eV",
+    "born_band_cv_cation": "charge_state=cation 的 band_cv",
+    "born_band_cv_anion": "charge_state=anion 的 band_cv",
+    "ea_gas_eV": "w26_anion_gate.csv 的 gas_ea_eV",
+    "ea_at_80p4_eV": "w26_anion_gate.csv 的 ea_at_80p4_eV",
+    "ea_window_eV": "ea_at_1000_eV − gas_ea_eV（同一行）",
+    "homo_slope_neutral_eV": "中性态、epsilon >= 20.0 且 status=ok 的网格点上，homo_eV 对 1/epsilon 的最小二乘斜率",
+    "lumo_slope_neutral_eV": "同上，y 换成 lumo_eV",
+    "gap_slope_neutral_eV": "同上，y 换成 gap_eV"
+  },
+  "coverage_contract": {
+    "broadcast_rule": "按 inchikey 把每化合物一行广播到池的每一行；块的 status 只有在 13 列全部非空时才是 ok",
+    "missing_rule": "不插补。块缺失或 status 非 ok 的池行，其响应列全部为 NaN，交给 XGBoost 自带的缺失值处理",
+    "no_fold_statistics": "不计算任何折内统计量，因此不存在折统计量泄漏的路径",
+    "expected_row_coverage": 0.7394,
+    "expected_scored_compounds": 97
+  },
+  "seeds": [
+    42,
+    1234,
+    2026,
+    31337,
+    7
+  ],
+  "anchor": {
+    "arm": "lever4",
+    "seed": 42,
+    "representation": "Morgan+Physical",
+    "expected": 0.5433111678100043,
+    "tolerance": 1e-9,
+    "on_failure": "拒绝报出其余任何数字"
+  },
+  "bars": {
+    "pass_delta": 0.02,
+    "kill_delta": 0.005,
+    "placebo_tolerance": 0.005
+  },
+  "placebo": {
+    "rule": "把响应块的行顺序按冻结种子的置换打乱后重跑同一条臂；只在 seed 42 上跑一次，不重抽到达标",
+    "rng_seed": 2026,
+    "seeds": [
+      42
+    ],
+    "clean_if": "置换后的增量绝对值 < 0.005"
+  },
+  "leakage_audit": {
+    "splits_compared": "seed 42 的 fold_signature 必须与 build_scoreboard() 的冻结 splits 相同",
+    "cross_fold": "全部种子、两个臂的 folds_with_a_straddling_compound 必须为 0"
+  },
+  "red_lines": [
+    "不改任何 W26 产物、不改任何冻结池、不改任何冻结读数（0.4091179943351143 / 0.4766400383507876 / 0.5861142332208197 / 0.6216672295270079）",
+    "不读任何介电常数标签进特征块",
+    "不引用 Reaxys 数值；THEMol（CC BY-NC 4.0）不入交付包",
+    "缺行不插补、不丢弃评分行",
+    "不动主记分牌别的臂；本枪的 shot 单独记账"
+  ],
+  "shot_accounting": {
+    "this_week": 1,
+    "cumulative_after": 13,
+    "note": "本枪触及冻结主记分牌池与评分掩码，因此按主记分牌 shot 记账；W21–W26 各计 0"
+  },
+  "criteria": {
+    "H27a": "seed 42 的 lever4 锚（Morgan+Physical）逐位复现 0.5433111678100043，容差 1e-09",
+    "H27b": "跨折泄漏：全部种子、两个臂的含跨界化合物折数为 0",
+    "H27c": "确认线：五种子 Morgan+Physical 增量均值 >= +0.02",
+    "H27d": "部分线：五种子 Morgan+Physical 增量均值 >= +0.005",
+    "H27e": "安慰剂惰性：行重排后的 Morgan+Physical 增量绝对值 < 0.005",
+    "H27f": "覆盖纪律：响应块覆盖 97/97 评分化合物",
+    "H27g": "描述性次读数：五种子 Physical（仅稠密物理块）增量均值，与主读数并列报出，不单独构成晋升路径"
+  },
+  "revision": 2,
+  "revision_note": {
+    "from_revision": 1,
+    "what_moved": "锚的表示口径与判据措辞",
+    "when": "在只跑过 1 个种子（42）的冒烟之后、五种子生产运行之前",
+    "why": "修订 1 把锚 0.5433111678100043 标成 Physical 表示，这是事实性错误：该常量在本记分牌家族里的定义是 full_table_lever4 的 Morgan+Physical 表示（probes/dielectric_representation_seed_robustness.py 的 ANCHORS 与 HYPOTHESIS_REFERENCE）。冒烟跑出的锚值 0.543311 正是 Morgan+Physical 那一列。修订 2 把主读数改回 Morgan+Physical、把 Physical 降为描述性次读数，并把 H27g 明确标成描述性（不单独构成晋升路径）。",
+    "thresholds_moved": false,
+    "thresholds_unchanged": {
+      "H27a": 1e-9,
+      "H27c": 0.02,
+      "H27d": 0.005,
+      "H27e": 0.005,
+      "H27f": 97
+    },
+    "columns_moved": false,
+    "arms_moved": false,
+    "seeds_moved": false,
+    "placebo_rule_moved": false
+  },
+  "smoke_pilot_evidence": {
+    "scope": "只跑 seed 42，两个臂 + 安慰剂；不写任何结论",
+    "pool": "2391 行 / 评分 457 行 / 97 化合物",
+    "block": "242 化合物，242 个 13 列全满",
+    "coverage": {
+      "rows_with_the_block": 1768,
+      "rows": 2391,
+      "block_row_coverage": 0.7394,
+      "scored_compounds_with_the_block": 97
+    },
+    "anchor_seed42_MorganPlusPhysical": 0.543311,
+    "block_seed42_MorganPlusPhysical": 0.441891,
+    "seconds_per_arm": 72
+  },
+  "primary_representation": "Morgan+Physical",
+  "secondary_representation": "Physical"
+}
