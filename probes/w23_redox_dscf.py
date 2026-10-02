@@ -195,6 +195,13 @@ def parse_arm(result):
         "xtb_version": parsed.get("xtb_version"),
         "error": parsed.get("error") or "",
         "seconds": float(result.get("seconds") or 0.0),
+        # w21.parse_arm already extracts the lithium diagnostics, but this wrapper
+        # rebuilds its payload field by field and used to drop them.  Week 24-1 reads
+        # li_mulliken_q as the H2 observable, so the omission silently emptied every
+        # Li column of that layer and scored H2 on zero pairs.
+        "li_mulliken_q": parsed.get("li_mulliken_q"),
+        "li_min_dist_A": parsed.get("li_min_dist_A"),
+        "li_nearest_atom": parsed.get("li_nearest_atom"),
     }
     return payload
 

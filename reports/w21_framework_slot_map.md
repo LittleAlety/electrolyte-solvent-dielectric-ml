@@ -45,6 +45,6 @@
 
 ## 2. 本件不做的（写清为什么）
 
-- **`C_1` 已由 Tier 3 在 GFN2-xTB 层级实例化、`P_2` 已由 W23-1（`probes/w23_orbital_medium.py`，ALPB 三档）实例化、`P_1` 已由 W23-2（`probes/w23_redox_dscf.py`，GFN2-xTB ΔSCF 绝热）实例化**。**仍不做**：`C_2`（显式微溶剂化，需要新建团簇几何管线）与 **DFT 级**的 `P_1` / `P_2`（ORCA / r2SCAN-3c 不在本仓工具链里）。本仓不假装做过这两者。
+- **`C_1` 已由 Tier 3 在 GFN2-xTB 层级实例化、`P_2` 已由 W23-1（`probes/w23_orbital_medium.py`，ALPB 三档）实例化、`P_1` 已由 W23-2（`probes/w23_redox_dscf.py`，GFN2-xTB ΔSCF 绝热）实例化**。**仍不做**：`C_2`（显式微溶剂化，需要新建团簇几何管线）与 **DFT 级**的 `P_1` / `P_2`。**登记更正（W24-2，2026-10-02）**：本行原写「ORCA / r2SCAN-3c 不在本仓工具链里」，该登记经文件系统复核为**假**——`E:/ORCA/orca_6_1_1/orca.exe`（6.1.1）在盘、许可有效、r2SCAN-3c 正常终止；DFT 级 `P_1` / `P_2` 已由 `probes/w24_2_orca_dft.py` 首次实例化（`reports/w24_2_orca_dft_charter.md`）。`C_2`（显式微溶剂化反式 2:1）已由 `probes/w24_condition_redox.py` 首次实例化（GFN2-xTB 层）。
 - **不做 §14 active-learning replay**：它需要「昂贵标签预算 → 决策精度」曲线，而本仓的昂贵标签（Batt 层）只有 49 个可核点。
 - **不发 v1.4**：本周无晋升、无冻结件移动，发布线不动。

@@ -1,0 +1,257 @@
+{
+  "schema_version": "w24_condition_redox_prereg@1",
+  "task": "w24_condition_redox",
+  "title": "Axis B C_1 氧化还原臂 + C_2 显式微溶剂化臂首次实例化：GFN2-xTB ΔSCF 在 Li+ 配位态与 2:1 反式二聚态上的电离能/电子亲和能",
+  "status": "locked_before_run",
+  "locked_at_local": "2026-10-02",
+  "charter": "reports/week24_project_charter.md",
+  "framework_slots": {
+    "primary": "docs/framework/ranking-electrolyte-materials-v2.md 3.2 Axis B C_1 Li+-coordinated conditional state（DDG_ox^coord / DDG_red^coord 的定义）",
+    "secondary": [
+      "docs/framework/ranking-electrolyte-materials-v2.md 3.2 Axis B C_2 selected explicit microsolvation states",
+      "docs/framework/ranking-electrolyte-materials-v2.md 8.2 Li+ 配位优先使用相对 ligand-exchange quantity",
+      "docs/framework/ranking-electrolyte-materials-v2.md 17.1 C_2 在 MVP 中只做 targeted sensitivity check",
+      "HB 论文 Table 2 的 C0->C1 与 C1->C2 两级台阶（N=18 / 10 分子；本臂把同一台阶扩到 N=246）"
+    ],
+    "non_goals": [
+      "不改任何冻结读数、不动主记分牌（本周 shot 仍为 0，累计仍为 12）",
+      "不构造综合电解液分数（框架 18 禁止）",
+      "C_2 不做不同化学计量 cluster 的 Boltzmann 混合（框架 3.2 明令禁止）",
+      "本臂只到 GFN2-xTB 半经验层级，不是 DFT 级"
+    ]
+  },
+  "inputs": {
+    "roster": {
+      "path": "data/processed/w21_chemical_space_metadata.csv",
+      "rows": 246,
+      "sha256": "fba4a7b287f38018dd30500ff34dc6132c6eec5a17490789b562a1e99868a27f",
+      "role": "池与顺序来源（seed = 42 + row_index），与 W21 / W23-1 / W23-2 逐位同源"
+    },
+    "c1_anchor_layer": {
+      "path": "data/processed/w21_li_coordination_layer.csv",
+      "rows": 246,
+      "sha256": "48864109573f919ab320aa10d2b7b8e78532115e1f65228b16e75a76123eeedc",
+      "role": "C_1 ref 态回归锚：本臂在气相重算 [LiM]+（net+1, uhf 0），要求与 total_energy_li_hartree 逐位一致"
+    },
+    "orbital_medium_layer": {
+      "path": "data/processed/w23_orbital_medium_layer.csv",
+      "rows": 246,
+      "sha256": "0649924ed3925eec0032072c292ac16b271a5202914845cad9971213b94f2d4e",
+      "role": "C_1 ref 态第二回归锚：气相 Li 态轨道能与 gas_li_homo_eV/gas_li_lumo_eV 比对（只比对、不取值）"
+    },
+    "dscf_layer": {
+      "path": "data/processed/w23_redox_dscf_layer.csv",
+      "rows": 246,
+      "sha256": "d24d4c5a0937bbf971afb5d52f15038505f58e47d43c4ed8ebe44a07910d1b9f",
+      "role": "免费态（C_0）的 ΔSCF IP/EA 与 Δ 位移来源；本臂的 C0->C1 台阶是拿本层与自算 C_1 相减"
+    },
+    "geometry_source": {
+      "path": "probes/w21_li_coordination.py",
+      "sha256": "fb43c0afd6cd10165dfddc9664231725253aa96889fae2c4474fe28c33f136bc",
+      "role": "embed / classify_motif / li_position / xyz_block_with_li 逐字复用，[LiM]+ 起始几何与 W21 完全同源"
+    }
+  },
+  "geometry_protocol": {
+    "embedder": "RDKit ETKDGv3 + MMFF94（缺参时 UFF），useRandomCoords=True（w21.embed，未改动）",
+    "seed_rule": "seed = 42 + row_index",
+    "c1_motif": "w21.classify_motif + w21.li_position + w21.xyz_block_with_li：Li 放在供体原子上 LI_START_DISTANCE_A = 2.0 A 处，方向为孤对/pi 法向（与 W21 逐字同源）",
+    "c2_construction": "point_reflection_a_cross_b：以 C_1 的 Li 位置 l 为中心，把整个 [LiM] 单元做点反演（p -> 2l - p）得到第二个配体，再补回中心的 Li。所得 [Li(M)2]+ 为反式（antipodal）2:1 二聚起始构型，Li 与两个供体各相距 2.0 A。确定性构造、不枚举构象、不枚举 2:1 异构体。",
+    "c2_declared_limitation": "反式 2:1 只是 2:1 motif 空间里的一个确定性代表点，不是最低能异构体；本臂按框架 17.1 只作 targeted sensitivity check，结论只允许用作「1:1 图像是否稳健」的敏感性判断，不得读成 C_2 的定量真值。",
+    "note": "本臂不新建 embed 代码；每个电荷态共用一个起始几何，各自在 xTB 内 --opt 弛豫"
+  },
+  "xtb_protocol": {
+    "binary": "xtb 6.7.1（冻结 runner electrolyte_ml.xtb_runner，OMP_NUM_THREADS=1，独立 scratch）",
+    "closed_shell": "xtb_optimisation_arguments（--opt --gfn 2 --chrg <Q> --uhf 0），冻结函数不动",
+    "open_shell": "xtb_open_shell_arguments（--opt --gfn 2 --chrg <Q> --uhf 1），冻结函数与其单测逐字不变",
+    "medium_flag": "ALPB（--alpb <solvent> 或省略 = 气相），与 W23-1 / W23-2 同一隐式模型、同一四档标称（gas + thf/benzaldehyde/water）",
+    "media": [
+      {
+        "key": "gas",
+        "alpb_name": null,
+        "epsilon": 1
+      },
+      {
+        "key": "thf",
+        "alpb_name": "thf",
+        "epsilon": 7.58
+      },
+      {
+        "key": "benzaldehyde",
+        "alpb_name": "benzaldehyde",
+        "epsilon": 18
+      },
+      {
+        "key": "water",
+        "alpb_name": "water",
+        "epsilon": 80.4
+      }
+    ]
+  },
+  "arms": {
+    "complexes": [
+      {
+        "key": "c1",
+        "label": "[LiM]+ 1:1 配位态",
+        "ligand_count": 1,
+        "base_charge_offset": 1
+      },
+      {
+        "key": "c2",
+        "label": "[Li(M)2]+ 反式 2:1 二聚态",
+        "ligand_count": 2,
+        "base_charge_offset": 1
+      }
+    ],
+    "states": [
+      {
+        "key": "cation",
+        "delta_q": 1,
+        "unpaired": 1,
+        "role": "氧化产物的起始态（净电荷 = 母分子 + 1 + 1）"
+      },
+      {
+        "key": "ref",
+        "delta_q": 0,
+        "unpaired": 0,
+        "role": "条件态本身（净电荷 = 母分子 + 1），闭壳层"
+      },
+      {
+        "key": "reduced",
+        "delta_q": -1,
+        "unpaired": 1,
+        "role": "还原产物的起始态（净电荷 = 母分子 + 0）"
+      }
+    ],
+    "count_per_compound": 24,
+    "list_rule": "arm_key = <complex>_<medium>_<state>，共 2 complex x 4 medium x 3 state = 24",
+    "planned_runs": 5904,
+    "execution": "ProcessPoolExecutor，每分子一个任务、任务内二十四臂串行；单臂仍是冻结 runner + 单线程 xTB（并行只在分子之间）"
+  },
+  "observables": {
+    "ip_adiabatic_eV": "E(cation) - E(ref)，同一 complex、同一介质内，两态各自 --opt（绝热口径）；四档介质各一份",
+    "ea_adiabatic_eV": "E(ref) - E(reduced)，同上",
+    "ddg_ox_coord_eV": "IP(complex) - IP(free)，即框架 3.2 的 DDG_ox^coord；free 侧取 W23-2 的 ip_gas_eV / ip_water_eV",
+    "ddg_red_coord_eV": "(-EA(complex)) - (-EA(free))，即框架 3.2 的 DDG_red^coord；free 侧取 W23-2 的 -ea_gas_eV / -ea_water_eV",
+    "c1_to_c2_step_eV": "IP 或 (-EA) 在 [Li(M)2]+ 与 [LiM]+ 之间的差（第二配位壳台阶）",
+    "state_identity_probe": "Li 的 Mulliken 布居（xTB charges 文件末原子）；还原态里电子是否落在 Li 上 = (q(Li, ref) - q(Li, reduced)) >= 0.5 e"
+  },
+  "hypotheses_locked_before_run": [
+    {
+      "id": "H1",
+      "text": "C0->C1 条件态台阶上，氧化轴保序、还原轴失序：tau_b(ox) > 0 且 tau_b(red) < 0",
+      "threshold": "气相与水分两档都要满足 sign(tau_b(ox)) > 0 且 sign(tau_b(red)) < 0（两侧 |tau_b| 都要求 >= 0.20，否则记为太靠近零不可判）",
+      "paper_reference": "论文 N=18：C0->C1 氧化 tau_b = 0.689、还原 tau_b = -0.4667",
+      "falsified_if": "任一款不满足则判否，并如实登记"
+    },
+    {
+      "id": "H2",
+      "text": "态身份改变：还原态 [complex]^(0) 里多出的那个电子主要落在 Li 上（q(Li) 至少下降 0.5 e）",
+      "threshold": "达到 0.5 e 阈值的化合物占比 >= 0.50",
+      "paper_reference": "论文 N=12：11/12 个体系里还原时电子落在 Li+ 上",
+      "falsified_if": "低于 0.50 则判否"
+    },
+    {
+      "id": "H3",
+      "text": "sigma 闭式恒等式：逐对直接算出的 f_unresolved 与 Pr(q_ij > sqrt(2)/z) 完全相等",
+      "threshold": "z = 1.96 与 z = 1 两档，两条路径的最大绝对差 <= 1e-9",
+      "paper_reference": "论文四项检验之一：f_unresolved(z) = Pr(q_ij > sqrt(2)/z) 精确给出",
+      "falsified_if": "超出 1e-9 则判否（说明实现与闭式不等价）"
+    },
+    {
+      "id": "H4",
+      "text": "位移离散度支配排序：跨越本仓全部台阶，rho(std, tau_b) <= -0.5",
+      "threshold": "rho(std, tau_b) <= -0.5 且 rho(|mean|, tau_b) > -0.5（即离散度比幅值更能解释 tau_b）",
+      "paper_reference": "论文 N=18 十级台阶：rho(std, tau_b) = -0.8511、rho(|mean|, tau_b) = -0.5350",
+      "falsified_if": "不满足则判否"
+    },
+    {
+      "id": "H5",
+      "text": "Born 形式：单电荷态溶剂化能沿 1-1/eps 的过原点直线 R^2 >= 0.90",
+      "threshold": "在 4 个 eps 点（1 / 7.58 / 18.0 / 80.4）上做单参数 Born 拟合，R^2 >= 0.90 的（化合物, 电荷态）曲线占比 >= 0.70",
+      "paper_reference": "论文 24 条曲线平均 R^2 = 0.9861（Born 显著优于 Onsager 0.8779）",
+      "falsified_if": "低于 0.70 则判否"
+    },
+    {
+      "id": "H6",
+      "text": "小样本 tau_b 抽样误差量级与论文一致：在 N=10 子集上重抽 2000 次的 tau_b 标准差落在 [0.06, 0.25]",
+      "threshold": "每个可建台阶的 sd 都落在 [0.06, 0.25]",
+      "paper_reference": "论文：N=10 子集重抽 2000 次，tau_b 抽样标准差 0.1264",
+      "falsified_if": "超出区间则判否，并给出本仓自己的最小样本量读数"
+    },
+    {
+      "id": "H7",
+      "text": "回归锚（资格审查）：气相 C_1 ref 态（[LiM]+ net+1 uhf 0）与 W21 已提交层逐位一致",
+      "threshold": "max|d E| <= 1e-9 hartree，且气相 Li 态 homo/lumo 与 W23-1 gas_li_* 的 max|d| <= 1e-6 eV",
+      "falsified_if": "不通过则 C_1 整条臂作废（说明新电荷态与 ref 态不共享几何/命令来源）"
+    },
+    {
+      "id": "H8",
+      "text": "C_2 QC：反式 2:1 二聚构型在优化后仍然成键（两个 Li-供体距离都 <= 3.2 A，且两配体之间最小原子间距 >= 1.3 A）",
+      "threshold": "通过 QC 的化合物占比 >= 0.70",
+      "falsified_if": "低于 0.70 则 C_2 臂只作 QC 报告、不进 C1->C2 台阶读数"
+    },
+    {
+      "id": "H9",
+      "text": "C1->C2 第二壳台阶：氧化轴保序（tau_b > 0.40），还原轴失序（tau_b < 0.40）",
+      "threshold": "气相与水分两档都要满足 tau_b(ox) > 0.40 且 tau_b(red) < 0.40",
+      "paper_reference": "论文 N=12：C1->C2 氧化 tau_b = 0.867、还原 tau_b = 0.289",
+      "falsified_if": "任一款不满足则判否"
+    }
+  ],
+  "readouts": [
+    "R1 C_1 / C_2 的 IP、EA 在气相与水分两档的分布（n / 均值 / 标准差 / 失败计数）",
+    "R2 DDG_ox^coord 与 DDG_red^coord（本臂首次自算的条件态位移），两个 complex x 两个介质",
+    "R3 C0->C1 与 C1->C2 两级台阶在两轴上的 tau_b / Spearman / Top-k 重叠 / f_unresolved / robust_inversion，全部带 bootstrap CI",
+    "R4 态身份探针：还原前后 Li 的 Mulliken 布居变化（H2 的判据表）",
+    "R5 与 HB 论文 Table 2 的逐台阶 gap map（符号 / 幅值 / tau_b 三个口径，只作对照不作证伪）",
+    "R6 sigma 闭式恒等式检验（H3）",
+    "R7 十级台阶在本仓 N=246 上的 rho(std, tau_b) / rho(|mean|, tau_b) / rho(std, f_unresolved) 族（H4）",
+    "R8 Born 拟合（H5）：逐 (化合物, 电荷态) 单参数拟合 R^2 分布 + |dE|*eps 常数带",
+    "R9 tau_b 抽样误差 vs N 曲线（H6）：N in {10, 18, 25, 49, 100, 246}",
+    "R10 回归锚证据表（H7）",
+    "R11 C_2 QC 表（H8）",
+    "R12 失败与 scf_retry post_hoc 登记"
+  ],
+  "qc_rules": {
+    "ref_geometry_rule": "每个 complex 的 cation / ref / reduced 三态共用一个起始几何，各自 --opt；三态之间不做几何传递",
+    "charge_rule": "arm 净电荷 = 母分子形式电荷 + complex.base_charge_offset + state.delta_q",
+    "c2_qc_rule": "Li-供体距离取优化后 Li（最后一个原子）到两个配体供体原子的距离（配体 2 的原子索引整体平移 n_atoms(mol)）",
+    "scf_retry_rule": "失败臂沿用 W21 / W23 的 post_hoc 重试（--iterations 1000 --etemp 1000），重试结果单独标记，不覆盖首次读数"
+  },
+  "frozen_read_lines_untouched": {
+    "frozen_baseline": 0.4091179943351143,
+    "frozen_headline": 0.4766400383507876,
+    "single_representation_cross_seed": 0.5861142332208197,
+    "w20_4_promoted_arm": 0.6216672295270079,
+    "main_scoreboard_attempts_cumulative": 12,
+    "main_scoreboard_attempts_this_week": 0
+  },
+  "declared_limits": [
+    "层级：GFN2-xTB 半经验 --opt，不是 DFT 级；论文的 C 台阶是 r2SCAN-3c，本臂是低层级实例化，绝对值不可直接比",
+    "绝热口径（三态各自优化）与垂直口径不同，不得与本仓历史垂直数值或论文的垂直三点法混比",
+    "C_2 只用了一个确定性的反式 2:1 起始构型，不是最低能异构体，也不是 population 平均；框架 3.2 明令禁止把不同化学计量 cluster 混做 Boltzmann 平均，本臂遵守",
+    "C_1 的 ref 态锚到 W21 是必要的资格检查；阳极（+2）态在气相可能发生库仑解离，QC 如实登记，不以失败臂推断化学",
+    "本臂不引用任何 Reaxys 数值；Batt-P30K / RX-392 只在别处作参考层，本臂不涉及",
+    "氧化轴方向约定：S_ox 越大越难氧化 = IP 与 -eps_HOMO；还原轴 S_red 越大越难还原 = -EA 与 eps_LUMO"
+  ],
+  "amendment_before_run": {
+    "at_local": "2026-10-02",
+    "reason": "初版把介质锁成 gas + water 两档（12 臂 / 2952 次）。跑前扩到与 W23-2 免费态完全对等的四档（gas + thf + benzaldehyde + water，24 臂 / 5904 次），理由有三：(a) 只有这样 C_0 -> C_1 -> C_2 台阶才与免费态的 P1->P2 环境台阶同底，能做「同底环境梯」的 apples-to-apples 比较；(b) 四档 eps 点让 H5 的 Born 拟合也能覆盖复合物电荷态（两档只有 2 个点，不可拟合）；(c) 单位成本 ~0.12 s/次，四档全跑约 12-25 分钟，在预算内。",
+    "superseded": {
+      "media": [
+        {
+          "key": "gas",
+          "alpb_name": null,
+          "epsilon": 1
+        },
+        {
+          "key": "water",
+          "alpb_name": "water",
+          "epsilon": 80.4
+        }
+      ],
+      "count_per_compound": 12,
+      "planned_runs": 2952
+    }
+  }
+}

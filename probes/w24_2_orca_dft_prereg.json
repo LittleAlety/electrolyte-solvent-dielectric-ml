@@ -1,0 +1,172 @@
+{
+  "schema_version": "w24_2_orca_dft_prereg@1",
+  "task": "w24_2_orca_dft",
+  "title": "Axis A P_1 / P_2 的 DFT 级首次实例化：ORCA 6.1.1 r2SCAN-3c 三点法垂直 ΔSCF（气相 + CPCM/SMD 乙腈），在母体论文的 18 分子核心集上逐字复现",
+  "status": "locked_before_run",
+  "locked_at_local": "2026-10-02",
+  "charter": "reports/w24_2_orca_dft_charter.md",
+  "why_this_arm_exists": [
+    "W23-2 与 W24-1 把 P_1 只做到 GFN2-xTB 半经验层级，因此本仓台阶与母体论文台阶层级不同、只能比符号不能比数值。",
+    "本仓文档（reports/w21_framework_slot_map.md:48、reports/week23_2_project_charter.md:65）把 ORCA 登记为「不在本仓工具链里」。该登记经实机验证为**错误**：E:/ORCA/orca_6_1_1/orca.exe（ORCA 6.1.1）在盘、许可证有效、r2SCAN-3c 正常终止（水分子 4 进程 6.5 s）。本臂是对该登记错误的更正与补救。",
+    "母体论文 2.3 明写「所有 ΔSCF 结果均取自三态单点计算」，即 P_1/P_2 是**垂直量**（共用 GFN2 几何 G1 的单点），不是绝热。垂直单点不需要 Opt/Freq，成本使 DFT 级实例化首次变得可行。"
+  ],
+  "framework_slots": {
+    "primary": "docs/framework/ranking-electrolyte-materials-v2.md 3.1 Axis A P_1 gas-phase molecular redox thermodynamics（DFT 级首次实例化）",
+    "secondary": [
+      "docs/framework/ranking-electrolyte-materials-v2.md 3.1 Axis A P_2 fixed-background continuum molecular redox thermodynamics（CPCM/SMD 乙腈）",
+      "docs/framework/ranking-electrolyte-materials-v2.md 19 Stage 1 gate S1-1 / S1-2（方法审计：选方法审计分子、比较泛函/基组）——本臂是这两条首次实例化",
+      "docs/framework/ranking-electrolyte-materials-v2.md 15.1 气相锚点（8-10 个实验 IP 的 absolute scale / family trend / ranking 审计）",
+      "母体论文 Table 1（12 个气相锚点的 MAE / 偏置 / 最大误差 / tau_b）与 Table 2（P0->P1 与 P1->P2 两级台阶）"
+    ],
+    "non_goals": [
+      "不改任何冻结读数、不动主记分牌（本周 shot 仍为 0，累计仍为 12）",
+      "不做 G1->G2 几何台阶的 Opt+Freq（本臂只做垂直单点；几何台阶留待后续）",
+      "不做弥散基组对照（论文 2.3 已做，本臂不重复）",
+      "不构造综合电解液分数（框架 18 禁止）"
+    ]
+  },
+  "inputs": {
+    "core_set": {
+      "path": "E:/Claude Code/电解液溶剂-HB/电解液溶剂HB-Code/data/metadata/core_set.csv",
+      "rows": 18,
+      "sha256": "630b0ee8c09dc4141124e335181572bf27a63f297a8df95f9c774683a10cf91b",
+      "role": "分子名册（mol_id / name / smiles）。这是母体论文的核心集本身，用于逐分子对标",
+      "note": "18 个分子中有 17 个同时在本仓 246 名册内（只差 C18 SN 丁二腈），因此本臂可同时充当 xTB<->DFT 的桥"
+    },
+    "gas_anchors": {
+      "path": "E:/Claude Code/电解液溶剂-HB/电解液溶剂HB-Code/data/anchors/gas_phase_anchors.csv",
+      "sha256": "a957ef0126efb817d115d4e0ed663207e401e42b5e6e63ffbb78942660c347b0",
+      "role": "R_gas 外部锚点（NIST WebBook 实验 IP + 一处 DLPNO-CCSD(T) 参照），用于复现论文 Table 1"
+    },
+    "solution_anchors": {
+      "path": "E:/Claude Code/电解液溶剂-HB/电解液溶剂HB-Code/data/anchors/solution_redox_anchors.csv",
+      "sha256": "48bb6c0e3fbcc8ef94cc586a3ad40f00869bdd19f43826908057f0cfdb08b213",
+      "role": "R_sol 外部锚点（同系列 LSV 氧化电位），只作对照"
+    },
+    "roster": {
+      "path": "data/processed/w21_chemical_space_metadata.csv",
+      "sha256": "fba4a7b287f38018dd30500ff34dc6132c6eec5a17490789b562a1e99868a27f",
+      "role": "xTB<->DFT 桥的交集判定"
+    },
+    "xtb_parallel_layer": {
+      "path": "data/processed/w24_condition_redox_layer.csv",
+      "role": "W24-1 的 xTB 条件态层；本臂不改它，只用它与 246 名册做尺度桥"
+    }
+  },
+  "geometry_protocol": {
+    "embedder": "RDKit ETKDGv3 + MMFF94（缺参时 UFF），useRandomCoords=True（复用 probes/w21_li_coordination.py 的 embed）",
+    "seed_rule": "seed = 42 + row_index（核心集行序）",
+    "g1": "GFN2-xTB --opt（冻结 runner xtb_optimisation_arguments）在气相优化中性分子，xtbopt.xyz 即论文的 G1 几何",
+    "note": "论文用 CREST 做构象搜索；本臂用确定性单构象，这是如实登记的口径差，不得声称为同构象"
+  },
+  "orca_protocol": {
+    "binary": "E:/ORCA/orca_6_1_1/orca.exe（ORCA 6.1.1）",
+    "method": "r2SCAN-3c（r2SCAN meta-GGA + def2-mTZVPP + 几何 Counterpoise 型色散校正），RIJCOSX 加速，TightSCF",
+    "single_point": "三态单点（neutral / cation / anion）在同一 G1 几何上 —— 垂直量，与论文 2.3 同口径",
+    "solvent": "CPCM(ACETONITRILE) + smd true + SMDsolvent \"ACETONITRILE\"；ORCA 输出回读的 Epsilon = 35.6880，与论文 35.688 一致",
+    "energy_convention": {
+      "primary": "FINAL SINGLE POINT ENERGY（含 CPCM 反应场的 SCF 能量）",
+      "secondary": "Total Energy after SMD CDS correction（再叠加 Gcds 空腔-色散-溶剂结构项）",
+      "rule": "两条都入 layer；主读数用 primary，secondary 作为预注册的稳健性变体同跑一遍台阶读数"
+    },
+    "charge_and_multiplicity": "neutral (q=0, M=1)、cation (q=+1, M=2)、anion (q=-1, M=2)；开壳层用 UKS（ORCA 由多重度自动选择）",
+    "parallel": "%pal nprocs = <每作业进程数>，%maxcore 3000；作业级并行，进程数 x 并发作业数 <= 16",
+    "scratch": "每个作业独立临时目录，跑完即清"
+  },
+  "arms": {
+    "list_rule": "arm = <medium>_<state>，medium in {gas, smd_acetonitrile}，state in {neutral, cation, anion}",
+    "count_per_molecule": 6,
+    "planned_orca_jobs": 108,
+    "planned_xtb_jobs": "18 次 --opt（G1）+ 54 次垂直单点（3 态 x gas，GFN2）= 72"
+  },
+  "observables": {
+    "ip_vertical_gas_eV": "E(cation, gas) - E(neutral, gas)，同一 G1 几何（论文 P_1）",
+    "ea_vertical_gas_eV": "E(neutral, gas) - E(anion, gas)",
+    "ip_vertical_smd_eV": "E(cation, smd) - E(neutral, smd)（论文 P_2）",
+    "ea_vertical_smd_eV": "E(neutral, smd) - E(anion, smd)",
+    "p_ox": "p_ox = IP（越大越难氧化，与论文 2.4 的方向一致）",
+    "p_red": "p_red = -EA（越大越难还原）",
+    "koopmans_p0": "P_0^ox = -eps_HOMO、P_0^red = +eps_LUMO，取自同一 G1 几何的 GFN2 中性态",
+    "gfn2_dscf_vertical": "GFN2-xTB 三态垂直单点（论文 Table 1 的 P_0prime），同一 G1 几何",
+    "bridge_offset_eV": "DFT - xTB 的逐分子差，用于把 W24-1 的 246 分子 xTB 台阶映射到 DFT 尺度"
+  },
+  "hypotheses_locked_before_run": [
+    {
+      "id": "O1",
+      "text": "复现论文 Table 1：P1（r2SCAN-3c 气相垂直 ΔSCF）对 12 个气相锚点的 MAE 约 0.25 eV",
+      "threshold": "MAE <= 0.60 eV（论文 0.251；放宽到 2.4 倍以吸收构象与几何口径差）",
+      "paper_reference": "Table 1：P1 MAE 0.251 eV、tau_b 0.727；P0 MAE 1.377、偏置 +1.279；P0prime MAE 4.481、tau_b 0.911",
+      "falsified_if": "MAE 超过阈值则判否，并据此声明本臂未能复现论文的绝对标度"
+    },
+    {
+      "id": "O2",
+      "text": "复现论文 Table 1 的 P0 与 P0prime：GFN2 Koopmans 的 MAE 显著大于 GFN2 DeltaSCF 的 MAE（值误差方向）",
+      "threshold": "MAE(P0) < MAE(P0prime) 且 MAE(P0prime) >= 2.0 eV",
+      "falsified_if": "不满足则判否"
+    },
+    {
+      "id": "O3",
+      "text": "复现论文 Table 1 的反直觉核心：熵序保真度与绝对精度解耦 —— P0prime 的 tau_b 不低于 P1 的 tau_b",
+      "threshold": "tau_b(P0prime) >= tau_b(P1) - 0.15（论文 0.911 vs 0.727）",
+      "falsified_if": "不满足则判否"
+    },
+    {
+      "id": "O4",
+      "text": "复现论文 3.2 的方法台阶 P0->P1：氧化轴位移为负、还原轴位移为正",
+      "threshold": "sign(mean dP0->P1 ox) < 0 且 sign(mean dP0->P1 red) > 0",
+      "paper_reference": "论文 3.2：氧化 -1.5496 eV（tau_b 0.673）、还原 +7.5919 eV（tau_b 0.595）",
+      "falsified_if": "任一款不满足则判否"
+    },
+    {
+      "id": "O5",
+      "text": "复现论文 3.3 的环境台阶 P1->P2：两轴位移都为负，且 tau_b 高于方法台阶（环境比方法更保序）",
+      "threshold": "两轴 mean 位移 < 0 且 tau_b(P1->P2, ox) > tau_b(P0->P1, ox)",
+      "paper_reference": "论文 3.3：氧化 -2.3934（tau_b 0.895）、还原 -2.1731（tau_b 0.673）",
+      "falsified_if": "不满足则判否"
+    },
+    {
+      "id": "O6",
+      "text": "气相阴离子不束缚是普遍签名：P1 下大多数阴离子的最高占据轨道能为正",
+      "threshold": "阳 HOMO 判据成立的分子占比 >= 0.80",
+      "paper_reference": "论文 2.3：核心集在 P1 下有 18/18 个阴离子不束缚",
+      "falsified_if": "低于 0.80 则判否"
+    },
+    {
+      "id": "O7",
+      "text": "DFT<->xTB 桥存在且近似为逐分子可转移的平移：两种口径的 IP 排序高度一致",
+      "threshold": "17 个交集分子上 Spearman rho(IP_r2SCAN3c, IP_GFN2_vertical) >= 0.80",
+      "falsified_if": "低于 0.80 则声明桥不成立，W24-1 的 246 台阶不得映射到 DFT 尺度"
+    },
+    {
+      "id": "O8",
+      "text": "能量约定稳健性：用 SMD CDS 修正口径重跑台阶，tau_b 的变化不超过 0.10",
+      "threshold": "|tau_b(primary) - tau_b(secondary)| <= 0.10（P0->P1 与 P1->P2 各轴）",
+      "falsified_if": "超过则判否，并声明 dfSCF 的 SMD 口径对结论敏感"
+    }
+  ],
+  "readouts": [
+    "R1 逐分子三态四口径能量（GFN2 gas vertical、ORCA gas、ORCA SMD primary、ORCA SMD CDS）",
+    "R2 论文 Table 1 的逐层 MAE / 偏置 / 最大误差 / tau_b（P0、P0prime、P1 对 12 个气相锚点）",
+    "R3 论文 Table 2 的 P0->P1 与 P1->P2 两条台阶：两轴的位移均值 / std / tau_b / f_unresolved / Top-k",
+    "R4 阴离子不束缚签名（O6）",
+    "R5 DFT<->xTB 桥：17 个交集分子的逐分子偏移、rho、以及把 W24-1 的 246 台阶映射到 DFT 尺度的读数",
+    "R6 能量约定稳健性（O8）",
+    "R7 ORCA 作业 QC：正常终止率、SCF 收敛、回读的 Epsilon、挂钟",
+    "R8 失败登记"
+  ],
+  "qc_rules": {
+    "termination": "以输出中 ORCA TERMINATED NORMALLY 为唯一通过判据",
+    "epsilon_check": "回读 CPCM 段的 Epsilon，必须等于 35.6880，否则该作业作废",
+    "multiplicity": "中性单重态、阳/阴离子双重态；若 ORCA 报告的自旋污染或收敛失败则登记",
+    "unbound_anion": "阴离子态最高占据轨道能 > 0 即记 unbound_signature=yes（与 W23-2 同一判据）"
+  },
+  "declared_limits": [
+    "几何口径差：论文用 CREST 构象搜索，本臂用确定性单构象（seed = 42 + row_index）。因此表 1 的 MAE 不完全可比。",
+    "构象数少：单构象下 EA 尤其脆弱（论文 2.3 亦指出气相 EA 只在趋势上有意义）。",
+    "能量约定未在论文中明示：本臂把 FINAL SINGLE POINT ENERGY 与 SMD CDS 修正两条都落盘，并预注册 primary，冲突时以 primary 为主读数、secondary 为稳健性。",
+    "核心集只有 18 个分子，tau_b 抽样误差大（论文自报 N=10 时 sd 0.1264）；本臂的 tau_b 不用于精细比较，只用于符号与量级检查。",
+    "本臂不动 W24-1 的 xTB 层；DFT<->xTB 桥只用于声明可转移性，不用于修改任何冻结读数。",
+    "不引用任何 Reaxys 数值。",
+    "本臂不改写母体论文；只回答「同一协议在本机是否能被复现」。"
+  ]
+}
