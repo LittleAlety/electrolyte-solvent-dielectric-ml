@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task_id": "week22_w22_3_broad_pool_budget",
+  "title": "broad-pool 最小信息预算演示：唯一升级判据（跑前锁定）",
+  "prereg_status": "locked_before_run",
+  "locked_at_note": "本判据在读取候选池之前锁定；跑后不得更换判据，也不得新增判据变体。",
+  "plan_reference": "reports/week22_project_charter.md | W22-3 | B5 / D7",
+  "input": {
+    "path": "probes/artifacts/w20_ranking_key_v1_candidates.csv",
+    "sha256": "b52f720bfa904a1c71e730e0d8fb2bb7ec7d4041ce9aae7ce7b1835c518ae6c5",
+    "bytes": 45093401,
+    "columns_contract": [
+      "inchikey", "smiles", "canonical_smiles", "source_line", "NumHDonors", "TPSA",
+      "HOMO_eV", "LUMO_eV", "gap_eV", "domain", "ranking_channels", "key_score",
+      "rank", "on_front", "excluded_reason", "provenance"
+    ]
+  },
+  "locked_criterion": {
+    "id": "criterion_A_cheap_layer_promote",
+    "expression": "domain == 'in_domain' AND on_front is true AND key_score is non-empty",
+    "fields": [
+      {"column": "domain", "test": "equals 'in_domain'"},
+      {"column": "on_front", "test": "is true"},
+      {"column": "key_score", "test": "non-empty"}
+    ],
+    "rationale": "只有同时通过适用域闸门、进入前沿、且已被便宜层评分的候选，才值得升级到昂贵层量化/实验。三个条件缺一不可，避免把「域外」误当「不值得」也避免把「未评分」误当「低分」。",
+    "immutability": "跑前锁定；跑后不得更换判据或增设并列判据以改变主读数。"
+  },
+  "savings_definition": {
+    "baseline": "全部升级（upgrade_all_baseline = 候选总数）",
+    "numerator": "calls_avoided = candidates_total - criterion_upgrade",
+    "ratio": "savings_ratio = 1 - criterion_upgrade / candidates_total"
+  },
+  "expected_direction": {
+    "note": "本件不预设节省比例的数值；无论结果为 0 还是 1，都按实测登记，并要求把域闸门与排序键的贡献分开叙述。"
+  },
+  "provenance_policy": "每个读数在 w22_broad_pool_budget_summary.json::readings 中带 source 列。",
+  "discipline": {
+    "produces_reading": false,
+    "promoted": false,
+    "main_scoreboard_untouched": true,
+    "new_expensive_calculations": 0,
+    "pool_is_candidate_generator": false
+  },
+  "outputs": [
+    "probes/w22_broad_pool_budget_summary.json"
+  ]
+}

@@ -6640,3 +6640,45 @@ MD / RDF 管线（整条新管线，循环 3 再评估）、介电谱反推 Deby
 **⑧ Gate 1 判词**：**仍未闭合，但缺口性质改变** —— `X2` 由「整层为空」变为「已有内容（GFN2-xTB 级）」；`C_1` 侧仍无外部参考层。框架原文 §3/§11 不改一个字节，修订只落在 `reports/w21_framework_slot_map.md` 与 `reports/w21_framework_notes.md`（第 13–16 条）。
 
 **⑨ 红线未触碰**：不引用 Reaxys 数值；不把 Batt 参考层当训练标签；不动 `0.4091179943351143` / `0.4766400383507876` / `0.5861142332208197` / `0.6216672295270079`；不发 v1.4。
+## 28.71 Week 22 立项：对外评审整改轮（A/B/C/D 四组）与 W22-1 安全定理严格化（2026-10-02）
+
+**定位**：Week 22 是一条**整改轮**（review-response round），把一份外部评审报告的 A/B/C/D 四组共 26 条意见变成可执行断言。立项章 `reports/week22_project_charter.md`（含逐条处置矩阵）。本件**不新增昂贵量化计算、不拟合新模型、不动任何冻结件、不引用任何 Reaxys 数值**；`main_scoreboard_attempts = 0`（累计仍 **12**）。
+
+**① 一条必须先登记的定位事实**：评审针对的那份 PDF 正文（`A_axis`、漏解安全定理、十级台阶、`P1` vs GFN2-xTB ΔSCF 的 `4.48 eV / τb 0.91`、介电阶梯 `eps = 200`、`F24` 页眉）在本仓与工作目录内**均不存在**（本仓现有的是介电数据集/筛选管线论文与 v2 框架方案）。处置：能在仓内复算/修订的条目本轮执行；依赖原文页面/数据表的条目（A1、A2、A4、B2 原文表、B4 原文表/图注、D2–D5）登记为 `pending_needs_original`，**绝不代填原文数字**。逐条矩阵见 `paper/review_response_matrix.md`。
+
+**② W22-1（A3）：安全定理的因子 2 被证实，且界是紧的。** 命题：单格最大效应量 `A_axis = max_i |Δe_i|`，一对分子的间距 `d = e_i − e_j` 受**两格**扰动，故 `|Δd| ≤ 2·A_axis`，严格判据应为 `|d0| ≥ 2·A_axis`。解析证明 + 蒙特卡洛（`probes/w22_safety_theorem.py`，预注册 `probes/w22_safety_theorem_prereg.json`，`locked_before_run`）：
+
+| 判据 | 读数 | 结果 |
+| --- | --- | --- |
+| `m=1` 必须漏解 | 平均漏解率 **0.860%**（最坏 1.294%），**200/200** 次实现均出现漏解 | 成立 |
+| `m=2` 必须零漏解 | 200 次 × 19,900 对，漏解**恒为 0** | 成立 |
+| 2A 是必需而非保守 | `max\|Δd\|/(2A) = 0.99895`（≤1 且 >0.95） | 成立 |
+| 留一台阶前瞻（D1） | 在 2Â 处漏判翻号 **0** 次；在 Â 处漏判 **1,382** 次（占 10,875 次真实翻号的 12.71%）；precision 0.99667 / recall 0.99998 | 成立 |
+
+**严格化代价**：仓内 1,176 对、`A_axis = 0.152 eV` 下，安全 pair 由 **1,013（86.14%）** 降到 **874（74.32%）**（−139 对，安全集相对缩水 **13.72%**）；`A ∈ [0.05,0.30] eV` 时缩水 4.55%–24.17%。**定理边界**：扰动无界时（Normal 臂每轮约 9.17 个分子 `|Δe| > A`）`m=2` 漏解非零（均值 1.14e-4） ⇒ 准确表述是「**前提有界时** |d0| ≥ 2A 才无条件充分」。报告已按**两句话**分开写「定理（解析严格界）」与「仿真（经验零漏）」，明写仿真不得反证定理。产物：`probes/artifacts/w22_safety_theorem_{leakage,coverage}.png`、`tests/test_w22_safety_theorem.py`（11 passed）、`reports/w22_safety_theorem.md`。
+
+## 28.72 Week 22 · W22-2：n=49 排序臂统计加固 —— 配对 Δτb 的 CI 跨 0（B1/B2/B3/B4）（2026-10-02）
+
+**定位**：本件在 W21 的 n=49 排序臂上补统计证据链；输入 `probes/artifacts/w21_rank_pairs.csv`（1,176 pair），**逐位复现** W21 的两侧可分辨 451 / robust inversion 0 / τb 0.6888。预注册 `probes/w22_stat_hardening_prereg.json`（`locked_before_run`，5,000 次重抽样、固定种子）。全文 `reports/w22_stat_hardening.md`。
+
+**① 化合物级 bootstrap 95% CI（单位 = InChIKey，有放回抽 49）**：`τb(homo)` **0.6888** [0.5684, 0.7974]；`ρ(homo)` 0.8640 [0.7487, 0.9301]；`τb(lumo)` 0.4660 [0.2620, 0.6342]；`τb(gap)` 0.3537 [0.2063, 0.4987]；`f_robust_inversion` 三条均为 0 / CI [0,0]。
+
+**② 配对 bootstrap Δτb（B2 的核心）**：`Δτb(homo − lumo) = 0.2228`，95% CI **[−0.0087, 0.4852]** —— **跨 0**，判据不过，登记 `suggestive_only`；`Δτb(homo − gap) = 0.3350`，CI [0.1315, 0.5478]（不跨 0）。⇒ 「homo 的排序显著优于 lumo」这一头条在两两配对口径下**只能算提示级证据**，与评审 B2 的判断一致。
+
+**③ 留一化合物敏感性（B1）**：`τb(homo) ∈ [0.6791, 0.7163]`（全池 0.6888）；影响力最大者 `JUJWROOIHBZHMG-UHFFFAOYSA-N`（Δ = +0.0275）。单个化合物翻不动结论。
+
+**④ 多重比较校正（B3）**：置换检验（5,000 次）p = 2.0e-4 / 2.0e-4 / 4.0e-4（homo/lumo/gap）；Bonferroni 与 Holm 校正后**三条全部 `survives_correction`**（p_adj ≤ 1.2e-3）。**口径警告**：这与评审原文的「p=0.008 在校正下不幸存」**不是同一批检验**，两处不得互引。
+
+**⑤ 口径一致性审计（B4）**：homo/lumo/gap 三通道**共用同一批 49 个化合物** ⇒ 三条 p 值与三组 CI **互不独立**；`n=49` 是 247 键 ε 名册的子集；**不可**与 W20 KPI 面板（457 行 / 97 化合物）或 broad-pool 合并。bootstrap 只给抽样区间，**不消除**非独立性、也**不消除**池子选择——本臂是 machinery pilot。
+
+**⑥ 确定性与自检**：`--write-summary` 连跑两次，summary 与 report sha256 逐字节相同；`pytest tests/test_w22_stat_hardening.py` = 8 passed；`ruff` 全过。
+
+## 28.73 Week 22 · W22-3/W22-4 与收口：统一数据文档、broad-pool 预算演示、评审整改矩阵（2026-10-02）
+
+**① W22-3 统一数据文档（用户交付物）**：`probes/build_unified_data_document.py` → `E:\Claude Code\电解质ML\成果输出\数据统一文档.md`（7,936 行 / 1,011,966 B / 13 张表，sha256 `2f1276c1140acf50a4b5a137bb8f0108576d5770c75468574b3dcab450dcde79`）。逐件登记 **3,273** 个文件 / 1,926,406,036 B（`data/**` CSV 214、`data/**` JSON 2,751、`probes/*_summary.json` 160、`probes/artifacts/*.csv` 128、框架 1、论文 16、立项章 3）；固定章节：§0 口径纪律、§1 数据表清单、§2 探针摘要清单、§3 冻结四读数、§4 六通道覆盖（31,949 行）、§5 KPI 板、§6 负结果登记、§7 出处索引。`--check` 逐字节重算通过；大文件（45 MB 候选池、80 MB 原始黏度表、109 件 >4 MiB 的 JSON）只登记元数据/流式计行。
+
+**② W22-3 broad-pool 最小信息预算演示（B5/D7）**：判据跑前锁定（`domain=='in_domain'` 且 `on_front` 为真 且 `key_score` 非空）。候选 **115,756** → 域内 **0** → 前沿 **0** → 判据升级 **0**，节省比例 **1.0**。**必须与排序质量分开叙述**：该池是 Tier C 单点筛查池，按发布前锁定的 D1 域规则全部判域外，节省**由域闸门承担，不是由排序键承担**。⇒ B5 的诚实答案是：本仓现有 broad pool **无法演示「排序驱动的预算节省」**，能给的只有闸门驱动的那个数，且不得读成「排序键有 100% 筛选力」。
+
+**③ W22-4 评审整改矩阵**：`paper/review_response_matrix.md`（A1–A6 / B1–B5 / C1–C8 / D1–D7 逐条：原文问题 → 修法 → 是否可在仓内执行 → 状态），并在 §7 回填 W22-1/2/3 的实测读数。C 组逐条实测：仅 **C6** 真实存在并已修（`paper/paper_zh_draft.md` 图 1 图注，单句替换）；**C8** 登记 `pending_needs_figure_regen`（11 张图内英文标题 + 中文图注混排，须重出 PNG）；C1/C2/C3/C4/C5/C7 在本仓**不存在**（检索 0 命中）。`paper/submission_checklist.md` 文末追加「Week 22 评审整改补充检查项」（A1/A4/B4 提交前必查）。D6 决策流程图：`probes/artifacts/w22_min_information_budget.png`（全中文标签，`--check` 复渲染字节一致）。
+
+**④ 收口**：交付包 `E:\Claude Code\电解质ML\成果输出\week22\`，生成脚本 `probes/export_week22_results.py`；验收与 week18–week21 同构：`lanes_missing = []`、`promoted_lanes = []`、冻结四读数未动、主记分牌尝试 0 次（累计 12）。**本周不发 v1.4**（无晋升、无冻结件移动）。四条 lane 全部带独立预注册或声明无读数。
