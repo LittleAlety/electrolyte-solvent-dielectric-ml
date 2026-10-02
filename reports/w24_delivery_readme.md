@@ -170,7 +170,8 @@ W24-2 的 `nitrogen dioxide` 六臂全失败：NO2 是稳定自由基，预注�
 | `paper/make_paper_docx.py` | 渲染脚本：标题样式 / 表格 / 19 张图按序插入，CJK 字体（宋体正文、黑体标题） |
 | `paper/_v2_*.md` | 装配用的分节片段（head / front / sec29 / body_a / body_b / disc_extra / concl / appendix） |
 
-- **成品 docx**：`成果输出/论文_电解液溶剂筛选中的描述符决策稳定性.docx`（3,895,232 B，sha256 `050ceed915bbaa843caecec62fca22dc81e868a72e58930cc841d6e0d2a27919`），19 张内嵌图、15 张表、54 个标题。
+- **成品 docx**：`成果输出/论文_电解液溶剂筛选中的描述符决策稳定性.docx`（3,894,837 B，sha256 `c11f8cfe76d6ba0d8b9d2a478b0f6a3a39246659e02a7be96f4aba0e528ca9b6`），19 张内嵌图、15 张表、54 个标题。docx 内含 `docProps` 构建时间戳，重新生成不保证逐字节一致；该 sha256 只标识本次交付字节。
 - **重新生成**：`python paper/build_paper_v2.py` → `python paper/make_paper_docx.py`（docx 渲染需 `python-docx`，项目 venv 未装，使用捆绑运行时 Python）。
+- **装配期断言**：`paper/build_paper_v2.py` 在写出前校验每个 Markdown 表格块的列数一致（防「单元格内竖线把表撑宽」，本轮附录 A 的 `spearman(|C|, R²)` 正是这一类）。
 - **口径**：§3.18–§3.20 是后验再分析，正文与附录 B 已逐条标注「不得引用为预注册结论」，且不占 shot；四个冻结读数不动。
 - **与母体论文的关系**：同一套 `P`/`C` 台阶与 `tau_b` 口径，把 N=10–22 的挑选样本放大到 N=246 普查；母体论文读数保持原位、不被修订（§4.7 三条「不宣称」）。

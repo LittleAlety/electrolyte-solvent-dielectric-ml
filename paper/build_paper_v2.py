@@ -50,10 +50,42 @@ sec4 = sec4.replace("\uff08\u00a72.9\uff09", "\uff08\u00a72.10\uff09")
 
 parts = [head, front, sec2, sec3, body_a, body_b, sec4, disc_extra, concl, appendix]
 out = ("\n\n---\n\n").join(strip_rules(p) for p in parts) + "\n"
+def validate_tables(text):
+    """Fail loudly when a markdown table block has ragged column counts.
+
+    A literal pipe inside a cell (for example a Spearman rank written with
+    vertical bars) silently splits that cell and pushes the table one column
+    wider.  Catching it at assembly time keeps the rendered docx honest.
+    """
+    lines = text.split("\n")
+    problems = []
+    tables = 0
+    i = 0
+    while i < len(lines):
+        if lines[i].strip().startswith("|"):
+            block = []
+            while i < len(lines) and lines[i].strip().startswith("|"):
+                block.append(lines[i])
+                i += 1
+            tables += 1
+            widths = set()
+            for row in block:
+                stripped = row.strip().strip("|")
+                widths.add(len(stripped.split("|")))
+            if len(widths) > 1:
+                problems.append((block[0].strip()[:60], sorted(widths)))
+        else:
+            i += 1
+    if problems:
+        raise SystemExit("ragged markdown tables: " + repr(problems))
+    return tables
+
+n_tables = validate_tables(out)
+
 target = ROOT / "paper_zh_draft_v2.md"
 io.open(target, "w", encoding="utf-8", newline="\n").write(out)
 
 print("wrote", target)
-print("chars", len(out), "lines", out.count(chr(10)) + 1, "figures", out.count("!["))
+print("chars", len(out), "lines", out.count(chr(10)) + 1, "figures", out.count("!["), "tables", n_tables)
 for h in ["## 1 ", "## 2 ", "## 3 ", "## 4 ", "## 5 ", "## \u6570\u636e\u4e0e\u4ee3\u7801", "## \u9644\u5f55 A", "## \u9644\u5f55 B", "## \u9644\u5f55 C", "## \u53c2\u8003\u6587\u732e", "### 2.9 ", "### 2.10 ", "### 2.11 ", "### 3.17 ", "### 3.18 ", "### 3.19 ", "### 3.20 ", "### 4.6 ", "### 4.7 "]:
     print(h.strip(), "->", out.count(h))
