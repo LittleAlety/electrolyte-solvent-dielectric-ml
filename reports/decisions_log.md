@@ -6564,3 +6564,55 @@ MD / RDF 管线（整条新管线，循环 3 再评估）、介电谱反推 Deby
 4. **末次干净重导**：`python probes/export_week20_results.py --overwrite`；确认 `worktree_dirty = false` 且 `artifacts_commit` = 回填提交 SHA。
 5. **未铸出前不得**把任何 v1.3 DOI 数字写进 `README.md` / `paper/release_notes_v1.3.md`（避免重演 v1.1 / v1.2 的自指占位符缺陷）。
 |
+
+## 28.67 Week 21 Tier 1：v2 框架原文入库与槽位接口三表（2026-10-02）
+
+**定位**：本件是 `reports/week21_project_charter.md` §3「Tier 1｜零计算对齐」的落地章。`produces_reading = false`、`models_fitted = 0`、`network_calls = 0`、`writes_any_pool = false`、不占 shot 编号、不动主记分牌（累计 12 次不变）、不引用 Reaxys 数值。全文见 `reports/w21_framework_alignment.md`，槽位映射见 `reports/w21_framework_slot_map.md`，框架补丁见 `reports/w21_framework_notes.md`。
+
+**① 框架原文逐字节入库**：来源 `E:\Claude Code\电解液溶剂-HB\核心文件\ranking-electrolyte-materials-v2.md`，落点 `docs/framework/ranking-electrolyte-materials-v2.md`，**54,147 B / 1,779 行 / 30 个一级章节**，sha256 `e55c1b07a127ef7d…`（侧车 `docs/framework/ranking-electrolyte-materials-v2.sha256`）。`byte_identical = true`。**一个字节都不改**；缺陷只登记在 `reports/w21_framework_notes.md`。
+
+**② 特征成本分级（框架 §11）**：`probes/artifacts/w21_feature_cost_map.csv` 共 **18** 行 —— X0 **9** / X1 **2** / **X2 1** / target 2 / reference 4。**X2 那一条的 `evidence_path` 为空**：本仓没有做任何 Li⁺ 配位计算，框架 §11.3 的一整层在本仓不存在。这不是遗漏，是边界，如实登记而不是编造。
+
+**③ 多轴 chemical-space metadata（框架 §5.2）**：`data/processed/w21_chemical_space_metadata.csv`，**246 行 / 246 个唯一键**，16 个互斥主家族（alcohol 52 / other 47 / ether 31 / aromatic_hydrocarbon 29 / ionic_liquid_or_salt 21 / nitrile 16 / ester 15 / halogenated 14 / amine 6 / amide 3 / cyclic_carbonate 3 / linear_carbonate 3 / phosphate 2 / sulfoxide 2 / sulfone 1 / water 1）+ 多选官能团标签 + 角色（state_of_the_art_solvent **15** / background_candidate **231**）。**四个仓内不存在的字段**（`conformer_count` / `Li_motif_count` / `state_identity_status` / `reactivity_status`）一律写 `not_available_in_repo`，**不插补、不编造**。判例核对：PC/EC/DMC/DEC/EMC/DME/DOL/EA/AN/sulfolane/DMSO/TEP/VC/FEC/water 15 个全部正确落到 `state_of_the_art_solvent`。
+
+**④ Stage 0 / Stage 1 判词（框架 §19）**：`probes/artifacts/w21_stage_gate_verdicts.csv` 共 **14** 条 —— 成立 **8** / 部分成立 **3** / 未执行 **3**。**Gate 0 = 成立**（本件不改动任何已冻结定义）；**Gate 1 = NOT CLOSED**（本仓不跑 functional/basis/diffuse 扫描与气相锚，因此不得做批量 DFT —— 而本仓本来也不做，故该 gate 对本仓不构成阻塞，只是不许声称做过）。三处**未执行**照实登记：`S0-8` reference ligand R（无 Li⁺ 配位）、`S1-1` 方法审计分子（无 DFT）、`S1-2` functional/basis 比较。
+
+## 28.68 Week 21 Tier 2：轨道通道的 §9 排序稳定性与 §10 决策指标首次实例化（2026-10-02）
+
+**定位**：本件是立项章 §3「Tier 2｜零 DFT，本周唯一的真读数层」第 7–10 项的落地章。`produces_reading = true`、`promoted = false`、**本周主记分牌尝试 0 次（累计仍 12 次）**、不动任何冻结读数。预注册见 `probes/w21_rank_stability_prereg.json`（`locked_before_run`，sha256 见 summary）。全文见 `reports/w21_rank_stability.md`，拆分表见 `reports/w21_split_taxonomy.md`。
+
+**① 池与身份核对**：`data/dielectric_v03.csv`（246 键）∩ `data/processed/themol_orbital_layer.csv`（Batt 列非空）⇒ **n = 49 化合物 / C(49,2) = 1,176 个 pair**，与 `probes/w19_batt_gap_crosscheck_summary.json` 的 `primary.keys` **逐键一致**（不一致即抛错，不静默）。**注意一处口径陷阱**：图层表自带的 `in_epsilon_roster` 标记是按**旧名册**算的，直接用它会把 succinonitrile 多算进来（n=50）；本件改用冻结 246 键名册为准。
+
+**② 层级与方向**：`P_0` = GFN2-xTB 气相单点；`R_sol` = Batt-P30K ωB97X-V/def2-TZVPPD/SMD(ε=18.5)，**只作 reference layer，不训练、不入池**。方向按框架 §4.1：`T = −ε_HOMO`（越大越耐氧化），Top-k = 最耐氧化的 k 个。
+
+**③ 容差（预注册）**：每化合物 `u_i = |P_0 → R_sol 线性映射的留一残差|`（eV，R_sol 单位）；配对分离门槛 `z = 1.96`、`σ_ij = sqrt(u_i² + u_j²)`；参考层侧登记数值容差 **0.05 eV**。**照实声明缺口**：参考层的物理不确定度本仓未量化，只登记数值容差。
+
+**④ §9 主读数（HOMO 通道）**：朴素换序 **183 / 1,176 = 0.1556**；**预注册规则下 robust inversion = 0 / 451**，bootstrap 95% CI = [0, 0, 0]（5,000 次重抽，分母 451 次次成立），permutation **p = 1.0**（5,000 次置换，912 次有效）。至少一侧 unresolved = **0.6165**；**只被一侧解析 = 0.5655**（框架 §9.2 的分母会静默丢掉这 56.5%，本件单列）。Kendall τ_b = **0.6888**、Spearman ρ = **0.8640**、Pearson r = 0.8223。概率化配对排序：p>0.9 占 0.2755 / p<0.1 占 0.2313 / 中间带 0.4932。**归属**：这是框架 §22.7（大部分 pair 都 unresolved）的实测形态 —— **ρ 高不代表排序可判定**。
+
+**⑤ 容差敏感性（事后臂，已在报告与本表标明非预注册）**：z = 1.96 → 0 个；z = 1.0 → **5** 个；z = 0.674 → **27** 个；完全放开（z = 0）→ **153** 个。用途只有一个：说明「容差要松到什么程度才会出现第一个 robust inversion」，**不得挑一个好看的门当结论**（与 §10.3 对阈值的事后挑选禁令同族）。CSV：`probes/artifacts/w21_tolerance_sensitivity.csv`。
+
+**⑥ §10.1 / §10.2**：Top-k overlap（k/N = 10/20/30%，k = 5/10/15）= **0.400 / 0.900 / 0.800**，Jaccard = 0.250 / 0.818 / 0.667；selection regret = **0.7874 / 0.1003 / 0.1147 eV**。**最顶上那 5 个候选只重叠 40%、平均差 0.787 eV** —— 本件对筛选叙事最有用的一条。CSV：`probes/artifacts/w21_topk_overlap.csv`。
+
+**⑦ §10.3**：标 `not_instantiated_in_week21`。HOMO 通道上没有来自外部设计要求或实验基准的阈值；框架自己禁止事后挑阈值，本件**不挑**。
+
+**⑧ §13.2 三拆分并排（target = Batt HOMO，45 个化合物带完整 X0 块，掉 4 个）**：random 5×10 —— ridge 0.376 / GPR 0.447 / GBM 0.484 / 单特征 0.508 / **RF 0.594**；**骨架留出（34 组）全部为负**，最好 RF **−0.901**；**LOFO（成员 ≥5 的 4 个家族：aromatic_hydrocarbon / ester / ether / other）全部为负**，最好 GPR **−5.681**。**均值基线在 LOFO 下 −27.45、random 下 −0.276** ⇒ 「R² 的零点是均值基线，不是 0」。KRR 按冻结超参（alpha=1, gamma=0.1）会炸到 **−164.8**，本件单列 `krr_tuned`（训练折内选参）回到 −26.8 并**照实并列**，不藏。CSV：`probes/artifacts/w21_split_metrics.csv`、`w21_lofo_by_family.csv`；配对明细 `probes/artifacts/w21_rank_pairs.csv`（1,176 行）。
+
+**⑨ 统计边界（必须随读数一起读）**：n = 49 落在框架 §13.3 自警的薄区，**全部读数标 `machinery pilot`**，不得当达标结论。
+
+**⑩ 其它通道**：LUMO ρ = 0.6459 / τ_b = 0.4660（`reference_only`）；gap 的线性映射近乎水平 ⇒ §9.2 分母塌缩（两侧都可分辨 < 5 个 pair），**`f_robust_inversion` 无定义**，本件如实登记 `undefined_reason` 而不是给一个数。
+
+**⑪ 立项章笔误纠正**：立项章 Tier 2 第 11 项写「把 `auc_gt15` / `auc_gt30` 加进 `METRIC_NAMES`」，**本件不执行**：该问题已由 W18 的 AUC sidecar（`probes/artifacts/dielectric_auc_sidecar.csv`）与三拆分表（`probes/artifacts/dielectric_splitters_auc.csv`）解决，且 `tests/test_auc_sidecar_and_splitters.py` 明确断言 `METRIC_NAMES` 冻结为七项、不得含 AUC。改登记在 `reports/w21_framework_notes.md` 第 11 条。
+
+## 28.69 Week 21 Tier 2：η 解冻（Walden `kinematic_thaw` 数据层结清）与 Week 21 收口（2026-10-02）
+
+**定位**：本件是立项章 §3「Tier 2」第 11 项前半的落地章，也是 Week 21 的收口章。`produces_reading = false`（数据层结清，非通道读数）、不占 shot 编号、不动主记分牌（累计 12 次不变）、不引用 Reaxys 数值。全文见 `reports/w21_eta_thaw.md`。
+
+**① 解冻条件已满足**：Walden 臂（§28.x / `probes/walden_dn_channel_summary.json`）把运动黏度行登记为排除态，理由写死是「本仓没有密度可换算」，并声明唯一依赖 `data/density_v01.csv`（`thaw_dependency_present = true`）。该表现在在盘上。
+
+**② 折出结果**：`data/processed/viscosity_observations_thermoml.csv` 的 **176** 条运动黏度行，按**冻结配对规则**（`probes/build_viscosity_v02.py`：exact 1e-3 K，否则 nearest ≤ 1.0 K）**全部精确配对**，`η = ν × ρ` 折出 **176 / 176 行**，**0 条未配对**，`by_pairing_kind = {exact: 176}`。行表：`probes/artifacts/w21_eta_thawed_rows.csv`（含 ν、配到的 ρ、密度来源 DOI、折出的 η 与状态列）。
+
+**③ 排除登记的全貌**：`eta_epsilon_joint_exclusions.csv` 里 `reason_code = kinematic_viscosity_not_dynamic` 共 **214** 行 = **176 条 thermoml（本件折出）** + **38 条 pubchem 液窗行（不在本件数据源内，如实留在原状态）**。本件只处置 thermoml 侧，不扩大口径。
+
+**④ 买到多少**：**5 个化合物**，其中**原本就在联合表内的 5 个、新增 0 个键**。⇒ **数据层结清，模型层明确不做**：176 行 / 5 键撑不起任何通道级读数，且重拟合等于铸一个新模型版本，需另立预注册。判词 `walden_kinematic_thaw_flag = closeable_in_data_layer`。
+
+**⑤ 收口（AF-12 顺序）**：封树提交 → 干净重导 → 补修复提交。交付包 `E:\Claude Code\电解质ML\成果输出\week21\`，验收要求与 week18–week20 同构：`lanes_missing = []`、`promoted_lanes = []`、`worktree_dirty = false`、`artifacts_commit` 指向最新提交、`verification_passed = true`。**本周不发 v1.4**（无晋升、无冻结件移动，发布线不动）。

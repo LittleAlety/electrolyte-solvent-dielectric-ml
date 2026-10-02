@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "task_id": "week21_w21_1_rank_stability",
+  "title": "Tier 2：轨道通道的不确定性感知排序（§9）与筛选决策指标（§10）+ 三拆分/复杂度阶梯（§13）",
+  "status": "locked_before_run",
+  "charter": "reports/week21_project_charter.md | section 3 | Tier 2 items 7-10",
+  "framework": "docs/framework/ranking-electrolyte-materials-v2.md",
+  "run_mode": "offline",
+  "channel": "orbitals",
+  "pool": {
+    "definition": "epsilon 名册 ∩ 我方 xTB 覆盖 ∩ Batt-P30K 身份命中（structure_check = inchikey_match）",
+    "expected_n": 49,
+    "expected_pairs": 1176
+  },
+  "levels": {
+    "P_0": {
+      "column": "homo_gfn2_eV",
+      "level": "GFN2-xTB 气相单点（THEMol B3LYP-D3(BJ)/DZVP 几何）",
+      "role": "cheap proxy"
+    },
+    "R_sol": {
+      "column": "batt_homo_eV",
+      "level": "wB97X-V/def2-TZVPPD/SMD(epsilon=18.5)",
+      "role": "external reference layer, MIT 许可"
+    }
+  },
+  "unified_direction": {
+    "rule": "框架 §4.1 方向约定：P_ox = -epsilon_HOMO（越大越耐氧化）。因此 HOMO 通道的统一方向目标量 T = -HOMO，Top-k = 最耐氧化的 k 个。",
+    "lumo_axis": "LUMO 通道同法，T = LUMO（越大越耐还原）"
+  },
+  "tolerance": {
+    "map": "OLS P_0 -> R_sol（全池拟合，与 w19 交叉核对同式）",
+    "u_i": "每化合物的留一残差绝对值（eV，R_sol 单位）",
+    "z": 1.96,
+    "sigma_ij": "sqrt(u_i^2 + u_j^2)",
+    "delta_R_sol_eV": 0.05,
+    "registered_limit": "参考层的物理不确定度本仓未量化，只登记数值容差；该缺口必须随读数一起报告"
+  },
+  "top_k": {
+    "rule": "k/N = 10% / 20% / 30%，n = 49",
+    "values": [5, 10, 15]
+  },
+  "bootstrap": {"n_resamples": 5000, "seed": 20261002, "unit": "compound（簇内配对重算）"},
+  "permutation": {"n_permutations": 5000, "seed": 20261002, "null": "置换 R_sol 的化合物标签"},
+  "complexity_ladder": ["mean_baseline", "single_feature_baseline", "ridge", "krr", "gpr", "random_forest", "gradient_boosting"],
+  "splits": ["random_repeated_kfold_5x10", "group_kfold_scaffold_5", "lofo_family_min5"],
+  "threshold_decision_error": "not_instantiated_in_week21：HOMO 通道上没有来自外部设计要求/实验基准的阈值 T（charter section 8 patch 3）",
+  "promotion": {
+    "promoted": false,
+    "main_scoreboard_attempts": 0,
+    "frozen_untouched": [
+      "0.4091179943351143",
+      "0.4766400383507876",
+      "0.5861142332208197",
+      "0.6216672295270079"
+    ]
+  },
+  "forbidden": [
+    "reaxys_values",
+    "batt_labels_into_any_training_pool",
+    "cross_pool_comparison"
+  ]
+}
