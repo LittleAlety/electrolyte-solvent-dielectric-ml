@@ -160,6 +160,20 @@ def test_outputs_are_utf8_without_a_bom():
     raw.decode("utf-8")
 
 
+# The repository hygiene gate rejects any tracked text file that carries CRLF in
+# the worktree, and csv.writer defaults to a CRLF terminator while Path.write_text
+# translates the newline on Windows.  Both were hit while writing this probe, so
+# both are pinned here rather than discovered by the gate a second time.
+def test_every_committed_table_is_lf_only():
+    for path in (ARTIFACTS / "w24_3_conclusions.csv",
+                 ARTIFACTS / "w24_3_conclusions.json",
+                 ARTIFACTS / "w24_3_sampling_law.csv",
+                 ARTIFACTS / "w24_3_paper_axis_sigma.csv",
+                 ARTIFACTS / "w24_3_axis_flip.csv",
+                 ARTIFACTS / "w24_3_topk_decoupling.csv"):
+        assert b"\r\n" not in path.read_bytes(), path.name
+
+
 def test_figures_are_non_trivial():
     assert FIGURE_ADEQUACY.stat().st_size > 50_000
     assert FIGURE_SCREENING.stat().st_size > 50_000

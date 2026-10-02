@@ -258,7 +258,7 @@ def born_regimes(born_rows):
 
 def write_csv(path: Path, fieldnames, rows) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
@@ -534,7 +534,8 @@ def main() -> int:
         "rho_absC_r2": rho_c_r2,
         "readings": readings,
     }
-    CONCLUSIONS_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    CONCLUSIONS_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2),
+                                 encoding="utf-8", newline="\n")
     write_csv(CONCLUSIONS_CSV,
               ("id", "reading", "statistic", "value", "unit", "support"),
               readings)
