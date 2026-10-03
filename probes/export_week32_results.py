@@ -124,6 +124,7 @@ CARRY_FORWARD = (
     ("paper/make_paper_docx_template.py", "make_paper_docx_template.py"),
     ("probes/export_week31_results.py", "export_week31_results.py"),
     ("probes/export_week32_results.py", "export_week32_results.py"),
+    ("probes/w32_presentation_figures.py", "w32_presentation_figures.py"),
 )
 
 LANE_KEYS = tuple(LANES)
@@ -133,6 +134,10 @@ EXTERNAL_DELIVERABLES: tuple[tuple[str, str], ...] = ()
 FIGURES: tuple[str, ...] = (
     "probes/artifacts/w32_rank_stability.png",
     "probes/artifacts/w32_regularization_ladder.png",
+    "probes/artifacts/w32_fig_noise_floor.png",
+    "probes/artifacts/w32_fig_fidelity_law.png",
+    "probes/artifacts/w32_fig_milestones.png",
+    "probes/artifacts/w32_fig_regularization_curves.png",
 )
 
 VERIFIERS = (

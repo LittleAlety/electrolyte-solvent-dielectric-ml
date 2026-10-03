@@ -57,3 +57,7 @@ W31 留下两个口子：抽样律**只在介电通道的层级口径上**被实
 - W32-B 的拟合路径直接复用 W31 的 `evaluate_ladder`，只替换配置表与臂前缀。
 - 单表示（Physical 13 列）读数永不与冻结头条 `0.4766400383507876` 混比。
 
+## 6. 呈现层（四张直观图）
+
+均为对上面两个冻结 JSON 的纯后处理（`probes/w32_presentation_figures.py`：不占 shot、不产生新读数、不改任何冻结文件）：`w32_fig_noise_floor.png` 四通道噪声地板与最小信息预算（闭式 sd(N) 对经验波动）；`w32_fig_fidelity_law.png` s0 对保真度缺口 1 − tau_b；`w32_fig_milestones.png` 项目里程碑阶梯（冻结读数 vs 读数，含 0.60 门）；`w32_fig_regularization_curves.png` 两条正则化曲线的逐种子散点与五种子均值。
+
