@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Assemble paper/paper_zh_draft_v2.md from the v1 draft plus the W21-W24 sections."""
 import io
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -82,7 +83,27 @@ def validate_tables(text):
 
 n_tables = validate_tables(out)
 
+def _headings(text):
+    """Headings outside fenced code blocks."""
+    heads, fenced = set(), False
+    for line in text.split("\n"):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced and line.startswith("#"):
+            heads.add(line.strip())
+    return heads
+
+
 target = ROOT / "paper_zh_draft_v2.md"
+if target.exists() and "--force" not in sys.argv:
+    lost = sorted(_headings(io.open(target, encoding="utf-8").read()) - _headings(out))
+    if lost:
+        raise SystemExit(
+            "refusing to overwrite %s: %d heading(s) live only in the shipped draft and would be\n"
+            "lost by a rebuild.  Move them into paper/_v2_*.md first, or pass --force.\n%s"
+            % (target.name, len(lost), "\n".join("  " + h for h in lost[:20]))
+        )
 io.open(target, "w", encoding="utf-8", newline="\n").write(out)
 
 print("wrote", target)
