@@ -7150,3 +7150,59 @@ NO₂ 是**稳定自由基**（`O=[N+][O-]`，1 个自由基电子），预注�
 **⑨ 一处真 bug 与修复**：W33-B 初稿把 `critical_tau` 取成**负尾**（n = 5 返回 -0.8）。已改为「累积概率仍 <= alpha 的最大 K」⇒ 正值，并用 `tests/test_w33_kendall_null_tool.py` 的逐值回归（`critical_tau(5, 0.05) == 0.8`、`critical_tau(7, 0.01) == 0.8095238095238095`、`p_upper(7, 0.90) == Fraction(1, 720)`、Mahonian counts 总和 `== n!`）钉死防复发。W33-A 的复查同时确认 `homo` 条款逐行等价于「阴离子 HOMO < 0」。
 
 **⑩ 纪律与判词**：主记分牌 **本轮 shot = 0，累计 19**；四个冻结读数（`0.4091179943351143` / `0.4766400383507876` / `0.5861142332208197` / `0.6216672295270079`）未动；不改 `METRIC_NAMES`、不新增特征列、缺行不插补。W33-A / W33-B 按附录 C 属后验读数 / 工具：**不占 shot、不得当作预注册结论引用**。**仍不能**：引用 -0.602 作为 ORCA 层还原轴读数；把拒答当作缺失值插补；把两层数值结果混在同一张记分牌上；把单表示读数与冻结头条 `0.4766400383507876` 混比。**产物**：`probes/w33_bound_state_gate.py`、`probes/w33_bound_state_gate_prereg.json`、`probes/artifacts/w33_bound_state_gate_{summary.json,gates.csv,refuse_queue.csv,readings.csv,png}`、`reports/w33_bound_state_gate.md`、`tests/test_w33_bound_state_gate.py`、`probes/w33_kendall_null_tool.py`、`probes/artifacts/w33_kendall_null_{summary.json,table.csv,budget.csv,png}`、`reports/w33_kendall_null_tool.md`、`tests/test_w33_kendall_null_tool.py`、`probes/export_week33_results.py`。
+
+## 28.88 Week 34：门禁注册表与四通道看板（后验，不占 shot）＋ R6 的配对重抽分辨率审计（后验，不占 shot）（2026-10-03）
+
+**这一件是什么**：W33 收口时登记了两件未做的事（README §11 第 8、9 条）。其一，W33-A 的门禁**只活在报告里** —— 判定写进了 `reports/` 与 summary，但下游若想引用「还原轴读数」，盘上没有任何产物能强制它先过门禁（no registry, no dashboard, no guard）。其二，**R6 是全仓唯一没有分辨率读数的跨层级结论** —— 母体论文六档有 σ（`w24_3_paper_axis_sigma.csv` 的 `sigma` 列）、四通道有抽样律 s0，唯独 R6 那条「固定化合物、只换层级」的 Δτ 既没有 σ、也没有区间，只有两个点估计（`ox_move = −0.043`、`red_move = −1.437`）。本轮两条 lane 各堵一个口子，都**不占主记分牌 shot（累计仍 19）**，登记方式与 W30-A / W31-A / W32-A / W33-A 同族。
+
+**① 规模与覆盖（W34-A）**：只读四张冻结表（`w23_redox_dscf_layer.csv`、`w24_2_orca_dft_layer.csv`、W33-A 的 `summary/gates.csv`、`w32_rank_stability.json`、W33-B 的 `budget.csv`），逐位记 sha256；不重跑 xTB / ORCA、不装依赖、不联网；全轮约 **3.6 s**。
+
+**② 注册表（`data/processed/redox_state_legality_registry.csv`，1028 行）**：把 W33-A 的判定从「报告里的表」升成「盘上的权威列」，每个（层级 × 介质 × 分子）态给出 `geom_ok / homo_bound / ea_positive / legal / reason`。
+
+| 层级 | 介质 | eps | 行数 | 合法 | 因几何 | 因不束缚 | 因 EA 非正 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| GFN2 | 气相 | 1.0 | 246 | 52 | 5 | 188 | 1 |
+| GFN2 | THF | 7.6 | 246 | 154 | 4 | 86 | 2 |
+| GFN2 | 苯甲醛 | 18.0 | 246 | 154 | 4 | 87 | 1 |
+| GFN2 | 水 | 80.4 | 246 | 161 | 5 | 80 | 0 |
+| ORCA | ORCA 气相 | 1.0 | 22 | 0 | 0 | 22 | 0 |
+| ORCA | ORCA SMD 乙腈 | 35.7 | 22 | 2 | 0 | 16 | 4 |
+
+不变量：`legal == geom_ok AND homo_bound AND ea_positive`；`reason` 按 geom > homo > ea 取首个失败条款。**注册表 legal 与 W33-A `gates.csv` 逐条一致。**
+
+**③ 守卫（同脚本 `assert_redox_readable` / `redox_reading`）**：门禁与读数在**同一次调用**里，调用方无法绕过；合法子集 < 5 抛 `RedoxGateRefusal`，**不返回 None** —— 拒答是「在本层不可宣读」的明确结论，不得捕获后插补、赋伪值或静默跳过。复现锚：`gfn2/gas` 合法子集 τ_b = **0.7450980392156863**、`gfn2/water` = **0.8119565217391304**，与 W33-A 逐位一致。
+
+**④ 四通道看板（`probes/artifacts/w34_channel_dashboard.{csv,md,png}`）**：
+
+| 通道 | s0（中位） | N_pop | sd@N=12 | 所需 N（sd ≤ 0.05） | 门禁 | 可否宣读 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 介电常数 eps | 0.4737 | 205 | 0.132683 | 62.0 | 否 | 可宣读 |
+| 黏度 eta | 0.4903 | 708 | 0.140340 | 85.0 | 否 | 可宣读 |
+| 分子轨道 HOMO/LUMO/IP/EA | 0.5828 | 29515 | 0.168207 | 135.0 | 否 | 可宣读 |
+| 氧化还原自由能 | 0.3695 | 392 | 0.105010 | 48.0 | **是** | GFN2 可宣读；ORCA 不可判定 |
+
+这张表把「每通道自己的噪声地板」（W32-A）与「还原轴的定义域」（W33-A）并成一个跨通道入口：**只有氧化还原通道带门禁**，且该通道的 ORCA 层判不可判定。
+
+**⑤ W34-A 判据 5/5 成立**：H34a 注册表规模（1028）成立、H34b 与 W33-A gates.csv 逐条一致成立、H34c reason 优先级成立、H34d 守卫行为（ORCA 气相拒答 + GFN2 气相放行且 τ_b 复现）成立、H34e 看板四通道齐备且 redox 行带门禁成立。
+
+**⑥ 规模与覆盖（W34-B）**：预注册 `probes/w34_paired_power_prereg.json`，`status = locked_before_run`、revision 1、sha256 `431e8fd5c78744906c4a7c19293dea3859ba7957438d8bf58e1308545ea21f0e`；含 **disclosure 显式声明非盲**（跑前已见 W24-3 的四个锚与两个点估计、W33-A 的门禁裁决）。重抽单位 = 22 个配对化合物（有放回），B = **4000**，种子 **20261003**；统计量 = `w24_3_posthoc.kendall_tau_b`。全轮约 **3.1 s**。
+
+**⑦ 四个复现锚逐位命中**：`same_ox_gfn2` = **0.6969696969696969**、`same_ox_orca` = **0.6536796536796536**、`same_red_gfn2` = **0.8354978354978355**、`same_red_orca` = **−0.6017316017316018**（tolerance 1e-12）；不中则脚本 `return 2` 拒绝出报告。`tests/test_w34_paired_power.py` 另用**直接 scipy 路径**独立复算这四个数（不经探针 helper）。
+
+**⑧ 核心读数：氧化轴的 −0.043 落在噪声地板之内**：
+
+| 轴 | τ_b(GFN2) | τ_b(ORCA) | Δτ | 95% 区间 | 半宽 | 跨 0 | 判定 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 氧化轴 | 0.696970 | 0.653680 | −0.043290 | [−0.1982, 0.0909] | 0.1446 | **是** | **不可分辨** |
+| 还原轴 | 0.835498 | −0.601732 | −1.437229 | [−1.7037, −1.0818] | 0.3109 | 否 | 可分辨的真效应 |
+
+- **H34g 成立**：还原轴区间不跨 0，4000 次重抽符号翻转占比 **0.0000** ⇒ 翻号是真的。
+- **H34h 成立**：氧化轴区间**跨 0** ⇒ 「氧化轴对层级不敏感」在 n = 22 下应改写为「**未检出差异（不可分辨）**」，而不是「无差异」。**这是本轮最值钱的一条**：把一个**未被检验的肯定式表述**降级为一个**有分辨率的否定式读数**。正确读法是「未检出差异」，不是「证明无差异」。
+- **H34i 成立**：独立地板 `sqrt(2)·exact_sd(22)` = **0.217113**（精确零分布，取自 W33-B 工具）；氧化轴区间半宽 0.1446，比值 **0.6658 < 1** ⇒ 配对设计确实降方差。
+- **H34j 成立**：门禁叠加 —— 配对集 GFN2 气相合法 **1/22**、ORCA 气相合法 **0/22** ⇒ 上面两个 Δ 都是在（几乎全部）**不合法态**上算的。**分辨率与定义域是两件事，必须并报。**
+
+**⑨ W34-B 判据 5/5 成立**：H34f 复现锚成立、H34g 还原轴不跨 0 成立、H34h 氧化轴跨 0 成立、H34i 配对降方差成立、H34j 门禁一致性成立。
+
+**⑩ 一处设计缺陷与修复（本轮自查）**：W34-B 初稿曾提供 `--draws` CLI，跑 `--draws 200` 会**静默覆盖** B = 4000 的产物，使盘上产物与预注册不一致。已**移除该 CLI**、把 B 写死为预注册值（`draws = DRAWS`），并把「预注册的 draws / seed」写进 `tests/test_w34_paired_power.py`（从 prereg 读回比对 summary）。
+
+**⑪ 纪律与判词**：主记分牌 **本轮 shot = 0，累计 19**；四个冻结读数（`0.4091179943351143` / `0.4766400383507876` / `0.5861142332208197` / `0.6216672295270079`）未动；不改 `METRIC_NAMES`、不新增特征列、缺行不插补。W34-A / W34-B 按附录 C 属后验注册表 / 读数：**不占 shot、不得当作预注册结论引用**。**仍不能**：把 bootstrap 区间外推到 246 普查；把区间跨 0 读成「证明无差异」；把拒答当缺失值插补；把单表示读数与冻结头条 `0.4766400383507876` 混比。**待下一份预注册处理**：论文 §3.20 与附录 A 里「氧化轴对层级不敏感」的口径更正。**产物**：`probes/w34_legality_registry.py`、`data/processed/redox_state_legality_registry.csv`、`probes/artifacts/w34_legality_registry_summary.json`、`probes/artifacts/w34_channel_dashboard.{csv,md}`、`probes/artifacts/w34_legality_registry.png`、`reports/w34_legality_registry.md`、`tests/test_w34_legality_registry.py`、`probes/w34_paired_power.py`、`probes/w34_paired_power_prereg.json`、`probes/artifacts/w34_paired_power_{summary.json,bootstrap.csv,table.csv,png}`、`reports/w34_paired_power.md`、`tests/test_w34_paired_power.py`、`probes/export_week34_results.py`。

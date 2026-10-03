@@ -1,0 +1,82 @@
+{
+  "schema": "w34_paired_power/prereg@1",
+  "task": "week34_paired_power",
+  "status": "locked_before_run",
+  "revision": 1,
+  "locked_at_utc": "2026-10-03T12:30:00Z",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "本轮读数在 C 轴（电子结构层级）与统计分辨率层，不触冻结的 ε 主记分牌：不改四个冻结读数，也不在主记分牌池上拟合任何模型。登记方式与 W30-A / W31-A / W32-A / W33-A 同族。"
+  },
+  "why": "R6（固定化合物、只换电子结构层级）是全仓唯一没有分辨率读数的跨层级结论：母体论文六档有 sigma 列、四通道有抽样律 s0，而 R6 只有点估计 ox_move = -0.043、red_move = -1.437。本轮给它补上配对 bootstrap 区间，检验『氧化轴对层级不敏感』这句表述是否有分辨率支撑。",
+  "disclosure": "**非盲**。设计本预注册时已见的既有读数（全部来自本仓已提交产物）：`probes/artifacts/w24_3_level_crosscheck.csv` 的 n_paired=22、same_ox_gfn2=0.6969696969696969、same_ox_orca=0.6536796536796536、ox_move=-0.04329004329004327、same_red_gfn2=0.8354978354978355、same_red_orca=-0.6017316017316018、red_move=-1.4372294372294374；以及 W33-A 的配对集门禁裁决（GFN2 1/22、ORCA 0/22）。跑前写死的是**重抽单位、B、种子、区间口径与四条判据**；被读的是**区间与跨 0 占比**这些点估计之外的新量。这不是盲测，按本仓惯例（见 `probes/dielectric_anchor_prereg.json` 的 disclosure 字段）显式声明。",
+  "design": {
+    "unit_of_resampling": "配对化合物（inchikey），有放回",
+    "statistic": "Kendall tau_b（probes/w24_3_posthoc.py::kendall_tau_b）",
+    "pair_columns": {
+      "gfn2_ox": ["-gas_neutral_homo_eV", "ip_gas_eV"],
+      "gfn2_red": ["-gas_neutral_lumo_eV", "ea_gas_eV"],
+      "orca_ox": ["p0_ox_eV", "orca_ip_gas_eV"],
+      "orca_red": ["p0_red_eV", "orca_ea_gas_eV"]
+    },
+    "delta_definition": "Delta tau = tau_orca - tau_gfn2（与 w24_3_level_crosscheck.csv 的 ox_move / red_move 同号）",
+    "draws": 4000,
+    "seed": 20261003,
+    "interval": "95% 分位区间（2.5% / 97.5%）",
+    "crosses_zero_rule": "区间下界 <= 0 <= 区间上界",
+    "independent_floor": "sqrt(2) * exact_sd(22)，exact_sd 取自 probes/w33_kendall_null_tool.py",
+    "reproduction_anchors": {
+      "same_ox_gfn2": 0.6969696969696969,
+      "same_ox_orca": 0.6536796536796536,
+      "same_red_gfn2": 0.8354978354978355,
+      "same_red_orca": -0.6017316017316018,
+      "rule": "四个全域 tau_b 必须逐位命中，否则拒绝出报告",
+      "tolerance": 1e-12
+    }
+  },
+  "criteria": [
+    {
+      "id": "H34f",
+      "description": "复现锚：四个全域 tau_b 逐位命中 w24_3_level_crosscheck.csv",
+      "threshold": 0.0,
+      "direction": "abs_diff_le_tol"
+    },
+    {
+      "id": "H34g",
+      "description": "还原轴 Delta tau 的 95% 配对 bootstrap 区间不跨 0（翻号可分辨）",
+      "threshold": 0.0,
+      "direction": "interval_excludes_zero"
+    },
+    {
+      "id": "H34h",
+      "description": "氧化轴 Delta tau 的 95% 配对 bootstrap 区间跨 0（『不敏感』在 n=22 下不可分辨）",
+      "threshold": 0.0,
+      "direction": "interval_includes_zero"
+    },
+    {
+      "id": "H34i",
+      "description": "配对降方差：bootstrap 区间半宽 < 独立地板 sqrt(2)*exact_sd(22)",
+      "threshold": 1.0,
+      "direction": "ratio_lt_1"
+    },
+    {
+      "id": "H34j",
+      "description": "门禁一致性：配对集 GFN2 气相合法 1/22、ORCA 气相合法 0/22（与 W33-A 逐位一致）",
+      "threshold": 0.0,
+      "direction": "exact_match"
+    }
+  ],
+  "boundaries": [
+    "两张输入表逐位只读并记 sha256；不重跑 xTB、不重跑 ORCA、不装依赖、不联网。",
+    "bootstrap 只在 22 个配对化合物上重抽，不外推到 246 普查；区间是该配对设计下的分辨率，不是全域噪声地板。",
+    "区间跨 0 的正确读法是『未检出差异』，不是『证明无差异』。",
+    "不改 METRIC_NAMES、不新增特征列、不动四个冻结读数与 ε 主记分牌。",
+    "若复现锚不中，脚本必须拒绝写报告（不得只打印警告）。"
+  ],
+  "inputs": [
+    "data/processed/w23_redox_dscf_layer.csv",
+    "data/processed/w24_2_orca_dft_layer.csv",
+    "probes/artifacts/w24_3_level_crosscheck.csv"
+  ]
+}
