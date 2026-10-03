@@ -7106,3 +7106,47 @@ NO₂ 是**稳定自由基**（`O=[N+][O-]`，1 个自由基电子），预注�
 **⑨ 四条复现锚与天花板**：seed 42 冻结档位 **0.6080587938801**（gap 0.000000000000）、冻结端点 **0.5861142332208**、W20-4 注册臂 **0.6216672295270**、W31 固定最优 **0.6223892738254** —— 四条复现锚逐位命中，250 折，零跨界。九档最高是 **ss07_d4_mcw5_bin128 = 0.626590**，对注册臂 +0.004923。档位间极差：R² 0.040476 对 AUC(ε>30) 0.005565，比值 **7.27**（H32i 用比值判据，正是 W31 报告写下的改法）。
 
 **⑪ 纪律与判词**：主记分牌 **本轮 shot = 1，累计 19**；预注册 revision 1、`status = locked_before_run`、`thresholds_moved = false`；每档只覆盖八列声明键，`objective` / `tree_method` / `n_jobs` / `random_state 42` 一律不动；缺行不插补、不丢弃评分行、不新增特征列、不改 `METRIC_NAMES`。W32-A 按附录 C 属后验读数：不占 shot、不得当作预注册结论引用；其评测单元随通道而定（黏度是（分子 × 温度）行）。**仍不能**：把单表示读数与冻结头条 `0.4766400383507876` 混比；把过门当作晋升；把 W32-A 的通道噪声地板写进主记分牌口径。**产物**：`probes/w32_cross_channel_rank_stability.py`、`probes/w32_regularization_ladder.py`、`probes/w32_regularization_ladder_prereg.json`、`probes/w32_regularization_ladder_summary.json`、`probes/artifacts/w32_rank_stability_*.csv/.json/.png`、`probes/artifacts/w32_regularization_ladder_*`、`reports/w32_rank_stability.md`、`reports/w32_regularization_ladder.md`、`tests/test_w32_rank_stability.py`、`tests/test_w32_regularization_ladder.py`、`probes/export_week32_results.py`。
+
+## 28.87 Week 33：态合法性前置门禁（后验，不占 shot）＋ tau_b 精确零分布工具（不占 shot）（2026-10-03）
+
+**这一件是什么**：母体论文 v2 的 R6 / §3.20 停在**诊断** —— 还原轴 tau_b 由 GFN2 的 +0.835 翻到 ORCA 的 -0.602、气相阴离子不束缚占比 0.764 → 1.000，结论是「还原轴需要重新定义」，但这一步**从未有人做出可执行件**（《后续方向文献调研报告》P1，被判为最高优先、有被抢发风险）。同时 W32-A 的抽样律 `sd(N) = s0·sqrt(1/N - 1/N_pop)` 是**拟合**闭式，小样本下没有精确的显著性口径（报告 P4，最快兑现）。本轮两条 lane 都是**后验 / 工具**，都**不占主记分牌 shot（累计仍 19）**，登记方式与 W30-A / W31-A / W32-A 同族。
+
+**① 规模与覆盖（W33-A）**：四张输入表逐位只读并记 sha256（`data/processed/w23_redox_dscf_layer.csv` 246 行、`data/processed/w24_2_orca_dft_layer.csv` 28 行、`probes/artifacts/w24_3_level_crosscheck.csv`、`probes/artifacts/w32_rank_stability.json`）；不重跑 xTB、不重跑 ORCA、不装依赖、不联网；全轮约 **1.1 s**。
+
+**② 门禁规则（预注册写死）**：`geom`（`<medium>_anion_status == 'ok'`）∧ `homo`（阴离子 HOMO < 0，等价于 `anion_unbound_<medium> == 'no'`，阈值 0.0，源 `probes/w23_redox_dscf.py::UNBOUND_HOMO_SIGNATURE_EV`）∧ `ea`（`ea_<medium>_eV > 0`）**三条款之交**；合法子集 < 5 判**不可判定**（拒答），不得插补、不得赋伪值、不得静默丢弃。预注册 revision 1、`status = locked_before_run`、sha256 `b92443790958b40124cb50b5cb8612de204ece50fbbffd6ab3e9584b10501334`。
+
+**③ 逐介质漏斗（GFN2-xTB 普查，246 分子）**：
+
+| 介质 | eps | 合法 | 因不束缚拒答 | 因 EA 非正拒答 | 因几何/SCF 拒答 | 通过率 | 拒答率 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 气相 | 1.0 | 52 | 188 | 1 | 5 | 21.1% | 78.9% |
+| THF | 7.6 | 154 | 86 | 2 | 4 | 62.6% | 37.4% |
+| 苯甲醛 | 18.0 | 154 | 87 | 1 | 4 | 62.6% | 37.4% |
+| 水 | 80.4 | 161 | 80 | 0 | 5 | 65.4% | 34.6% |
+
+**条款分解（关键）**：气相里「不束缚签名」只放过 53/246，而 EA > 0 会放过 151/246 —— 差 **39.8 个百分点**。GFN2 的 ΔSCF EA 在阴离子不束缚时仍常为正，**不能单独当门禁**（这正是 H33a 的机制）。
+
+**④ 门禁前后的还原轴排序读数**：
+
+| 层级 | 介质 | 全域 tau_b（行数） | 合法子集 tau_b（行数） | 裁决 |
+| --- | --- | --- | --- | --- |
+| GFN2 | 气相 | 0.826430（240） | 0.745098（52） | 可宣读 |
+| GFN2 | THF | 0.878940（240） | 0.733130（154） | 可宣读 |
+| GFN2 | 苯甲醛 | 0.856067（240） | 0.674063（153） | 可宣读 |
+| GFN2 | 水 | 0.906362（241） | 0.811957（161） | 可宣读 |
+| ORCA | ORCA 气相 | -0.601732（22） | —— | 不可判定 |
+| ORCA | ORCA SMD 乙腈 | -0.619048（22） | —— | 不可判定 |
+
+门禁后 tau_b **全线下降**（最大跌幅在苯甲醛：**0.1820**）⇒ 原先的高 tau_b 里有一部分是「不束缚态同向漂移」造出的**假一致**。配对锚点上的合法行数 **GFN2 1/22、ORCA 0/22** ⇒ 那个 +0.835 / -0.602 的跨层级对比，本来就是在（几乎全部）不合法态上算的；ORCA 两层合法子集（0/22、2/22）均 < 5，按预注册判**不可判定**，**不得引用 -0.602 作为该层还原轴读数**。
+
+**⑤ 判据 5/6 成立，H33e 判否**：H33a 成立（EA 与 HOMO 通过率差 0.398374 ≥ 0.30）、H33b 成立（ORCA 气相合法子集 0 < 5）、H33c 成立（通过率随 eps 非降）、H33d 成立（门禁前后 tau_b 最大差 0.182004 ≥ 0.10）、H33f 成立（气相拒答率 0.788618 ≥ 0.70）。**H33e 判否**：预注册猜「两层裁决不一致占多数」，实测两层在这 22 个配对化合物上**高度一致（一致率 95.5%，GFN2 合法 ∧ ORCA 不合法 1 例、两层都不合法 21 例）**；层级依赖体现为「合法子集不够读数」，而不是「裁决互相矛盾」。**判否照实登记，不改写。**
+
+**⑥ 复现锚 A1/A2/A3 逐位命中**：GFN2 配对集全域 tau_b = **0.8354978354978355**、ORCA 配对集 = **-0.6017316017316018**、气相不束缚占比 = **0.7642276422764228**；任一锚不中，脚本**拒绝写报告**（`return 2`）。
+
+**⑦ W33-B 精确零分布（工具，不占 shot）**：Kendall tau_b（无并列）与逆序数 K 一一对应（`tau = 1 - 4K/(n(n-1))`），逆序数的 Mahonian 分布由生成函数 `prod_{i=1..n}(1 + x + ... + x^{i-1})` **精确枚举**，p 值与临界值用 `Fraction` 有理数精确算，不依赖正态近似。判据 **3/3 成立**：**H33g** `sd(n)·sqrt(n)` 在 n = 5..12 上极差/中位 **0.180597**（门 0.25）；**H33h** 锚点 **`P(tau_null >= 0.90 | n = 7) = 1/720 = 0.001389`**（门 0.01）⇒ 母体论文那条 n=7 的 0.9 阈值**不是拍出来的，是精确算得出来的**；**H33i** α = 0.05 精确临界 tau 随 n 单调不增（0.800 → 0.394）。
+
+**⑧ 立项前预算（规则写死 `2.80·sqrt(2)·sd <= Delta tau`）**：四通道 × 四个目标 Delta tau（0.05 / 0.10 / 0.15 / 0.20）共 **16 个值全部「可达」**（N <= N_pop）。介电通道要判出 Delta tau = 0.10 约需 **N ≈ 129.5**；黏度 246.0；轨道 523.2；氧化还原 138.4。**注意**：预算表的 s0 / N_pop 取 W32-A 各通道**中位**，是粗算；正式预注册必须用该序列自己的 s0。
+
+**⑨ 一处真 bug 与修复**：W33-B 初稿把 `critical_tau` 取成**负尾**（n = 5 返回 -0.8）。已改为「累积概率仍 <= alpha 的最大 K」⇒ 正值，并用 `tests/test_w33_kendall_null_tool.py` 的逐值回归（`critical_tau(5, 0.05) == 0.8`、`critical_tau(7, 0.01) == 0.8095238095238095`、`p_upper(7, 0.90) == Fraction(1, 720)`、Mahonian counts 总和 `== n!`）钉死防复发。W33-A 的复查同时确认 `homo` 条款逐行等价于「阴离子 HOMO < 0」。
+
+**⑩ 纪律与判词**：主记分牌 **本轮 shot = 0，累计 19**；四个冻结读数（`0.4091179943351143` / `0.4766400383507876` / `0.5861142332208197` / `0.6216672295270079`）未动；不改 `METRIC_NAMES`、不新增特征列、缺行不插补。W33-A / W33-B 按附录 C 属后验读数 / 工具：**不占 shot、不得当作预注册结论引用**。**仍不能**：引用 -0.602 作为 ORCA 层还原轴读数；把拒答当作缺失值插补；把两层数值结果混在同一张记分牌上；把单表示读数与冻结头条 `0.4766400383507876` 混比。**产物**：`probes/w33_bound_state_gate.py`、`probes/w33_bound_state_gate_prereg.json`、`probes/artifacts/w33_bound_state_gate_{summary.json,gates.csv,refuse_queue.csv,readings.csv,png}`、`reports/w33_bound_state_gate.md`、`tests/test_w33_bound_state_gate.py`、`probes/w33_kendall_null_tool.py`、`probes/artifacts/w33_kendall_null_{summary.json,table.csv,budget.csv,png}`、`reports/w33_kendall_null_tool.md`、`tests/test_w33_kendall_null_tool.py`、`probes/export_week33_results.py`。

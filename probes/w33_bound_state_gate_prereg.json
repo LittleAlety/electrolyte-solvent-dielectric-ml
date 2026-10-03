@@ -1,0 +1,176 @@
+{
+  "schema": "w33_bound_state_gate/prereg@1",
+  "task": "week33_bound_state_gate",
+  "status": "locked_before_run",
+  "revision": 1,
+  "locked_at_utc": "2026-10-03T11:20:00Z",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "本轮读数在 C 轴（配位态 / 氧化还原）与统计工具层，不触冻结的 ε 主记分牌：既不改四个冻结读数，也不在主记分牌池上拟合任何模型。登记方式与 W30-A / W31-A / W32-A 同族。",
+    "week33b_is_a_tool": "W33-B 输出的是精确零分布与临界值，不是模型读数；不占 shot。"
+  },
+  "why": "母体论文 v2 的 R6/§3.20 停在诊断：还原轴 τ_b 由 GFN2 的 +0.835 翻到 ORCA 的 −0.602，气相阴离子不束缚占比 0.764 → 1.000，结论是「还原轴需要重新定义」。文献调研报告 P1 指出这一步从未有人做出可执行件。本轮把报告写的第一件事做出来：把态合法性从后排质检提为**前置门禁**，配一个明确的拒答队列，并在合法子集上重读还原轴排序。这同时是对 T2（Rathnakumaran 2026「单描述符失效」）的回答：不是描述符失效，是描述符的定义域从未被声明。",
+  "disclosure": "**非盲**。设计本预注册时已见的既有读数（全部来自本仓已提交产物）：论文 v2 的 H4（气相不束缚 0.7801、水相 0.3320）、w24_2 的 ORCA 气相 27/27 不束缚、`probes/artifacts/w24_3_level_crosscheck.csv` 的 same_red_gfn2 = +0.8354978354978355、same_red_orca = −0.6017316017316018、unbound_share_census = 0.7642276422764228、unbound_share_paired_orca = 1.0，以及 w23 三条款各自的粗计数（EA>0 与 HOMO 签名的交叠）。跑前写死的是**门禁规则、判据与拒答分支**；被读的是门禁**之后**的量。这不是盲测，按本仓惯例（见 `probes/dielectric_anchor_prereg.json` 的 disclosure 字段）显式声明。",
+  "gate": {
+    "clauses": [
+      {
+        "id": "geom",
+        "rule": "<medium>_anion_status == 'ok'",
+        "source": "data/processed/w23_redox_dscf_layer.csv"
+      },
+      {
+        "id": "homo",
+        "rule": "anion_unbound_<medium> == 'no'",
+        "equivalent": "anion HOMO < 0.0",
+        "threshold_ev": 0.0,
+        "threshold_source": "probes/w23_redox_dscf.py::UNBOUND_HOMO_SIGNATURE_EV"
+      },
+      {
+        "id": "ea",
+        "rule": "ea_<medium>_eV > 0",
+        "threshold_ev": 0.0
+      }
+    ],
+    "legal_set": "geom AND homo AND ea（三条款之交）",
+    "refusal_rule": "合法子集 < min_legal_subset 时，该层的还原轴排序判为**不可判定**（拒答），不得给出数值读数，也不得插补或赋伪值。",
+    "min_legal_subset": 5,
+    "reason_priority": [
+      "geom",
+      "homo",
+      "ea"
+    ]
+  },
+  "media": [
+    {
+      "medium": "gas",
+      "epsilon": 1.0,
+      "label": "气相"
+    },
+    {
+      "medium": "thf",
+      "epsilon": 7.58,
+      "label": "THF"
+    },
+    {
+      "medium": "benzaldehyde",
+      "epsilon": 18.0,
+      "label": "苯甲醛"
+    },
+    {
+      "medium": "water",
+      "epsilon": 80.4,
+      "label": "水"
+    }
+  ],
+  "orca": {
+    "source": "data/processed/w24_2_orca_dft_layer.csv",
+    "media": [
+      "gas",
+      "smd_acetonitrile"
+    ],
+    "clauses": [
+      {
+        "id": "geom",
+        "rule": "orca_<medium>_anion_status == 'ok'"
+      },
+      {
+        "id": "homo",
+        "rule": "orca_anion_unbound_<medium> == 'no'"
+      },
+      {
+        "id": "ea",
+        "rule": "orca_ea_<medium>_eV > 0"
+      }
+    ],
+    "pairing": "与 w23 普查按 inchikey 相交"
+  },
+  "comparator": {
+    "function": "probes/w24_3_posthoc.py::kendall_tau_b",
+    "gfn2_pairs": [
+      "-gas_neutral_lumo_eV",
+      "ea_<medium>_eV"
+    ],
+    "orca_pairs": [
+      "p0_red_eV",
+      "orca_ea_gas_eV"
+    ]
+  },
+  "reproduction_anchors": {
+    "same_red_gfn2": 0.8354978354978355,
+    "same_red_orca": -0.6017316017316018,
+    "source": "probes/artifacts/w24_3_level_crosscheck.csv",
+    "rule": "全域（未门禁）τ_b 必须逐位命中，否则拒绝出报告",
+    "tolerance": 1e-12
+  },
+  "criteria": [
+    {
+      "id": "H33a",
+      "description": "门禁必要性：GFN2 气相的 ea 条款通过率与 homo 条款通过率之差（单用 EA 会多纳入的不束缚态占比）",
+      "threshold": 0.3,
+      "direction": ">="
+    },
+    {
+      "id": "H33b",
+      "description": "层级依赖：ORCA 气相合法子集规模（< 5 ⇒ 还原轴在该层判为不可判定）",
+      "threshold": 5.0,
+      "direction": "<"
+    },
+    {
+      "id": "H33c",
+      "description": "介质效应：四介质门禁通过率随介电常数非降（气相 ≤ THF ≤ 苯甲醛 ≤ 水）",
+      "threshold": 0.0,
+      "direction": "non_decreasing_in_epsilon"
+    },
+    {
+      "id": "H33d",
+      "description": "读数改变：门禁前后 τ_b 的绝对差的最大值（至少一个介质上 ≥ 0.10）",
+      "threshold": 0.1,
+      "direction": ">="
+    },
+    {
+      "id": "H33e",
+      "description": "跨层级裁决不一致：配对集上「GFN2 合法 ∧ ORCA 不合法」的占比",
+      "threshold": 0.5,
+      "direction": ">="
+    },
+    {
+      "id": "H33f",
+      "description": "拒答规模：GFN2 气相拒答率",
+      "threshold": 0.7,
+      "direction": ">="
+    }
+  ],
+  "tool_criteria": [
+    {
+      "id": "H33g",
+      "description": "1/√n 律：精确零分布 sd(n)·sqrt(n) 在 n = 5..12 上的极差/中位",
+      "threshold": 0.25,
+      "direction": "<="
+    },
+    {
+      "id": "H33h",
+      "description": "锚点规模显著性：n = 7 时 τ_b ≥ 0.90 的精确单侧 p 值",
+      "threshold": 0.01,
+      "direction": "<="
+    },
+    {
+      "id": "H33i",
+      "description": "临界值单调性：α = 0.05 的精确临界 τ_b 随 n（5..12）单调不增",
+      "threshold": 0.0,
+      "direction": "non_increasing"
+    }
+  ],
+  "boundaries": [
+    "四张输入表逐位只读并记 sha256；不重跑 xTB、不重跑 ORCA、不装依赖、不联网。",
+    "拒答不是缺失值：拒答 = 「在本层不可宣读」的明确结论，不得插补、不得赋伪值、不得静默丢弃。",
+    "跨层级只在配对集上比裁决一致性，不把两层的数值结果混在同一张记分牌上。",
+    "不改 METRIC_NAMES、不新增特征列、不动四个冻结读数与 ε 主记分牌。",
+    "若 ORCA 合法子集 < 5，报告必须写「不可判定」，不得引用 −0.602 作为该层的还原轴读数。"
+  ],
+  "inputs": [
+    "data/processed/w23_redox_dscf_layer.csv",
+    "data/processed/w24_2_orca_dft_layer.csv",
+    "probes/artifacts/w24_3_level_crosscheck.csv"
+  ]
+}
