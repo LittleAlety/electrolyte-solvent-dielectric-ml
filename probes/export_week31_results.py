@@ -36,8 +36,13 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT))
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
 from probes.export_results_common import (
     DEFAULT_OUTPUT_ROOT,
@@ -49,7 +54,6 @@ from probes.export_results_common import (
     write_sha256s,
 )
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 WEEK = "week31"
 
 TOLERANCE = 1e-09
@@ -84,7 +88,7 @@ LANES: dict[str, dict[str, object]] = {
         ),
         "probe": "probes/w31_v6_bridge.py",
         "prereg": None,
-        "summary": "probes/w31_v6_bridge.json",
+        "summary": "probes/artifacts/w31_v6_bridge.json",
         "report": "reports/w31_v6_bridge.md",
         "tests": ("tests/test_w31_v6_bridge.py",),
         "artifacts": (
@@ -151,7 +155,7 @@ VERIFIERS = (
 )
 
 README_TEXT = (REPOSITORY_ROOT / "reports/week31_delivery_readme.md").read_text(encoding="utf-8")
-BRIDGE_SUMMARY_PATH = REPOSITORY_ROOT / "probes/w31_v6_bridge.json"
+BRIDGE_SUMMARY_PATH = REPOSITORY_ROOT / "probes/artifacts/w31_v6_bridge.json"
 LADDER_SUMMARY_PATH = REPOSITORY_ROOT / "probes/w31_capacity_exchange_summary.json"
 
 
