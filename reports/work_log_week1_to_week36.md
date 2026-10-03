@@ -422,7 +422,7 @@
 - **W39-B 的机制更正**：差异拆成两块 —— (a) **约 0.4 D 的系统偏置**（90/103 个基本一致的化合物上签署差中位数 **−0.3914 D**，我们的列系统性偏高），(b) **少数两端都有的极端样本**（formamide −3.29 D、hexanedinitrile +5.68 D）。**刚性 / 柔性切分的作用**是定责：刚性分子（可旋转键 = 0，n = 48）在两来源里必是同一构象，差异只能来自**来源本身**；实测刚性 0.4442 D **不低于**柔性 0.4205 D ⇒ **构象自由度不是主因**（H39a7 判否，照实登记）。
 - **W39-C 的稳健性**：`g_rel` 是无量纲相对量，只可做域间比较；本件只作 W38-C 的稳健性检查，**不重开 W38-C、不改它的读数**。
 - **口径纪律**：QM9 的数值**不写进任何标签池或特征列**；`gap` 与 `homo`/`lumo` 同源自洽，只用 `gap`；名册分母 **241 行**（`dielectric_physical_features_v03.csv`），与 246 / 247 行口径不得混引。
-- **产物**：`probes/w39_qm9_crosscheck.py`、`probes/artifacts/w39_qm9_overlap.csv`、`probes/artifacts/w39_qm9_alignment.png`、`probes/artifacts/w39_qm9_crosscheck_summary.json`、`reports/w39_qm9_crosscheck.md`、`tests/test_w39_qm9_crosscheck.py`（10 项全绿）、`probes/export_week39_results.py`。
+- **产物**：`probes/w39_qm9_crosscheck.py`、`probes/artifacts/w39_qm9_overlap.csv`、`probes/artifacts/w39_qm9_alignment.png`、`probes/artifacts/w39_qm9_crosscheck_summary.json`、`reports/w39_qm9_crosscheck.md`、`tests/test_w39_qm9_crosscheck.py`（11 项全绿）、`probes/export_week39_results.py`。
 
 ## 5. 全项目判否与负结果总表（照实登记，不美化）
 

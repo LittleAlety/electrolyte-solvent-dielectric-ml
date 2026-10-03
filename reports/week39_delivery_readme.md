@@ -40,11 +40,13 @@
 | 产物 | `probes/artifacts/w39_qm9_overlap.csv`（103 行逐化合物：两套间隙、两套偶极、可旋转键、ε、hbd、摩尔体积）、`probes/artifacts/w39_qm9_crosscheck_summary.json` |
 | 图 | `probes/artifacts/w39_qm9_alignment.png`（左：间隙散点 + 标定线；右：偶极散点，绿 = 刚性 / 红 = 柔性） |
 | 报告 | `reports/w39_qm9_crosscheck.md` |
-| 测试 | `tests/test_w39_qm9_crosscheck.py`（**10 项全绿**） |
+| 测试 | `tests/test_w39_qm9_crosscheck.py`（**11 项全绿**） |
 | 导出 | `probes/export_week39_results.py`（验证块：四核心注册表 + 论文产物一致性 + `tests/test_repo_hygiene.py` + W39 / W38-D 测试） |
 | 立项 | `reports/week39_project_charter.md` |
 
 > **第三方数据集内容不进交付包**：QM9 CSV 只按路径 + sha256 复现；本包携带的图与表**均为本轮产物**。
+>
+> **治理**：W39 的 summary 直接走 `probes/export_results_common.write_json_stable`，因此**重跑探针不会弄脏工作树**（不进 README §11 第 22 条那 110 件的时间戳迁移 backlog）；回归守卫见 `tests/test_w39_qm9_crosscheck.py::test_probe_writes_its_summary_with_the_stable_writer`。
 
 ## 4. 复现
 

@@ -58,7 +58,7 @@ QM9 给了同分子、不同层级的偶极，正好当审计员。
 | 产物 | `probes/artifacts/w39_qm9_overlap.csv`（103 行逐化合物）、`probes/artifacts/w39_qm9_crosscheck_summary.json` |
 | 图 | `probes/artifacts/w39_qm9_alignment.png`（左：间隙散点 + 标定线；右：偶极散点，绿 = 刚性 / 红 = 柔性） |
 | 报告 | `reports/w39_qm9_crosscheck.md` |
-| 测试 | `tests/test_w39_qm9_crosscheck.py`（10 项） |
+| 测试 | `tests/test_w39_qm9_crosscheck.py`（11 项） |
 | 导出 | `probes/export_week39_results.py` → `成果输出/week39` |
 
 ## 5. 下一份预注册要处理的两件（已登记）

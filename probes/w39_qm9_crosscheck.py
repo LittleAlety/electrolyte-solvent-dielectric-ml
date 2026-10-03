@@ -33,7 +33,6 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
-import json
 import statistics
 import sys
 import time
@@ -46,6 +45,7 @@ sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
 import numpy as np  # noqa: E402
+from probes.export_results_common import write_json_stable  # noqa: E402
 from rdkit import Chem, RDLogger  # noqa: E402
 from rdkit.Chem import rdMolDescriptors  # noqa: E402
 from scipy.stats import pearsonr, spearmanr  # noqa: E402
@@ -635,8 +635,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "不占 shot（累计仍 19）。",
         ],
     }
-    SUMMARY_PATH.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.write_text(render_report(payload, criteria, inputs), encoding="utf-8", newline="\n")
 
     print("qm9 rows " + str(payload["qm9_rows"]) + "; hits " + str(payload["n_hits"])

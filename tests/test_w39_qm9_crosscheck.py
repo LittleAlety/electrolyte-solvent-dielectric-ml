@@ -142,6 +142,14 @@ def test_overlap_rows_cover_every_hit() -> None:
     assert all(float(row['qm9_gap_ev']) > 0.0 for row in rows)
 
 
+def test_probe_writes_its_summary_with_the_stable_writer() -> None:
+    """AF-12 family: a replay must not dirty the tracked summary via its timestamps."""
+
+    source = (ROOT / 'probes' / 'w39_qm9_crosscheck.py').read_text(encoding='utf-8')
+    assert 'write_json_stable(SUMMARY_PATH, summary)' in source
+    assert 'SUMMARY_PATH.write_text' not in source
+
+
 def test_figure_and_report_exist() -> None:
     assert FIGURE.is_file() and FIGURE.stat().st_size > 0
     assert REPORT.is_file()
