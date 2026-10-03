@@ -21,6 +21,8 @@ import time
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from export_results_common import write_json_stable  # noqa: E402
 SCRIPTS = REPOSITORY_ROOT / "scripts"
 PROBES = REPOSITORY_ROOT / "probes"
 ARTIFACTS = PROBES / "artifacts"
@@ -286,7 +288,7 @@ def main() -> int:
             "只允许新建 4 个产物 + 追加 1 个测试；不 commit。",
         ],
     }
-    write_json_lf(SUMMARY_PATH, summary)
+    stable = write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     ledger = summary["ledger"]
     REPORT_PATH.write_text(render_report({**payload, "criteria": criteria, "ledger": ledger}, sites),
@@ -296,6 +298,7 @@ def main() -> int:
     print("checker rc " + str(real_returncode) + "; sites " + str(payload.get("sites", 0))
           + " (reduction " + str(payload.get("reduction_sites", 0))
           + " / oxidation " + str(payload.get("oxidation_sites", 0)) + ")", flush=True)
+    print("summary " + stable, flush=True)
     print("negative control " + json.dumps(negatives, ensure_ascii=False), flush=True)
     print("verdicts " + str(passed) + "/" + str(len(criteria)), flush=True)
     for item in criteria:

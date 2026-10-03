@@ -1,0 +1,133 @@
+{
+  "schema": "w38_structure_function/summary@1",
+  "task": "week38_structure_function",
+  "generated_at_utc": "2026-10-03T10:07:26Z",
+  "elapsed_seconds": 7.128476700003375,
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "只读特征表的 SMILES 与 ε；不拟合模型、不新增特征列。"
+  },
+  "inputs": {
+    "E:\\Claude Code\\电解质ML\\电解质ML\\data\\processed\\dielectric_physical_features_v03.csv": "b36d3439560e4381b7779565b9950eed379832e832b72ea6a3a010662ed24fa3",
+    "features_sha256_after": "b36d3439560e4381b7779565b9950eed379832e832b72ea6a3a010662ed24fa3"
+  },
+  "inputs_unchanged": true,
+  "frozen_readings_untouched": [
+    0.4091179943351143,
+    0.4766400383507876
+  ],
+  "pool_note": "241 行物理特征表（每化合物一行，最近 298.15 K）；非冻结头条所在池。",
+  "structure_only_baseline": {
+    "nn_r2": 0.2502682738397636,
+    "nn_spearman": 0.6824536481882837,
+    "nn_mae": 7.986874066390042,
+    "sim_high": 0.8,
+    "delta_big": 30.0,
+    "sim_low": 0.3,
+    "delta_small": 5.0
+  },
+  "two_way_search": {
+    "n_compounds": 241,
+    "n_pairs": 28920,
+    "n_high_sim": 52,
+    "n_high_sim_big": 0,
+    "n_look_alike_differ": 0,
+    "n_differ_alike": 8584,
+    "n_blind": 26,
+    "n_blind_differ": 4,
+    "max_blind_delta": 13.252,
+    "max_high_sim_delta": 25.98
+  },
+  "permutation": {
+    "observed_spearman": -0.06070755917249451,
+    "null_mean": 0.0008858751584199605,
+    "null_sd": 0.02847648581232833,
+    "z": -2.1629577026055937,
+    "p_two_sided": 0.026026026026026026,
+    "n_permutations": 999,
+    "seed": 2026
+  },
+  "protic_high_eps": [
+    {
+      "name": "ethanolammonium nitrate",
+      "eps": 60.9,
+      "hbd": 2
+    },
+    {
+      "name": "2-hydroxyethylammonium lactate",
+      "eps": 85.6,
+      "hbd": 4
+    },
+    {
+      "name": "N-methylacetamide",
+      "eps": 178.47,
+      "hbd": 1
+    },
+    {
+      "name": "formamide",
+      "eps": 106.14,
+      "hbd": 2
+    }
+  ],
+  "criteria": [
+    {
+      "id": "H38b1",
+      "description": "存在「像而不同」对（Tanimoto >= 0.80 且 |delta eps| >= 30）",
+      "value": 0.0,
+      "threshold": 1.0,
+      "verdict": "判否"
+    },
+    {
+      "id": "H38b2",
+      "description": "结构-only 基线（1-NN 的 epsilon）R2 < 0.50：结构解释不了大部分标签方差",
+      "value": 0.2502682738397636,
+      "threshold": 0.5,
+      "verdict": "成立"
+    },
+    {
+      "id": "H38b3",
+      "description": "Spearman(相似度, |delta eps|) 相对重排零分布显著（|z| >= 2）",
+      "value": -2.1629577026055937,
+      "threshold": 2.0,
+      "verdict": "成立"
+    },
+    {
+      "id": "H38b4",
+      "description": "存在「不像而同」对（Tanimoto <= 0.30 且 |delta eps| <= 5）",
+      "value": 8584.0,
+      "threshold": 1.0,
+      "verdict": "成立"
+    },
+    {
+      "id": "H38b6",
+      "description": "事后读数：存在指纹不可分辨对（Tanimoto >= 0.99 且 |delta eps| >= 5）",
+      "value": 4.0,
+      "threshold": 1.0,
+      "verdict": "成立"
+    },
+    {
+      "id": "H38b7",
+      "description": "事后读数：指纹不可分辨对（Tanimoto >= 0.99）的最大 |delta eps|",
+      "value": 13.252,
+      "threshold": null,
+      "verdict": "成立"
+    },
+    {
+      "id": "H38b5",
+      "description": "0 shot（累计 19）；表只读、不拟合模型、不改四个冻结读数",
+      "value": 0.0,
+      "threshold": null,
+      "verdict": "成立"
+    }
+  ],
+  "registered_negatives": [
+    "H38b1"
+  ],
+  "headline": [
+    "结构-only 基线（1-NN 的 ε）R² = 0.2503——结构单独给不出功能。",
+    "「像而不同」对 0 对，「不像而同」对 8584 对。",
+    "Spearman(相似度, |Δε|) = -0.0607（z = -2.16）——相似度携带信息但斜率很浅。",
+    "不占 shot（累计仍 19）。"
+  ]
+}

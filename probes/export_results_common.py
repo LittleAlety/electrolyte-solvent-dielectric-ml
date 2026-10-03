@@ -36,6 +36,40 @@ def write_json(path: Path, payload: Mapping[str, object]) -> None:
     )
 
 
+VOLATILE_SUMMARY_KEYS = ("generated_at_utc", "elapsed_seconds")
+
+
+def write_json_stable(
+    path: Path,
+    payload: Mapping[str, object],
+    volatile: Sequence[str] = VOLATILE_SUMMARY_KEYS,
+) -> str:
+    """Write a tracked summary without letting a re-run rewrite bookkeeping only.
+
+    Tracked summaries carry ``generated_at_utc`` / ``elapsed_seconds``.  Re-running
+    the writer therefore dirties the worktree even when every scientific field is
+    identical, which breaks the "clean re-export -> identifiable bytes" coordinate
+    that AF-12 depends on.  If the file on disk already equals ``payload`` except
+    for the ``volatile`` keys, the existing bytes are kept untouched.
+
+    Returns ``"unchanged"`` or ``"written"``.
+    """
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_file():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8-sig"))
+        except json.JSONDecodeError:
+            existing = None
+        if isinstance(existing, dict):
+            kept_existing = {key: value for key, value in existing.items() if key not in volatile}
+            kept_payload = {key: value for key, value in payload.items() if key not in volatile}
+            if kept_existing == kept_payload:
+                return "unchanged"
+    write_json(path, payload)
+    return "written"
+
+
 def read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
