@@ -1,0 +1,80 @@
+{
+  "schema": "w31_capacity_exchange/prereg@1",
+  "task": "week31_capacity_exchange",
+  "title": "稠密 13 列物理块的容量交换阶梯：深度买到的那点量级，能不能用叶惩罚换回来",
+  "status": "locked_before_run",
+  "locked_at_utc": "2026-10-03T20:00:00Z",
+  "lock_rule": "配置清单、池、切分器、种子集、判据与锚在第一次生产运行之前冻结。任何事后要改，按『更正』另立登记，不在原地修改。",
+  "why": "W31-A 把母体论文 v6 的第三条结论（若干昂贵层在排序意义上可省）迁到 ML 侧时，本仓已有的最硬读数是『深度 2 -> 4 只值 +0.0045840097020970』。但既有全部读数都停在 min_child_weight in {1, 5}：叶惩罚与深度都是容量旋钮，两者之间是否存在可替代关系从未被测过。本枪只问这一件事：把叶惩罚从 5 提到 7 / 10（深度 2），能否把深度那 +0.0046 买回来，甚至超过它；再补一档深度 4 / 叶惩罚 7 作为交互点，检验『深度边际在更高叶惩罚下收缩』这一可证伪预测。",
+  "reuses": {
+    "scoreboard_pool": "probes/dielectric_representation_seed_robustness.py 的 build_context()，逐字复用；评分 457 行 / 97 化合物，训练掩码 full_base（2391 行）",
+    "splits": "probes/w28_dense_hyperparameters.py 的 splits_for_seed()，逐字复用；5 折 x 10 重复，GroupKFold by InChIKey",
+    "representation": "context['physical_lever4']（13 列稠密块），与 W28 / W29 / W30 的冻结与重调臂完全同一块",
+    "fitter": "dielectric_representation_ablation.XGB_PARAMS，random_state 固定为 SEED = 42；每档只覆盖本表列出的键",
+    "no_new_dependency": "不安装新依赖、不联网、不跑 xTB；全部由盘上已有产物派生"
+  },
+  "design": "固定档位阶梯（ladder），不是搜索：每个配置在同样的折上各拟合一次，没有任何选择，因此每一档都是一个诚实读数。前三档是复现锚（冻结档位、W20-4 注册臂、W30 最佳新组合），后三档是本轮的新组合点。",
+  "configs": [
+    {"index": 0, "label": "anch_frozen_d2", "max_depth": 2, "n_estimators": 200, "learning_rate": 0.05, "min_child_weight": 1, "colsample_bytree": 0.8, "max_bin": 64, "reg_lambda": 1.0},
+    {"index": 1, "label": "anch_w20_4_registered_d4_mcw5", "max_depth": 4, "n_estimators": 200, "learning_rate": 0.05, "min_child_weight": 5, "colsample_bytree": 0.8, "max_bin": 128, "reg_lambda": 1.0},
+    {"index": 2, "label": "anch_w30_best_d2_mcw5", "max_depth": 2, "n_estimators": 200, "learning_rate": 0.05, "min_child_weight": 5, "colsample_bytree": 0.8, "max_bin": 128, "reg_lambda": 1.0},
+    {"index": 3, "label": "bin128_mcw7_d2", "max_depth": 2, "n_estimators": 200, "learning_rate": 0.05, "min_child_weight": 7, "colsample_bytree": 0.8, "max_bin": 128, "reg_lambda": 1.0},
+    {"index": 4, "label": "bin128_mcw10_d2", "max_depth": 2, "n_estimators": 200, "learning_rate": 0.05, "min_child_weight": 10, "colsample_bytree": 0.8, "max_bin": 128, "reg_lambda": 1.0},
+    {"index": 5, "label": "bin128_mcw7_d4", "max_depth": 4, "n_estimators": 200, "learning_rate": 0.05, "min_child_weight": 7, "colsample_bytree": 0.8, "max_bin": 128, "reg_lambda": 1.0}
+  ],
+  "new_combination_indices": [3, 4, 5],
+  "frozen_keys_not_moved_within_a_row": [
+    "subsample 0.8",
+    "objective reg:squarederror",
+    "tree_method hist",
+    "n_jobs 1",
+    "random_state 42"
+  ],
+  "seeds": [42, 1234, 2026, 31337, 7],
+  "criteria": {
+    "H31a": "复现锚：seed 42 的第 0 档（冻结档位）逐位复现 0.6080587938801277，容差 1e-09",
+    "H31b": "交叉验证：第 0 档的五种子端点复现 0.5861142332208197，容差 1e-06",
+    "H31c": "交叉验证：第 1 档（W20-4 注册臂）的五种子端点复现 0.6216672295270079，容差 1e-06",
+    "H31d": "交叉验证：第 2 档（W30 最佳新组合）的五种子端点复现 0.6170832198249109，容差 1e-06",
+    "H31e": "跨折泄漏：含跨界化合物的折数为 0",
+    "H31f": "容量交换存在：深度 2 上 max(mcw 7, mcw 10) 高出同深度 mcw 5 超过 0.002",
+    "H31g": "深度边际收缩：depth_margin(mcw5) - depth_margin(mcw7) > 0，其中 depth_margin(m) = r2(d4, mcw m) - r2(d2, mcw m)",
+    "H31h": "序不变量：全六档的 AUC(eps>30) 档位间极差 < 0.02 且 R2 档位间极差 > 0.08",
+    "H31i": "容量天花板未被打破：全部六档的最高五种子均值 <= W20-4 注册臂 0.6216672295270079 + 0.005",
+    "H31j": "过门：最佳档位的五种子均值 >= 0.60"
+  },
+  "bars": {
+    "reproduction": 1e-09,
+    "cross_check": 0.000001,
+    "capacity_exchange_min_gain": 0.002,
+    "order_invariance_auc_range": 0.02,
+    "order_invariance_r2_range": 0.08,
+    "gate_r2": 0.6,
+    "ceiling_slack": 0.005
+  },
+  "expected_reproductions": {
+    "seed42_frozen_d2": 0.6080587938801277,
+    "frozen_d2_cross_seed": 0.5861142332208197,
+    "w20_4_registered_d4_mcw5": 0.6216672295270079,
+    "w30_best_d2_mcw5_bin128": 0.6170832198249109
+  },
+  "shot_accounting": {
+    "lanes": 1,
+    "this_week_main_scoreboard_attempts": 1,
+    "cumulative_after_this_week": 18,
+    "ledger": "W20 计 1、W21-W26 各 0、W27 计 1、W28 计 2、W29 计 1、W30 计 1、W31 计 1"
+  },
+  "red_lines": [
+    "不改任何冻结表、不改任何冻结读数（0.4091179943351143 / 0.4766400383507876 / 0.5861142332208197 / 0.6216672295270079）",
+    "不改 METRIC_NAMES（它驱动被锁 CSV 的表头），AUC 走探针自己的重复表列与既有侧车路线",
+    "不读任何介电常数标签进特征；不新增任何特征列",
+    "缺行不插补、不丢弃评分行",
+    "不动 W28 / W29 / W30 的任何读数与产物；本枪只读它们"
+  ],
+  "smoke_pilot_evidence": {
+    "scope": "本枪为纯固定档位阶梯，管线与 W30 的 evaluate_ladder 同构（该管线已在 W28 锚阶段、W28/W29/W30 生产运行中验证）；冒烟只用于测成本，不写结论",
+    "thresholds_moved": false
+  },
+  "revision": 1,
+  "revision_note": {"what_moved": "无——这是第 1 版", "thresholds_moved": false}
+}
