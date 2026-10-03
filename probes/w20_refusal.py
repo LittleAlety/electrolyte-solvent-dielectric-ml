@@ -54,6 +54,7 @@ from typing import Any
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
+from export_results_common import write_json_stable
 
 from probes.w19_ranking_key import HIGH_PERMITTIVITY_EPS, high_permittivity_excluded
 
@@ -356,11 +357,7 @@ def write_artifact(
 
     document = refusal_rule_document(registry_path=registry_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(path, document)
     return path
 
 
@@ -385,11 +382,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         write_artifact()
     summary = run(registry_path=args.registry)
     if args.write_summary:
-        args.summary.write_text(
-            json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-            newline="\n",
-        )
+        write_json_stable(args.summary, summary)
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

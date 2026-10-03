@@ -14,6 +14,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from export_results_common import write_json_stable
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 
@@ -383,7 +384,7 @@ def main() -> int:
             "report": "reports/w21_framework_alignment.md",
         },
     }
-    SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY, summary)
 
     lines = [
         "# W21 Tier 1：v2 框架原文入库与槽位接口三表",

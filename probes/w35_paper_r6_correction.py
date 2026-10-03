@@ -21,9 +21,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sys
 import time
 from pathlib import Path
+
+from export_results_common import write_json_stable
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
@@ -345,8 +346,7 @@ def main() -> int:
         ],
     }
     SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    SUMMARY_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY_PATH, payload)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(render_report(payload), encoding="utf-8", newline="\n")
 

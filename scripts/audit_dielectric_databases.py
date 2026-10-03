@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1] / "probes"))
 import argparse
 import csv
 import json
@@ -10,6 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
+from export_results_common import write_json_stable
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 AUDIT_FIELDS = (
@@ -179,7 +184,7 @@ def _zenodo_audit() -> dict[str, object]:
 def _safe_remote(name: str, function) -> dict[str, object]:
     try:
         result = function()
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         return {
             "status": "unavailable",
             "error": f"{type(error).__name__}: {error}",
@@ -336,10 +341,7 @@ def main() -> int:
     result = build_audit(args.root)
     write_csv_rows(args.csv_output, AUDIT_FIELDS, result["rows"])
     args.json_output.parent.mkdir(parents=True, exist_ok=True)
-    args.json_output.write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    write_json_stable(args.json_output, result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

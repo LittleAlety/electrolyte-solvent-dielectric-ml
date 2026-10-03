@@ -32,8 +32,8 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-
 import w34_legality_registry as registry_mod
+from export_results_common import write_json_stable
 
 ARTIFACTS = REPOSITORY_ROOT / "probes" / "artifacts"
 REGISTRY_CSV = REPOSITORY_ROOT / "data" / "processed" / "redox_state_legality_registry.csv"
@@ -151,8 +151,7 @@ def write_csv_lf(path, fieldnames, rows) -> None:
 
 def write_json_lf(path, payload) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                          encoding="utf-8", newline="\n")
+    write_json_stable(Path(path), payload)
 
 
 def fmt(value, digits: int = 6) -> str:

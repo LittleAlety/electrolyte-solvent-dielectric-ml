@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import ast
 import csv
-import json
 import math
 import re
 import sys
@@ -29,8 +28,8 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 _PROBES = str(REPOSITORY_ROOT / "probes")
 if _PROBES not in sys.path:
     sys.path.insert(0, _PROBES)
-
-from w36_endpoint_rule import ENDPOINT_TOLERANCE, endpoint_of  # noqa: E402
+from export_results_common import write_json_stable
+from w36_endpoint_rule import ENDPOINT_TOLERANCE, endpoint_of
 
 ARTIFACT_DIR = REPOSITORY_ROOT / "probes" / "artifacts"
 SUMMARY_PATH = ARTIFACT_DIR / "w37_endpoint_tolerance_guard_summary.json"
@@ -530,8 +529,7 @@ def main() -> int:
             "复用 endpoint_of() 现场演示：逐位相等会碎、容差判等成立。",
         ],
     }
-    SUMMARY_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY_PATH, payload)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(render_report(payload), encoding="utf-8", newline="\n")
 

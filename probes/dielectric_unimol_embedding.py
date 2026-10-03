@@ -45,12 +45,12 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import numpy as np
 from dielectric_observations_grouped_benchmark import METRIC_NAMES
 from dielectric_pool_expansion_benchmark import fold_signature
 from dielectric_representation_ablation import SEED, XGB_PARAMS, evaluate_repeat, read_csv_rows
 from dielectric_representation_seed_robustness import build_context, splits_for
+from export_results_common import write_json_stable
 from xgboost import XGBRegressor
 
 from electrolyte_ml.exporting import canonical_text_sha256
@@ -428,11 +428,7 @@ def write_csv_rows(
 
 def write_json(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=False) + chr(10),
-        encoding="utf-8",
-        newline=chr(10),
-    )
+    write_json_stable(path, payload)
 
 
 def blocked_summary(

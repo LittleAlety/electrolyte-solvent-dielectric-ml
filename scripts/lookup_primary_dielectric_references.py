@@ -15,6 +15,11 @@ import requests
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1] / "probes"))
+from export_results_common import write_json_stable
 
 from electrolyte_ml.pathing import portable_relative_path
 
@@ -137,10 +142,7 @@ def run(
         "policy": "Crossref matches are candidates and require manual verification.",
     }
     summary_path.parent.mkdir(parents=True, exist_ok=True)
-    summary_path.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    write_json_stable(summary_path, summary)
     return summary
 
 

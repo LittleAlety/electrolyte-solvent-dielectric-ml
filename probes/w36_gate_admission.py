@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import json
 import sys
 import time
 from pathlib import Path
@@ -26,9 +25,8 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-
-import w34_legality_registry as registry_mod
 import w35_redox_gate_consumers as consumers
+from export_results_common import write_json_stable
 
 ARTIFACTS = REPOSITORY_ROOT / "probes" / "artifacts"
 REGISTER_CSV = ARTIFACTS / "w35_gated_reference_register.csv"
@@ -282,8 +280,7 @@ def main() -> int:
             "不占 shot（累计仍 19）。",
         ],
     }
-    SUMMARY_PATH.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(render_report(payload, criteria), encoding="utf-8", newline="\n")
     passed = sum(1 for item in criteria if item["verdict"] == "成立")

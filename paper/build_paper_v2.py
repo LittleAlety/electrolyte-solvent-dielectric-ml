@@ -73,6 +73,7 @@ front = strip_rules(read(ROOT / "_v2_front.md"))
 sec29 = strip_rules(read(ROOT / "_v2_sec29.md"))
 body_a = strip_rules(read(ROOT / "_v2_body_a.md"))
 body_b = strip_rules(read(ROOT / "_v2_body_b.md"))
+body_c = strip_rules(read(ROOT / "_v2_body_c.md"))
 disc_extra = strip_rules(read(ROOT / "_v2_disc_extra.md"))
 concl = strip_rules(read(ROOT / "_v2_concl.md"))
 appendix = strip_rules(read(ROOT / "_v2_appendix.md"))
@@ -91,7 +92,7 @@ sec2 = sec2.replace(marker, sec29 + "\n\n" + marker, 1)
 
 sec4 = sec4.replace("\uff08\u00a72.9\uff09", "\uff08\u00a72.10\uff09")
 
-parts = [head, front, sec2, sec3, body_a, body_b, sec4, disc_extra, concl, appendix]
+parts = [head, front, sec2, sec3, body_a, body_b, body_c, sec4, disc_extra, concl, appendix]
 out = ("\n\n---\n\n").join(strip_rules(p) for p in parts) + "\n"
 def validate_tables(text):
     """Fail loudly when a markdown table block has ragged column counts.
@@ -151,5 +152,6 @@ io.open(target, "w", encoding="utf-8", newline="\n").write(out)
 
 print("wrote", target)
 print("chars", len(out), "lines", out.count(chr(10)) + 1, "figures", out.count("!["), "tables", n_tables)
-for h in ["## 1 ", "## 2 ", "## 3 ", "## 4 ", "## 5 ", "## \u6570\u636e\u4e0e\u4ee3\u7801", "## \u9644\u5f55 A", "## \u9644\u5f55 B", "## \u9644\u5f55 C", "## \u53c2\u8003\u6587\u732e", "### 2.9 ", "### 2.10 ", "### 2.11 ", "### 3.17 ", "### 3.18 ", "### 3.19 ", "### 3.20 ", "### 4.6 ", "### 4.7 "]:
+for h in ["## 1 ", "## 2 ", "## 3 ", "## 4 ", "## 5 ", "## \u6570\u636e\u4e0e\u4ee3\u7801", "## \u9644\u5f55 A", "## \u9644\u5f55 B", "## \u9644\u5f55 C", "## \u53c2\u8003\u6587\u732e", "### 2.9 ", "### 2.10 ", "### 2.11 ", "### 3.17 ", "### 3.18 ", "### 3.19 ", "### 3.20 ",
+        "### 3.22 ", "### 3.23 ", "### 3.24 ", "### 3.25 ", "### 4.6 ", "### 4.7 "]:
     print(h.strip(), "->", out.count(h))

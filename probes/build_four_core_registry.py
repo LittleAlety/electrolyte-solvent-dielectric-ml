@@ -39,6 +39,7 @@ from typing import Any
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 DEFAULT_PREREG = REPOSITORY_ROOT / "probes" / "four_core_registry_prereg.json"
 DEFAULT_TABLE = REPOSITORY_ROOT / "data" / "processed" / "four_core_key_registry.csv"
@@ -208,7 +209,7 @@ def write_text_lf(path: Path, text: str) -> None:
 
 
 def write_json_lf(path: Path, payload: Any) -> None:
-    write_text_lf(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    write_json_stable(path, payload)
 
 
 def write_csv_lf(path: Path, fieldnames: Sequence[str], rows: Sequence[Mapping[str, Any]]) -> None:

@@ -36,9 +36,10 @@ ROOT = Path(__file__).resolve().parents[1]
 for _extra in (ROOT / "probes", ROOT / "src"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
-
 import w21_li_coordination as w21
 import w24_condition_redox as w24
+from export_results_common import write_json_stable
+
 from electrolyte_ml.xtb_runner import run_xtb_subprocess, xtb_optimisation_arguments
 
 HB = Path("E:/Claude Code/电解液溶剂-HB/电解液溶剂HB-Code")
@@ -424,7 +425,7 @@ def run_molecule(payload):
                 parsed["status"] = "ok" if parsed["terminated"] else "orca_failed"
                 parsed["seconds"] = float(result.get("seconds") or 0.0)
                 total += parsed["seconds"]
-            except Exception as exc:  # noqa: BLE001 - the message is the evidence
+            except Exception as exc:
                 parsed = {"terminated": False, "final_sp_energy_hartree": None,
                           "smd_cds_total_hartree": None, "epsilon": None, "homo_eV": None,
                           "lumo_eV": None, "scf_converged": False, "n_scf_cycles": None,
@@ -447,7 +448,7 @@ def run_molecule(payload):
                     parsed["serial_retry_status"] = retry_parsed["status"]
                     if retry_parsed["status"] == "ok":
                         parsed = retry_parsed
-                except Exception as exc:  # noqa: BLE001 - the message is the evidence
+                except Exception as exc:
                     parsed["serial_retry"] = True
                     parsed["serial_retry_status"] = "exception"
                     parsed["serial_retry_error"] = str(exc)[:200]
@@ -1094,8 +1095,7 @@ def load_checkpoint(path):
 
 def append_checkpoint(path, record):
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a", encoding="utf-8", newline=chr(10)) as handle:
-        handle.write(json.dumps(record, ensure_ascii=False) + chr(10))
+    write_json_stable(path, record)
 
 
 def estimated_cost(smiles):
@@ -1149,8 +1149,7 @@ def main(argv=None):
                                 previous["pool"]["elapsed_seconds"],
                                 previous["pool"]["generated_at_utc"])
         write_artifacts(summary, rows)
-        SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + chr(10),
-                           encoding="utf-8", newline=chr(10))
+        write_json_stable(SUMMARY, summary)
         REPORT.write_text(render_report(summary), encoding="utf-8", newline=chr(10))
         print(json.dumps({"mode": "from_layer", "n": len(rows)}, ensure_ascii=False))
         return 0
@@ -1225,8 +1224,7 @@ def main(argv=None):
     summary["pool"]["checkpoint"] = {"path": str(checkpoint), "reused_records": skipped,
                                      "disabled": bool(args.no_checkpoint)}
     write_artifacts(summary, rows)
-    SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + chr(10),
-                       encoding="utf-8", newline=chr(10))
+    write_json_stable(SUMMARY, summary)
     REPORT.write_text(render_report(summary), encoding="utf-8", newline=chr(10))
     print(json.dumps({
         "summary": str(SUMMARY), "report": str(REPORT),

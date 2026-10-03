@@ -34,10 +34,10 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-
 import build_dielectric_pool_expansion as builder
 import dielectric_coordination_block as v1
 from dielectric_representation_ablation import read_csv_rows
+from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
@@ -188,9 +188,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "features": portable_relative_path(FEATURES_OUT, root=REPOSITORY_ROOT),
         "wall_seconds": time.perf_counter() - started,
     }
-    SUMMARY_OUT.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
-    )
+    write_json_stable(SUMMARY_OUT, payload)
     print(json.dumps(payload, ensure_ascii=False, indent=1))
     return 0 if kept else 1
 

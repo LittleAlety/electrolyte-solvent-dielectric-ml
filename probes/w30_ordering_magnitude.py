@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import json
 import statistics
 import sys
 import time
@@ -36,9 +35,9 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import numpy as np
 import w28_dense_hyperparameters as w28
+from export_results_common import write_json_stable
 
 from electrolyte_ml.pathing import portable_relative_path
 
@@ -110,9 +109,7 @@ def write_csv(path: Path, header, rows) -> None:
 
 def dump_json(path: Path, payload) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="\n") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=False)
-        handle.write("\n")
+    write_json_stable(path, payload)
 
 
 def aggregate(path: Path):

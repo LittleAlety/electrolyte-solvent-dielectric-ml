@@ -49,6 +49,7 @@ from typing import Any
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 from electrolyte_ml.thermoml import parse_thermoml_file
 
@@ -284,7 +285,7 @@ def write_text_lf(path: Path, text: str) -> None:
         handle.write(text)
 
 def write_json_lf(path: Path, payload: Any) -> None:
-    write_text_lf(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    write_json_stable(path, payload)
 
 def write_csv_lf(path: Path, fieldnames: Sequence[str], rows: Sequence[Mapping[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -673,7 +674,7 @@ def inchi_to_smiles(inchi: str, cache: dict[str, str]) -> str:
         molecule = Chem.MolFromInchi(inchi)
         if molecule is not None:
             smiles = Chem.MolToSmiles(molecule)
-    except Exception:  # noqa: BLE001 - RDKit 反解失败会抛任意异常，留空即可
+    except Exception:
         smiles = ""
     cache[inchi] = smiles
     return smiles
@@ -1062,7 +1063,7 @@ def extract_value_layer(xml_results: Sequence[Mapping[str, Any]]) -> dict[str, A
         path = Path(str(result["path"]))
         try:
             parsed = parse_thermoml_file(path)
-        except Exception as exc:  # noqa: BLE001 - 解析失败必须记账，不能静默
+        except Exception as exc:
             parse_failures.append({"file": path.name, "error": str(exc)})
             continue
         for row in parsed:

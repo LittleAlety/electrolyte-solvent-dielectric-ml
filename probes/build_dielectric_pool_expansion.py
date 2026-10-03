@@ -42,13 +42,13 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import numpy as np
 from dielectric_lowfreq_gate_probe import (
     PRIMARY_FREQUENCY_CAP_MHZ,
     ROOM_TEMPERATURE_RANGE_K,
 )
 from dielectric_representation_ablation import PHYSICAL_COLUMNS, read_csv_rows
+from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
@@ -246,14 +246,12 @@ def _smiles_from_pubchem(inchikeys: Sequence[str]) -> dict[str, str]:
             payload = response.json() if response.status_code == 200 else {}
             props = payload.get("PropertyTable", {}).get("Properties", [])
             cache[key] = str(props[0]["CanonicalSMILES"]) if props else ""
-        except Exception:  # noqa: BLE001
+        except Exception:
             cache[key] = ""
         if index % 25 == 0:
             time.sleep(0.2)
     REAXYS_SMILES_CACHE.parent.mkdir(parents=True, exist_ok=True)
-    REAXYS_SMILES_CACHE.write_text(
-        json.dumps(cache, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
-    )
+    write_json_stable(REAXYS_SMILES_CACHE, cache)
     return cache
 
 
@@ -404,7 +402,7 @@ def _feature_task(payload: tuple[str, str, str]) -> dict[str, object]:
             timeout_seconds=900,
         )
         row = script._feature_row(source, result)  # type: ignore[attr-defined]
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         row = script._error_feature_row(source, str(error))  # type: ignore[attr-defined]
     return dict(row)
 
@@ -484,9 +482,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     report["generated_at_utc"] = _utc_now()
     report["wall_seconds"] = time.perf_counter() - started
     SUMMARY_OUT.parent.mkdir(parents=True, exist_ok=True)
-    SUMMARY_OUT.write_text(
-        json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
-    )
+    write_json_stable(SUMMARY_OUT, report)
     print(json.dumps(report.get("features", {}), ensure_ascii=False, indent=1))
     print("summary: " + str(SUMMARY_OUT))
     return 0 if kept else 1

@@ -18,17 +18,17 @@ W29/W30/W31 把容量这件事拆成了深度、叶惩罚、分箱三个面，�
 from __future__ import annotations
 
 import argparse
-import json
 import time
 from pathlib import Path
 
-import numpy as np
-
 import dielectric_pool_expansion_benchmark as bn
 import dielectric_representation_seed_robustness as sr
+import numpy as np
 import w28_dense_hyperparameters as w28
 import w31_capacity_exchange as ladder
 from dielectric_representation_ablation import SEED as FIT_SEED
+from export_results_common import write_json_stable
+
 from electrolyte_ml.pathing import portable_relative_path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -495,7 +495,7 @@ def main(argv=None) -> int:
                             time.perf_counter() - started, stage)
     ladder.write_csv(REPEATS_CSV, REPEAT_COLUMNS,
                      [[row[column] for column in REPEAT_COLUMNS] for row in spreadsheet])
-    ladder.dump_json(SUMMARY_PATH, payload)
+    write_json_stable(SUMMARY_PATH, payload)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with REPORT_PATH.open("w", encoding="utf-8", newline="\n") as handle:
         handle.write(format_report(payload))

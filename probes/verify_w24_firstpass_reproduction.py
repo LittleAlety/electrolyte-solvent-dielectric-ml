@@ -18,8 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 for _extra in (ROOT / "probes", ROOT / "src"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
-
 import w21_li_coordination as w21
+from export_results_common import write_json_stable
 
 BEFORE = ROOT / "probes" / "artifacts" / "w24_condition_redox_layer_firstpass.csv"
 AFTER = ROOT / "data" / "processed" / "w24_condition_redox_layer.csv"
@@ -100,9 +100,7 @@ def main():
     fields_out = ["row_index", "name", "column", "first_pass", "re_run"]
     w21.write_csv(ARTIFACTS / "w24_firstpass_reproduction.csv", fields_out,
                   [[row[field] for field in fields_out] for row in result["differences"]])
-    (ARTIFACTS / "w24_firstpass_reproduction.json").write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + chr(10), encoding="utf-8",
-        newline=chr(10))
+    write_json_stable(ARTIFACTS / "w24_firstpass_reproduction.json", payload)
     print(json.dumps(payload, ensure_ascii=False))
     return 0
 

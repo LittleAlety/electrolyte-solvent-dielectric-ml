@@ -18,6 +18,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from export_results_common import write_json_stable
+
 ROOT = Path(__file__).resolve().parents[1]
 THERMOML = ROOT / "data" / "processed" / "viscosity_observations_thermoml.csv"
 DENSITY = ROOT / "data" / "density_v01.csv"
@@ -198,7 +200,7 @@ def main() -> int:
             "report": "reports/w21_eta_thaw.md",
         },
     }
-    SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY, summary)
 
     lines = [
         "# W21 Tier 2：η 解冻（Walden kinematic_thaw 的依赖已到货）",

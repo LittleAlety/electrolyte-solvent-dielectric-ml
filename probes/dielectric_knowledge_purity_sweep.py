@@ -69,7 +69,6 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import numpy as np
 from dielectric_band_ablation import (
     MIN_TEST_ROWS_PER_FOLD,
@@ -108,6 +107,7 @@ from dielectric_room_window_paired import (
     masked_splits,
     scored_fold_signature,
 )
+from export_results_common import write_json_stable
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from xgboost import XGBRegressor
@@ -1824,11 +1824,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     summary_path = Path(args.summary)
     summary_path.parent.mkdir(parents=True, exist_ok=True)
-    summary_path.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(summary_path, summary)
     report_path = Path(args.report)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(

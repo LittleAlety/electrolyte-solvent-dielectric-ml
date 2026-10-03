@@ -36,9 +36,9 @@ ROOT = Path(__file__).resolve().parents[1]
 for _extra in (ROOT / "probes", ROOT / "src"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
-
 import w21_li_coordination as w21
-from electrolyte_ml.xtb_features import parse_xtb_output
+from export_results_common import write_json_stable
+
 from electrolyte_ml.xtb_runner import run_xtb_subprocess
 
 PREREG = ROOT / "probes" / "w26_dielectric_law_prereg.json"
@@ -579,6 +579,7 @@ def figure_b(plt, gate_rows):
 
 def geometry_pilot(smiles, seed, timeout_seconds, nprocs, maxcore):
     import subprocess
+
     import w24_2_orca_dft as w24
     from rdkit import Chem
     record = {"smiles": smiles, "status": "ok", "seconds": float("nan"), "converged": False,
@@ -1122,8 +1123,7 @@ def main(argv=None):
                       "contrast": CONTRAST_CSV.name},
     }
     summary["report_lines"] = render_report(summary)
-    Path(args.out).write_text(json.dumps(summary, ensure_ascii=False, indent=2) + chr(10),
-                              encoding="utf-8", newline=chr(10))
+    write_json_stable(Path(args.out), summary)
     REPORT.write_text(chr(10).join(summary["report_lines"]) + chr(10), encoding="utf-8",
                       newline=chr(10))
     print(json.dumps({"verdicts": verdicts, "pool": summary["pool"],

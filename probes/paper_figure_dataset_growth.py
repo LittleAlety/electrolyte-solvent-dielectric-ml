@@ -36,8 +36,8 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-
 import matplotlib
+from export_results_common import write_json_stable
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -309,9 +309,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"PASS: {OUTPUT_JSON} matches the committed rosters")
         return 0
 
-    with target.open("w", encoding="utf-8", newline="\n") as handle:
-        json.dump(summary, handle, ensure_ascii=False, indent=2)
-        handle.write("\n")
+    write_json_stable(target, summary)
     render(collect(), REPOSITORY_ROOT / OUTPUT_PNG)
     print(f"wrote {OUTPUT_JSON} and {OUTPUT_PNG}")
     for label in summary["counts"]:

@@ -28,13 +28,13 @@ from __future__ import annotations
 import argparse
 import collections
 import csv
-import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 
@@ -210,11 +210,7 @@ def main(argv: list[str] | None = None) -> int:
 
     report = build_audit()
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(report, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(args.output, report)
     cross = report["cross_check"]
     print(f"wrote {args.output.relative_to(REPOSITORY_ROOT).as_posix()}")
     print(

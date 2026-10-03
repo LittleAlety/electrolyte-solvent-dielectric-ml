@@ -29,6 +29,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+from export_results_common import write_json_stable
 from scipy import stats
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -569,7 +570,7 @@ def build_artifacts() -> dict:
         "outputs": outputs,
     }
 
-    write_text(SUMMARY, json.dumps(summary, ensure_ascii=False, indent=2) + "\n")
+    write_json_stable(SUMMARY, summary)
 
     outputs_with_summary = dict(outputs)
     outputs_with_summary["summary"] = artifact_row(SUMMARY)
@@ -707,7 +708,7 @@ def main() -> int:
     if not (args.write_prereg or args.write_summary):
         parser.error("pass --write-prereg and/or --write-summary")
     if args.write_prereg:
-        write_text(PREREG, json.dumps(prereg_payload(), ensure_ascii=False, indent=2) + "\n")
+        write_json_stable(PREREG, prereg_payload())
         print("wrote", rel(PREREG))
     if args.write_summary:
         build_artifacts()

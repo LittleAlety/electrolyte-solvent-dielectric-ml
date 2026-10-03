@@ -38,6 +38,8 @@ from datetime import UTC
 from pathlib import Path
 from typing import Any
 
+from export_results_common import write_json_stable
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 # A literal backtick, kept out of the source text so no editor can mangle it.
@@ -409,11 +411,7 @@ def render_report(summary: Mapping[str, Any]) -> str:
 
 
 def write_outputs(summary: Mapping[str, Any]) -> None:
-    SUMMARY_PATH.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2) + chr(10),
-        encoding="utf-8",
-        newline=chr(10),
-    )
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.write_text(render_report(summary), encoding="utf-8", newline=chr(10))
 
 

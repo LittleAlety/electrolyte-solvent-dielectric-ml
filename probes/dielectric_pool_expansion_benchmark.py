@@ -35,7 +35,6 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import dielectric_coordination_block as v1
 import dielectric_xtb_full_table_migration as migration
 import numpy as np
@@ -53,6 +52,7 @@ from dielectric_representation_ablation import (
     read_csv_rows,
 )
 from dielectric_room_window_paired import HYBRID, masked_splits
+from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
@@ -527,11 +527,7 @@ def format_report(summary: Mapping[str, object]) -> list[str]:
 
 def _write_json(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=1) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(path, payload)
 
 
 def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:

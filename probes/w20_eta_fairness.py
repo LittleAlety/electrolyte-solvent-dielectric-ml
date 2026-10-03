@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import platform
 import sys
 import time
@@ -41,11 +40,11 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import numpy as np
 import viscosity_baseline as frozen
 import viscosity_row_level_unfreeze as unfreeze
 import w19_chemprop_viscosity as w19
+from export_results_common import write_json_stable
 from sklearn.model_selection import GroupKFold
 from xgboost import XGBRegressor
 
@@ -1066,7 +1065,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     }
     _write_text(REPORT_PATH, "\n".join(format_report(summary)) + "\n")
     summary["artifacts"]["w20_eta_fairness.md"] = canonical_text_sha256(REPORT_PATH)
-    _write_text(SUMMARY_PATH, json.dumps(summary, indent=2) + "\n")
+    write_json_stable(SUMMARY_PATH, summary)
     primary = pool_results[POOL_PRIMARY]
     print("verdict " + str(summary["verdict"])
           + " delta " + repr(summary["delta_mae_log10_cP"])

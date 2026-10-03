@@ -101,7 +101,6 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import numpy as np
 from dielectric_band_ablation import (
     INERT_TOLERANCE,
@@ -138,6 +137,7 @@ from dielectric_room_window_paired import (
     audit_masks,
     masked_splits,
 )
+from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
@@ -638,7 +638,7 @@ def run_li_complex(task: Mapping[str, object]) -> dict[str, object]:
                 cwd=run_dir,
                 timeout_seconds=timeout_seconds,
             )
-        except Exception as error:  # noqa: BLE001 - a failed conformer is data, not a crash
+        except Exception as error:
             errors.append(f"seed {seed}: {error}")
             row["xtb_seconds"] = float(row["xtb_seconds"]) + (time.perf_counter() - start)
             continue
@@ -1740,11 +1740,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "report": portable_relative_path(REPORT_PATH, root=REPOSITORY_ROOT),
         "summary": portable_relative_path(SUMMARY_PATH, root=REPOSITORY_ROOT),
     }
-    SUMMARY_PATH.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.write_text("\n".join(format_report(summary)) + "\n", encoding="utf-8", newline="\n")
     for line in format_report(summary):
         print(line)

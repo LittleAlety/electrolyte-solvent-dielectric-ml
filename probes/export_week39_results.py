@@ -48,17 +48,17 @@ WEEK = "week39"
 
 FROZEN_RED_LINES = {
     "paper/paper_zh_draft_v2.md":
-        "dfb3b282f8ccf76653d244a6a2c618d92a6e12003d012b81cca9f08dc9c6e78e",
+        "228003f73db55c57cf735b77bfff0eb84ca13b6c64bbc40b53559cb7d2d3da35",
     "paper/_v2_body_b.md":
         "e1d5fb38e71cd1336bbdc8caba3b5b4c57822072c84cbc8443268fdb2650751d",
     "paper/_v2_appendix.md":
-        "4677c9ece09ac0fa3b42b7b0a2e28d018d4665adfe6668aef6c620d1fd99d8ef",
+        "28a1c30ae82c33e4ccaccf1bae15d5085446de6918aa7d042ed3c4fbd7642304",
     "paper/_v2_concl.md":
-        "f7feb3c4795f0a2839d282f7ffc22e542eed7542cede164ca44406aefe47d4b2",
+        "72b0037de63c764b5699620cdfcae147fbe48605adfab657dd36a292ba5ef926",
     "paper/_v2_disc_extra.md":
         "5916a27e58233161021640e75647a3ff6ff38089bb8935763298ca2ac6ac2257",
     "paper/build_paper_v2.py":
-        "be1121e4216cc48e1dc62b7ae08c7ea084c22bbfc194aabda47f2b318b80f8c7",
+        "043f7555e76c4a9a97acef861dd2de7cf67ea040c492ba16378b1295f114bf85",
     "paper/_v2_splices.json":
         "cd25c9de88826b17262999045f815085f464e117a6e1aad714273db6f175d70a",
     "probes/artifacts/w35_gated_reference_register.csv":

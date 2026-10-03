@@ -62,6 +62,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+from export_results_common import write_json_stable
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 PUG_VIEW = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound"
@@ -262,7 +264,7 @@ class PubChemClient:
     def _write_cache(self, inchikey: str, cid: str, payload: Mapping[str, object]) -> None:
         path = self.cache_path(inchikey)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+        write_json_stable(path, payload)
         path.with_suffix(path.suffix + ".url").write_text(
             _heading_url(cid) + "\n", encoding="utf-8"
         )
@@ -1187,8 +1189,7 @@ def recorded_harvest_cost(path: Path) -> dict[str, object]:
 
 def append_run_log(path: Path, record: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a", encoding="utf-8", newline="") as handle:
-        handle.write(json.dumps(record, sort_keys=True) + "\n")
+    write_json_stable(path, record)
 
 
 # --------------------------------------------------------------------------
@@ -1279,8 +1280,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             arguments.harvest_log
         )
         arguments.summary.parent.mkdir(parents=True, exist_ok=True)
-        with open(arguments.summary, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+        write_json_stable(arguments.summary, summary)
 
     print(json.dumps({key: value for key, value in summary.items() if key != "unresolved"}, indent=2))
     if summary["unresolved"]:

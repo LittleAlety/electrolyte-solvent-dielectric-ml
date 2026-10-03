@@ -34,6 +34,7 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 
@@ -836,8 +837,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(report, indent=2, ensure_ascii=False, sort_keys=False)
-    args.output.write_text(payload + "\n", encoding="utf-8", newline="\n")
+    write_json_stable(args.output, report)
     print(f"wrote {describe_path(args.output)}")
     for claim in report["claims"]:
         print(f"  {claim['verdict']:<32} {claim['claim_id']}")

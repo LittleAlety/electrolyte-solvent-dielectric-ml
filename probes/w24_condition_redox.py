@@ -33,10 +33,13 @@ ROOT = Path(__file__).resolve().parents[1]
 for _extra in (ROOT / "probes", ROOT / "src"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
-
 import w21_li_coordination as w21
 import w23_redox_dscf as w23
-from electrolyte_ml.xtb_runner import xtb_open_shell_arguments  # noqa: F401  (re-exported for tests)
+from export_results_common import write_json_stable
+
+from electrolyte_ml.xtb_runner import (
+    xtb_open_shell_arguments,
+)
 
 PREREG = ROOT / "probes" / "w24_condition_redox_prereg.json"
 SUMMARY = ROOT / "probes" / "w24_condition_redox_summary.json"
@@ -305,7 +308,7 @@ def run_compound(payload):
                     parsed.update(geometry_probe(result, complex_key, record["ligand_atoms"],
                                                 donor_index))
                     record["arms"][arm_key] = parsed
-                except Exception as exc:  # noqa: BLE001 - the message is the evidence
+                except Exception as exc:
                     record["arms"][arm_key] = empty_arm("exception", str(exc))
     record["seconds_total"] = float(
         sum((arm.get("seconds") or 0.0) for arm in record["arms"].values())
@@ -1294,6 +1297,7 @@ def scf_retry_posthoc(executable, layer_rows, timeout_seconds):
 
     import shutil
     import tempfile
+
     from electrolyte_ml.xtb_runner import run_xtb_subprocess, xtb_optimisation_arguments
 
     entries = []
@@ -1352,7 +1356,7 @@ def scf_retry_posthoc(executable, layer_rows, timeout_seconds):
                                 "retry_status": payload.get("status"),
                                 "retry_total_E_hartree": fmt(payload.get("total_E_hartree")),
                                 "recovered": bool(ok)})
-            except Exception as exc:  # noqa: BLE001 - the message is the evidence
+            except Exception as exc:
                 entries.append({"inchikey": row.get("inchikey"), "arm": arm,
                                 "first_status": row.get(arm + "_status"),
                                 "retry_status": "exception", "retry_total_E_hartree": "",
@@ -1391,8 +1395,7 @@ def load_checkpoint(path):
 
 def append_checkpoint(path, record):
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a", encoding="utf-8", newline=chr(10)) as handle:
-        handle.write(json.dumps(record, ensure_ascii=False) + chr(10))
+    write_json_stable(path, record)
 
 
 def estimated_cost(smiles):
@@ -1448,8 +1451,7 @@ def main(argv=None):
                                                  "post_hoc": "not_executed", "entries": []})
         write_artifacts(summary)
         write_qc_csv(summary, layer_rows)
-        SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + chr(10),
-                           encoding="utf-8", newline=chr(10))
+        write_json_stable(SUMMARY, summary)
         REPORT.write_text(render_report(summary), encoding="utf-8", newline=chr(10))
         print(json.dumps({"mode": "from_layer", "n": len(layer_rows)}, ensure_ascii=False))
         return 0
@@ -1527,8 +1529,7 @@ def main(argv=None):
     summary["pool"]["resumed_records"] = skipped
     write_artifacts(summary)
     write_qc_csv(summary, layer_rows)
-    SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + chr(10),
-                       encoding="utf-8", newline=chr(10))
+    write_json_stable(SUMMARY, summary)
     REPORT.write_text(render_report(summary), encoding="utf-8", newline=chr(10))
     print(json.dumps({
         "summary": str(SUMMARY), "report": str(REPORT),

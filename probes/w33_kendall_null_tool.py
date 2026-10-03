@@ -24,6 +24,8 @@ import time
 from fractions import Fraction
 from pathlib import Path
 
+from export_results_common import write_json_stable
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 RANK_JSON = REPOSITORY_ROOT / "probes" / "artifacts" / "w32_rank_stability.json"
 ARTIFACTS = REPOSITORY_ROOT / "probes" / "artifacts"
@@ -181,8 +183,7 @@ def write_csv(path, fieldnames, rows) -> None:
 
 
 def dump_json(path, payload) -> None:
-    Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                          encoding="utf-8", newline="\n")
+    write_json_stable(Path(path), payload)
 
 
 def fmt(value, digits=6) -> str:
@@ -324,7 +325,7 @@ def render_figure(payload) -> bool:
         figure.savefig(FIGURE_PATH, dpi=150)
         plt.close(figure)
         return True
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         print("figure skipped: " + repr(error))
         return False
 

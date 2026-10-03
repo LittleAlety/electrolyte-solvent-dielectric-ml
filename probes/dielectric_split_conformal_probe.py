@@ -38,8 +38,8 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import matplotlib
+from export_results_common import write_json_stable
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -172,19 +172,15 @@ def _json_ready(value: object) -> object:
 
 
 def write_json_lf(path: Path, payload: object) -> None:
-    """Write JSON with explicit LF endings and no non-finite literals.
+    """Write a tracked summary through the stable writer.
 
-    Path.write_text translates the newline to os.linesep on Windows, which would
-    make the artifact bytes depend on the host platform. Non-finite floats are
-    converted to null first because bare NaN and Infinity are not valid JSON.
+    The stable writer keeps the bytes already on disk when every
+    non-volatile field agrees, so re-running the probe no longer dirties
+    the worktree. Non-finite floats are converted to null first because
+    bare NaN and Infinity are not valid JSON.
     """
 
-    text = (
-        json.dumps(_json_ready(payload), ensure_ascii=False, indent=2, allow_nan=False)
-        + "\n"
-    )
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
+    write_json_stable(path, _json_ready(payload))
 
 
 def _aggregate(values: Sequence[float]) -> dict[str, float | int | None]:

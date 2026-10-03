@@ -51,7 +51,6 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import dielectric_coordination_block as v1
 import dielectric_pool_expansion_benchmark as bn
 import numpy as np
@@ -68,6 +67,7 @@ from dielectric_representation_seed_robustness import (
     build_context,
     splits_for,
 )
+from export_results_common import write_json_stable
 from xgboost import XGBRegressor
 
 from electrolyte_ml.exporting import canonical_text_sha256
@@ -1089,9 +1089,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         ("seed", "arm", "representation", "repeat", *METRIC_NAMES),
         spreadsheet,
     )
-    summary_path.write_text(
-        json.dumps(summary, indent=1, ensure_ascii=False) + chr(10), encoding="utf-8", newline=chr(10)
-    )
+    write_json_stable(summary_path, summary)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(render_report(summary), encoding="utf-8", newline=chr(10))
 

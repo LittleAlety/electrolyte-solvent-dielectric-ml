@@ -7307,3 +7307,58 @@ NO₂ 是**稳定自由基**（`O=[N+][O-]`，1 个自由基电子），预注�
 **④ W39-C 结论稳健性：W38-C 的域比不是 μ 来源的伪影。** 在同一 103 子集、同一机械门槛（μ ≥ 1 D）下，把 W38-C 的 `g_rel` 统计量分别用「我们的 μ」与「QM9 的 μ」重算给体 / 非给体中位数比：**我们 2.980102**（n 给体 29 / 非给体 54）vs **QM9 3.045860**（n 给体 29 / 非给体 49），两条都 ≥ 1.50（H39a8 / H39a9）⇒ W38-C 的方向性结论**不依赖 μ 来源**。**边界**：`g_rel` 是无量纲相对量（单位被斜率吸收），只可做域间比较，**不得与文献 g 绝对值对照**；本件只作稳健性检查，**不重开 W38-C、不改它的任何读数**。
 
 **判据合计 10 条 = 9 成立 + 1 条已登记判否**（H39a1–H39a10；其中 H39a7 判否，第 10 条 H39a10 是输入 / 指纹判据、成立：名册 sha256 `b36d3439…4fa3`、QM9 sha256 前后一致且与登记指纹相符）。**测试** `tests/test_w39_qm9_crosscheck.py` **11 项全绿**。**仍不能**：把 QM9 的数值写进任何标签池或特征列；把两个层级的间隙直接互换（层级不同：B3LYP/6-31G(2df,p) 气相 vs xTB GFN2 单点）；把标定式外推到 103 个命中化合物之外；用柔性分子的偶极差给定责；把 241 行分母与 246 / 247 行分母混引；把 QM9 的偶极当实验值（它同样是计算值，只是不同层级）。**产物**：`probes/w39_qm9_crosscheck.py`、`probes/artifacts/w39_qm9_overlap.csv`、`probes/artifacts/w39_qm9_alignment.png`、`probes/artifacts/w39_qm9_crosscheck_summary.json`、`reports/w39_qm9_crosscheck.md`、`tests/test_w39_qm9_crosscheck.py`、`data/external/qm9_dataset.csv`、`probes/export_week39_results.py`。
+## 28.95 Week 40：四个已登记项合并交付（判据改法 / 稳定写入迁移 / Onsager 域精化 / 轨道外部对照层）（2026-10-03）
+
+**合并理由**：这四条都来自 README §11 已登记条目，且都不重拟合主记分牌、不新增特征列、不改 `METRIC_NAMES`、不动四个冻结读数（`0.4091179943351143` / `0.4766400383507876` / `0.5861142332208197` / `0.6216672295270079`）。按项目惯例，它们一律**不占 shot**：`main_scoreboard_shots_this_week = 0`，累计仍 **19**。四条探针各自 `exit 0`，判否项全部在 `REGISTERED_NEGATIVES` 里登记，未登记判否才会让 exit≠0。
+
+### W40-A 后验读数：三条判据改法（`probes/w40_criteria_reform.py`）
+
+只读盘上既有产物换判据重读，**14 条判据 = 13 成立 + 1 已登记判否（H40a5）**，测试 12 项全绿。
+
+- **反解预算（修 W38-A 的判否）**：W38-A 把「alpha=0.05 下推荐条数不足」判成缺陷，是把**问法**当**答案**。在 tau=30 上反解出 `alpha* = 0.06`，该预算下合并精度 **0.9000**、推荐 **10** 条；锚点 `alpha = 0.05` 精度 **1.000**、6 条。判据成立。
+- **相对与盲区（修 H38b1）**：最高相似度十分位的 `|d eps|` 中位数相对全域 = **0.6518218623481781**（p = 0.0）；盲区 **26** 对，其中 **4** 对 `|d eps| >= 5`。绝对阈值换成相对判据后成立。
+- **比值判据（修 H31h 的绝对 0.08 门）**：五个**干净阶梯**的最差比值 **21.044062 / 13.712271 / 8.092207 / 4.178785 / 7.272894**（≥4x），AUC30 极差上限 **0.018851**（全 < 0.02）。门：稳健门 ≥4、非单点门 ≥10 且至少 2 个阶梯，均满足。
+- **本轮最重要的口径修正**：W28 那 13 个臂如果混进阶梯池，AUC30 极差会从 0.005561 抬到 **0.543814**（约 98 倍），比值被压到 1.293 ⇒ **假判否**。凡比值判据，第一要求是**阶梯定义干净**（探针已加 `grid_fixed_` 前缀过滤并新增 W29 阶梯）。
+- **H40a5 判否（已登记）**：tau=15 上反解为空——该 tau 下不存在能守住精度的 alpha。
+
+### W40-B 治理件：稳定写入迁移收口（`probes/w40_timestamp_migration.py`）
+
+**8 条判据全部成立**，测试 11 项全绿。复算清单分母 **117 = 已迁移 110 + 待迁移 0 + 无写入器历史产物 7**；W38 登记的 110 件「待迁移」现在**没有一件留在待迁移**；全仓「未用稳定写入的 owner」= **0**。抽样三支探针各跑两遍，`new_dirty_paths = []`，产物哈希不变。
+
+- **口径**：稳定写入 = 「同一内容不重记时间」，只忽略 `generated_at_utc` / `elapsed_seconds` 两个键。另有 **33** 件带 `wall_seconds` / `started_at_utc` / `finished_at_utc` 一类易变键的写入器，已在 summary 的 `extra_volatile` 里登记（**不**宣称它们已稳定，只登记）。
+- **7 件无写入器历史产物**逐件列出并核对 owner（如 `probes/g1plus_*_evidence.json`、`probes/w19_safety_channel_registry.json`），确认它们只有读者、没有写入者，所以不构成脏树来源。
+- 该件修改了 **113** 个 probe/test 文件（`write_json` → `write_json_stable`）。这是本轮改动面最大的一件，但属卫生件，不产生读数。
+
+### W40-C Onsager 域精化（`probes/w40_onsager_domain.py`）
+
+**13 条判据 = 11 成立 + 2 已登记判否（H40c10 / H40c11）**，测试 15 项全绿。域规则精化后**只有 3 条化合物被改判**：`water`（A→B）、`1-Butanethiol` 与 `1-Pentanethiol`（B→A）。
+
+- 水在旧口径下 RDKit `NumHDonors = 0` 被放进非给体域 A；新规则 `donor_h = 2`，判入给体域 B。**改正水的归属让高介电族域间比从 15.650360 降到 13.404448**——旧口径**高估**了域分离。读数变保守，不是变好看。
+- 新口径域间比 **2.581713**；旧口径 **2.5016162961750874** 被逐位复现（W38-C 锚未动），域分离结论不变。
+- 双 mu 秩一致：`Spearman(g_rel) = 0.800684`（n = 76）；两套 mu 的域间比 **2.891737 vs 2.885677**，相对差 **0.0021**。口径纪律：QM9 只覆盖 103 个命中化合物，第二套 mu 只在该子集成立，两套 mu 的 `g_rel` **只比中位数与秩，不比绝对值**。
+- **H40c10 判否（已登记）**：偶极系统偏置 `signed_delta_median = -0.391400 D`，校正后域间比 **3.113253**，相对变化 **0.205886 > 0.10** ⇒ 域分离对偶极偏置**敏感**，不能宣称稳健。
+- **H40c11 判否（已登记）**：水 `g_rel = 2.2506` < 给体域中位 **2.5817**，与「强自缔合 ⇒ g 大」的朴素预期相反。
+- **边界（必须并读）**：名册里两种酰胺写作**亚胺醇式**，所以「酰胺共振」假设在本名册**零作用、未被检验**——不能据此声称否证了酰胺机制。
+
+### W40-D 轨道外部对照层（`probes/w40_orbital_external.py`）
+
+**10 条判据 = 9 成立 + 1 已登记判否（H40d8）**，测试 13 项全绿。QM9（CC BY 4.0）作 xTB 的第二方对照层，覆盖 **103 / 241**。
+
+- **排序可信**：Spearman **0.885628**、Kendall **0.711442**、Pearson **0.840944**。
+- **量级不可互换**：未标定 MAE **2.532944 eV**、绝对差中位数 **2.577390 eV**，**102/103** 条 ≥ 1 eV。线性标定（留一）把 MAE 降到 **1.601998 eV**，下降 **36.8% < 50%** ⇒ 只作**排序先验**，不把标定后的数值写进标签池或特征列。
+- 标定式复现 W39 冻结值（`xTB = 2.0266971543817958 * QM9 - 8.8728945529514`，`matches_w39 = True`），口径连续。单位写死 Hartree（1 Ha = 27.211386245988 eV）。
+- **H40d8 判否（已登记）+ W38-D 更正**：PubChemQC 名册级单文件子集下载**受阻**。更正 W38-D 的措辞——「325 GB 不可行」**过于笼统**：全局最小分片只有 **536126834 B ≈ 0.5 GiB**（< 1 GiB，`min_shard_under_1gib = True`），真正的阻塞在**可定位性**（无 CID 索引、无 parquet 分支、本机 PubChem 不可达）。`b3lyp` 六个 config 合计 **7669431815893 B ≈ 7.67 TB**，那才是「不可行」的部分。
+
+### 论文同步
+
+- 新增 `paper/_v2_body_c.md`：§3.22（W34–W37 门禁收口）、§3.23（W38-B/C）、§3.24（W40-A）、§3.25（W39）、§3.26（W40-C）、§3.27（W40-D）、§3.28（W40-B）。
+- `paper/build_paper_v2.py` 接入 `body_c`；`_v2_head.md` 版本行改 **v1.4（2026-10-03）**，摘要新增「主结果四 / 主结果五」，边界句补 N-23 至 N-28；`_v2_concl.md` 结论改「十三条」并新增第 11–13 条；`_v2_appendix.md` 附录 A 追加 15 行、附录 B 补 N-23 至 N-28、附录 C shot 账本改「W33–W40 各计 0」。
+- 重建后 `scripts/check_paper_artifact_consistency.py` 通过（"paper drafts agree with the frozen artifacts"）。**论文正文哈希已变**，因此 `probes/export_week38/39/40_results.py` 的 `FROZEN_RED_LINES` 必须同步到新值，否则它们启动即 `raise ValueError("a frozen red line moved")`。注意：真红线是**四条冻结读数**与登记表，论文是**活文件**，它的哈希变动属正常迭代，不是红线移动。
+
+### 仍不能（本轮明确不做）
+
+- 用比值判据去救**已被污染**的阶梯池（必须先清阶梯）；把稳定写入的「忽略两键」外推成「产物不再变」（另有 33 件易变键只是登记，未处理）；把域间比 2.581713 当**因果**；把 QM9 标定后的 eV 写进标签池/特征列；把 241 行分母与 246 / 247 行分母混引；把 PubChemQC 的 0.5 GiB 分片解读成「W38-D 判错了」——它判的是**整库不可行**，方向没错，措辞过粗。
+
+### 产物
+
+`probes/w40_criteria_reform.py`、`probes/w40_timestamp_migration.py`、`probes/w40_onsager_domain.py`、`probes/w40_orbital_external.py`；对应 `tests/test_w40_*.py`（12 / 11 / 15 / 13）；`probes/artifacts/w40_conformal_inversion.csv`、`w40_similarity_bins.csv`、`w40_ladder_ratio.csv`、`w40_timestamp_inventory.csv`、`w40_onsager_domain_compounds.csv`、`w40_onsager_domain_summary.csv`、`w40_orbital_external_control.csv`、`w40_orbital_channels_update.csv` 及四份 summary / 三张 png；`reports/w40_criteria_reform.md`、`reports/w40_timestamp_migration.md`、`reports/w40_onsager_domain.md`、`reports/w40_orbital_external.md`、`reports/week40_project_charter.md`、`reports/work_log_week37_to_week40.md`、`probes/export_week40_results.py`。

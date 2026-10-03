@@ -49,6 +49,7 @@ from rdkit.Chem import Descriptors, rdMolDescriptors
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 from probes.al_round1 import HAZARD_SMARTS
 
@@ -1183,7 +1184,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     write_text(identity_path, identity_text)
-    write_text(summary_path, summary_text)
+    write_json_stable(summary_path, summary)
     write_text(report_path, report_text)
     print("wrote {} 行身份表 -> {}".format(summary["identity_resolution"]["rows"], identity_path))
     print(

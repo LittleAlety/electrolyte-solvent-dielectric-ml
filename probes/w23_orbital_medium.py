@@ -38,8 +38,8 @@ ROOT = Path(__file__).resolve().parents[1]
 for _extra in (ROOT / "probes", ROOT / "src"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
-
 import w21_li_coordination as w21  # geometry, QC and the section-9 metric battery
+from export_results_common import write_json_stable
 
 PREREG = ROOT / "probes" / "w23_orbital_medium_prereg.json"
 SUMMARY = ROOT / "probes" / "w23_orbital_medium_summary.json"
@@ -193,7 +193,7 @@ def run_compound(payload):
             result = w21.run_arm(
                 executable, label, xyz_text, charge, timeout_seconds, extra_arguments=extra
             )
-        except Exception as exc:  # noqa: BLE001 - the message is the evidence
+        except Exception as exc:
             return {
                 "status": "exception", "homo_eV": None, "lumo_eV": None, "gap_eV": None,
                 "total_energy_hartree": None, "xtb_version": None, "li_mulliken_q": None,
@@ -647,7 +647,7 @@ def scf_retry_posthoc(executable, layer_rows, timeout_seconds, limit=None):
         try:
             result = w21.run_arm(executable, "retry_%03d_%s" % (index, arm_key), xyz_text,
                                  charge, timeout_seconds, extra_arguments=tuple(extra))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             entry["error"] = str(exc)[:200]
             entries.append(entry)
             continue
@@ -1112,8 +1112,7 @@ def build_summary(records, layer_rows, prereg, prereg_sha, elapsed, retry, gener
 
 
 def write_summary(summary):
-    SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-                       encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY, summary)
 
 
 def write_artifacts(summary):

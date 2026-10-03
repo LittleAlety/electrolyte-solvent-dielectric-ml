@@ -42,6 +42,7 @@ import numpy as np
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
+from export_results_common import write_json_stable
 
 __all__ = [
     "CANDIDATE_COLUMNS",
@@ -1210,8 +1211,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     # LF only: Windows text mode would translate '\n' into CRLF and trip the
     # repository hygiene gate, so the handle pins newline explicitly.
-    with summary_path.open("w", encoding="utf-8", newline="\n") as handle:
-        handle.write(json.dumps(summary, ensure_ascii=False, indent=2) + "\n")
+    write_json_stable(summary_path, summary)
     print(json.dumps(counts, ensure_ascii=False, indent=2))
     print(json.dumps(artifact, ensure_ascii=False, indent=2))
     return 0

@@ -41,6 +41,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 PAPER = REPOSITORY_ROOT / "paper"
 ARTIFACTS = REPOSITORY_ROOT / "probes" / "artifacts"
@@ -298,7 +299,7 @@ def apply_plans(plans: list) -> dict:
                      "纯空行的段用内联 content，因为装配器对每个部分都跑 strip_rules。"),
             "splices": items,
         }
-        write_text_lf(SPLICE_JSON, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+        write_json_stable(SPLICE_JSON, payload)
     return {"files": touched, "splices": len(items)}
 
 
@@ -469,8 +470,7 @@ def main() -> int:
             + "，交付字节仍等于已发布稿。",
         ],
     }
-    SUMMARY_PATH.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(render_report(all_plans, all_plans, after_blocks, criteria,
                                          shipped_sha_before, {"files": all_files},

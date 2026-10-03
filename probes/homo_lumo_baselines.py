@@ -39,6 +39,7 @@ import numpy as np
 import rdkit
 import sklearn
 import xgboost
+from export_results_common import write_json_stable
 from rdkit import Chem, RDLogger
 from rdkit.Chem import Descriptors, rdFingerprintGenerator
 from sklearn.dummy import DummyRegressor
@@ -1397,11 +1398,7 @@ def run_baselines(
         screening["prereg_sha256"] = prereg_sha
         screening["pool_sha256"] = pool_sha
         screening_path.parent.mkdir(parents=True, exist_ok=True)
-        screening_path.write_text(
-            json.dumps(screening, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-            newline="\n",
-        )
+        write_json_stable(screening_path, screening)
     selections = select_main_configurations(screening)
     if screen_only:
         return {"screening": screening, "selections": selections}
@@ -1509,10 +1506,7 @@ def run_baselines(
         write_fold_csv(fold_csv_path, fold_rows)
         write_prediction_csv(predictions_csv_path, bundle, pool_indices, prediction_records)
         summary_path.parent.mkdir(parents=True, exist_ok=True)
-        summary_path.write_text(
-            json.dumps(assemble_summary(complete=False), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        write_json_stable(summary_path, assemble_summary(complete=False))
         print(f"[flush] partial artifacts written, completed={completed}", flush=True)
 
     for target in FORMAL_RUN_ORDER:
@@ -1713,11 +1707,7 @@ def run_baselines(
     }
 
     baselines_path.parent.mkdir(parents=True, exist_ok=True)
-    baselines_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(baselines_path, payload)
 
     champion_rows = np.flatnonzero(np.isin(bundle.inchikeys, np.asarray(sorted(champion_inchikeys), dtype=str)))
     champion_smiles = [bundle.smiles[index] for index in champion_rows.tolist()]
@@ -1744,19 +1734,11 @@ def run_baselines(
         "prereg records that FEC/VC were already withheld from the dielectric fit while "
         "EC/PC were not, which is an asymmetry that must not be blurred away"
     )
-    baselines_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(baselines_path, payload)
 
     summary = assemble_summary(complete=True)
     summary_path.parent.mkdir(parents=True, exist_ok=True)
-    summary_path.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(summary_path, summary)
     return summary
 
 

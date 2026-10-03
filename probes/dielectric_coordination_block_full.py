@@ -16,7 +16,6 @@ a **new** artifact so the released table stays byte-identical.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import time
 from collections.abc import Mapping, Sequence
@@ -25,8 +24,8 @@ from pathlib import Path
 PROBES_DIR = Path(__file__).resolve().parent
 if str(PROBES_DIR) not in sys.path:
     sys.path.insert(0, str(PROBES_DIR))
-
 import dielectric_coordination_block as v1
+from export_results_common import write_json_stable
 
 from electrolyte_ml.pathing import portable_relative_path
 from electrolyte_ml.xtb_features import generate_3d_xyz
@@ -239,7 +238,7 @@ def _topup_worker(task: tuple[int, str, str, str]) -> dict[str, object]:
             timeout_seconds=v1.XTB_TIMEOUT_SECONDS,
             li_plus_energy=float(_WORKER_STATE["li_plus_energy"]),
         )
-    except Exception as error:  # noqa: BLE001 - a failed compound is data, not a crash
+    except Exception as error:
         return {
             "inchikey": key,
             "name": name,
@@ -319,9 +318,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "wall_seconds": time.perf_counter() - started,
         "jobs": jobs,
     }
-    SUMMARY_PATH.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
-    )
+    write_json_stable(SUMMARY_PATH, payload)
     print(f"ok {ok} / {len(merged)} rows written to {OUTPUT_PATH}")
     print(f"status counts {status_counts}")
     return 0

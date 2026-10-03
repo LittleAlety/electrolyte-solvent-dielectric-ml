@@ -19,9 +19,10 @@ import csv
 import hashlib
 import json
 import statistics
-import sys
 import time
 from pathlib import Path
+
+from export_results_common import write_json_stable
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
@@ -362,8 +363,7 @@ def main() -> int:
             "不占 shot（累计仍 19）、不改 METRIC_NAMES、不动四个冻结读数与 ε 主记分牌。",
         ],
     }
-    SUMMARY_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY_PATH, payload)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(render_report(payload), encoding="utf-8", newline="\n")
 

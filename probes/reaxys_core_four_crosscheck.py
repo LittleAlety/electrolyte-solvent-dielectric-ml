@@ -41,6 +41,7 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 CSV_PATH = REPOSITORY_ROOT / "probes" / "reaxys_core_four_crosscheck.csv"
 SUMMARY_PATH = REPOSITORY_ROOT / "probes" / "reaxys_core_four_crosscheck_summary.json"
@@ -841,7 +842,7 @@ def write_csv(path=CSV_PATH):
 
 def write_summary(path=SUMMARY_PATH):
     payload = build_summary()
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    write_json_stable(path, payload)
     return path
 
 

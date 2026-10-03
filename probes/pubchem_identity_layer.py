@@ -43,6 +43,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+from export_results_common import write_json_stable
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 PUG_REST = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
@@ -143,7 +145,7 @@ class PubChemClient:
     def _write_cache(self, inchikey: str, payload: Mapping[str, object]) -> None:
         path = self.cache_path(inchikey)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        write_json_stable(path, payload)
         path.with_suffix(path.suffix + ".url").write_text(
             _properties_url(inchikey) + "\n", encoding="utf-8"
         )
@@ -699,13 +701,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             "offline": arguments.offline,
         }
         arguments.harvest_log.parent.mkdir(parents=True, exist_ok=True)
-        with open(arguments.harvest_log, "a", encoding="utf-8", newline="") as handle:
-            handle.write(json.dumps(record, sort_keys=True) + "\n")
+        write_json_stable(arguments.harvest_log, record)
         summary["harvest_log_path"] = str(arguments.harvest_log)
         write_rows(arguments.output, rows)
         arguments.summary.parent.mkdir(parents=True, exist_ok=True)
-        with open(arguments.summary, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+        write_json_stable(arguments.summary, summary)
     return 0
 
 

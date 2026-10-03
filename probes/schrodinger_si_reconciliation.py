@@ -36,12 +36,11 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
+from export_results_common import write_json_stable
 from thermoml_viscosity_coverage_probe import (
     display_path,
     read_csv_rows,
     to_float,
-    write_json_lf,
 )
 
 from electrolyte_ml.exporting import canonical_text_sha256
@@ -466,7 +465,7 @@ def build_summary(*, summary_path: Path = DEFAULT_SUMMARY) -> dict[str, object]:
         ],
     }
 
-    write_json_lf(summary_path, payload)
+    write_json_stable(summary_path, payload)
     return payload
 
 

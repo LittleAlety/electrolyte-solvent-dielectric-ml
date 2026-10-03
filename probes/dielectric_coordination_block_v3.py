@@ -48,7 +48,6 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import dielectric_coordination_block as v1
 import dielectric_coordination_block_v2 as v2
 import dielectric_xtb_full_table_migration as migration
@@ -56,6 +55,7 @@ import numpy as np
 from dielectric_observations_grouped_benchmark import METRIC_NAMES
 from dielectric_representation_ablation import SEED
 from dielectric_room_window_paired import HYBRID
+from export_results_common import write_json_stable
 
 from electrolyte_ml.pathing import portable_relative_path
 
@@ -1053,9 +1053,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     v1.write_csv_rows(
         ARTIFACTS_DIR / (ARTIFACT_STEM + "_predictions.csv"), PREDICTION_COLUMNS, prediction_rows
     )
-    SUMMARY_PATH.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
-    )
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.write_text("\n".join(format_report(summary)) + "\n", encoding="utf-8", newline="\n")
 
     verdict = summary["verdict"]

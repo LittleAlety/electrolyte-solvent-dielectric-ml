@@ -31,7 +31,6 @@ raises and no in-domain number is reported at all.  Nothing here is promoted.
 from __future__ import annotations
 
 import argparse
-import json
 import platform
 import sys
 import time
@@ -44,7 +43,6 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import dielectric_coordination_block as v1
 import dielectric_coordination_block_v3 as v3
 import dielectric_xtb_full_table_migration as migration
@@ -56,6 +54,7 @@ from dielectric_representation_ablation import (
     evaluate_repeat,
 )
 from dielectric_room_window_paired import HYBRID, masked_splits
+from export_results_common import write_json_stable
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from sklearn.linear_model import LogisticRegression
@@ -801,11 +800,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     csv_rows = [*reading_rows(per_seed), *endpoint_rows(summary)]
     v1.write_csv_rows(REPEATS_PATH, READING_COLUMNS, csv_rows)
-    SUMMARY_PATH.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=1) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.write_text(
         "\n".join(format_report(summary)) + "\n", encoding="utf-8", newline="\n"
     )

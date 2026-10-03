@@ -49,13 +49,13 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import dielectric_pool_expansion_benchmark as bn
 import dielectric_representation_seed_robustness as sr
 import numpy as np
 import w27_dielectric_response as w27
 from dielectric_representation_ablation import SEED as FIT_SEED
 from dielectric_representation_ablation import XGB_PARAMS, evaluate_repeat
+from export_results_common import write_json_stable
 from sklearn.metrics import r2_score
 from sklearn.model_selection import GroupKFold
 from xgboost import XGBRegressor
@@ -155,9 +155,7 @@ def write_csv(path: Path, header: Sequence[str], rows: Sequence[Sequence[object]
 def dump_json(path: Path, payload: Mapping[str, object]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="\n") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=False)
-        handle.write("\n")
+    write_json_stable(path, payload)
 
 
 def read_json(path: Path) -> dict:

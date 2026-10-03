@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import time
 from collections.abc import Mapping, Sequence
@@ -24,11 +23,11 @@ import numpy as np
 PROBES_DIR = Path(__file__).resolve().parent
 if str(PROBES_DIR) not in sys.path:
     sys.path.insert(0, str(PROBES_DIR))
-
 import dielectric_coordination_block as v1
 import dielectric_pool_expansion_benchmark as bn
 import dielectric_xtb_full_table_migration as migration
 from dielectric_representation_ablation import read_csv_rows
+from export_results_common import write_json_stable
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 CONFORMER_FEATURES_PATH = (
@@ -138,9 +137,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "readings": readings,
         "wall_seconds": time.perf_counter() - started,
     }
-    SUMMARY_PATH.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
-    )
+    write_json_stable(SUMMARY_PATH, payload)
     print("wrote", SUMMARY_PATH.name)
     return 0
 

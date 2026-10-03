@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import sys
 import time
 from collections.abc import Iterator, Mapping, Sequence
@@ -35,11 +34,11 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import dielectric_observations_grouped_benchmark as gb
 import dielectric_target_and_scaffold as sc
 import numpy as np
 from dielectric_representation_ablation import REPRESENTATIONS, evaluate_repeat
+from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
@@ -310,11 +309,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
 
     write_csv_rows(TABLE_PATH, TABLE_COLUMNS, table)
-    SUMMARY_PATH.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=1) + chr(10),
-        encoding="utf-8",
-        newline=chr(10),
-    )
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.write_text(format_report(summary), encoding="utf-8", newline=chr(10))
     print("wrote " + str(TABLE_PATH))
     print("wrote " + str(SUMMARY_PATH))

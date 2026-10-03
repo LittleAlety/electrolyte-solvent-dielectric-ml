@@ -50,8 +50,9 @@ ROOT = Path(__file__).resolve().parents[1]
 for _extra in (ROOT / "probes", ROOT / "src"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
-
 import w21_li_coordination as w21
+from export_results_common import write_json_stable
+
 from electrolyte_ml.xtb_runner import (
     run_xtb_subprocess,
     xtb_open_shell_arguments,
@@ -236,7 +237,7 @@ def run_compound(payload):
                 result = run_arm(executable, label, xyz_text, net_charge + delta_q,
                                  unpaired, solvent, timeout_seconds)
                 record["arms"][arm_key] = parse_arm(result)
-            except Exception as exc:  # noqa: BLE001 - the message is the evidence
+            except Exception as exc:
                 record["arms"][arm_key] = {
                     "status": "exception", "homo_eV": None, "lumo_eV": None, "gap_eV": None,
                     "total_E_hartree": None, "xtb_version": None,
@@ -669,7 +670,7 @@ def scf_retry_posthoc(executable, layer_rows, timeout_seconds, limit=None):
                              Chem.MolToXYZBlock(molecule), net + unpaired,
                              1 if unpaired else 0,
                              solvent, timeout_seconds)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             entry["error"] = str(exc)[:200]
             entries.append(entry)
             continue
@@ -890,8 +891,7 @@ def write_summary(summary):
     """
 
     payload = {key: value for key, value in summary.items() if key != "layer_rows"}
-    SUMMARY.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                       encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY, payload)
 
 
 def write_artifacts(summary):

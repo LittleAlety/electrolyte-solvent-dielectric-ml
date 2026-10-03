@@ -16,9 +16,10 @@
 from __future__ import annotations
 
 import csv
-import json
 from collections import defaultdict
 from pathlib import Path
+
+from export_results_common import write_json_stable
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -83,9 +84,7 @@ def write_csv(path: Path, header, rows) -> None:
 
 def write_json(path: Path, payload) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="\n") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=False)
-        handle.write("\n")
+    write_json_stable(path, payload)
 
 
 def mean(values) -> float:

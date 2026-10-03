@@ -50,7 +50,6 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import numpy as np
 from dielectric_representation_ablation import (
     N_REPEATS,
@@ -64,6 +63,7 @@ from dielectric_representation_ablation import (
     read_modelling_rows,
 )
 from dielectric_target_and_scaffold import fit_predict
+from export_results_common import write_json_stable
 from sklearn.model_selection import RepeatedKFold
 
 from electrolyte_ml.applicability import applicability_domain, count_hbond_donors
@@ -168,7 +168,7 @@ def write_csv_lf(
 
 
 def _write_json(path: Path, payload: Mapping[str, object]) -> None:
-    _write_text(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    write_json_stable(path, payload)
 
 
 def _read_json(path: Path) -> dict:

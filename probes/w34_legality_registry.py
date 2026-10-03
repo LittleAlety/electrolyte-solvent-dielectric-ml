@@ -26,9 +26,9 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-
 import w24_3_posthoc as posthoc
 import w33_bound_state_gate as gate
+from export_results_common import write_json_stable
 
 REDOX_LAYER = REPOSITORY_ROOT / "data" / "processed" / "w23_redox_dscf_layer.csv"
 ORCA_LAYER = REPOSITORY_ROOT / "data" / "processed" / "w24_2_orca_dft_layer.csv"
@@ -274,8 +274,7 @@ def write_csv(path, fieldnames, rows) -> None:
 
 
 def dump_json(path, payload) -> None:
-    Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                          encoding="utf-8", newline="\n")
+    write_json_stable(Path(path), payload)
 
 
 def fmt(value, digits=6) -> str:

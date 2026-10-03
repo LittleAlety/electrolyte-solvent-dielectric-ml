@@ -11,6 +11,7 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
+from export_results_common import write_json_stable
 
 from scripts.verify_dielectric_representation_ablation import (
     verify as verify_representation,
@@ -91,10 +92,7 @@ def _copy_artifact(
 
 def _write_json(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    write_json_stable(path, payload)
 
 
 def _write_sha256s(directory: Path) -> None:

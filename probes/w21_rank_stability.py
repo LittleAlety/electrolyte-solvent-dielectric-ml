@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
+from export_results_common import write_json_stable
 from scipy import stats
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -623,7 +624,7 @@ def main() -> int:
             "report_splits": "reports/w21_split_taxonomy.md",
         },
     }
-    SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY, summary)
 
     scalars = homo["scalars"]
     lines = [

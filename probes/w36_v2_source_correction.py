@@ -33,6 +33,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 ARTIFACTS = REPOSITORY_ROOT / "probes" / "artifacts"
 PREREG_PATH = REPOSITORY_ROOT / "probes" / "w36_v2_source_correction_prereg.json"
@@ -330,8 +331,7 @@ def main() -> int:
             "仍登记 " + str(len(drift)) + " 段装配源无法复现的历史漂移，留给专门的回灌轮次。",
         ],
     }
-    SUMMARY_PATH.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
-                            encoding="utf-8", newline="\n")
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(render_report(prereg, corrections, audit, drift, criteria, shipped_sha),
                            encoding="utf-8", newline="\n")

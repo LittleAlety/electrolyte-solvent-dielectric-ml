@@ -31,12 +31,12 @@ import numpy as np
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-
 import dielectric_coordination_block as v1
 import dielectric_pool_expansion_benchmark as bn
 import dielectric_xtb_full_table_migration as migration
 from dielectric_observations_grouped_benchmark import build_matrices
 from dielectric_representation_ablation import read_csv_rows
+from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
@@ -400,9 +400,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         repeat_rows.extend(arms[arm]["repeat_rows"])  # type: ignore[arg-type]
     v1.write_csv_rows(ARTIFACTS_DIR / (ARTIFACT_STEM + "_folds.csv"), v1.FOLD_COLUMNS_OUT, fold_rows)
     v1.write_csv_rows(ARTIFACTS_DIR / (ARTIFACT_STEM + "_repeats.csv"), v1.REPEAT_COLUMNS_OUT, repeat_rows)
-    SUMMARY_PATH.write_text(
-        json.dumps(summary, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
-    )
+    write_json_stable(SUMMARY_PATH, summary)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text("\n".join(format_report(summary)) + "\n", encoding="utf-8", newline="\n")
     verdict = summary["verdict"]

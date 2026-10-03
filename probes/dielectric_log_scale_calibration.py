@@ -52,12 +52,12 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import numpy as np
 from dielectric_observations_grouped_benchmark import METRIC_NAMES
 from dielectric_pool_expansion_benchmark import fold_signature
 from dielectric_representation_ablation import SEED, XGB_PARAMS, evaluate_repeat
 from dielectric_representation_seed_robustness import build_context, splits_for
+from export_results_common import write_json_stable
 from sklearn.isotonic import IsotonicRegression
 from sklearn.metrics import r2_score
 from xgboost import XGBRegressor
@@ -553,10 +553,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "repeats_csv": portable_relative_path(csv_path, root=REPOSITORY_ROOT),
         },
     }
-    summary_path.write_text(
-        json.dumps(summary, indent=1, ensure_ascii=False, sort_keys=False) + "\n",
-        encoding="utf-8",
-    )
+    write_json_stable(summary_path, summary)
     if not placebo:
         REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
         REPORT_PATH.write_text(format_report(summary), encoding="utf-8")

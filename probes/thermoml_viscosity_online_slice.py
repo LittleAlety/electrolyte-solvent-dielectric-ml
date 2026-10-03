@@ -52,6 +52,7 @@ from typing import Any
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from export_results_common import write_json_stable
 
 API_BASE = "https://trc.nist.gov/ThermoML-API/objects"
 API_OBJECT_PREFIX = "20.5000.trc.thermoml/"
@@ -150,7 +151,7 @@ def write_text_lf(path: Path, text: str) -> None:
 
 
 def write_json_lf(path: Path, payload: Any) -> None:
-    write_text_lf(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    write_json_stable(path, payload)
 
 
 def canonical_json(payload: Any) -> str:

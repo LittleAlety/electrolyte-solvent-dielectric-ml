@@ -46,12 +46,12 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-
 import dielectric_coordination_block as v1
 import dielectric_pool_expansion_benchmark as bn
 import dielectric_representation_seed_robustness as sr
 import numpy as np
 from dielectric_representation_ablation import REPRESENTATIONS
+from export_results_common import write_json_stable
 
 from electrolyte_ml.pathing import portable_relative_path
 
@@ -533,9 +533,7 @@ def build_verdict(criteria_id, claim, value, threshold, holds):
 def dump_json(path: Path, payload) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="\n") as handle:
-        handle.write(json.dumps(payload, ensure_ascii=False, indent=2))
-        handle.write("\n")
+    write_json_stable(path, payload)
 
 
 def parse_args(argv=None):

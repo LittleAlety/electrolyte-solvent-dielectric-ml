@@ -87,6 +87,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from export_results_common import write_json_stable
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 DEFAULT_CSV = REPOSITORY_ROOT / "data" / "reference" / "kpi_15_14_shortlists.csv"
@@ -1316,7 +1318,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         si_pdf_override=args.si_pdf,
         main_text_override=args.main_text_pdf,
     )
-    summary_text = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
     problems: list[str] = list(summary["validation"]["problems"])
 
     if args.check:
@@ -1340,7 +1341,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     _write_text(csv_path, csv_text)
-    _write_text(summary_path, summary_text)
+    write_json_stable(summary_path, summary)
     _write_text(report_path, report_text)
     for problem in problems:
         print("FAIL " + problem)
