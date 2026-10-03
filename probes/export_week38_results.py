@@ -148,6 +148,22 @@ LANES = {
         "produces_reading": False,
         "promoted": False,
     },
+    "w38_data_recon": {
+        "title": "W38-D 后验侦察：四核心量新来源核实 + 渠道红线登记（9 判据；不占 shot）",
+        "probe": "probes/w38_data_recon.py",
+        "prereg": None,
+        "summary": "probes/artifacts/w38_recon_summary.json",
+        "report": "reports/w38_data_recon.md",
+        "tests": ("tests/test_w38_data_recon.py",),
+        "artifacts": (
+            "probes/artifacts/w38_recon_hits.csv",
+            "probes/artifacts/w38_recon_channels.csv",
+            "probes/artifacts/w38_recon_hits.png",
+            "reports/w38_reaxys_literature_index.md",
+        ),
+        "produces_reading": False,
+        "promoted": False,
+    },
 }
 
 LANE_KEYS = tuple(LANES)
@@ -167,6 +183,7 @@ FIGURES: tuple[str, ...] = (
     "probes/artifacts/w38_conformal_coverage.png",
     "probes/artifacts/w38_structure_function.png",
     "probes/artifacts/w38_onsager_g.png",
+    "probes/artifacts/w38_recon_hits.png",
 )
 
 VERIFIERS = (
@@ -175,7 +192,8 @@ VERIFIERS = (
     (
         "-m pytest tests/test_repo_hygiene.py tests/test_w38_conformal_shortlist.py "
         "tests/test_w38_structure_function.py tests/test_w38_onsager_residual.py "
-        "tests/test_w38_summary_timestamp.py tests/test_w37_gate_admission_export.py "
+        "tests/test_w38_summary_timestamp.py tests/test_w38_data_recon.py "
+        "tests/test_w37_gate_admission_export.py "
         "-q -p no:cacheprovider"
     ),
 )

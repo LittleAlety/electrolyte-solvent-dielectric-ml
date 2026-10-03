@@ -404,7 +404,9 @@
 - **W38-B 的机制价值**：Morgan(r=2) 看不见**链长**（heptane / nonane）、**环尺寸**（1,4-dioxane 2.2 vs 15-crown-5 15.5）、**立体化学**（cis / trans-1,2-dichloroethylene 2.1 / 9.2）。这给「ECFP 块在 lever 4 下净有害」提供了候选机制：一个把 7 倍介电差抹成同一个向量的表示，在高杠杆配置下只能贡献噪声。
 - **W38-C 的坐实与两处自我削弱**：坐实的是「残差集中在自缔合质子性液体上」（formamide 166.9、NMA 37.8 对碳酸酯类 1.1–2.2）；自我削弱的是 —— `dipole_D` 列有质量疑点（formamide 0.439 D、NMA 1.593 D 与实验值差数倍），且 `L/x` 在 μ → 0 处**发散**，不加门槛时排名被烷烃占据（环戊烷 μ = 0.001 D → g_rel 7.2e5），是**统计量病态不是物理**。因此主判据全用中位数/秩，并加 μ ≥ 1.0 D 的数值门槛。
 - **W38-E 的意义**：`worktree_dirty` 与 `artifacts_commit` 是 AF-12 标识交付字节的两个坐标。修法不是「不写」，而是「同一内容不重记时间」。状态照实写：**机制已修、迁移未完成**（1/111）。
-- **产物**：`probes/w38_conformal_shortlist.py`、`probes/w38_structure_function.py`、`probes/w38_onsager_residual.py`、`probes/w38_summary_timestamp.py`、`probes/artifacts/w38_*`、`reports/w38_*.md`、`tests/test_w38_*.py`、`probes/export_results_common.py`（新增 `write_json_stable`）、`probes/export_week38_results.py`。
+- **W38-D（数据侦察）**：把四个核心量的外部来源**逐件实测 + 逐渠道登记**。名册命中（分母统一 241 行，RDKit 全 27 位 InChIKey 集合交）：Batt-P30K **73/241**、Batt-SLM.smi **79/241**、RX-392 **10/241**、chew 粘度 **140/241**（全项目 η 最高）、Chodera 介电 **45/241**、SolvFunc-87 **26/241**。三份 Batt-SLM 附属件与上游 git blob **逐字节相等** ⇒ 不算新源；本轮**真新增**只有 CPI 两表（MIT，**无核心量标签**）。裁决：**chew 粘度是 CC BY-NC 4.0 ⇒ 不入商用池**（η 线被封）；Chodera 是 **GPL-2.0** 的**零频** ε；NIST WebBook / DDBST / Cheméo / MNSol 全是红线。否证：**OMat24 是无机材料**、**OMol25 只有 energy + atomic forces（不是轨道源）**。新增可商用轨道线：镜像 `hf-mirror.com` 上的 **PubChemQC（CC-BY-4.0，含 HOMO/LUMO/gap）** 与 **QM9 原始 deposition（CC BY 4.0）**。判据 **9/9**。
+
+- **产物**：`probes/w38_conformal_shortlist.py`、`probes/w38_structure_function.py`、`probes/w38_onsager_residual.py`、`probes/w38_summary_timestamp.py`、`probes/w38_data_recon.py`、`probes/artifacts/w38_*`、`reports/w38_*.md`、`tests/test_w38_*.py`、`probes/export_results_common.py`（新增 `write_json_stable`）、`probes/export_week38_results.py`。
 
 ## 5. 全项目判否与负结果总表（照实登记，不美化）
 
@@ -437,6 +439,11 @@
 | 保形短名单 | τ=30 / α=0.10 的合并精度 | **0.8125 < 0.90 门**（H38a2 判否）；α=0.05 时 1.000（6 条推荐） |
 | 阈值型结构判据 | Tanimoto ≥ 0.80 且 \|Δε\| ≥ 30 | **0 对**（实测上限 25.98；H38b1 判否）；机制读数改为指纹盲区 26 对 |
 | 统计量病态 | `g_rel = L/x` 在 μ → 0 处发散 | 不加门槛时排名被烷烃占据（环戊烷 μ=0.001 D → 7.2e5）；加 μ ≥ 1.0 D 门槛（H38c8） |
+| 外部数据集 | OMol25（ColabFit，CC-BY-4.0） | Properties 只有 `energy, atomic forces` ⇒ **不是轨道源**（H38d8） |
+| 许可边界 | chew_2024 粘度（140/241，全项目 η 最高） | **CC BY-NC 4.0** ⇒ 不入商用池（H38d9） |
+| 许可边界 | NIST WebBook / DDBST / Cheméo / MNSol | 专有或许可受限，条款明文禁批量下载/抓取建库 ⇒ 红线 |
+| 可达性 | huggingface.co / zenodo.org / pubchemqc.riken.jp | 本机 DNS 不可达 ⇒ 登记「**环境受阻**」，不是「源不存在」 |
+| 数据增量 | 本轮新可商用核心量标签源 | **0 个**；真新增文件 2 个（CPI 两表，MIT）但**不带标签** |
 
 ## 6. 全项目正向读数总表
 
@@ -458,6 +465,9 @@
 | W38 | 结构-only 基线（1-NN 的 ε） | R² `0.2502679` |
 | W38 | Kirkwood-Onsager 域间 g_rel 中位数比 | `2.501616`（z `4.0761`） |
 | W38 | 指纹盲区对最大 \|Δε\|（Tanimoto ≥ 0.99） | `13.25` |
+| W38 | 名册命中（MIT 轨道源 Batt-P30K，分母 241） | `73 / 241` |
+| W38 | 名册命中（η 最高件 chew 粘度，CC BY-NC） | `140 / 241` |
+| W38 | 已在库判定：Batt-SLM 附属件与上游 blob 逐字节相等 | `3 / 3` |
 
 **口径提醒（永不混比）**：`0.6223892738254433` 与 `0.6265899384202314` 是**阶梯读数**，不是新晋升级别；`0.5861142332208197` 是**单表示诚实端点**；`0.6080587938801277` 是 **seed 42 的单抽**；四者与冻结头条 `0.4766400383507876` **口径不同，不得混比**。
 

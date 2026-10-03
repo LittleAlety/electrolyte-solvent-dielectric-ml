@@ -9,7 +9,7 @@
 
 ---
 
-## 1. 为什么是这四条
+## 1. 为什么是这五条
 
 W37 把 §11 清空之后，仓库第一次出现「治理件齐了、但科学问题没有新进展」的状态。本轮回答
 四个**已经在盘上、却从未被问过**的问题：
@@ -30,7 +30,7 @@ W37 把 §11 清空之后，仓库第一次出现「治理件齐了、但科学�
 
 一句话：**W37 把册子接上机器，W38 把机器接上物理与保证。**
 
-## 2. 四条 lane
+## 2. 五条 lane
 
 | lane | 回答 | 做法 | 判据 |
 | --- | --- | --- | --- |
@@ -39,7 +39,17 @@ W37 把 §11 清空之后，仓库第一次出现「治理件齐了、但科学�
 | **W38-C** Onsager/Kirkwood 残差诊断 | 缺的那一维是不是取向相关 g | 令 `L(eps) = (eps-1)(2eps+1)/(9eps)`，在给体数 `hbd == 0` 的域上过原点拟合 `L ~ mu_sq_over_Vm`，残差比即相对 g | H38c1–H38c4（4 条） |
 | **W38-E** 时间戳脏树收口 | 干净重导为什么不干净 | 把 `generated_at_utc` / `elapsed_seconds` 从被跟踪 summary 挪进派生的 `*_run_meta.json`，导出器与测试不再写跟踪件 | H38e1–H38e4（4 条） |
 
-合计 **17 条判据**。W38-D（数据侦察）由子代理并行执行，产出登记报告，不设数值判据。
+| **W38-D** 数据侦察 | 四个核心量还有没有**合法**新来源 | 逐件实测名册命中（RDKit 全 27 位 InChIKey 集合交）+ 逐渠道登记许可/可达性/是否含核心量，渠道表即准入清单 | H38d1–H38d9（9 条） |
+
+合计 **38 条判据**（A 8 + B 7 + C 8 + D 9 + E 6），其中 **2 条为已登记判否**（H38a2 / H38b1）。
+
+### W38-D 的口径要点
+
+- **分母统一 241 行**（`data/processed/dielectric_physical_features_v03.csv`）；既有报告的 246 / 247 行是 `data/dielectric_v03.csv` 口径，**两者不得混引**。
+- **「已在库」与「真新增」用字节判定**：与上游 git blob 的 sha256 逐字节比对，不用文件名猜。校验必须走 GitHub `git/blobs` 接口（PowerShell 解 Contents API 的 `content` 字段会**多 4 字节**）。
+- **红线是判据不是备注**：任何 `can_enter_pool` 的渠道，许可类别必须是 permissive；NC / ND / 专有 / 受限一律 false（H38d6 / H38d9）。
+- **第三方数值不入池**：本件只读盘上既有外部件的**标识符列**做集合交，不把任何第三方数值写进池或特征列；Reaxys 只作**文献索引**取 DOI。
+- **受阻 ≠ 不存在**：DNS 不可达的渠道登记为「环境受阻」，不登记为「源不存在」。
 
 ### W38-A 的口径要点（必须在读数前写死）
 
@@ -61,11 +71,11 @@ W37 把 §11 清空之后，仓库第一次出现「治理件齐了、但科学�
 
 | 类别 | 路径 |
 | --- | --- |
-| 探针 | `probes/w38_conformal_shortlist.py`、`probes/w38_structure_function.py`、`probes/w38_onsager_residual.py`、`probes/w38_summary_timestamp.py` |
-| 产物 | `probes/artifacts/w38_conformal_*.csv`、`probes/artifacts/w38_structure_*.csv`、`probes/artifacts/w38_onsager_*.csv`、`probes/artifacts/w38_timestamp_*.csv` |
-| 图 | `probes/artifacts/w38_conformal_coverage.png`、`probes/artifacts/w38_structure_function.png`、`probes/artifacts/w38_onsager_g.png` |
-| 报告 | `reports/w38_conformal_shortlist.md`、`reports/w38_structure_function.md`、`reports/w38_onsager_residual.md`、`reports/w38_timestamp_closeout.md` |
-| 测试 | `tests/test_w38_conformal_shortlist.py`、`tests/test_w38_structure_function.py`、`tests/test_w38_onsager_residual.py`、`tests/test_w38_summary_timestamp.py` |
+| 探针 | `probes/w38_conformal_shortlist.py`、`probes/w38_structure_function.py`、`probes/w38_onsager_residual.py`、`probes/w38_summary_timestamp.py`、`probes/w38_data_recon.py` |
+| 产物 | `probes/artifacts/w38_conformal_*.csv`、`probes/artifacts/w38_structure_*.csv`、`probes/artifacts/w38_onsager_*.csv`、`probes/artifacts/w38_timestamp_*.csv`、`probes/artifacts/w38_recon_{hits,channels}.csv` |
+| 图 | `probes/artifacts/w38_conformal_coverage.png`、`probes/artifacts/w38_structure_function.png`、`probes/artifacts/w38_onsager_g.png`、`probes/artifacts/w38_recon_hits.png` |
+| 报告 | `reports/w38_conformal_shortlist.md`、`reports/w38_structure_function.md`、`reports/w38_onsager_residual.md`、`reports/w38_timestamp_closeout.md`、`reports/w38_data_recon.md` |
+| 测试 | `tests/test_w38_conformal_shortlist.py`、`tests/test_w38_structure_function.py`、`tests/test_w38_onsager_residual.py`、`tests/test_w38_summary_timestamp.py`、`tests/test_w38_data_recon.py` |
 | 导出 | `probes/export_week38_results.py` → `成果输出/week38` |
 
 ## 4. 边界与不做清单
@@ -77,6 +87,7 @@ W37 把 §11 清空之后，仓库第一次出现「治理件齐了、但科学�
   不得与文献的 g 绝对值对照。
 - **不把结构≠功能的极值对当反例定理**：那是**提示性证据**（n 有限、单一描述符集），
   用于支持分域声明，不用于宣称某个分子「不可预测」。
-- **红线不变**：Reaxys 数值不入任何池；THEMol 只留 `data/raw/`；Batt-P30K 是唯一可商用第三方线。
+- **红线不变**：Reaxys 数值不入任何池（W38-D 只用它取文献 DOI）；THEMol 只留 `data/raw/`；Batt-P30K 仍是主力可商用第三方线，W38-D 另登记了镜像上的 **PubChemQC（CC-BY-4.0）** 与 **QM9 原始 deposition（CC BY 4.0）** 两条可商用轨道线。
+- **W38-D 带出来的三条数据线（登记，未执行）**：① PubChemQC / QM9 只按名册命中取**单文件子集**，不取整仓（7.7 / 8.4 TB）；② η 覆盖最高的 140/241 被封在 **CC BY-NC 4.0**，要进商用池必须另找源；③ NIST WebBook / DDBST / Cheméo / MNSol / QMugs / THEMol / MolSSI liquid-electrolytes 一律不入池。
 - **不做**：不重跑已被证否的路线（换拟合器 / 网络叠加 / 外来化学空间 / η 行级解冻）；
   不把 W31 `0.622389` 与 W32 `0.626589` 读作新纪录。

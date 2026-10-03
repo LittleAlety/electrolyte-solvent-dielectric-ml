@@ -35,6 +35,8 @@
 
 - **W37：README §11 最后三条一次性收口（全部后验，不占 shot，累计仍 19）**。① **装配源回灌（第 16 条）**：`paper/_v2_*.md` 与已发布稿之间登记过的 **11 段漂移**全部回灌（实际 **12 段** —— 第 2 轮才暴露 §3.21 末尾那个被 `strip_rules` 吃掉的空行），重建产物与已发布稿 **逐字节相等**，已发布稿 sha256 `dfb3b282f8cc…` **未变**，真跑一次 `build_paper_v2.py`（不加 `--force`）后交付字节仍不变；§3.1–§3.14 由 v1 线切片而来，那三段改为 `paper/_v2_splices.json` 的**锚点拼接**（命中数必须恰好为 1，否则重建器报错退出）。② **端点判等守卫（第 17 条）**：AST + 子串扫出仓库内「≥ 8 位有效数字字面量做 `==` / `!=`」**95 处**，逐条判定后**禁止 0 处**（现存全在测试断言里，属登记常量回归），容差**从注册表 R5 读出**（`1e-12`），并提供 `endpoints_equal()`；合成违规能被抓、`abs(a-b) <= tol` 不误抓。③ **准入接进导出（第 18 条）**：`scripts/check_redox_admission.py` 把论文附录 A 的 **7 个**还原轴引用点逐个对回登记表并要求 `admit()` 通过（`mark` 由 W34-A 守卫复算、零不一致、未登记 0），删行 / 改名即 `exit ≠ 0`；校验器挂进 `tests/test_repo_hygiene.py`，而各周导出器的 `VERIFIERS` 都引用该文件 ⇒ **导出阶段的验证块自动带上准入检查**。判据合计 **16 条全部成立**（5 + 5 + 6）。详见 `reports/week37_project_charter.md` / `reports/week37_delivery_readme.md`。
 
+- **W38：把「拒答」升级成有覆盖保证的短名单 + 结构≠功能谱 + Onsager 残差 + 数据侦察（四条后验 lane + 一条侦察 lane，0 shot，累计仍 19）**。① **W38-A 保形筛选举荐**：按**化合物**切分（98 化合物 → 49/49，种子 `2026+repeat`）的 split-conformal，行级覆盖 **0.9337 / 0.8858 / 0.8109**（α = 0.05 / 0.10 / 0.20）；τ=30 上 α=0.05 给 **6** 条推荐、精度 **1.000**，α=0.10 给 **16** 条、精度 **0.8125**（**H38a2 已登记判否**，阈值不原地改）。真实约束被暴露出来：α=0.10 / τ=15 时每折约 **42.1** 个化合物落未决区 ⇒ **漏斗的瓶颈是可判定性，不是精度**。② **W38-B 结构≠功能**：结构-only 基线（1-NN 的 ε）R² **0.2502679**；Spearman(相似度, |Δε|) = **−0.0607**（置换检验 z **−2.163**、p 0.026）；**指纹盲区 26 对**（Tanimoto ≥ 0.99）里 4 对 |Δε| ≥ 5、最大 **13.25**（1,4-dioxane 2.2 vs 15-crown-5 15.5；cis/trans-DCE 2.1/9.2）—— 给「ECFP 块在 lever 4 下净有害」一个候选机制（**H38b1 已登记判否**，实测上限 25.98 < 30）。③ **W38-C Kirkwood-Onsager 残差**：给体域 / 非给体域的 `g_rel` 中位数比 **2.5016**（z **4.076**、p 0.006），`leave-top-5-out` 后 **2.5597**，ε ≥ 60 族内比 **15.65** ⇒ 母体论文「单分子描述符传不了分子间关联」的诊断**被钉到那条可证伪预测上**（残差集中在自缔合质子性液体）。④ **W38-E 时间戳脏树收口**：`write_json_stable` 让干净重导不再脏树（端到端验证通过）；111 个带时间戳跟踪件已迁移 1 / 待迁移 110 ⇒ **机制已修、迁移未完成**。⑤ **W38-D 数据侦察**：把四个核心量的外部来源逐件实测 + 逐渠道登记（**9/9 判据**）—— η 覆盖最高件 `chew_2024_viscosity_supp_2.csv` 命中 **140/241** 但许可 **CC BY-NC 4.0**（不得入商用池）；`chodera_2015_data_dielectric.csv` 命中 **45/241**、**GPL-2.0**；`Batt-P30K.h5` 命中 **73/241**（MIT）；三份「已在库」的 Batt-SLM 附属件与上游 git blob **逐字节相等**（不算新源）；本轮**真新增**只有 `CPI/Input/Features{,-NoF}.csv`（MIT，无核心量标签）。同时否掉三条：**OMat24 是无机材料**、**OMol25 只有 energy + atomic forces**（不是轨道源）、NIST / DDBST / Cheméo / MNSol 全是红线。**新增可商用轨道线**：镜像 `hf-mirror.com` 上 `molssiai-hub/pubchemqc-b3lyp|pm6` 为 **CC-BY-4.0** 且含 `energy-{alpha,beta}-homo/lumo/gap`，QM9 原始 deposition 亦为 **CC BY 4.0**。判据合计 **29 + 9 = 38 条，36 成立 + 2 条已登记判否**。详见 `reports/week38_delivery_readme.md` / `reports/w38_data_recon.md`。
+
 - **论文按期刊模版重排并导出 docx**：`paper/make_paper_docx_template.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性_期刊模版.docx`（**414 段 / 18 张三线表 / 23 张图**；W35-B 改稿后已重新生成，含 §3.8.1 的 W20-4 单键定价表、§3.8.2 的 W30 组合/交互阶梯、图 8b/8c/10b）。
 
 ## 1. 这个仓库是什么
@@ -161,7 +163,14 @@ python probes\export_week37_results.py --overwrite
 | THEMol（ByteDance-Seed） | CC BY-NC 4.0 | **非商用**；只留在 `data/raw/`，**不入交付包** |
 | Batt-P30K（Teoroo-CMC/Batt-SLM） | MIT | 唯一干净的第三方线，可作参考层与迁移源 |
 | OMat24 | 自有条款 | **无机晶体**数据集，对有机溶剂分子不适用 |
-| Reaxys | 商业条款 | **不引用任何数值** |
+| Reaxys | 商业条款 | **不引用任何数值**（W38-D：只作文献索引取 DOI） |
+| PubChemQC（`molssiai-hub/pubchemqc-{b3lyp,pm6}@hf-mirror`） | CC-BY-4.0 | 新增可商用**轨道能**线（含 `energy-{alpha,beta}-homo/lumo/gap`）；全量 7.7 / 8.4 TB，只按名册命中取子集 |
+| QM9（Ramakrishnan 2014 原始 deposition） | CC BY 4.0（DataCite 已核实） | 可商用轨道能（`homo`/`lumo`/`gap`，133,885 分子）；**不要**引 HF 上无许可声明的第三方镜像 |
+| `chew_2024_viscosity_supp_{2,3}.csv` | CC BY-NC 4.0 | **非商用**；η 覆盖最高（140/241）但**不入商用池** |
+| `chodera_2015_data_dielectric.csv` | GPL-2.0（仓库级） | 可商用但带 copyleft 义务；口径是**零频 ε** |
+| QMugs / MolSSI liquid-electrolytes | CC BY-NC-SA / CC BY-NC-ND | **红线**，不入池 |
+| NIST WebBook / DDBST / Cheméo / MNSol | All rights reserved / 专有 / 专有 / 商业授权 | **红线**，条款明文禁批量下载或抓取建库 |
+| ColabFit OMol25 | CC-BY-4.0 | 可商用，但只有 `energy` + `atomic forces` ⇒ **不是轨道源** |
 
 ## 10. 版本与 DOI
 
@@ -199,3 +208,6 @@ python probes\export_week37_results.py --overwrite
 21. **H38b1 的判据改法（W38 登记，未执行）**：把绝对标签差阈值换成 (a) **相对判据**（同相似度分位内的 |Δε| 分位）与 (b) **指纹盲区判据**（Tanimoto ≥ 0.99 且 |Δε| ≥ 5 的对数）；后者已在 W38-B 以事后读数交付（26 对 / 4 对 / 最大 13.25）。
 22. **剩余 110 个带时间戳跟踪件的稳定写入迁移（W38 登记，未执行）**：清单见 `probes/artifacts/w38_timestamp_inventory.csv`；全部迁移到 `write_json_stable` 之后，第 19 条才算关闭。
 23. **Onsager 域规则精化（W38 登记，未执行）**：现规则继承 RDKit 的 Lipinski donor 定义（**不把水算作给体**，water 因此落在 g ≈ 1 域却实测 g_rel ≈ 2.2）；下一份预注册应改用显式的「可给体质子」定义，并加一条**偶极质量审计**（formamide `0.439 D`、NMA `1.593 D` 与实验值相差数倍；`L/x` 在 μ → 0 处发散）。
+24. **η 覆盖最高件是 CC BY-NC 4.0（W38-D 登记，未执行）**：`data/external/chew_2024_viscosity_supp_2.csv` 名册命中 **140/241**（全项目 η 覆盖最高），但其 Data availability 段把该数据**单独**声明为 **CC BY-NC 4.0**（文章级 CC BY 4.0 被该例外覆盖）⇒ **不得入商用池**。另两件同理：`chew_2024_viscosity_supp_3.csv` 是 `_pred`（模型输出，不入池）；`chodera_2015_data_dielectric.csv` 命中 **45/241**，仓库许可 **GPL-2.0**（可商用但带 copyleft 义务），且口径是**零频** ε，需先对齐。下一步二选一：只作非商业内部对照，或另找可商用 η 源。
+25. **可商用轨道线已变宽（W38-D 登记，未执行）**：`hf-mirror.com` 上 `molssiai-hub/pubchemqc-b3lyp` 与 `-pm6` 为 **CC-BY-4.0** 且字段表 + 抽样 JSON 命中 `energy-{alpha,beta}-homo/lumo/gap`；QM9 原始 deposition（DataCite rightsList）亦为 **CC BY 4.0**（133,885 分子）。相对地 **OMat24 是无机材料、OMol25 只有 `energy` + `atomic forces`** ⇒ 两者都**不是**轨道源。下一步：只取名册命中化合物的**单文件子集**，不要整仓（PubChemQC 全量约 7.7 TB / 8.4 TB）。
+26. **红线渠道已钉死（W38-D 登记）**：NIST WebBook（Standard Reference Data Act，「All rights reserved」）、DDBST（条款明文禁保存/下载/系统性抓取建库）、Cheméo（明文禁整库下载与整体嵌入）、MNSol（商业授权 6000 USD，且只含溶剂化自由能）—— 一律不入池；QMugs（CC BY-NC-SA）、THEMol（CC BY-NC）、MolSSI liquid-electrolytes（CC BY-NC-ND）同为红线。`huggingface.co` / `zenodo.org` / `pubchemqc.riken.jp` 在本机 **DNS 不可达**，登记为「环境受阻」而非「源不存在」。渠道表见 `probes/artifacts/w38_recon_channels.csv`。
