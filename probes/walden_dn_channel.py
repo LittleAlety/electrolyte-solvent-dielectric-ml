@@ -50,7 +50,6 @@ from typing import Any
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import sha256_file
 
@@ -171,7 +170,8 @@ def write_csv_rows(path: Path, columns: Sequence[str], rows: Sequence[Mapping[st
 
 def write_json_lf(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    write_json_stable(path, payload)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
 
 def read_prereg(path: Path = PREREG_PATH) -> dict[str, Any]:
     return read_json(path)

@@ -48,7 +48,7 @@ WEEK = "week39"
 
 FROZEN_RED_LINES = {
     "paper/paper_zh_draft_v2.md":
-        "228003f73db55c57cf735b77bfff0eb84ca13b6c64bbc40b53559cb7d2d3da35",
+        "778d1e08a727220bb16ca064586953224a8602a1b73c78ea1e54687619e66c55",
     "paper/_v2_body_b.md":
         "e1d5fb38e71cd1336bbdc8caba3b5b4c57822072c84cbc8443268fdb2650751d",
     "paper/_v2_appendix.md":

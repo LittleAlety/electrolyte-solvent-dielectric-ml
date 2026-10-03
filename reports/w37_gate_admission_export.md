@@ -31,13 +31,13 @@ probes/artifacts/w35_gated_reference_register.csv，逐点调用 W36-D 的 admit
 
 | 论文行 | 附录 | 表格行 | 轴 | 登记行 | 准入 | 标记 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 796 | 附录 A | 跨层级对照（22 化合物） | oxidation | r6_ox_gfn2 | 准入 | 不适用（门禁只覆盖还原轴） |
-| 796 | 附录 A | 跨层级对照（22 化合物） | oxidation | r6_ox_orca | 准入 | 不适用（门禁只覆盖还原轴） |
-| 796 | 附录 A | 跨层级对照（22 化合物） | reduction | r6_red_gfn2 | 准入 | 不可判定 |
-| 796 | 附录 A | 跨层级对照（22 化合物） | reduction | r6_red_orca | 准入 | 不可判定 |
-| 797 | 附录 A | 态合法性门禁（W33-A） | reduction | r6_red_gfn2 | 准入 | 不可判定 |
-| 797 | 附录 A | 态合法性门禁（W33-A） | reduction | r6_red_orca | 准入 | 不可判定 |
-| 797 | 附录 A | 态合法性门禁（W33-A） | reduction | w33a_gfn2_gas | 准入 | 可宣读 |
+| 913 | 附录 A | 跨层级对照（22 化合物） | oxidation | r6_ox_gfn2 | 准入 | 不适用（门禁只覆盖还原轴） |
+| 913 | 附录 A | 跨层级对照（22 化合物） | oxidation | r6_ox_orca | 准入 | 不适用（门禁只覆盖还原轴） |
+| 913 | 附录 A | 跨层级对照（22 化合物） | reduction | r6_red_gfn2 | 准入 | 不可判定 |
+| 913 | 附录 A | 跨层级对照（22 化合物） | reduction | r6_red_orca | 准入 | 不可判定 |
+| 914 | 附录 A | 态合法性门禁（W33-A） | reduction | r6_red_gfn2 | 准入 | 不可判定 |
+| 914 | 附录 A | 态合法性门禁（W33-A） | reduction | r6_red_orca | 准入 | 不可判定 |
+| 914 | 附录 A | 态合法性门禁（W33-A） | reduction | w33a_gfn2_gas | 准入 | 可宣读 |
 
 ## 4. 合成违规自检
 

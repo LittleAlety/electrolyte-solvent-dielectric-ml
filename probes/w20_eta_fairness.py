@@ -44,7 +44,11 @@ import numpy as np
 import viscosity_baseline as frozen
 import viscosity_row_level_unfreeze as unfreeze
 import w19_chemprop_viscosity as w19
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 from sklearn.model_selection import GroupKFold
 from xgboost import XGBRegressor
 

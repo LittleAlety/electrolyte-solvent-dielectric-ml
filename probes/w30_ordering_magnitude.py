@@ -37,7 +37,11 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 import numpy as np
 import w28_dense_hyperparameters as w28
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 
 from electrolyte_ml.pathing import portable_relative_path
 

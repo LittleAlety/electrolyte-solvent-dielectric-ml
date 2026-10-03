@@ -31,17 +31,17 @@ import re
 import shutil
 import sys
 import tempfile
-import time
 import warnings
-from collections import Counter
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 
+from collections import Counter
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from export_results_common import write_json_stable
 
 from electrolyte_ml.xtb_features import parse_xtb_output
 from electrolyte_ml.xtb_runner import run_xtb_subprocess, xtb_optimisation_arguments
@@ -443,7 +443,7 @@ def parse_arm(result):
         return payload
     try:
         parsed = parse_xtb_output(text)
-    except Exception as error:
+    except Exception as error:  # noqa: BLE001 - the message is the evidence
         payload["status"] = "parse_failed"
         payload["error"] = str(error)[:200]
         return payload
@@ -674,14 +674,14 @@ def run_probe(executable, timeout_seconds, limit=None):
         try:
             c0 = parse_arm(run_arm(executable, label + "_0", Chem.MolToXYZBlock(molecule),
                                    net_charge, timeout_seconds))
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             c0 = {"status": "exception", "error": str(error)[:200], "homo_eV": None, "lumo_eV": None,
                   "gap_eV": None, "total_energy_hartree": None, "xtb_version": None,
                   "li_mulliken_q": None, "li_min_dist_A": None, "li_nearest_atom": None}
         try:
             c1 = parse_arm(run_arm(executable, label + "_1", xyz_block_with_li(molecule, position),
                                    net_charge + 1, timeout_seconds))
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             c1 = {"status": "exception", "error": str(error)[:200], "homo_eV": None, "lumo_eV": None,
                   "gap_eV": None, "total_energy_hartree": None, "xtb_version": None,
                   "li_mulliken_q": None, "li_min_dist_A": None, "li_nearest_atom": None}
@@ -1283,7 +1283,7 @@ def scf_retry_posthoc(executable, layer_rows, timeout_seconds):
             try:
                 parsed = parse_arm(run_arm(executable, label, xyz, charge, timeout_seconds,
                                            extra_arguments=SCF_RETRY_ARGUMENTS))
-            except Exception as error:
+            except Exception as error:  # noqa: BLE001
                 parsed = {"status": "exception", "error": str(error)[:200], "gap_eV": None,
                           "li_min_dist_A": None, "li_mulliken_q": None}
             retry_rows.append((
@@ -1338,7 +1338,8 @@ def main(argv=None):
             previous["post_hoc"]["li_binding_energy"]["li_plus_total_energy_hartree"],
             previous["post_hoc"]["scf_retry"],
         )
-        write_json_stable(SUMMARY, relabelled)
+        SUMMARY.write_text(json.dumps(relabelled, ensure_ascii=False, indent=2) + "\n",
+                           encoding="utf-8", newline="\n")
         write_report(relabelled)
         print(json.dumps({"mode": "from_layer", "n": len(layer_rows),
                           "report": str(REPORT)}, ensure_ascii=False))
@@ -1353,7 +1354,8 @@ def main(argv=None):
     elapsed = time.perf_counter() - started
     layer_sha = sha256_file(LAYER_CSV)
     summary = write_summary(layer_rows, readings, prereg, layer_sha, elapsed, li_plus_hartree, scf_retry)
-    write_json_stable(SUMMARY, summary)
+    SUMMARY.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+                       encoding="utf-8", newline="\n")
     write_report(summary)
     print(json.dumps({
         "summary": str(SUMMARY),

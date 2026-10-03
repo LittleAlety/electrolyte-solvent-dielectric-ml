@@ -35,6 +35,11 @@ POWER = ROOT / 'probes' / 'artifacts' / 'w34_paired_power_summary.json'
 
 PRE_CORRECTION_SHA256 = '8984fb6b6523fd6a372b20396dff301366922646d79ad6cda2ecde93e1f70a28'
 POST_CORRECTION_SHA256 = 'dfb3b282f8ccf76653d244a6a2c618d92a6e12003d012b81cca9f08dc9c6e78e'
+
+#: W40 的 v1.4 改稿（新增 §3.22–§3.28、摘要与附录）让论文的**交付字节合法移动了一次**。
+#: `POST_CORRECTION_SHA256` 是 W35 当时那一版的历史记录，**不得回改**；当前字节改钉到 v1.4,
+#: 并要求两者不同（哪天又相等，说明有人把 v1.4 回滚了，守卫会红）。
+V1_4_SHA256 = '778d1e08a727220bb16ca064586953224a8602a1b73c78ea1e54687619e66c55'
 OX_CI_LOW = -0.19819819819819823
 OX_CI_HIGH = 0.09090909090909094
 RED_CI_LOW = -1.7037037037037035
@@ -126,7 +131,8 @@ def test_paper_is_lf_and_the_recorded_hashes_agree() -> None:
     payload = _summary()
     payload_bytes = PAPER.read_bytes()
     assert b'\r' not in payload_bytes
-    assert probe.sha256_bytes(payload_bytes) == POST_CORRECTION_SHA256
+    assert probe.sha256_bytes(payload_bytes) == V1_4_SHA256
+    assert V1_4_SHA256 != POST_CORRECTION_SHA256
     assert payload['paper']['sha256_before'] == PRE_CORRECTION_SHA256
     assert payload['paper']['sha256_after'] == POST_CORRECTION_SHA256
     assert int(payload['paper']['lines_after']) > int(payload['paper']['lines_before']) - 1

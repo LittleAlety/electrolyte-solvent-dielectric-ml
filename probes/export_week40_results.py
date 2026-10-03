@@ -51,7 +51,7 @@ WEEK = "week40"
 
 FROZEN_RED_LINES = {
     "paper/paper_zh_draft_v2.md":
-        "228003f73db55c57cf735b77bfff0eb84ca13b6c64bbc40b53559cb7d2d3da35",
+        "778d1e08a727220bb16ca064586953224a8602a1b73c78ea1e54687619e66c55",
     "paper/_v2_body_b.md":
         "e1d5fb38e71cd1336bbdc8caba3b5b4c57822072c84cbc8443268fdb2650751d",
     "paper/_v2_appendix.md":
@@ -103,7 +103,7 @@ LANES = {
         "promoted": False,
     },
     "w40_timestamp_migration": {
-        "title": ("W40-B 治理件：剩余带时间戳跟踪件迁到稳定写入（重跑不脏树；不占 shot）"),
+        "title": ("W40-B 治理件：带时间戳跟踪件迁到稳定写入，22 个 owner 按三类理由登记为例外（重跑不脏树；不占 shot）"),
         "probe": "probes/w40_timestamp_migration.py",
         "prereg": None,
         "summary": "probes/artifacts/w40_timestamp_migration_summary.json",

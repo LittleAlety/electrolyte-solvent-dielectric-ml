@@ -49,6 +49,7 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
+
 import dielectric_knowledge_purity_sweep as v1
 import numpy as np
 from dielectric_coverage_paired_benchmark import (
@@ -75,7 +76,6 @@ from dielectric_representation_ablation import (
     read_csv_rows,
 )
 from dielectric_room_window_paired import HYBRID, fold_signature, scored_fold_signature
-from export_results_common import write_json_stable
 from xgboost import XGBRegressor
 
 from electrolyte_ml.exporting import canonical_text_sha256
@@ -1379,7 +1379,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     artifacts_dir.mkdir(parents=True, exist_ok=True)
-    write_json_stable(summary_path, summary)
+    summary_path.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
     report_path.write_text(
         "\n".join(render_report(summary)) + "\n", encoding="utf-8", newline="\n"
     )

@@ -27,7 +27,11 @@ import dielectric_coordination_block as v1
 import dielectric_pool_expansion_benchmark as bn
 import dielectric_xtb_full_table_migration as migration
 from dielectric_representation_ablation import read_csv_rows
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 CONFORMER_FEATURES_PATH = (

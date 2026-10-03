@@ -25,7 +25,11 @@ PROBES_DIR = Path(__file__).resolve().parent
 if str(PROBES_DIR) not in sys.path:
     sys.path.insert(0, str(PROBES_DIR))
 import dielectric_coordination_block as v1
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 
 from electrolyte_ml.pathing import portable_relative_path
 from electrolyte_ml.xtb_features import generate_3d_xyz

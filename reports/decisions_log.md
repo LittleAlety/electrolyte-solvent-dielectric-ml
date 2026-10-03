@@ -7321,13 +7321,23 @@ NO₂ 是**稳定自由基**（`O=[N+][O-]`，1 个自由基电子），预注�
 - **本轮最重要的口径修正**：W28 那 13 个臂如果混进阶梯池，AUC30 极差会从 0.005561 抬到 **0.543814**（约 98 倍），比值被压到 1.293 ⇒ **假判否**。凡比值判据，第一要求是**阶梯定义干净**（探针已加 `grid_fixed_` 前缀过滤并新增 W29 阶梯）。
 - **H40a5 判否（已登记）**：tau=15 上反解为空——该 tau 下不存在能守住精度的 alpha。
 
-### W40-B 治理件：稳定写入迁移收口（`probes/w40_timestamp_migration.py`）
+### W40-B 治理件：稳定写入迁移收口（含例外登记）（`probes/w40_timestamp_migration.py`）
 
-**8 条判据全部成立**，测试 11 项全绿。复算清单分母 **117 = 已迁移 110 + 待迁移 0 + 无写入器历史产物 7**；W38 登记的 110 件「待迁移」现在**没有一件留在待迁移**；全仓「未用稳定写入的 owner」= **0**。抽样三支探针各跑两遍，`new_dirty_paths = []`，产物哈希不变。
+**9 条判据全部成立**，测试 12 项全绿。复算清单分母 **121 = 已迁移 95 + 有理由不迁移 19（22 个 owner）+ 待迁移 0 + 无写入器历史产物 7**；W38 登记的 110 件「待迁移」现在**没有一件留在待迁移**；全仓「未用稳定写入**且未登记例外**的 owner」= **0**。抽样三支探针各跑两遍，`new_dirty_paths = []`，产物哈希不变。
+
+**本轮最重要的一处自我更正：「全量迁移」不等于「全部写入站点都可以迁移」。** 第一版机械迁移认为 110 件全部可迁；复核发现三类站点**不能**动，全部回退到 W39 字节：
+
+- **(a) 字节被冻结摘要 / 锁前预注册钉死**（16 个 owner）：改字节即让已交付 summary 与盘上脚本不再一致，例如 `dielectric_knowledge_purity_sweep_erratum_prereg.json` 的 `version_1_pins`（锁前冻结）、`walden_dn_channel_summary.json` / `eta_epsilon_joint_summary.json` 的 `manifest.builder.sha256`、`w20_eta_fairness_prereg.json` / `w24_condition_redox_prereg.json` 的依赖件摘要。这类「证据」的意义就是「当时那个字节」。
+- **(b) 写入站点是追加写**（3 个 owner）：`open(..., "a")` 记一行 JSONL，稳定写入是**整篇改写**，会抹掉历史行（`pubchem_liquid_window_harvest.append_run_log` 等）。
+- **(c) 原写入器带 `allow_nan=False`**（3 个 owner）：严格 JSON 语义，稳定写入走 `json.dumps` 默认 `allow_nan=True`，会把 `NaN` 写进交付件。
+
+三类共 **22 个 owner**（`pubchem_liquid_window_harvest.py` 同时属 (a)(b)），逐条带**非空理由**登记进 `EXEMPT_WRITERS`。新增判据 **H40b9** 机械复核：理由栏非空，且被登记的 owner 确实**不含** `write_json_stable` —— 防止把例外登记当成藏未迁移件的地方。**例外登记不是豁免**：这 22 个 owner 重跑**仍会弄脏工作树**，是明确保留的已知代价；登记的是「不能迁移的理由」，不是「已修」。
 
 - **口径**：稳定写入 = 「同一内容不重记时间」，只忽略 `generated_at_utc` / `elapsed_seconds` 两个键。另有 **33** 件带 `wall_seconds` / `started_at_utc` / `finished_at_utc` 一类易变键的写入器，已在 summary 的 `extra_volatile` 里登记（**不**宣称它们已稳定，只登记）。
 - **7 件无写入器历史产物**逐件列出并核对 owner（如 `probes/g1plus_*_evidence.json`、`probes/w19_safety_channel_registry.json`），确认它们只有读者、没有写入者，所以不构成脏树来源。
-- 该件修改了 **113** 个 probe/test 文件（`write_json` → `write_json_stable`）。这是本轮改动面最大的一件，但属卫生件，不产生读数。
+- 该件修改了 **113** 个 probe/test 文件（`write_json` → `write_json_stable`），其中 **22 个已回退**。这是本轮改动面最大的一件，但属卫生件，不产生读数。
+
+**顺带修掉的一处真实回归**：迁移把探针里的 `from export_results_common import ...` 写成**裸模块名**，而 `scripts/verify_four_core_registry.py` 等以 `probes.<mod>` 方式导入这些文件 ⇒ `ModuleNotFoundError`。已全部改成 `try: from probes.export_results_common ... / except ImportError: from export_results_common ...` 双分支垫片，两种入口都可跑。
 
 ### W40-C Onsager 域精化（`probes/w40_onsager_domain.py`）
 

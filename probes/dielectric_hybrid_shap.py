@@ -77,6 +77,7 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
+
 import numpy as np
 from dielectric_band_ablation import ROOM_BAND
 from dielectric_coverage_paired_benchmark import (
@@ -112,7 +113,6 @@ from dielectric_representation_ablation import (
     fit_predict_representation,
 )
 from dielectric_room_window_paired import HYBRID, fold_signature, scored_fold_signature
-from export_results_common import write_json_stable
 from xgboost import DMatrix, XGBRegressor
 
 from electrolyte_ml.exporting import canonical_text_sha256, sha256_file
@@ -2422,7 +2422,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text("\n".join(render_report(summary)) + "\n", encoding="utf-8", newline="\n")
     SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    write_json_stable(SUMMARY_PATH, summary)
+    SUMMARY_PATH.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
     print(f"task            : {TASK_ID}")
     print(f"importance impl : {IMPORTANCE_IMPL}")
     print(f"folds           : {len(splits)} (5 x {executed_repeats})")

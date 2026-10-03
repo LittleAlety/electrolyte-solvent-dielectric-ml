@@ -24,7 +24,11 @@ import time
 from fractions import Fraction
 from pathlib import Path
 
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 RANK_JSON = REPOSITORY_ROOT / "probes" / "artifacts" / "w32_rank_stability.json"

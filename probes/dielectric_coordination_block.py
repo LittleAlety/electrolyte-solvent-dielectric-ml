@@ -137,7 +137,11 @@ from dielectric_room_window_paired import (
     audit_masks,
     masked_splits,
 )
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path

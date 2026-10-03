@@ -63,7 +63,11 @@ from dielectric_representation_ablation import (
     read_modelling_rows,
 )
 from dielectric_target_and_scaffold import fit_predict
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 from sklearn.model_selection import RepeatedKFold
 
 from electrolyte_ml.applicability import applicability_domain, count_hbond_donors

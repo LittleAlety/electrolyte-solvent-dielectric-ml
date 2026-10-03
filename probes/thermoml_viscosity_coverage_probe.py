@@ -35,7 +35,6 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.thermoml import parse_thermoml_file
@@ -121,16 +120,20 @@ def display_path(path: Path) -> str:
 
 
 def write_json_lf(path: Path, payload: object) -> None:
-    """Write a tracked summary through the stable writer.
+    """Write JSON with explicit LF endings and no non-finite literals.
 
-    The stable writer keeps the bytes already on disk when every
-    non-volatile field agrees, so re-running the probe no longer dirties
-    the worktree. Non-finite floats are converted to null first because
-    bare NaN and Infinity are not valid JSON.
+    ``Path.write_text`` would translate the newline to ``os.linesep`` on Windows
+    and make the artifact bytes host-dependent. Non-finite floats are converted
+    to ``null`` first because bare NaN and Infinity are not valid JSON.
     """
 
+    text = (
+        json.dumps(_json_ready(payload), ensure_ascii=False, indent=2, allow_nan=False)
+        + "\n"
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
-    write_json_stable(path, _json_ready(payload))
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        handle.write(text)
 
 
 def write_csv_lf(

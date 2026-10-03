@@ -14,7 +14,11 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 

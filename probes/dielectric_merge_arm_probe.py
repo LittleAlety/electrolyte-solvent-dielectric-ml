@@ -41,7 +41,6 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
-from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
@@ -574,7 +573,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     summary_path = Path(args.summary)
     summary_path.parent.mkdir(parents=True, exist_ok=True)
-    write_json_stable(summary_path, summary)
+    summary_path.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
     report_lines = render_report(summary)
     report_path = Path(args.report)
     report_path.parent.mkdir(parents=True, exist_ok=True)

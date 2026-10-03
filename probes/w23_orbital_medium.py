@@ -39,7 +39,11 @@ for _extra in (ROOT / "probes", ROOT / "src"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
 import w21_li_coordination as w21  # geometry, QC and the section-9 metric battery
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 
 PREREG = ROOT / "probes" / "w23_orbital_medium_prereg.json"
 SUMMARY = ROOT / "probes" / "w23_orbital_medium_summary.json"

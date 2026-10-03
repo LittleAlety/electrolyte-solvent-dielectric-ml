@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import platform
 import sys
 import time
@@ -39,10 +40,10 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
+
 import build_viscosity_v02 as thaw_rule
 import numpy as np
 import viscosity_baseline as frozen
-from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 from electrolyte_ml.pathing import portable_relative_path
@@ -697,7 +698,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         READING_COLUMNS,
         [{column: row[column] for column in READING_COLUMNS} for row in readings],
     )
-    write_json_stable(SUMMARY_PATH, summary)
+    SUMMARY_PATH.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=1) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
     REPORT_PATH.write_text(
         "\n".join(format_report(summary)) + "\n", encoding="utf-8", newline="\n"
     )

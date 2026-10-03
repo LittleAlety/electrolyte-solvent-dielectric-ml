@@ -33,7 +33,11 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 
 ARTIFACTS = REPOSITORY_ROOT / "probes" / "artifacts"
 PREREG_PATH = REPOSITORY_ROOT / "probes" / "w36_v2_source_correction_prereg.json"

@@ -43,7 +43,10 @@ sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
-from export_results_common import VOLATILE_SUMMARY_KEYS, write_json_stable  # noqa: E402
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import VOLATILE_SUMMARY_KEYS, write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import VOLATILE_SUMMARY_KEYS, write_json_stable
 
 ARTIFACTS = REPOSITORY_ROOT / "probes" / "artifacts"
 W38_INVENTORY_PATH = ARTIFACTS / "w38_timestamp_inventory.csv"
@@ -69,6 +72,66 @@ INVENTORY_FIELDS = (
 STATUS_MIGRATED = "已迁移稳定写入"
 STATUS_PENDING = "待迁移"
 STATUS_LEGACY = "无写入器（历史产物）"
+STATUS_EXEMPT = "有理由不迁移（例外登记）"
+
+#: 例外登记：这些写入器的字节被**冻结产物**钉死，或它的写入语义不是「整篇改写 JSON」。
+#: 迁移它们会 (a) 让预注册 / 已交付 summary 记录的脚本摘要失效，(b) 把追加写降级成覆盖写，
+#: 或 (c) 丢掉 `allow_nan=False` 的严格性。每一条都必须带非空理由，否则 H40b9 判否。
+EXEMPT_WRITERS: dict[str, str] = {
+    # (a) 字节被冻结摘要 / 锁前预注册钉死 —— 改字节即让已交付的摘要与盘上脚本不再一致
+    "probes/build_eta_epsilon_joint_table.py":
+        "字节被 probes/eta_epsilon_joint_summary.json 的 manifest.builder.sha256 钉死",
+    "probes/dielectric_association_features_probe.py":
+        "字节被 probes/dielectric_association_features_summary.json 钉死",
+    "probes/dielectric_bagging_probe.py":
+        "字节被 probes/dielectric_bagging_probe_summary.json 钉死",
+    "probes/dielectric_hybrid_shap.py":
+        "字节被 probes/dielectric_hybrid_shap_summary.json 的 inputs.script_sha256 钉死",
+    "probes/dielectric_knowledge_purity_sweep.py":
+        "字节被 erratum 的 version_1_pins 钉死（锁前冻结，改字节等于篡改 v1 证据）",
+    "probes/dielectric_knowledge_purity_sweep_erratum.py":
+        "字节被 probes/dielectric_knowledge_purity_sweep_erratum_summary.json 钉死",
+    "probes/dielectric_merge_arm_probe.py":
+        "字节被 probes/dielectric_merge_arm_summary.json 钉死",
+    "probes/dielectric_target_transform_probe.py":
+        "字节被 probes/dielectric_target_transform_probe_summary.json 钉死",
+    "probes/kpi_funnel_cross_run.py":
+        "字节按摘要被 reports/decisions_log.md 引用（历史记录，不得回改）",
+    "probes/pubchem_identity_layer.py":
+        "字节被 probes/identity_smiles_drawing_decision_summary.json 当作依赖件钉死",
+    "probes/identity_smiles_drawing_decision.py":
+        "盘上 summary 由本脚本 build_full_summary() 重算比对，改字节会让两者不再一致",
+    "probes/viscosity_row_level_unfreeze.py":
+        "字节被 w19_chemprop_viscosity_prereg.json 与 w20_eta_fairness_prereg.json 钉死",
+    "probes/w19_chemprop_viscosity.py":
+        "字节被 probes/w20_eta_fairness_prereg.json 钉死",
+    "probes/w20_safety_ablation.py":
+        "字节按摘要被 reports/w20_safety_ablation.md / reports/_w20_section_w202.md 引用",
+    "probes/w21_li_coordination.py":
+        "字节被 probes/w24_condition_redox_prereg.json 钉死",
+    "probes/walden_dn_channel.py":
+        "字节被 probes/walden_dn_channel_summary.json 的 manifest.builder.sha256 钉死",
+    # (b) 追加写：稳定写入是整篇改写，会丢掉 JSONL 的历史行
+    "probes/pubchem_liquid_window_harvest.py":
+        "append_run_log 是追加写 JSONL（open(..., 'a')），整篇改写会丢历史行；且有 append 行为测试",
+    "probes/w24_2_orca_dft.py":
+        "run log 是追加写 JSONL（open(..., 'a')），整篇改写会丢历史行",
+    "probes/w24_condition_redox.py":
+        "run log 是追加写 JSONL（open(..., 'a')），整篇改写会丢历史行",
+    # (c) allow_nan=False：稳定写入走 json.dumps 默认 allow_nan=True
+    "probes/dielectric_split_conformal_probe.py":
+        "原写入器带 allow_nan=False（严格 JSON），稳定写入会把 NaN 写进交付件",
+    "probes/thermoml_local_coverage_probe.py":
+        "原写入器带 allow_nan=False（严格 JSON），理由同上",
+    "probes/thermoml_viscosity_coverage_probe.py":
+        "原写入器带 allow_nan=False（严格 JSON），理由同上",
+}
+
+EXEMPT_CATEGORIES: dict[str, str] = {
+    "pinned_bytes": "字节被冻结摘要 / 锁前预注册钉死",
+    "append_log": "写入站点是追加写，整篇改写会丢历史行",
+    "strict_json": "原写入器带 allow_nan=False 的严格 JSON 语义",
+}
 
 WRITER_CALL_NAMES = frozenset(
     {
@@ -197,6 +260,7 @@ def build_inventory() -> tuple[list[dict[str, object]], dict[str, object]]:
     scripts = writer_scripts()
     rows: list[dict[str, object]] = []
     named_volatile: list[dict[str, str]] = []
+    exempt: list[dict[str, str]] = []
     legacy: list[str] = []
     dynamic_ok: list[str] = []
     for relative in tracked_files():
@@ -212,8 +276,18 @@ def build_inventory() -> tuple[list[dict[str, object]], dict[str, object]]:
         named_writers = sorted(
             owner for owner in owners if any(base in target for target in write_targets(load_text(owner)))
         )
+        exempt_owners = sorted(owner for owner in owners if owner in EXEMPT_WRITERS)
         if stable_owners:
             status = STATUS_MIGRATED
+        elif exempt_owners and set(named_writers) <= set(exempt_owners):
+            status = STATUS_EXEMPT
+            exempt.append(
+                {
+                    "tracked_json": relative,
+                    "writers": ";".join(exempt_owners),
+                    "reasons": " | ".join(EXEMPT_WRITERS[owner] for owner in exempt_owners),
+                }
+            )
         elif named_writers:
             status = STATUS_PENDING
             named_volatile.append({"tracked_json": relative, "writers": ";".join(named_writers)})
@@ -242,6 +316,7 @@ def build_inventory() -> tuple[list[dict[str, object]], dict[str, object]]:
         )
     meta = {
         "named_volatile": named_volatile,
+        "exempt": exempt,
         "legacy": legacy,
         "dynamic_path_migrated": dynamic_ok,
     }
@@ -399,7 +474,7 @@ def evaluate(payload: Mapping[str, object]) -> list[dict[str, object]]:
     )
     add(
         "H40b2",
-        "W38 登记的待迁移行在复算清单中不再有「待迁移」",
+        "W38 登记的待迁移行在复算清单中不再有「待迁移」（例外登记不算未迁移）",
         float(len(w38_pending) - len(w38_pending_still)),
         float(len(w38_pending)),
         not w38_pending_still,
@@ -413,7 +488,7 @@ def evaluate(payload: Mapping[str, object]) -> list[dict[str, object]]:
     )
     add(
         "H40b4",
-        "复算清单中「待迁移」行数（应为 0）",
+        "复算清单中「待迁移」行数（应为 0；有理由不迁移的行走例外登记，不计入）",
         float(len(pending_now)),
         0.0,
         not pending_now,
@@ -446,6 +521,23 @@ def evaluate(payload: Mapping[str, object]) -> list[dict[str, object]]:
         None,
         True,
     )
+    bad_exempt = [
+        row
+        for row in meta["exempt"]
+        if not str(row["reasons"]).strip()
+        or any(
+            "write_json_stable" in load_text(writer)
+            for writer in str(row["writers"]).split(";")
+            if writer
+        )
+    ]
+    add(
+        "H40b9",
+        "例外登记逐条可核：理由非空，且被登记的 owner 确实不含稳定写入（不得拿例外登记掩盖未迁移）",
+        float(len(bad_exempt)),
+        0.0,
+        not bad_exempt,
+    )
     return criteria
 
 
@@ -461,13 +553,18 @@ def render_report(payload: Mapping[str, object], criteria: Sequence[Mapping[str,
     for row in payload["w38_rows"]:
         w38_counts[str(row["status"])] = w38_counts.get(str(row["status"]), 0) + 1
     lines = [
-        "# W40-B：带时间戳跟踪件的写入器全量迁移到稳定写入（卫生件，不占 shot）",
+        "# W40-B：带时间戳跟踪件的写入器迁移到稳定写入（卫生件，不占 shot）",
         "",
         "README §11 第 22 条（第 19 条的收口）。W38-E 只把**已观测到会脏树的那一条链路**",
         "（`probes/w37_gate_admission_export.py`）接到 `probes/export_results_common."
         "write_json_stable`，",
-        "并在报告里写明「机制已修、迁移未完成」。本件把**所有**被跟踪且带",
-        "`generated_at_utc` 的 JSON 的写入器逐站点迁移。",
+        "并在报告里写明「机制已修、迁移未完成」。本件把被跟踪且带 `generated_at_utc` 的 JSON 的写入器迁移，",
+        "并对**不能迁移**的站点逐条登记理由（第 2.1 节）。",
+        "",
+        "**口径更正（必须并读）**：第一版执行时把「全量」当成「全部站点」，结果扫出三类不该动的写入器：",
+        "(a) 字节被**冻结摘要 / 锁前预注册**钉死（迁移即让已交付摘要与盘上脚本不再一致），",
+        "(b) 写入站点是**追加写**（稳定写入是整篇改写，会丢 JSONL 历史行），",
+        "(c) 原写入器带 **`allow_nan=False`** 的严格 JSON 语义。这三类已全部回退并登记为例外。",
         "",
         "## 1. 迁移动作",
         "",
@@ -489,7 +586,7 @@ def render_report(payload: Mapping[str, object], criteria: Sequence[Mapping[str,
         "| 状态 | W38 清单 | W40 复算 |",
         "| --- | --- | --- |",
     ]
-    for status in (STATUS_MIGRATED, STATUS_PENDING, STATUS_LEGACY):
+    for status in (STATUS_MIGRATED, STATUS_EXEMPT, STATUS_PENDING, STATUS_LEGACY):
         lines.append(
             "| " + status + " | " + str(w38_counts.get(status, 0)) + " | " + str(counts.get(status, 0)) + " |"
         )
@@ -500,7 +597,21 @@ def render_report(payload: Mapping[str, object], criteria: Sequence[Mapping[str,
         "",
         "- `已迁移稳定写入`：至少一个 owner 文件含 `write_json_stable`；",
         "- `待迁移`：没有 owner 含稳定写入，但存在**具名写入调用**直接点名该件；",
+        "- `有理由不迁移（例外登记）`：写入调用确实点名该件、但该 owner 在 `EXEMPT_WRITERS` 里带理由登记，",
+        "  因此**不计入**「待迁移」；",
         "- `无写入器（历史产物）`：没有任何 owner 的写入调用点名该件。",
+        "",
+        "### 2.1 例外登记（" + str(len(meta["exempt"])) + " 条候选行，覆盖 " + str(len(EXEMPT_WRITERS)) + " 个 owner）",
+        "",
+        "| 被跟踪 JSON | owner | 理由 |",
+        "| --- | --- | --- |",
+    ]
+    for item in meta["exempt"]:
+        lines.append(
+            "| `" + str(item["tracked_json"]) + "` | `" + str(item["writers"]).replace(";", "`; `")
+            + "` | " + str(item["reasons"]) + " |"
+        )
+    lines += [
         "",
         "## 3. 抽样证据：连跑两遍不产生新的脏路径",
         "",
@@ -570,6 +681,8 @@ def render_report(payload: Mapping[str, object], criteria: Sequence[Mapping[str,
         + "** 件还带别的易变顶层键（`wall_seconds` / `started_at_utc` / `finished_at_utc` /",
         "  `generated_at_local` / `cache_populated_between_utc` / `throttle_seconds` …）：这些件重跑仍会脏树，",
         "  但它们**不是**「写入器没迁移」，而是「volatile 键集合比助手覆盖的更宽」，属于已登记盲区。",
+        "- **例外登记不是豁免**：H40b9 逐条核理由非空、且被登记的 owner 确实不含稳定写入；",
+        "  例外件重跑**仍会弄脏工作树**，这是本件明确保留的已知代价（不是已修）。",
         "- 「已迁移」是 owner 级判据（任一 owner 含稳定写入即算），不是逐写入站的完备证明；",
         "  本件用另一条独立读数补强：**全仓不存在「写入调用点名跟踪件却未用稳定写入」的 owner**（判据 H40b3）。",
         "- 不拟合模型、不触四个冻结读数（基线 " + repr(FROZEN_BASELINE) + " / 头条 "
@@ -675,6 +788,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "total": len(inventory),
             STATUS_MIGRATED: counts.get(STATUS_MIGRATED, 0),
             STATUS_PENDING: counts.get(STATUS_PENDING, 0),
+            STATUS_EXEMPT: counts.get(STATUS_EXEMPT, 0),
             STATUS_LEGACY: counts.get(STATUS_LEGACY, 0),
         },
         "w38_inventory_counts": {
@@ -684,6 +798,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             STATUS_LEGACY: sum(1 for row in w38_rows if row["status"] == STATUS_LEGACY),
         },
         "named_volatile_writers": meta["named_volatile"],
+        "exempt": {
+            "count": len(meta["exempt"]),
+            "writers": len(EXEMPT_WRITERS),
+            "categories": EXEMPT_CATEGORIES,
+            "registry": {owner: reason for owner, reason in sorted(EXEMPT_WRITERS.items())},
+            "rows": meta["exempt"],
+            "note": "例外件重跑仍会脏工作树；登记的是「不迁移的理由」，不是「已修」。",
+        },
         "residual": {
             "legacy_without_writer": meta["legacy"],
             "dynamic_path_migrated": meta["dynamic_path_migrated"],
@@ -700,10 +822,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "registered_negatives": list(REGISTERED_NEGATIVES),
         "headline": [
             "W38 登记为「待迁移」的 " + str(sum(1 for row in w38_rows if row["status"] == STATUS_PENDING))
-            + " 件，现在没有一件仍是「待迁移」。",
+            + " 件，现在没有一件仍是「待迁移」（例外登记不计入待迁移）。",
             "复算分母 " + str(len(inventory)) + " 件：已迁移 " + str(counts.get(STATUS_MIGRATED, 0))
-            + "、待迁移 " + str(counts.get(STATUS_PENDING, 0)) + "、无写入器（历史产物）"
-            + str(counts.get(STATUS_LEGACY, 0)) + "。",
+            + "、有理由不迁移 " + str(counts.get(STATUS_EXEMPT, 0))
+            + "（" + str(len(EXEMPT_WRITERS)) + " 个 owner）、待迁移 " + str(counts.get(STATUS_PENDING, 0))
+            + "、无写入器（历史产物）" + str(counts.get(STATUS_LEGACY, 0)) + "。",
+            "例外分三类：字节被冻结摘要/预注册钉死、追加写、allow_nan=False 严格 JSON。",
             "独立读数：全仓含写入调用却未用稳定写入的 owner = " + str(len(meta["named_volatile"])) + "。",
             "抽样三探针各连跑两遍，零新增脏路径。",
             "0 shot（累计仍 19）。",
@@ -716,6 +840,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(
         "inventory " + str(len(inventory)) + " timestamped tracked json; migrated "
         + str(counts.get(STATUS_MIGRATED, 0)) + "; pending " + str(counts.get(STATUS_PENDING, 0))
+        + "; exempt " + str(counts.get(STATUS_EXEMPT, 0))
         + "; legacy " + str(counts.get(STATUS_LEGACY, 0))
     )
     print("named volatile writers (whole repo): " + str(len(meta["named_volatile"])))

@@ -39,7 +39,10 @@ sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
-from export_results_common import VOLATILE_SUMMARY_KEYS, write_json_stable  # noqa: E402
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import VOLATILE_SUMMARY_KEYS, write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import VOLATILE_SUMMARY_KEYS, write_json_stable
 
 ARTIFACTS = REPOSITORY_ROOT / "probes" / "artifacts"
 INVENTORY_CSV = ARTIFACTS / "w38_timestamp_inventory.csv"

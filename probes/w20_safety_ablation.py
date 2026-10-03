@@ -126,8 +126,6 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from export_results_common import write_json_stable
-
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
@@ -788,12 +786,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         prereg = prereg_summary(
             locked_at_utc=datetime.now(UTC).isoformat()
         )
-        write_json_stable(args.prereg, prereg)
+        args.prereg.write_text(
+            json.dumps(prereg, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
         print(json.dumps(prereg, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
     summary = run(recommended_set_path=args.recommended_set)
     if args.write_summary:
-        write_json_stable(args.summary, summary)
+        args.summary.write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
     if args.write_arms_csv:
         write_arms_csv(args.arms_csv, summary)
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))

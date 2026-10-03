@@ -28,7 +28,11 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 import w24_3_posthoc as posthoc
 import w33_bound_state_gate as gate
-from export_results_common import write_json_stable
+try:  # W40-B import shim: works as `probes.<mod>` and as a direct script
+    from probes.export_results_common import write_json_stable
+except ImportError:  # direct execution: probes/ is sys.path[0]
+    from export_results_common import write_json_stable
+
 
 REDOX_LAYER = REPOSITORY_ROOT / "data" / "processed" / "w23_redox_dscf_layer.csv"
 ORCA_LAYER = REPOSITORY_ROOT / "data" / "processed" / "w24_2_orca_dft_layer.csv"

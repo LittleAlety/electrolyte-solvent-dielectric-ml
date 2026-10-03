@@ -36,10 +36,10 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "probes"))
+
 import numpy as np
 import viscosity_baseline as frozen
 import viscosity_row_level_unfreeze as unfreeze
-from export_results_common import write_json_stable
 
 from electrolyte_ml.exporting import canonical_text_sha256
 
@@ -654,7 +654,7 @@ def regenerate_report() -> int:
     )
     _write_text(REPORT_PATH, "\n".join(format_report(summary)) + "\n")
     summary["artifacts"]["w19_chemprop_viscosity.md"] = canonical_text_sha256(REPORT_PATH)
-    write_json_stable(SUMMARY_PATH, summary)
+    _write_text(SUMMARY_PATH, json.dumps(summary, indent=2) + "\n")
     print("regenerated " + str(REPORT_PATH), flush=True)
     return 0
 
@@ -742,7 +742,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     _write_text(REPORT_PATH, "\n".join(format_report(summary)) + "\n")
     summary["artifacts"]["w19_chemprop_viscosity.md"] = canonical_text_sha256(REPORT_PATH)
-    write_json_stable(SUMMARY_PATH, summary)
+    _write_text(SUMMARY_PATH, json.dumps(summary, indent=2) + "\n")
     print("wrote " + str(SUMMARY_PATH), flush=True)
     print(
         "verdict " + str(summary["verdict"]) + " delta " + repr(summary["delta_mae_log10_cP"]),

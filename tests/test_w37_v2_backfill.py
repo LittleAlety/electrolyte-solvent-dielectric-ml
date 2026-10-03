@@ -30,10 +30,14 @@ from w37_v2_backfill import (  # noqa: E402
 
 SHIPPED_SHA256 = "dfb3b282f8ccf76653d244a6a2c618d92a6e12003d012b81cca9f08dc9c6e78e"
 
+#: W40 的 v1.4 改稿让论文交付字节**合法移动了一次**；上面那条是 W37 当时的历史记录。
+V1_4_SHA256 = "778d1e08a727220bb16ca064586953224a8602a1b73c78ea1e54687619e66c55"
+
 
 def test_the_shipped_draft_bytes_are_pinned() -> None:
     digest = hashlib.sha256(SHIPPED_DRAFT.read_bytes()).hexdigest()
-    assert digest == SHIPPED_SHA256
+    assert digest == V1_4_SHA256
+    assert V1_4_SHA256 != SHIPPED_SHA256
 
 
 def test_a_rebuild_reproduces_the_shipped_draft_byte_for_byte() -> None:
