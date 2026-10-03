@@ -37,6 +37,8 @@
 
 - **W38：把「拒答」升级成有覆盖保证的短名单 + 结构≠功能谱 + Onsager 残差 + 数据侦察（四条后验 lane + 一条侦察 lane，0 shot，累计仍 19）**。① **W38-A 保形筛选举荐**：按**化合物**切分（98 化合物 → 49/49，种子 `2026+repeat`）的 split-conformal，行级覆盖 **0.9337 / 0.8858 / 0.8109**（α = 0.05 / 0.10 / 0.20）；τ=30 上 α=0.05 给 **6** 条推荐、精度 **1.000**，α=0.10 给 **16** 条、精度 **0.8125**（**H38a2 已登记判否**，阈值不原地改）。真实约束被暴露出来：α=0.10 / τ=15 时每折约 **42.1** 个化合物落未决区 ⇒ **漏斗的瓶颈是可判定性，不是精度**。② **W38-B 结构≠功能**：结构-only 基线（1-NN 的 ε）R² **0.2502679**；Spearman(相似度, |Δε|) = **−0.0607**（置换检验 z **−2.163**、p 0.026）；**指纹盲区 26 对**（Tanimoto ≥ 0.99）里 4 对 |Δε| ≥ 5、最大 **13.25**（1,4-dioxane 2.2 vs 15-crown-5 15.5；cis/trans-DCE 2.1/9.2）—— 给「ECFP 块在 lever 4 下净有害」一个候选机制（**H38b1 已登记判否**，实测上限 25.98 < 30）。③ **W38-C Kirkwood-Onsager 残差**：给体域 / 非给体域的 `g_rel` 中位数比 **2.5016**（z **4.076**、p 0.006），`leave-top-5-out` 后 **2.5597**，ε ≥ 60 族内比 **15.65** ⇒ 母体论文「单分子描述符传不了分子间关联」的诊断**被钉到那条可证伪预测上**（残差集中在自缔合质子性液体）。④ **W38-E 时间戳脏树收口**：`write_json_stable` 让干净重导不再脏树（端到端验证通过）；111 个带时间戳跟踪件已迁移 1 / 待迁移 110 ⇒ **机制已修、迁移未完成**。⑤ **W38-D 数据侦察**：把四个核心量的外部来源逐件实测 + 逐渠道登记（**9/9 判据**）—— η 覆盖最高件 `chew_2024_viscosity_supp_2.csv` 命中 **140/241** 但许可 **CC BY-NC 4.0**（不得入商用池）；`chodera_2015_data_dielectric.csv` 命中 **45/241**、**GPL-2.0**；`Batt-P30K.h5` 命中 **73/241**（MIT）；三份「已在库」的 Batt-SLM 附属件与上游 git blob **逐字节相等**（不算新源）；本轮**真新增**只有 `CPI/Input/Features{,-NoF}.csv`（MIT，无核心量标签）。同时否掉三条：**OMat24 是无机材料**、**OMol25 只有 energy + atomic forces**（不是轨道源）、NIST / DDBST / Cheméo / MNSol 全是红线。**新增可商用轨道线**：镜像 `hf-mirror.com` 上 `molssiai-hub/pubchemqc-b3lyp|pm6` 为 **CC-BY-4.0** 且含 `energy-{alpha,beta}-homo/lumo/gap`，QM9 原始 deposition 亦为 **CC BY 4.0**。判据合计 **29 + 9 = 38 条，36 成立 + 2 条已登记判否**。详见 `reports/week38_delivery_readme.md` / `reports/w38_data_recon.md`。
 
+- **W39：QM9 第三轨道层落地 —— 层级对齐 + 偶极质量审计（后验，不占 shot，累计仍 19）**。W38-D 把可商用轨道线扩到「Batt-P30K（MIT）+ PubChemQC（CC-BY-4.0，最小切片 325 GB 不可行）+ QM9（原始 deposition，**CC BY 4.0**，整份 28.6 MB）」之后，本轮**把 QM9 落到盘上**（`data/external/qm9_dataset.csv`，**28,637,864 B** / sha256 `01d196218c78…e053` / **133,885 行**）并做了三件事。① **W39-A 层级对齐**：名册命中 **103 / 241** —— 三条轨道线里**最宽**（Batt-P30K 73、Batt-SLM.smi 79）；xTB GFN2 间隙 vs B3LYP 间隙 **Spearman `0.885628`**、Pearson `0.840944`，但**量级系统性压缩**（中位数比 `0.705757`、MAE `2.532944 eV`、标定 `xTB = 2.026697·B3LYP − 8.872895`、标定 R² `0.707187`）⇒ 与主记分牌「**排序学会了、量级学不会**」同构。② **W39-B 偶极质量审计**：W38-C 登记的那条自我削弱（`dipole_D` 有质量疑点）被独立证实 —— **Spearman `0.802206`**、MAE `0.610310 D`、绝对差 ≥ 1 D 的 **13 / 103**；**但「构象自由度是主因」这条判否**（H39a7：刚性域中位绝对差 `0.4442 D` 反而**高于**柔性域 `0.4205 D`）⇒ 机制更正为「**约 0.39 D 的系统偏置**（90 个基本一致的化合物上签署差中位数 `−0.3914 D`，我们的列系统性偏高）+ 少数两端都有的极端样本（formamide −3.29 D、hexanedinitrile +5.68 D）」。③ **W39-C 结论稳健性**：同一 103 子集上换 μ 来源重算 W38-C 的给体 / 非给体 `g_rel` 中位数比 —— **`2.980102`（我们的 μ）vs `3.045860`（QM9 的 μ）**，结论不依赖 μ 来源。判据 **10 条 = 9 成立 + 1 条已登记判否（H39a7）**；QM9 只作**对照 / 审计层**，数值**不写进任何标签池或特征列**。详见 `reports/w39_qm9_crosscheck.md`。
+
 - **论文按期刊模版重排并导出 docx**：`paper/make_paper_docx_template.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性_期刊模版.docx`（**414 段 / 18 张三线表 / 23 张图**；W35-B 改稿后已重新生成，含 §3.8.1 的 W20-4 单键定价表、§3.8.2 的 W30 组合/交互阶梯、图 8b/8c/10b）。
 
 ## 1. 这个仓库是什么
@@ -134,14 +136,11 @@ python scripts\verify_four_core_registry.py --check
 python scripts\verify_dielectric_v04.py
 python scripts\verify_v032_benchmarks.py
 
-# 最近一轮（W37）：§11 最后三条收口（装配源回灌 + 端点判等守卫 + 准入接进导出）
+# 最近一轮（W39）：QM9 第三轨道层落地 —— 层级对齐 + 偶极质量审计（后验，不占 shot）
 $env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
-python probes\w37_v2_backfill.py
-python probes\w37_endpoint_tolerance_guard.py
-python probes\w37_gate_admission_export.py
-python scripts\check_redox_admission.py
-python -m pytest tests\test_repo_hygiene.py tests\test_w37_v2_backfill.py tests\test_w37_endpoint_tolerance_guard.py tests\test_w37_gate_admission_export.py -q -p no:cacheprovider
-python probes\export_week37_results.py --overwrite
+python probes\w39_qm9_crosscheck.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w39_qm9_crosscheck.py -q -p no:cacheprovider
+python probes\export_week39_results.py --overwrite
 ```
 
 > 全套 `pytest -q` 很慢（3,362 条测试函数）。日常验收用逐轮文档化的子集：`tests\test_repo_hygiene.py` 加该轮的 `tests\test_wN_*.py`。
@@ -152,7 +151,7 @@ python probes\export_week37_results.py --overwrite
 - **论文源（中文）**：`paper/paper_zh_draft_v2.md`
 - **期刊模版 docx**：`paper/make_paper_docx_template.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性_期刊模版.docx`（A4、正文五号宋体、固定行距 15 磅、字间距 0.15 磅；**414 段 / 18 张三线表 / 23 张图**）
 - **另一版 docx**：`paper/make_paper_docx.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性.docx`
-- **逐轮交付导出**：`成果输出/week1` … `week37`。每一轮的 `weekN_summary.json` 带 `artifacts_commit`（标识交付字节的提交）、`worktree_dirty`、`lanes_missing` 与 `verification_passed`；导出按 **AF-12 三步走**：先封树提交 → 用该提交干净重导 → 按需补修复提交。
+- **逐轮交付导出**：`成果输出/week1` … `week39`。每一轮的 `weekN_summary.json` 带 `artifacts_commit`（标识交付字节的提交）、`worktree_dirty`、`lanes_missing` 与 `verification_passed`；导出按 **AF-12 三步走**：先封树提交 → 用该提交干净重导 → 按需补修复提交。
 
 ## 9. 许可与第三方数据
 
@@ -165,7 +164,7 @@ python probes\export_week37_results.py --overwrite
 | OMat24 | 自有条款 | **无机晶体**数据集，对有机溶剂分子不适用 |
 | Reaxys | 商业条款 | **不引用任何数值**（W38-D：只作文献索引取 DOI） |
 | PubChemQC（`molssiai-hub/pubchemqc-{b3lyp,pm6}@hf-mirror`） | CC-BY-4.0 | 新增可商用**轨道能**线（含 `energy-{alpha,beta}-homo/lumo/gap`）；全量 7.7 / 8.4 TB，只按名册命中取子集 |
-| QM9（Ramakrishnan 2014 原始 deposition） | CC BY 4.0（DataCite 已核实） | 可商用轨道能（`homo`/`lumo`/`gap`，133,885 分子）；**不要**引 HF 上无许可声明的第三方镜像 |
+| QM9（Ramakrishnan 2014 原始 deposition） | CC BY 4.0（DataCite 已核实） | 可商用**轨道能 + 偶极**（`homo`/`lumo`/`gap`/`dipole_moment`，133,885 分子）；**W39 已落盘** `data/external/qm9_dataset.csv`（28,637,864 B，sha256 `01d196218c78…e053`），实测名册命中 **103/241**，只作**对照 / 审计层**、不入池；**不要**引 HF 上无许可声明的第三方镜像 |
 | `chew_2024_viscosity_supp_{2,3}.csv` | CC BY-NC 4.0 | **非商用**；η 覆盖最高（140/241）但**不入商用池** |
 | `chodera_2015_data_dielectric.csv` | GPL-2.0（仓库级） | 可商用但带 copyleft 义务；口径是**零频 ε** |
 | QMugs / MolSSI liquid-electrolytes | CC BY-NC-SA / CC BY-NC-ND | **红线**，不入池 |
@@ -211,3 +210,5 @@ python probes\export_week37_results.py --overwrite
 24. **η 覆盖最高件是 CC BY-NC 4.0（W38-D 登记，未执行）**：`data/external/chew_2024_viscosity_supp_2.csv` 名册命中 **140/241**（全项目 η 覆盖最高），但其 Data availability 段把该数据**单独**声明为 **CC BY-NC 4.0**（文章级 CC BY 4.0 被该例外覆盖）⇒ **不得入商用池**。另两件同理：`chew_2024_viscosity_supp_3.csv` 是 `_pred`（模型输出，不入池）；`chodera_2015_data_dielectric.csv` 命中 **45/241**，仓库许可 **GPL-2.0**（可商用但带 copyleft 义务），且口径是**零频** ε，需先对齐。下一步二选一：只作非商业内部对照，或另找可商用 η 源。
 25. **可商用轨道线已变宽（W38-D 登记，未执行）**：`hf-mirror.com` 上 `molssiai-hub/pubchemqc-b3lyp` 与 `-pm6` 为 **CC-BY-4.0** 且字段表 + 抽样 JSON 命中 `energy-{alpha,beta}-homo/lumo/gap`；QM9 原始 deposition（DataCite rightsList）亦为 **CC BY 4.0**（133,885 分子）。相对地 **OMat24 是无机材料、OMol25 只有 `energy` + `atomic forces`** ⇒ 两者都**不是**轨道源。下一步：只取名册命中化合物的**单文件子集**，不要整仓（PubChemQC 全量约 7.7 TB / 8.4 TB）。
 26. **红线渠道已钉死（W38-D 登记）**：NIST WebBook（Standard Reference Data Act，「All rights reserved」）、DDBST（条款明文禁保存/下载/系统性抓取建库）、Cheméo（明文禁整库下载与整体嵌入）、MNSol（商业授权 6000 USD，且只含溶剂化自由能）—— 一律不入池；QMugs（CC BY-NC-SA）、THEMol（CC BY-NC）、MolSSI liquid-electrolytes（CC BY-NC-ND）同为红线。`huggingface.co` / `zenodo.org` / `pubchemqc.riken.jp` 在本机 **DNS 不可达**，登记为「环境受阻」而非「源不存在」。渠道表见 `probes/artifacts/w38_recon_channels.csv`。
+27. **QM9 对照层已落地，下一步两件（W39 登记，未执行）**：① 把 `data/external/qm9_dataset.csv` 的 `homo`/`lumo`/`gap` 接到轨道通道的**外部对照层**（不是标签层）；口径按「**只能谈排序与标定，不得直接互换**」—— 它是 B3LYP/6-31G(2df,p) 气相轨道能差，我们的是 xTB GFN2 单点，标定式 `xTB = 2.026697·B3LYP − 8.872895` 只在 103 个命中化合物上成立；② 若要扩覆盖，走 **PubChemQC 按名册命中的单文件子集**（全量 7.7 / 8.4 TB 不可取），且不引入任何 NC 件。
+28. **偶极列的质量更正与后续修法（W39 登记，未执行）**：`dipole_D` 相对 QM9 有**约 0.39 D 的系统偏置**（90/103 个基本一致的化合物上签署差中位数 `−0.3914 D`，我们的列系统性偏高）＋少数两端都有的极端样本（−3.29 → +5.68 D）；H39a7 判否说明**构象自由度不是主因**（刚性 `0.4442 D` vs 柔性 `0.4205 D`）。下一份预注册应：① 把 W38-C 的 `g_rel` 主判据改成「对 `dipole_D` **同时报我们与 QM9 两套 μ** 的双读数」；② 追查偏置来源（单位 / 构象 / 来源列口径），在查清之前**不修数、不插补**。
