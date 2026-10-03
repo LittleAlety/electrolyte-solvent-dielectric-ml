@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Assemble paper/paper_zh_draft_v2.md from the v1 draft plus the W21-W24 sections."""
 import io
+import json
 import sys
 from pathlib import Path
 
@@ -10,6 +11,47 @@ REPO = ROOT.parent
 
 def read(p):
     return io.open(p, encoding="utf-8").read()
+
+
+def load_splices(path):
+    """The declarative insert/replace list for the v1-derived sections.
+
+    Section 3.1-3.14 is sliced out of the v1 draft, so a v2-only paragraph that
+    lives inside that range cannot be expressed as a source file.  Those paragraphs are
+    declared in paper/_v2_splices.json: "insert_between" names the two adjacent
+    lines the block sits between, "replace" names the exact line it replaces.
+    """
+
+    if not path.exists():
+        return []
+    payload = json.loads(read(path))
+    if payload.get("schema") != "paper_v2_splices@1":
+        raise SystemExit("unknown splice schema in " + path.name)
+    return payload["splices"]
+
+
+def apply_splices(text, path):
+    for item in load_splices(path):
+        if "content" in item:
+            body = item["content"]
+        else:
+            body = read(REPO / item["source"])
+            if not body.endswith("\n"):
+                raise SystemExit("splice " + item["id"] + ": source has no trailing newline")
+            body = body[:-1]
+        if item["mode"] == "insert_between":
+            needle = item["before"] + "\n" + item["after"]
+            replacement = item["before"] + "\n" + body + "\n" + item["after"]
+        elif item["mode"] == "replace":
+            needle = item["find"]
+            replacement = body
+        else:
+            raise SystemExit("splice " + item["id"] + ": unknown mode " + item["mode"])
+        hits = text.count(needle)
+        if hits != 1:
+            raise SystemExit("splice " + item["id"] + ": anchor hits " + str(hits))
+        text = text.replace(needle, replacement, 1)
+    return text
 
 
 def strip_rules(text):
@@ -81,6 +123,7 @@ def validate_tables(text):
         raise SystemExit("ragged markdown tables: " + repr(problems))
     return tables
 
+out = apply_splices(out, ROOT / "_v2_splices.json")
 n_tables = validate_tables(out)
 
 def _headings(text):

@@ -33,6 +33,8 @@
 - **W35-B（预注册驱动的论文口径更正，不占 shot）：把「不敏感」降级为「未检出差异」**：W34-B 的配对 bootstrap 给出氧化轴 Δτ = −0.0433 的 95% 区间 **[−0.1982, +0.0909]、跨 0**，所以「氧化轴对层级不敏感」必须改写为「**在 n = 22 上未检出差异（不可分辨）**」，而不是「无差异」。更正写成锁定件 `probes/w35_paper_r6_correction_prereg.json`（sha256 `3bef7a992f124a8bfdef9ff2dba94e6bd41ba3a1f25fc688c8869b447edf85ac`，其区间与 W34-B 冻结产物逐位一致），由 `probes/w35_paper_r6_correction.py` **幂等施加**四条更正（§3.20 第 1 条要点、§3.20 限制段、附录 A 跨层级对照行、结论 #8），论文 sha256 `8984fb6b6523…` → `dfb3b282f8cc…`；**所有既有数字原位保留**（只加注记），四个冻结读数出现次数逐位不变。判据 **5/5 成立**（含幂等）。详见 `reports/w35_paper_r6_correction.md`。
 - **W36（后验治理轮，不占 shot）：README §11 剩余五条一次性收口（W36-A … W36-E）**：① **W36-A 端点规则正式化**——把「端点 = 五个锁定种子（42/1234/2026/31337/7）× 每种子 10 折的两级均值」写成 7 条盘上条款（`data/processed/w36_endpoint_rule_registry.csv`），并交付可执行复算符 `endpoint_of()`（种子集或折数不符即抛 `SeedSetDriftError`）；对六张逐重复表、**49 个臂**逐条复算，**26 条已发布端点全部在 1e-12 内复现**，最大差 `2.220446049250313e-16`（1 ulp）——由此得出本轮最值钱的结论：**端点判等必须是容差，不能是字符串相等**（规则 R5）；3 个一折描述性臂标注「不适用」且无发布值。② **W36-B 噪声地板接进显示层**——四个通道的 s0 与四个 Δτ 档（0.05/0.10/0.15/0.20）的所需 N 落进附表，所需 N 由 W33-B 精确零分布工具复算、与已发布预算表**最大差 0**；**52 张 `*_repeats.csv`** 中 51 张映射到通道并逐张带上分辨边界，1 张（安全通道）显式标注未映射；**被冻结的表在生成前后逐文件 sha256 相等**（加列会改字节、破坏 AF-12 坐标，故走旁挂附表，入口 `probes/artifacts/w36_channel_dashboard_v2.csv`）。③ **W36-C 多保真度联合的显式准则**——`s0_hat = 0.30758114075296145 + 0.33317352371160197·(1 − tau_b_full)`（R² = `0.4437345881956626`；Spearman = `0.8058119658119658`，复现 W32-A 的 R2，26 条序列）；用缺口预测的所需 N 对实测 s0 的所需 N，四个通道的「可分辨」裁决**全部一致**，相对误差中位 **14.6%**（最大 28.0%，黏度通道）。④ **W36-D 引用登记升为准入清单**——`admit()` 对未登记的还原轴引用点抛 `AdmissionRefused`（未登记 = 不准入，不是警告）；登记 **10 行**（还原 8 / 氧化 2）全部准入，`mark` **由 W34-A 守卫复算**、与登记值不一致 0；**三个未登记合成格子（新层级 `r2scan3c` / 新介质 `benzene` / 新总体 `paired_orca_27`）全部被拒**。⑤ **W36-E 装配源口径同步**——README §11 第 15 条判否（v1 线 `paper/paper_zh_draft.md` 与英文线 `paper/full_draft.md` 「不敏感」命中 **0 处**），但审计暴露真正的隐患：W35-B 的四处更正只落在**已发布稿**，装配源 `paper/_v2_*.md` 未改 ⇒ 任何人跑一次 `paper/build_paper_v2.py` 就会把旧文案带回交付字节（**AF-12 同族**）。本轮把 C1–C4 逐字落回装配源（幂等），**不改已发布稿**（sha256 前后都是 `dfb3b282f8cc…`），并用临时路径重建验证四处更正确实出现在产物里；装配源与已发布稿之间剩余 **11 段漂移**登记在 `probes/artifacts/w36_v2_drift_inventory.csv`，**尚未回灌**。判据合计 **23 条全部成立**（5 + 8 + 5 + 5）。另交付 **`reports/work_log_week1_to_week36.md`**（Week 1–36 完整工作日志，含全项目判否总表与正向读数总表）。详见 `reports/week36_project_charter.md` / `reports/week36_delivery_readme.md`。
 
+- **W37：README §11 最后三条一次性收口（全部后验，不占 shot，累计仍 19）**。① **装配源回灌（第 16 条）**：`paper/_v2_*.md` 与已发布稿之间登记过的 **11 段漂移**全部回灌（实际 **12 段** —— 第 2 轮才暴露 §3.21 末尾那个被 `strip_rules` 吃掉的空行），重建产物与已发布稿 **逐字节相等**，已发布稿 sha256 `dfb3b282f8cc…` **未变**，真跑一次 `build_paper_v2.py`（不加 `--force`）后交付字节仍不变；§3.1–§3.14 由 v1 线切片而来，那三段改为 `paper/_v2_splices.json` 的**锚点拼接**（命中数必须恰好为 1，否则重建器报错退出）。② **端点判等守卫（第 17 条）**：AST + 子串扫出仓库内「≥ 8 位有效数字字面量做 `==` / `!=`」**95 处**，逐条判定后**禁止 0 处**（现存全在测试断言里，属登记常量回归），容差**从注册表 R5 读出**（`1e-12`），并提供 `endpoints_equal()`；合成违规能被抓、`abs(a-b) <= tol` 不误抓。③ **准入接进导出（第 18 条）**：`scripts/check_redox_admission.py` 把论文附录 A 的 **7 个**还原轴引用点逐个对回登记表并要求 `admit()` 通过（`mark` 由 W34-A 守卫复算、零不一致、未登记 0），删行 / 改名即 `exit ≠ 0`；校验器挂进 `tests/test_repo_hygiene.py`，而各周导出器的 `VERIFIERS` 都引用该文件 ⇒ **导出阶段的验证块自动带上准入检查**。判据合计 **16 条全部成立**（5 + 5 + 6）。详见 `reports/week37_project_charter.md` / `reports/week37_delivery_readme.md`。
+
 - **论文按期刊模版重排并导出 docx**：`paper/make_paper_docx_template.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性_期刊模版.docx`（**414 段 / 18 张三线表 / 23 张图**；W35-B 改稿后已重新生成，含 §3.8.1 的 W20-4 单键定价表、§3.8.2 的 W30 组合/交互阶梯、图 8b/8c/10b）。
 
 ## 1. 这个仓库是什么
@@ -49,13 +51,13 @@
 | --- | --- |
 | `data/` | 规范数据集与各轮构建的中间表（`dielectric_v04.csv` = 248 行 × 38 列；`density_v01.csv` 182,154 行；`viscosity_v02.csv` 42,941 行） |
 | `data/processed/` | 123 张派生表（四通道键注册表、条件位移层、构象层、名册补丁等） |
-| `probes/` | 249 个 Python 文件（含 36 个导出器）：每个数、每张图都有对应脚本；`probes/artifacts/` 346 件产物 |
-| `scripts/` | 59 个构建脚本与验证器（含 `verify_four_core_registry.py`） |
-| `tests/` | 237 个测试文件（含跨轮次的纪律守卫与复算守卫） |
-| `reports/` | 271 份 Markdown：决策日志（`decisions_log.md`，28.90 节）、逐轮立项章与交付说明 |
+| `probes/` | 253 个 Python 文件（含 37 个导出器）：每个数、每张图都有对应脚本；`probes/artifacts/` 352 件产物 |
+| `scripts/` | 60 个构建脚本与验证器（含 `verify_four_core_registry.py`、`check_redox_admission.py`） |
+| `tests/` | 240 个测试文件（含跨轮次的纪律守卫与复算守卫） |
+| `reports/` | 276 份 Markdown：决策日志（`decisions_log.md`，28.91 节）、逐轮立项章与交付说明 |
 | `docs/` | 逐轮构建笔记与 schema |
 | `paper/` | 论文源（`paper_zh_draft_v2.md`）与两个 docx 生成器 |
-| `成果输出/` | 每一轮的交付导出（`week1` … `week34`）与论文 docx（仓库外的兄弟目录） |
+| `成果输出/` | 每一轮的交付导出（`week1` … `week37`）与论文 docx（仓库外的兄弟目录） |
 
 ## 3. 四个通道与主记分牌
 
@@ -81,7 +83,7 @@
 | 单表示跨种子端点 | `0.5861142332208197` | 五种子均值（sd 0.0175），**冻结超参下**的 Physical 单表示端点 |
 | W20-4 唯一晋升翼 | `0.6216672295270079` | 迄今唯一被晋升并入库的臂 |
 
-- **主记分牌 shot 账本：累计 19。** W20-4 之后 W21–W26 各计 0；**W27 计 1**（第一个触及冻结池与评分掩码的新表示家族）、**W28 计 2**（嵌套重调 + 固定阶梯）、**W29 计 1**（分箱粒度阶梯）、**W30 计 1**（组合/交互阶梯）、**W31 计 1**（容量交换阶梯）、**W32 计 1**（正则化中间值阶梯，**第 19 枪**）；**W33 / W34 / W35 / W36 各计 0**（态合法性门禁、门禁注册表与看板、门禁旁路层与论文口径更正、README §11 剩余五条收口 —— 全部是后验读数或治理件，不拟合主记分牌臂）。另有**13 条不占 shot 的后验读数/注册表**（W30-A、W31-A、W32-A、W33-A、W34-A、W34-B、W35-A、W35-B、W36-A、W36-B、W36-C、W36-D、W36-E）与**1 件不占 shot 的统计工具**（W33-B `tau_b` 精确零分布）。
+- **主记分牌 shot 账本：累计 19。** W20-4 之后 W21–W26 各计 0；**W27 计 1**（第一个触及冻结池与评分掩码的新表示家族）、**W28 计 2**（嵌套重调 + 固定阶梯）、**W29 计 1**（分箱粒度阶梯）、**W30 计 1**（组合/交互阶梯）、**W31 计 1**（容量交换阶梯）、**W32 计 1**（正则化中间值阶梯，**第 19 枪**）；**W33 / W34 / W35 / W36 / W37 各计 0**（态合法性门禁、门禁注册表与看板、门禁旁路层与论文口径更正、README §11 剩余五条收口、§11 最后三条收口 —— 全部是后验读数、治理件或装配源回灌，不拟合主记分牌臂）。另有**16 条不占 shot 的后验读数/注册表**（W30-A、W31-A、W32-A、W33-A、W34-A、W34-B、W35-A、W35-B、W36-A、W36-B、W36-C、W36-D、W36-E、W37-A、W37-B、W37-C）与**1 件不占 shot 的统计工具**（W33-B `tau_b` 精确零分布）。
 - **非冻结的另一条读数（W29，登记但不入冻结表）：`0.6031674542995844`** —— Physical 单表示、五种子均值、`max_bin = 128`、深度 2。它与上面的「单表示跨种子端点 `0.5861142332208197`」**同池、同折、同表示、同种子集，只是配置不同**，两者永不混比；它也**低于 W20-4 的 `0.6216672295270079`**（后者把深度 4 / `min_child_weight` 5 / `max_bin` 128 三键同动，但 W20-4 网格里本就有逐键旁臂：`min_child_weight` 单独 `0.6249509650342622` 最高、`max_bin` 单独 `0.6096666055899116`、`colsample_bytree` 单独 `0.5607871938382311`），因此 W29 是**深度 2 上的新配置点**而不是新纪录。W27 已声明 Physical 单表示不单独构成晋升路径，本轮不改变该声明。
 - **非冻结的第三条读数（W30，登记但不入冻结表）：`0.6170832198249109`** —— Physical 单表示、五种子均值、深度 2 + `min_child_weight` 5 + `max_bin` 128。它与 `0.5861142332208197`、`0.6031674542995844` 两条**同池、同折、同表示、同种子集，只是配置不同**，永不混比；它比 W29 的 `0.6031674542995844` 高 `+0.013915765525326473`，但仍**低于 W20-4 的 `0.6216672295270079`**。W27 已声明 Physical 单表示不单独构成晋升路径，本轮不改变该声明。
 - **非冻结的第四条读数（W31，登记但不入冻结表）：`0.622389`** —— Physical 单表示、五种子均值、深度 4 + `min_child_weight` 7 + `max_bin` 128（`bin128_mcw7_d4`）。它是**首次在名义上**高于 W20-4 注册臂 `0.6216672295270079` 的档位，但幅度只有 `+0.000722`，**远小于种子间抖动**（该量级的 sd 约 0.0175）且落在预注册的 0.005 松弛带内，故按预注册判据读作「天花板未被打破」。**不得读作新纪录、不得当作晋升**（W27 声明未变）。
@@ -126,12 +128,14 @@ python scripts\verify_four_core_registry.py --check
 python scripts\verify_dielectric_v04.py
 python scripts\verify_v032_benchmarks.py
 
-# 最近一轮（W32）：四通道抽样律（后验）+ 正则化中间值阶梯 + 导出器
+# 最近一轮（W37）：§11 最后三条收口（装配源回灌 + 端点判等守卫 + 准入接进导出）
 $env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
-python probes\w32_cross_channel_rank_stability.py --draws 1000
-python -X utf8 -u probes\w32_regularization_ladder.py --jobs 12
-python -m pytest tests\test_repo_hygiene.py tests\test_w32_rank_stability.py tests\test_w32_regularization_ladder.py -q -p no:cacheprovider
-python probes\export_week32_results.py --overwrite
+python probes\w37_v2_backfill.py
+python probes\w37_endpoint_tolerance_guard.py
+python probes\w37_gate_admission_export.py
+python scripts\check_redox_admission.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w37_v2_backfill.py tests\test_w37_endpoint_tolerance_guard.py tests\test_w37_gate_admission_export.py -q -p no:cacheprovider
+python probes\export_week37_results.py --overwrite
 ```
 
 > 全套 `pytest -q` 很慢（3,362 条测试函数）。日常验收用逐轮文档化的子集：`tests\test_repo_hygiene.py` 加该轮的 `tests\test_wN_*.py`。
@@ -142,7 +146,7 @@ python probes\export_week32_results.py --overwrite
 - **论文源（中文）**：`paper/paper_zh_draft_v2.md`
 - **期刊模版 docx**：`paper/make_paper_docx_template.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性_期刊模版.docx`（A4、正文五号宋体、固定行距 15 磅、字间距 0.15 磅；**414 段 / 18 张三线表 / 23 张图**）
 - **另一版 docx**：`paper/make_paper_docx.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性.docx`
-- **逐轮交付导出**：`成果输出/week1` … `week34`。每一轮的 `weekN_summary.json` 带 `artifacts_commit`（标识交付字节的提交）、`worktree_dirty`、`lanes_missing` 与 `verification_passed`；导出按 **AF-12 三步走**：先封树提交 → 用该提交干净重导 → 按需补修复提交。
+- **逐轮交付导出**：`成果输出/week1` … `week37`。每一轮的 `weekN_summary.json` 带 `artifacts_commit`（标识交付字节的提交）、`worktree_dirty`、`lanes_missing` 与 `verification_passed`；导出按 **AF-12 三步走**：先封树提交 → 用该提交干净重导 → 按需补修复提交。
 
 ## 9. 许可与第三方数据
 
@@ -181,8 +185,8 @@ python probes\export_week32_results.py --overwrite
 11. **R6 口径更正已落地（W35-B）**：锁定件 `probes/w35_paper_r6_correction_prereg.json` + 幂等改稿探针；§3.20 / 附录 A / 结论 #8 已改写为「未检出差异（n = 22 不可分辨）」。**下一步**：确认英文线 `paper/full_draft.md` 与母体论文 v6 对接材料是否需要同一处口径同步（属下一份预注册）。
 12. **配对 bootstrap 模板可复用**：`probes/w34_paired_power.py` 的重抽骨架（锁定种子 + 区间 + 独立地板对照）可直接搬到其他单点估计读数（例如 §3.18–§3.20 里那些只有点估计的台阶）。
 14. **门禁的引用登记应成为准入清单（已落地，W36-D：`admit()` 未登记即抛 `AdmissionRefused`）**：任何新增的还原轴读数（新层级、新介质、新总体）在进入论文或交付前，先落进 `w35_gated_reference_register.csv` 的同一张表；标记由守卫给出，不允许手写。
-15. **口径更正的第二处待查（已查证，W36-E：v1 线与英文线 0 残留；装配源已同步，漂移 11 段登记未修）**：`paper/paper_zh_draft.md`（v1 线）与 `paper/full_draft.md`（英文线）里是否也写着「氧化轴不敏感」——若有，按同一预注册模式补正。
-16. **装配源回灌（W36-E 登记，未执行）**：`paper/_v2_*.md` 与已发布稿 `paper/paper_zh_draft_v2.md` 之间有 **11 段漂移**（例如 §3.8.1 等只在已发布稿里存在的段落），坐标在 `probes/artifacts/w36_v2_drift_inventory.csv`。下一轮应逐段回灌，然后验证「重建产物 = 已发布稿」**逐字节**成立；在此之前重建只允许显式 `--force` 且必须逐段比对。
-17. **端点判等容差写进守卫**：W36-A 的 `1e-12` 已入册为规则 R5；下一步是把「任何端点比对都必须走 `endpoint_of()` + 容差」写成测试守卫，禁止新增逐位字符串相等的端点比较。
-18. **准入清单接进交付 manifest（W36-D 已备件，未接线）**：`probes/artifacts/w36_gate_admission_manifest.csv` 已生成；下一步是把 `admit()` 接进论文与导出器，让未登记的还原轴引用点在**导出阶段**就失败，而不是靠人自觉。
+15. **口径更正的第二处待查（已查证，W36-E：v1 线与英文线 0 残留；装配源已同步；剩余 11 段漂移已于 W37-C 全部回灌）**：`paper/paper_zh_draft.md`（v1 线）与 `paper/full_draft.md`（英文线）里是否也写着「氧化轴不敏感」——若有，按同一预注册模式补正。
+16. **装配源回灌（已落地，W37-C）**：11 段漂移 → **0 段**（实际回灌 **12 段**：第 2 轮才发现 §3.21 末尾那个被 `strip_rules` 吃掉的空行）。重建产物与已发布稿 **逐字节相等**，已发布稿 sha256 `dfb3b282f8cc…` **未变**，真跑一次 `build_paper_v2.py`（不加 `--force`）后交付字节仍不变（变了探针会自动回滚并把判据记判否）。§3.1–§3.14 由 v1 线切片而来，那三段落成 `paper/_v2_splices.json` 的锚点拼接（命中数必须恰好为 1）。坐标与改法见 `probes/artifacts/w37_v2_backfill_inventory.csv`，判据 H37c1–H37c6。
+17. **端点判等容差写进守卫（已落地，W37-A）**：`probes/w37_endpoint_tolerance_guard.py` 用 AST + 子串扫描「≥ 8 位有效数字字面量做 `==` / `!=`」，命中 **95 处**、逐条判定后**禁止 0 处**（现存全在测试断言里，属登记常量回归），容差**从注册表 R5 读出**（`1e-12`，改注册表会被发现），并给出 `endpoints_equal()`；合成违规能被抓、`abs(a-b) <= tol` 不误抓。判据 H37a1–H37a5；边界：**只扫字面量比较**，不覆盖运行期变量之间的一般相等。
+18. **准入清单接进交付/导出链路（已落地，W37-B）**：`scripts/check_redox_admission.py` 把论文附录 A 的**7 个**还原轴引用点（还原 5 / 氧化 2）逐个对回登记表并要求 `admit()` 通过 —— `mark` 由 W34-A 守卫复算、**零不一致**、未登记 0；删行 / 改名即 `exit ≠ 0`。校验器挂进 `tests/test_repo_hygiene.py`，而各周导出器的 `VERIFIERS` 都引用该文件 ⇒ **导出阶段的验证块自动带上准入检查**，无需改任何历史周的导出脚本。判据 H37b1–H37b5；已知盲区：读数令牌是静态词汇表，论文里全新出现的未登记数值不会被拦截。
 13. **不做清单**：不再往深度/树数网格里加档位（W28 已把该方向上限定价在 0.599820）；不重跑已被证否的换拟合器（GPR 0.2313 / MLP -0.172）、网络叠加（+0.00175 惰性）、外来化学空间（NBS-514 → 0.3809 反噬）、杂类锚点（shot 15 → 0.5102 反噬）；η 行级解冻已判否（0.1748 → 0.1570，门 0.15）；分域记分牌（W18 lane B）与封顶修订（W20-8）均已交付，不重做。

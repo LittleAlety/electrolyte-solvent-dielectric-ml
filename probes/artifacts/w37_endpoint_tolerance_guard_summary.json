@@ -1,0 +1,132 @@
+{
+  "schema": "w37_endpoint_tolerance_guard/summary@1",
+  "task": "week37_endpoint_tolerance_guard",
+  "generated_at_utc": "2026-10-03T08:26:44Z",
+  "elapsed_seconds": 4.4397767999980715,
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "治理/守卫件：只做 AST 静态扫描 + 注册表读取，不拟合模型、不新增特征、不触 ε 主记分牌。"
+  },
+  "promoted": false,
+  "endpoint_tolerance": 1e-12,
+  "endpoint_tolerance_source": "data/processed/w36_endpoint_rule_registry.csv::R5",
+  "reused_from_w36": {
+    "module": "probes/w36_endpoint_rule.py",
+    "symbols": [
+      "endpoint_of",
+      "ENDPOINT_TOLERANCE"
+    ]
+  },
+  "scan": {
+    "roots": [
+      "probes",
+      "scripts",
+      "src",
+      "tests"
+    ],
+    "files_scanned": 564,
+    "files_unparsable": [],
+    "root_file_counts": {
+      "probes": 253,
+      "scripts": 60,
+      "src": 11,
+      "tests": 240
+    },
+    "min_significant_digits": 8
+  },
+  "frozen_readings": {
+    "frozen_baseline": "0.4091179943351143",
+    "frozen_headline": "0.4766400383507876",
+    "single_representation_cross_seed": "0.5861142332208197",
+    "w20_4_promoted_arm": "0.6216672295270079"
+  },
+  "sites": {
+    "total": 95,
+    "allowed": 95,
+    "forbidden": 0,
+    "by_kind": {
+      "frozen_text": 36,
+      "frozen_eq": 22,
+      "high_precision_float_eq": 34,
+      "high_precision_str_eq": 3
+    }
+  },
+  "forbidden_sites": [],
+  "synthetic_self_check": {
+    "violation_source": "if value == 0.5861142332208197:\n    pass\n",
+    "legal_source": "if abs(a - b) <= ENDPOINT_TOLERANCE:\n    pass\n",
+    "violation_forbidden": [
+      {
+        "path": "<synthetic_violation>",
+        "line": 1,
+        "kind": "frozen_eq",
+        "snippet": "value == 0.5861142332208197",
+        "disposition": "禁止",
+        "reason": "运行期控制流对冻结端点读数（single_representation_cross_seed）做逐位 ==/!= 判等；端点判等必须走 endpoint_of()+容差"
+      }
+    ],
+    "legal_forbidden": []
+  },
+  "reuse_diagnostic": {
+    "available": true,
+    "table": "probes/artifacts/w20_epsilon_second_stage_repeats.csv",
+    "arm": "xgb_reference",
+    "endpoint_recomputed": "0.5861142332208198",
+    "endpoint_published": "0.5861142332208197",
+    "abs_diff": "1.1102230246251565e-16",
+    "ulp_gap": "1.0",
+    "bitwise_equal": false,
+    "endpoints_equal": true
+  },
+  "criteria": [
+    {
+      "id": "H37a1",
+      "description": "注册表 R5 读出容差 == w36 ENDPOINT_TOLERANCE == 1e-12（改注册表会被发现）",
+      "value": 1e-12,
+      "threshold": 1e-12,
+      "verdict": "成立"
+    },
+    {
+      "id": "H37a2",
+      "description": "现存禁止项 = 0（扫描 probes/scripts/src/tests 的高精度字面量 Eq/NotEq）",
+      "value": 0.0,
+      "threshold": 0.0,
+      "verdict": "成立"
+    },
+    {
+      "id": "H37a3",
+      "description": "合成违规（if value == 0.5861142332208197:）被抓（禁止项 >= 1）",
+      "value": 1.0,
+      "threshold": 1.0,
+      "verdict": "成立"
+    },
+    {
+      "id": "H37a4",
+      "description": "合法用法（abs(a-b) <= ENDPOINT_TOLERANCE）不被误抓（禁止项 = 0）",
+      "value": 0.0,
+      "threshold": 0.0,
+      "verdict": "成立"
+    },
+    {
+      "id": "H37a5",
+      "description": "endpoints_equal 容忍 1-2 ulp 噪声、拒绝 1e-9 级差异（容差取自 R5）",
+      "value": 1.0,
+      "threshold": 1.0,
+      "verdict": "成立"
+    }
+  ],
+  "boundaries": [
+    "边界：只扫 8 位以上有效数字的**字面量**比较；不扫运行期变量之间的一般相等（`a == b` 变量对变量不在此守卫范围）。",
+    "有效数字按书写形式近似计数，不做尾零消歧（偏保守，宁多不少）。",
+    "判定策略用「是否位于测试断言」区分：运行期控制流的字面量逐位判等=禁止；测试断言对登记常量做原值回归=允许（R6）。",
+    "守卫只读盘上文件，不修改任何被扫描文件；本次扫描现存禁止项为 0。",
+    "R5 的 1e-12 是判等容差，不是新的显著性门；不得用它放宽任何判据。"
+  ],
+  "headline": [
+    "端点判等容差从注册表 R5 读出并断言 == w36 ENDPOINT_TOLERANCE == 1e-12；改注册表会被发现。",
+    "AST + 子串双扫描 probes/scripts/src/tests 共 564 个文件，命中 95 个端点比较点，现存禁止项 0 个。",
+    "合成违规 `if value == 0.5861142332208197:` 被抓；合法用法 `abs(a-b) <= ENDPOINT_TOLERANCE` 不被误抓。",
+    "复用 endpoint_of() 现场演示：逐位相等会碎、容差判等成立。"
+  ]
+}

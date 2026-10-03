@@ -306,3 +306,24 @@ def test_no_sha256_pin_is_satisfied_only_by_crlf_bytes() -> None:
 
     assert resolved > 0, "no pinned path/digest pairs were resolved"
     assert offenders == [], f"pins that only match the CRLF form: {offenders}"
+
+
+def test_w37_redox_admission_checker_is_green() -> None:
+    """W37-B wired the redox admission checker into this VERIFIER-block file.
+
+    ``tests/test_repo_hygiene.py`` is named by the weekly exporters' VERIFIERS
+    tuples, so running the admission checker here folds it into the export-time
+    verification block without touching any already-delivered exporter bytes.
+    """
+
+    import sys
+
+    completed = subprocess.run(
+        [sys.executable, str(REPOSITORY_ROOT / "scripts" / "check_redox_admission.py")],
+        cwd=REPOSITORY_ROOT,
+        capture_output=True,
+        encoding="utf-8",
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    payload = json.loads(completed.stdout.strip().splitlines()[-1])
+    assert payload["passed"] is True
