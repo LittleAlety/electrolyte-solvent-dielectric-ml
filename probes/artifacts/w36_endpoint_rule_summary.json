@@ -1,0 +1,195 @@
+{
+  "schema": "w36_endpoint_rule/summary@1",
+  "task": "week36_endpoint_rule",
+  "generated_at_utc": "2026-10-03T07:09:17Z",
+  "elapsed_seconds": 0.01804730000003474,
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "规则入册 + 端点复算：不拟合模型、不新增特征、不触 ε 主记分牌。"
+  },
+  "rules": [
+    {
+      "rule_id": "R1",
+      "clause": "端点定义",
+      "value": "先对每个种子的全部折取算术均值，再对锁定种子集取算术均值",
+      "source": "本仓主记分牌惯例（W20 起）",
+      "status": "在册"
+    },
+    {
+      "rule_id": "R2",
+      "clause": "锁定种子集",
+      "value": "42,1234,2026,31337,7",
+      "source": "probes/dielectric_hyperparameter_grid.py::SEEDS（跑前锁定，不得事后增删）",
+      "status": "在册"
+    },
+    {
+      "rule_id": "R3",
+      "clause": "每个种子的折数",
+      "value": "10",
+      "source": "逐重复表 repeat ∈ {0,...,9}（RepeatedKFold 5×10）",
+      "status": "在册"
+    },
+    {
+      "rule_id": "R4",
+      "clause": "稠密 13 列块默认配置",
+      "value": "max_bin=128; colsample_bytree=0.8; reg_lambda=1.0; max_depth=2; n_estimators=200; learning_rate=0.05",
+      "source": "W29 最佳档位 fine_bin128_cs08_l1（+0.017053 对冻结档位）",
+      "status": "在册"
+    },
+    {
+      "rule_id": "R5",
+      "clause": "端点判等容差",
+      "value": "1e-12",
+      "source": "本轮复算暴露：发布值与 fmean 复算值最多差 2 ulp（见 abs_diff 列）",
+      "status": "在册"
+    },
+    {
+      "rule_id": "R6",
+      "clause": "冻结读数表条目策略",
+      "value": "不新增条目；只登记新配置读数；四个冻结读数原值不变",
+      "source": "README §11 第 4 条",
+      "status": "在册"
+    },
+    {
+      "rule_id": "R7",
+      "clause": "四个冻结读数",
+      "value": "0.4091179943351143;0.4766400383507876;0.5861142332208197;0.6216672295270079",
+      "source": "论文附录 A",
+      "status": "在册"
+    }
+  ],
+  "locked_seeds": [
+    42,
+    1234,
+    2026,
+    31337,
+    7
+  ],
+  "repeats_per_seed": 10,
+  "endpoint_tolerance": 1e-12,
+  "inputs": {
+    "probes/artifacts/w20_epsilon_second_stage_repeats.csv": "5376b83f18a346d7245efc4362de81d0401a95e6503a71f30dfe4b0899ae100c",
+    "probes/artifacts/w28_dense_hyperparameters_repeats.csv": "3d4eaa370de493f37ece3a0a3fa74bc20face4f29f22ae14b96fb07afa5d4db9",
+    "probes/artifacts/w29_dense_binning_repeats.csv": "050944a7be345873371a086ea9822dd66dec66d21c6b82f950c4dc3057a24961",
+    "probes/artifacts/w30_combination_ladder_repeats.csv": "60a2cb25ff1b432935acd45fc0aaeb4ecc39c47c53cef292b8a6d8742ad63fe1",
+    "probes/artifacts/w31_capacity_exchange_repeats.csv": "3b1e77579f643c80f4ea0d2486432e5d47f459a7220e234dfdcc8ff9f9ecc68f",
+    "probes/artifacts/w32_regularization_ladder_repeats.csv": "d80f6c8079387868cdc36a73f1386b9a678be732e24181c2571a4f752e5e7b49"
+  },
+  "conformance_by_table": [
+    {
+      "table": "probes/artifacts/w20_epsilon_second_stage_repeats.csv",
+      "arms": 9,
+      "published": 6,
+      "passed": 6,
+      "ineligible": 0,
+      "max_abs_diff": "1.1102230246251565e-16"
+    },
+    {
+      "table": "probes/artifacts/w28_dense_hyperparameters_repeats.csv",
+      "arms": 13,
+      "published": 3,
+      "passed": 3,
+      "ineligible": 3,
+      "max_abs_diff": "1.1102230246251565e-16"
+    },
+    {
+      "table": "probes/artifacts/w29_dense_binning_repeats.csv",
+      "arms": 6,
+      "published": 6,
+      "passed": 6,
+      "ineligible": 0,
+      "max_abs_diff": "1.1102230246251565e-16"
+    },
+    {
+      "table": "probes/artifacts/w30_combination_ladder_repeats.csv",
+      "arms": 6,
+      "published": 5,
+      "passed": 5,
+      "ineligible": 0,
+      "max_abs_diff": "1.1102230246251565e-16"
+    },
+    {
+      "table": "probes/artifacts/w31_capacity_exchange_repeats.csv",
+      "arms": 6,
+      "published": 2,
+      "passed": 2,
+      "ineligible": 0,
+      "max_abs_diff": "2.220446049250313e-16"
+    },
+    {
+      "table": "probes/artifacts/w32_regularization_ladder_repeats.csv",
+      "arms": 9,
+      "published": 4,
+      "passed": 4,
+      "ineligible": 0,
+      "max_abs_diff": "2.220446049250313e-16"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "H36a1",
+      "description": "锁定种子集与折数在六张表、可宣读臂上一致",
+      "value": 46.0,
+      "threshold": null,
+      "verdict": "成立"
+    },
+    {
+      "id": "H36a2",
+      "description": "已发布端点全部在容差内复现",
+      "value": 26.0,
+      "threshold": 26.0,
+      "verdict": "成立"
+    },
+    {
+      "id": "H36a3",
+      "description": "复算与发布值的最大差 <= 容差（记录 ulp 量级）",
+      "value": 2.220446049250313e-16,
+      "threshold": 1e-12,
+      "verdict": "成立"
+    },
+    {
+      "id": "H36a4",
+      "description": "冻结读数表未新增条目（四个冻结读数原值不变）",
+      "value": null,
+      "threshold": null,
+      "verdict": "成立"
+    },
+    {
+      "id": "H36a5",
+      "description": "不适用臂已标注且无发布值",
+      "value": 3.0,
+      "threshold": null,
+      "verdict": "成立"
+    }
+  ],
+  "diagnostics": {
+    "published_checked": 26,
+    "published_passed": 26,
+    "max_abs_diff": 2.220446049250313e-16,
+    "ineligible": 3,
+    "ineligible_arms": [
+      "probes/artifacts/w28_dense_hyperparameters_repeats.csv::lever4_morgan_frozen",
+      "probes/artifacts/w28_dense_hyperparameters_repeats.csv::lever4_morgan_retuned",
+      "probes/artifacts/w28_dense_hyperparameters_repeats.csv::lever4_physical_retuned_shuffled_target"
+    ]
+  },
+  "frozen_readings": {
+    "frozen_baseline": 0.4091179943351143,
+    "frozen_headline": 0.4766400383507876,
+    "single_representation_cross_seed": 0.5861142332208197,
+    "w20_4_promoted_arm": 0.6216672295270079
+  },
+  "headline": [
+    "端点规则写成 7 条盘上条款（规则表 `data/processed/w36_endpoint_rule_registry.csv`）：端点 = 锁定 5 种子（42/1234/2026/31337/7）× 每种子 10 折的两级均值；稠密 13 列块默认 max_bin=128。",
+    "端点复算符对六张逐重复表、全部臂逐条重算；**已发布的 26 条端点全部在 1e-12 内复现**。",
+    "新发现：复算与发布值最多差 2.220446049250313e-16（1–3 ulp），所以端点判等必须写成容差而不是字符串相等。",
+    "冻结读数表不新增条目：四个冻结读数原值不变。"
+  ],
+  "boundaries": [
+    "本件只读已冻结的逐重复表，不重跑任何模型；端点复算不产生新读数。",
+    "端点规则只约束主记分牌（457 行 / 97 化合物池）；不改变任何历史读数。",
+    "R5 的容差 1e-12 是**判等容差**，不是新的显著性门；不得用它放宽任何判据。",
+    "不占 shot（累计仍 19）、不改 METRIC_NAMES、不动四个冻结读数与 ε 主记分牌。"
+  ]
+}
