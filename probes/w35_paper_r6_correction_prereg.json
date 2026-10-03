@@ -1,0 +1,125 @@
+{
+  "schema": "w35_paper_r6_correction/prereg@1",
+  "task": "week35_paper_r6_correction",
+  "revision": 1,
+  "status": "locked_before_run",
+  "locked_before_run": true,
+  "date": "2026-10-03",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "论文口径更正：不动模型、不动特征、不动冻结读数，只把 W34-B 已算出的区间写进论文并给受门禁约束的引用加标记。"
+  },
+  "target": {
+    "path": "paper/paper_zh_draft_v2.md",
+    "sha256_before": "8984fb6b6523fd6a372b20396dff301366922646d79ad6cda2ecde93e1f70a28",
+    "lines_before": 863
+  },
+  "question": "论文 §3.20 / 附录 A / 结论 #8 里「氧化轴对层级不敏感」是否必须改写为「未检出差异（n = 22 不可分辨）」？",
+  "evidence": {
+    "source_task": "week34_paired_power",
+    "prereg": "probes/w34_paired_power_prereg.json",
+    "prereg_sha256": "431e8fd5c78744906c4a7c19293dea3859ba7957438d8bf58e1308545ea21f0e",
+    "method": "paired bootstrap over the 22 paired compounds, resampling unit = compound, B = 4000, seed 20261003 locked before the run",
+    "oxidation": {
+      "delta": -0.04329004329004327,
+      "ci_low": -0.19819819819819823,
+      "ci_high": 0.09090909090909094,
+      "half_width": 0.14455364455364458,
+      "crosses_zero": true,
+      "sign_flip_share": 0.31125
+    },
+    "reduction": {
+      "delta": -1.4372294372294374,
+      "ci_low": -1.7037037037037035,
+      "ci_high": -1.0818181818181818,
+      "half_width": 0.31094276094276085,
+      "crosses_zero": false,
+      "sign_flip_share": 0.0
+    },
+    "gate": {
+      "task": "week34_legality_registry",
+      "paired_gfn2_gas_legal": 1,
+      "paired_orca_gas_legal": 0,
+      "min_legal_subset": 5,
+      "verdict": "配对集两层均判不可判定（合法 < 5）"
+    },
+    "independent_floor": 0.2171129824263099,
+    "half_width_ratio_ox": 0.66579917487296
+  },
+  "corrections": [
+    {
+      "id": "C1",
+      "locator": "§3.20 行 587：以「1. **」开头的唯一一行，且含 ASCII 标记 0.043",
+      "mode": "line_replace",
+      "rule": "整行替换；把肯定式「不敏感」降级为「未检出差异」，带上 95% 区间与跨 0 结论，原旁证保留",
+      "after_text": "1. **氧化轴未检出差异（不是「无差异」）**：换层级只动 0.043；配对 bootstrap（重抽单位 = 化合物，B = 4000，种子跑前锁定）给出 Δτ 的 95% 区间 **[−0.1982, +0.0909]、跨 0** ⇒ 在 n = 22 上**不可分辨**。原「与 R2 的 |σ| ≤ 0.04 在同一量级」保留为旁证，不再作为「不敏感」的证明。",
+      "before_text": "1. **氧化轴对层级不敏感**：换层级只动 0.043，与 R2 的 |σ| ≤ 0.04 在同一量级。"
+    },
+    {
+      "id": "C2",
+      "locator": "§3.20（行 575–595 窗口）内以 ASCII 子串「n = 22」定位的唯一非表格行",
+      "mode": "line_append",
+      "rule": "在该行行尾追加分辨率与定义域并报句；不改该行已有内容",
+      "after_suffix": " **分辨率补充（W34-B）**：氧化轴 Δτ 的 95% 区间 [−0.1982, +0.0909] 跨 0（半宽 0.1446）；还原轴 Δτ = −1.437 的区间 [−1.704, −1.082] 不跨 0（半宽 0.3109，4000 次重抽无符号翻转），但该轴的两层读数在 W33-A 门禁下**均判不可判定**（配对集 GFN2 气相合法 1/22、ORCA 气相合法 0/22）——可分辨的是**效应**，未过门禁的是**定义域**。"
+    },
+    {
+      "id": "C3",
+      "locator": "附录 A 表格行：以「|」开头且同时含 ASCII 子串 0.835 与 0.602 的唯一一行",
+      "mode": "line_replace",
+      "rule": "整行替换；0.043 / +0.835 / −0.602 三个原值原位保留，只补区间与门禁判词",
+      "after_text": "| 跨层级对照（22 化合物） | 氧化 Δ`tau_b` = −0.043（95% 区间 [−0.1982, +0.0909] **跨 0** ⇒ 未检出差异，n = 22 不可分辨）；还原 +0.835 → −0.602（Δ = −1.437，区间 [−1.704, −1.082] 不跨 0，但该层门禁判**不可判定**） | R6，GFN2 ↔ r2SCAN-3c；区间来自 W34-B（B = 4000），门禁来自 W33-A / W34-A |",
+      "before_text": "| 跨层级对照（22 化合物） | 氧化 Δ`tau_b` = −0.043；还原 +0.835 → −0.602 | R6，GFN2 ↔ r2SCAN-3c |"
+    },
+    {
+      "id": "C4",
+      "locator": "结论 #8：以「8. 」开头且同时含 ASCII 子串 0.835 与 0.602 的唯一一行",
+      "mode": "line_substring",
+      "rule": "在该行内做两处纯 ASCII 定位的子串替换（find 只用数字串），把区间与门禁判词插进原句，原数字原位保留",
+      "steps": [
+        {
+          "find": "0.043**",
+          "replace": "0.043**（95% 区间 [−0.1982, +0.0909] 跨 0 ⇒ **未检出差异**）",
+          "expect": 1
+        },
+        {
+          "find": "0.602**",
+          "replace": "0.602**（Δ = −1.437，区间不跨 0；但该轴门禁判**不可判定**）",
+          "expect": 1
+        }
+      ]
+    }
+  ],
+  "invariants": {
+    "preserved_numbers": [
+      "0.697",
+      "0.654",
+      "0.835",
+      "0.602",
+      "0.043",
+      "1.437",
+      "0.467",
+      "246",
+      "22",
+      "2.55",
+      "11.97"
+    ],
+    "keep_original_in_place": "所有既有数字原位保留，只加注记（本仓惯例：不改原地数字，只加更正）",
+    "no_direction_change": "还原轴仍记为「翻号可分辨」；本件只补「定义域未过门禁」与氧化轴的分辨率",
+    "no_abstract_change": "摘要主结果二只陈述「只动 −0.043」这个事实，未断言「不敏感」，不改",
+    "no_frozen_reading_change": [
+      "0.4091179943351143",
+      "0.4766400383507876",
+      "0.5861142332208197",
+      "0.6216672295270079"
+    ],
+    "no_metric_names_change": true,
+    "all_lf": true
+  },
+  "boundaries": [
+    "本件是预注册驱动的论文口径更正，不改模型、不改特征、不新增数据、不占 shot（累计仍 19）。",
+    "更正只覆盖 §3.20（C1 / C2）、附录 A（C3）、结论 #8（C4）；摘要与 §3.21 不动。",
+    "幂等：find 命中即替换（expect 给定期望次数），find 不命中而 after 文本已在则视为已施加。",
+    "区间跨 0 = 未检出差异，不等于证明无差异。"
+  ]
+}
