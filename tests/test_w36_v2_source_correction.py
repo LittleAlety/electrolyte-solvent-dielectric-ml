@@ -26,8 +26,8 @@ REPORT = ROOT / 'reports' / 'w36_v2_source_correction.md'
 SHIPPED = ROOT / 'paper' / 'paper_zh_draft_v2.md'
 SHIPPED_SHA = 'dfb3b282f8ccf76653d244a6a2c618d92a6e12003d012b81cca9f08dc9c6e78e'
 
-#: W40 的 v1.4 改稿让论文交付字节**合法移动了一次**；记录里的 SHIPPED_SHA 保持不变。
-V1_4_SHA256 = '778d1e08a727220bb16ca064586953224a8602a1b73c78ea1e54687619e66c55'
+#: W40/W41 的 v1.5 改稿让论文交付字节**合法移动了一次**；记录里的 SHIPPED_SHA 保持不变。
+V1_5_SHA256 = 'c7bc66296e18cd6384760a3b49014800662800f5141124365fccf31fdaf1b50f'
 V1_LINE = ROOT / 'paper' / 'paper_zh_draft.md'
 ENGLISH_LINE = ROOT / 'paper' / 'full_draft.md'
 
@@ -94,8 +94,8 @@ def test_shipped_draft_is_untouched() -> None:
     assert payload['shipped_draft']['unchanged'] is True
     assert _prereg()['shipped_draft']['sha256_before'] == SHIPPED_SHA
     # 当前交付字节改钉到 W40 的 v1.4，并要求与 W36 那一版不同（回滚即红）。
-    assert probe.sha256_file(SHIPPED) == V1_4_SHA256
-    assert V1_4_SHA256 != SHIPPED_SHA
+    assert probe.sha256_file(SHIPPED) == V1_5_SHA256
+    assert V1_5_SHA256 != SHIPPED_SHA
 
 
 def test_drift_is_registered_and_five_criteria_hold() -> None:

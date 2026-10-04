@@ -1,0 +1,176 @@
+{
+  "schema": "w45_compute/prereg@1",
+  "task": "week45_calibration_strata_dipole_rerun",
+  "revision": 3,
+  "status": "locked_before_run",
+  "locked_before_run": true,
+  "date": "2026-10-04",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "四条 lane 全是只读计算与治理复跑：标定层保真/泄漏审计、扩展层分层残差、偶极偏置分层归因、三条治理守卫复跑。不拟合主记分牌臂、不新增特征列、不改 METRIC_NAMES、不动四个冻结读数。"
+  },
+  "why": "W44 把治理接进机器后，README §11 第 40 条仍留着「同层级独立源缺位」；同时 W43 落下的扩展层里有一列 calib_homo_eV/calib_lumo_eV（标定 id themol_gfn2_to_batt_2fold_v2_registry_wide）从未被审计过。W45 做三件计算：① 审计该标定列是不是 in-sample 仿射拟合、是否只补电平不补序（泄漏与保真）；② 把 4668 行 xTB–Batt 按 tier 与重原子数分层，看 ρ/MAE 是否随分层漂移、离群有多重；③ 把 W42-C 的 ~0.39 D 偶极偏置按 HBD/重原子/偶极幅度分层，定位偏置集中在哪一类分子。第四条 lane 把 W44-A/B/D 三条守卫在本轮复跑成一张快照。",
+  "disclosure": "非盲。设计本预注册前已见：扩展层 5117 行（paired_anchor 4668 / calibrated_estimate 449）、tier 分布（calibration_bulk 4574 / named_core_channel 44 / flagship_dielectric 50 for paired）、calib_homo_eV 在 paired 行上与 homo_gfn2_eV 是精确全局仿射（残差 ~1.8e-15）、该仿射与 homo_gfn2->homo_batt 的 in-sample OLS 一致、分层 ρ 约 0.51-0.60、W42-C 登记的偶极偏置锚（signed 中位 -0.3914 D / 均值 +0.3945 D）、W43 冻结的扩展层 ρ=0.5984785837315431、W42 的 103 行偶极重合。跑前写死的是各 lane 的分母、分层边界、阈值、重抽数与守卫口径。被算的是规则之后重算的量。",
+  "forbidden_moves": [
+    "用本轮的审计结论去改扩展层的 calib_* 列或任何标签/特征列",
+    "把标定列当独立层或同层级源使用（它只是 in-sample 仿射重标定）",
+    "改动四个冻结读数或任何已登记负结果",
+    "把分层 ρ 的差异当成层级真值差（分层与层级不是同一件事）",
+    "把治理复跑的输出写回任何既有 summary"
+  ],
+  "roster": {
+    "path": "data/processed/dielectric_physical_features_v03.csv",
+    "n": 241
+  },
+  "lanes": {
+    "w45_calibration_audit": {
+      "question": "扩展层的 calib_homo_eV/calib_lumo_eV 是 in-sample 仿射拟合吗？它补的是电平还是序？out-of-sample 复拟合后 MAE 会掉多少（泄漏缺口）？",
+      "inputs": {
+        "expanded": "data/processed/themol_orbital_layer_expanded.csv"
+      },
+      "targets": [
+        "homo",
+        "lumo"
+      ],
+      "cv_folds": 5,
+      "cv_seed": 42,
+      "bootstrap_draws": 2000,
+      "rng_seed": 20261004,
+      "gates": {
+        "paired_rows_min": 4600,
+        "calibrated_rows_min": 400,
+        "affine_max_abs_residual_max": 1e-9,
+        "map_matches_batt_fit_tol": 0.000001,
+        "rank_invariance_tol": 0.000001,
+        "homo_mae_before_min": 1,
+        "homo_mae_after_max": 0.35,
+        "lumo_mae_before_min": 1,
+        "lumo_mae_after_max": 0.35,
+        "leakage_gap_min": 0,
+        "cv_mae_after_max_ev": 0.45
+      }
+    },
+    "w45_stratified_residual": {
+      "question": "4668 行 xTB–Batt 的秩一致与电平残差在 tier 与重原子数分层下漂移多大？离群有多重？",
+      "inputs": {
+        "expanded": "data/processed/themol_orbital_layer_expanded.csv"
+      },
+      "strata": {
+        "tier": [
+          "calibration_bulk",
+          "named_core_channel",
+          "flagship_dielectric"
+        ],
+        "atom_bins": [
+          [
+            5,
+            12
+          ],
+          [
+            13,
+            17
+          ],
+          [
+            18,
+            40
+          ]
+        ]
+      },
+      "bootstrap_draws": 2000,
+      "permutation_draws": 2000,
+      "rng_seed": 20261005,
+      "gates": {
+        "paired_rows_min": 4600,
+        "overall_spearman_expected": 0.5984785837315431,
+        "overall_spearman_tol": 1e-9,
+        "min_stratum_rows": 40,
+        "bulk_spearman_min": 0.55,
+        "bulk_spearman_max": 0.65,
+        "stratum_spearman_positive": true,
+        "stratum_homogeneity_max_gap": 0.15,
+        "bootstrap_ci_lo_min": 0.5,
+        "permutation_p_max": 0.001,
+        "min_atom_bin_rows": 100,
+        "atom_bin_spearman_min": 0.4,
+        "robust_tail_z": 3.5,
+        "heavy_tail_fraction_max": 0.2,
+        "robust_scale_mad_max_ev": 1
+      }
+    },
+    "w45_dipole_strata": {
+      "question": "W42-C 的 ~0.39 D 偶极偏置是均匀的，还是集中在某类分子（给体数 / 重原子数 / 偶极幅度）？",
+      "inputs": {
+        "roster": "data/processed/dielectric_physical_features_v03.csv",
+        "qm9": "probes/artifacts/w39_qm9_overlap.csv"
+      },
+      "strata": {
+        "hbd": [
+          0,
+          1,
+          2
+        ],
+        "atom_bins": [
+          [
+            1,
+            5
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            8,
+            9
+          ]
+        ],
+        "dipole_terciles": 3
+      },
+      "bootstrap_draws": 2000,
+      "permutation_draws": 2000,
+      "rng_seed": 20261006,
+      "gates": {
+        "overlap_rows_min": 90,
+        "overall_mean_expected": 0.39451165048543685,
+        "overall_mean_tol": 0.000001,
+        "hbd_strata_min_rows": 5,
+        "atom_bin_min_rows": 8,
+        "tercile_min_rows": 20,
+        "all_strata_positive": true,
+        "low_tercile_median_max": 0.1,
+        "high_tercile_median_min": 0.3,
+        "tercile_monotone": true,
+        "bootstrap_ci_excludes_zero": true,
+        "permutation_p_max": 0.001,
+        "abs_size_correlation_max": 0.5
+      }
+    },
+    "w45_governance_rerun": {
+      "question": "W44 接进机器的三条治理守卫（准入闸门 / 逐轮验收 / AST 静态守卫）在本轮复跑是否全绿？台账是否仍然稳定？",
+      "inputs": {
+        "gate": "probes/w44_prior_gate.py",
+        "acceptance": "probes/w44_acceptance_runner.py",
+        "static_guard": "probes/w44_static_shot_guard.py",
+        "ledger_probe": "probes/w43_governance_ledger.py"
+      },
+      "gates": {
+        "refused_controls": 3,
+        "undeclared_prior_uses_max": 0,
+        "weeks_scanned_min": 40,
+        "failing_weeks_max": 0,
+        "static_files_min": 350,
+        "metric_name_mutations_max": 0,
+        "frozen_reading_writes_max": 0,
+        "unregistered_promotions_max": 0,
+        "registered_negatives_expected": 9,
+        "cumulative_shot_cap": 19
+      }
+    }
+  },
+  "outputs": {
+    "artifacts_dir": "probes/artifacts",
+    "reports_dir": "reports",
+    "tests_dir": "tests"
+  },
+  "revision_note": "r2（W45-B 跑前）：原始离群门 heavy_tail_abs_gt2_count_max=200 在跑前核对时发现口径错——xTB 与 Batt 的 gap 存在 ~6.99 eV 的系统电平差（delta 中位 6.9873、MAD 0.6400），原始 |Δgap|>2 eV 覆盖 4276/4668，任何绝对阈值都会假判否。改为「去中位后按 1.4826*MAD 归一的稳健 z」口径：heavy_tail_fraction(|z|>3.5) <= 0.20 且 robust_scale_mad <= 1.0 eV。W45-A 在此之前未受该口径影响。 r3（W45-C 跑前）：① 重原子数分箱原 [[5,8],[9,14],[15,60]] 在 103 行偶极重合上有一箱为空（重原子数实际 1–9），改为 [[1,5],[6,7],[8,9]]；② 符号口径写错：偏置方向是 our 偏高，改成均值口径 mean(our−qm9) 并锚定 W42-C 的 +0.39451165048543685（原写 -0.3914 是相反符号的旧记录）；③ 增补低/高偶极三分位的中位偏置门（低档 <= 0.10 D、高档 >= 0.30 D、三分位中位单调）。"
+}

@@ -1,0 +1,172 @@
+{
+  "schema": "w41_governance/prereg@1",
+  "task": "week41_governance",
+  "revision": 2,
+  "status": "locked_before_run",
+  "locked_before_run": true,
+  "date": "2026-10-04",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "四条 lane 全是把 W40 登记的四条欠账写成机械规则/守卫，并只用盘上既有产物复算：不重拟合主记分牌臂、不新增特征列、不改 METRIC_NAMES、不动四个冻结读数。"
+  },
+  "why": "W40 交付说明 §5 与 README §11 第 29-32 条登记了四条『下一份预注册要处理』的事项，但准入规则、稳健性条款、同层级声明与例外准入规则都只写在报告散文里。本轮把它们逐条落成机器可复算的判据：W41-A 阶梯池准入（比值判据的第一要求是阶梯定义干净）、W41-B 域比双读数稳健性条款（H40c10 判否落地）、W41-C 例外登记表三类准入规则（EXEMPT_WRITERS 准入规则本身只写在探针里）、W41-D 轨道通道层级声明（QM9 只能作排序先验，同层级外部源与层级差须写进适用域声明）。",
+  "disclosure": "非盲。设计本预注册时已见本仓已提交产物里的既有读数（W40-A 的五个阶梯比值、W40-C 的域比与偏置校正读数、W40-B 的 EXEMPT_WRITERS、W39/W40 的 QM9 对照层与 W38-D 的 Batt-P30K 命中数）。跑前写死的是准入规则、稳健门、类别定义与适用域声明结构；被读的是规则之后重算的量。按本仓惯例显式声明，不当作盲测。",
+  "forbidden_moves": [
+    "把 W41-A 的比值判据用到已被污染的阶梯池上（必须先过准入规则）",
+    "只报偏置校正前或只报校正后的域比（W41-B 要求双读数同报）",
+    "把新增例外登记到三类理由之外（要先改预注册）",
+    "把 QM9 的 B3LYP 层与 Batt-P30K 的 ωB97X-V/SMD 层互换，或把任一外部层的数值写进标签池/特征列"
+  ],
+  "lanes": {
+    "w41_ladder_admission": {
+      "question": "把『干净阶梯』准入规则写成机械规则后，W40-A 的五个阶梯比值能不能逐位复现？污染池的反事实比值是多少？",
+      "ladder_sources": [
+        {
+          "label": "W28 稠密超参阶梯",
+          "path": "probes/artifacts/w28_dense_hyperparameters_repeats.csv",
+          "admit_prefix": "grid_fixed_"
+        },
+        {
+          "label": "W29 分箱阶梯",
+          "path": "probes/artifacts/w29_dense_binning_repeats.csv",
+          "admit_prefix": null
+        },
+        {
+          "label": "W30 组合/交互阶梯",
+          "path": "probes/artifacts/w30_combination_ladder_repeats.csv",
+          "admit_prefix": null
+        },
+        {
+          "label": "W31 容量交换阶梯",
+          "path": "probes/artifacts/w31_capacity_exchange_repeats.csv",
+          "admit_prefix": null
+        },
+        {
+          "label": "W32 正则化阶梯",
+          "path": "probes/artifacts/w32_regularization_ladder_repeats.csv",
+          "admit_prefix": null
+        }
+      ],
+      "admission_rules": [
+        {
+          "id": "R1",
+          "rule": "臂名必须匹配该阶梯声明的 admit_prefix（非空时）——保证同一配置网格"
+        },
+        {
+          "id": "R2",
+          "rule": "臂名不得匹配安慰剂正则 (shuffled|placebo|random_target)"
+        },
+        {
+          "id": "R3",
+          "rule": "臂名不得匹配换表示正则 (morgan|fingerprint|embedding)"
+        },
+        {
+          "id": "R4",
+          "rule": "臂的重复行数必须等于该阶梯的众数重复数（重复集完整）"
+        }
+      ],
+      "expected_admitted": {
+        "W28": 6,
+        "W29": 6,
+        "W30": 6,
+        "W31": 6,
+        "W32": 9
+      },
+      "expected_ratios": [
+        21.044061513567584,
+        13.712270713223267,
+        8.092207259070127,
+        4.178785477997323,
+        7.272893976113999
+      ],
+      "auc30_spread_gate": 0.02,
+      "robust_ratio_gate": 4.0,
+      "wide_ratio_gate": 10.0,
+      "polluted_ladder": "W28 全部 13 臂",
+      "expected_polluted_ratio_max": 2.0
+    },
+    "w41_domain_ratio_robustness": {
+      "question": "域间比同时报『偏置未校正』与『偶极偏置校正后』两个读数时，相对变化是多少？稳健门 0.10 是否被突破？",
+      "source": "probes/artifacts/w40_onsager_domain_compounds.csv",
+      "source_summary": "probes/artifacts/w40_onsager_domain_summary.json",
+      "domain_column": "domain_new",
+      "uncorrected_column": "g_rel_new",
+      "corrected_column": "g_rel_corr",
+      "usable_column": "usable",
+      "expected_uncorrected_ratio": 2.5817133416784355,
+      "expected_corrected_ratio": 3.1132529110752816,
+      "expected_relative_change": 0.20588636267854554,
+      "robust_gate": 0.1,
+      "high_eps_threshold": 60.0,
+      "expected_high_eps_uncorrected": 13.404447543209601,
+      "expected_high_eps_corrected": 17.31695976838166,
+      "clause": "任何域间比读数必须同时给出偏置未校正值与校正后值及相对变化；相对变化 > 0.10 时只能声明『方向稳健』，不得声明『量级稳健』。"
+    },
+    "w41_exemption_admission": {
+      "question": "EXEMPT_WRITERS 的 22 个 owner 能不能机械地落进三类理由？每类的计数是多少？有没有被登记却仍含稳定写入的 owner？",
+      "source": "probes/w40_timestamp_migration.py",
+      "categories": {
+        "pinned_bytes": "字节被冻结摘要 / 锁前预注册 / 依赖件摘要钉死",
+        "append_log": "写入站点是追加写，整篇改写会丢历史行",
+        "strict_json": "原写入器带 allow_nan=False 的严格 JSON 语义"
+      },
+      "evidence_rules": {
+        "append_log": "owner 源码含追加模式 open(..., \"a\")",
+        "strict_json": "owner 源码含 allow_nan=False",
+        "pinned_bytes": "理由文本命中 {钉死, 冻结, 摘要, summary, prereg, manifest, 依赖件, 引用, 历史记录, 比对} 之一"
+      },
+      "expected_owners": 22,
+      "expected_counts": {
+        "pinned_bytes": 16,
+        "append_log": 4,
+        "strict_json": 3
+      },
+      "policy_rules": [
+        "新增例外必须落在三类理由之内，新类别要先改本预注册",
+        "被冻结点名的脚本若要改字节，先走『解冻 / 更正』流程，不得默默改",
+        "例外件重跑仍会弄脏工作树，必须继续作为已知代价报出，不得计入迁移完成率"
+      ],
+      "expected_overlap_pinned_append": 1,
+      "expected_overlap_owner": "probes/pubchem_identity_layer.py",
+      "revision_note": "v1 按 W40 手写分组预登记 16/3/3 并把 pubchem_liquid_window_harvest 当作唯一 (a)(b) 重叠；机械证据复核（本预注册的 evidence_rules）发现 pubchem_identity_layer.py 同时有追加写站点（line 702）与被依赖件摘要钉死，真重叠是它；pubchem_liquid_window_harvest 只有追加写证据。v2 更正为 16/4/3、重叠 1、distinct 22。"
+    },
+    "w41_orbital_level_declaration": {
+      "question": "轨道通道里三条层级（GFN2-xTB / B3LYP 气相 / ωB97X-V+隐式溶剂）之间的排序迁移是不是可传递？层级差要不要写进适用域声明？",
+      "roster": "data/processed/dielectric_physical_features_v03.csv",
+      "qm9_overlap": "probes/artifacts/w39_qm9_overlap.csv",
+      "batt_h5": "data/raw/batt/Batt-P30K.h5",
+      "provenance_sidecar": "data/processed/four_core_label_provenance_sidecar.csv",
+      "levels": {
+        "xtb_gfn2_gas": "GFN2-xTB（气相单点，THEMol/Batt 几何）",
+        "qm9_b3lyp_gas": "B3LYP/6-31G(2df,p)（气相，QM9）",
+        "batt_wb97xv_smd": "ωB97X-V/def2-TZVPPD/SMD(epsilon=18.5)（Batt-P30K）"
+      },
+      "expected_coverage": {
+        "roster": 241,
+        "xtb_hits": 237,
+        "qm9_hits": 103,
+        "batt_hits": 73,
+        "triple_hits": 48
+      },
+      "expected_pairs": {
+        "xtb_qm9_n103_spearman": 0.8856281475401158,
+        "xtb_qm9_n103_kendall": 0.7114415223878093,
+        "xtb_qm9_n103_pearson": 0.8409443563052807,
+        "xtb_batt_n73_spearman": 0.33037146735776873,
+        "qm9_batt_n48_spearman": 0.8176735614281957,
+        "triple_xtb_qm9_spearman": 0.8597405429806952,
+        "triple_xtb_batt_spearman": 0.5384281372123317,
+        "triple_qm9_batt_spearman": 0.8176735614281957
+      },
+      "nontransitivity_gate_spearman": 0.6,
+      "calibration_anchor_xtb_on_qm9": {
+        "slope": 2.0266971543817958,
+        "intercept": -8.8728945529514,
+        "loo_mae_ev": 1.6019981907231886
+      },
+      "ad_statement": "轨道通道的标签层与两条外部层不同层级（泛函 / 基组 / 溶剂化三者至少差一项）；跨层级只声明排序可比、量级不可互换；任何在本通道上加权的读数必须先声明它引用的是哪一层，且不得用单一跨层先验替代另一层。",
+      "nontransitivity_gap_gate": 0.2
+    }
+  }
+}

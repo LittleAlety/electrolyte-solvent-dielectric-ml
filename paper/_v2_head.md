@@ -3,7 +3,7 @@
 ## ——层级伪影、轴锁定分歧与筛查可用性：一个可审计的五通道漏斗
 
 **数据版本**：v0.3.3（`data/dielectric_v03.csv`，246 行 × 38 列，SHA-256 `ff2142936e06e04b329b70f8597574f75349e54ce876e9fff81309e6d35ccce4`）  
-**代码与交付版本**：GitHub release v1.4（2026-10-03）；第 21–40 周证据包见 `reports/decisions_log.md` 与 `成果输出/week21`–`week40`。上一版 v1.3（2026-09-28）对应第 21–24 周  
+**代码与交付版本**：GitHub release v1.5（2026-10-04）；第 21–41 周证据包见 `reports/decisions_log.md` 与 `成果输出/week21`–`week41`。上一版 v1.4（2026-10-03）对应第 21–40 周  
 **永久归档**：Zenodo 概念 DOI https://doi.org/10.5281/zenodo.22957695 ；v1.4 的版本 DOI 在发版后回填，登记于 `README.md` §10（v1.3 版本 DOI 为 https://doi.org/10.5281/zenodo.23019467 ）  
 **许可**：数据 CC BY 4.0（`LICENSE-DATA.md`）、代码 MIT（`LICENSE`）  
 **口径纪律**：本文出现的每一个 R²、每一个 τ_b 都标注它所属的池与电子结构层级。不同池、不同层级的读数永不相除、相加或互比；同一条读数在两处出现时，一律使用同一个冻结字面值。

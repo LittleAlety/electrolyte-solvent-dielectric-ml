@@ -1,0 +1,253 @@
+{
+  "schema": "w43_dipole_protocol/summary@1",
+  "task": "week43_dipole_protocol",
+  "generated_at_utc": "2026-10-04T10:08:50.935824+00:00",
+  "elapsed_seconds": 0.1756883000052767,
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "只登记偶极校正协议与离线影响评估，不执行校正、不改标签或特征列、不拟合主记分牌臂、不动冻结读数。"
+  },
+  "inputs": {
+    "E:\\Claude Code\\电解质ML\\电解质ML\\data\\processed\\dielectric_physical_features_v03.csv": "b36d3439560e4381b7779565b9950eed379832e832b72ea6a3a010662ed24fa3",
+    "E:\\Claude Code\\电解质ML\\电解质ML\\probes\\artifacts\\w40_onsager_domain_compounds.csv": "f83ca10e48750f148cb6e078426718c85878e63b75cc3b7eec630cb8d8130260",
+    "E:\\Claude Code\\电解质ML\\电解质ML\\probes\\artifacts\\w39_qm9_overlap.csv": "7bdbfc52ef0cd07360b1a0e8680694605cf9beff86cad65cd589e41de6c3dfc7"
+  },
+  "inputs_unchanged": true,
+  "frozen_readings_untouched": [
+    0.4091179943351143,
+    0.4766400383507876,
+    0.5861142332208197,
+    0.6216672295270079
+  ],
+  "protocol": {
+    "protocol_id": "dipole_transfer_v1",
+    "status": "registered_not_authorized",
+    "authorization": "本轮不执行：只登记协议与离线影响评估；名册偶极列与特征列一字未改。",
+    "variants": {
+      "legacy": {
+        "kind": "signed_shift",
+        "offset": -0.39139999999999997,
+        "definition": "mu_corr = mu + offset（带符号增量，抽自 W40-C 域表，用于精确复现）"
+      },
+      "shift_mean": {
+        "kind": "signed_shift",
+        "offset": -0.39451165048543685,
+        "definition": "mu_corr = mu + offset（带符号增量 = -mean(mu_xTB - mu_QM9)）"
+      },
+      "shift_median": {
+        "kind": "signed_shift",
+        "offset": -0.40880000000000005,
+        "definition": "mu_corr = mu + offset（带符号增量 = -median(mu_xTB - mu_QM9)）"
+      },
+      "affine": {
+        "kind": "affine",
+        "slope": 0.7505560209207711,
+        "intercept": 0.16227395046765383,
+        "definition": "mu_corr = intercept + slope*mu，QM9 ~ our 的 OLS"
+      }
+    },
+    "applicability": "仅当目标行同时有 xTB 偶极与任一 B3LYP 气相偶极层（QM9 或 PubChemQC）时可用；否则回退到未校正偶极",
+    "fallback": "缺外部偶极 ⇒ 原样返回 mu_xTB，并在输出行标注 correction_applied=false",
+    "invalidation": "若留一交叉验证的 |bias| 的 95% CI 跨 0，或 MAE 未下降，则协议判为未通过、不得发布",
+    "estimate_overlap": {
+      "n": 103,
+      "scope": "名册 ∩ QM9"
+    },
+    "affine_diagnostics": {
+      "slope": 0.7505560209207711,
+      "intercept": 0.16227395046765383,
+      "r2": 0.6141809025552685,
+      "mae_uncorrected": 0.610309708737864,
+      "mae_corrected": 0.4604847987809531,
+      "bias_our_minus_qm9": 0.39451165048543685,
+      "bootstrap": {
+        "slope_point": 0.7505560209207711,
+        "slope_lo": 0.5656987021253073,
+        "slope_hi": 0.8930882528753882,
+        "intercept_point": 0.16227395046765383,
+        "intercept_lo": -0.16580282559823067,
+        "intercept_hi": 0.5393995238540341,
+        "draws": 2000
+      },
+      "leave_one_out": {
+        "n": 103,
+        "bias": 0.39451165048543685,
+        "sd": 0.9127629940966863,
+        "mae": 0.610309708737864,
+        "ci_lo": 0.22482240291262132,
+        "ci_hi": 0.5788337621359223,
+        "loo_offset_mean": 0.39451165048543696,
+        "loo_offset_sd": 0.008948656804869472,
+        "zero_inside_ci": false
+      }
+    },
+    "legacy_reproduction_max_abs_D": 1.7763568394002505e-15,
+    "uncorrected_domain_ratio": 2.5817134002985758
+  },
+  "impact_rows": [
+    {
+      "variant": "legacy",
+      "applied_rows": 211,
+      "dropped_nonpositive": 26,
+      "domain_ratio": 3.113252911075283,
+      "delta_vs_uncorrected": 0.5315395693968474,
+      "a_median_A": 2.2717183501160592e-05,
+      "b_median_B": 7.07243376664196e-05,
+      "notes": "n_A=144 n_B=67 uncorrected_ratio=2.5817133416784355"
+    },
+    {
+      "variant": "shift_mean",
+      "applied_rows": 211,
+      "dropped_nonpositive": 26,
+      "domain_ratio": 3.112220043710082,
+      "delta_vs_uncorrected": 0.5305067020316465,
+      "a_median_A": 2.2817829360411424e-05,
+      "b_median_B": 7.101410588942884e-05,
+      "notes": "n_A=144 n_B=67 uncorrected_ratio=2.5817133416784355"
+    },
+    {
+      "variant": "shift_median",
+      "applied_rows": 208,
+      "dropped_nonpositive": 29,
+      "domain_ratio": 3.172633092997715,
+      "delta_vs_uncorrected": 0.5909197513192797,
+      "a_median_A": 2.28100207569581e-05,
+      "b_median_B": 7.236782670549006e-05,
+      "notes": "n_A=141 n_B=67 uncorrected_ratio=2.5817133416784355"
+    },
+    {
+      "variant": "affine",
+      "applied_rows": 227,
+      "dropped_nonpositive": 0,
+      "domain_ratio": 2.4695764102256095,
+      "delta_vs_uncorrected": -0.112136931452826,
+      "a_median_A": 2.8873829532622175e-05,
+      "b_median_B": 7.130612828663926e-05,
+      "notes": "n_A=160 n_B=67 uncorrected_ratio=2.5817133416784355"
+    }
+  ],
+  "uncorrected_ratio": 2.5817134002985758,
+  "overlap_n": 103,
+  "criteria": [
+    {
+      "id": "H43b1",
+      "description": "协议状态为 registered_not_authorized（未执行校正）",
+      "value": "registered_not_authorized",
+      "threshold": "registered_not_authorized",
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b2",
+      "description": "估计重叠 n = 103（名册 ∩ QM9）",
+      "value": 103,
+      "threshold": 100,
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b3",
+      "description": "仿射变体斜率落在 [0.5, 1.5]",
+      "value": 0.7505560209207711,
+      "threshold": [
+        0.5,
+        1.5
+      ],
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b4",
+      "description": "仿射变体 R2 >= 0.50",
+      "value": 0.6141809025552685,
+      "threshold": 0.5,
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b5",
+      "description": "LOO 偏差 95% CI 不含 0（校正有据）",
+      "value": [
+        0.22482240291262132,
+        0.5788337621359223
+      ],
+      "threshold": "0 not in CI",
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b6",
+      "description": "仿射校正后 MAE < 未校正 MAE",
+      "value": {
+        "before": 0.610309708737864,
+        "after": 0.4604847987809531
+      },
+      "threshold": "after < before",
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b7",
+      "description": "legacy 变体精确复现域表 mu_corr_D（max|Δ| <= 1e-9 D）",
+      "value": 1.7763568394002505e-15,
+      "threshold": 1e-09,
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b8",
+      "description": "离线应用行数 >= 200（三个变体）",
+      "value": {
+        "legacy": 211,
+        "shift_mean": 211,
+        "affine": 227
+      },
+      "threshold": {
+        "min": 200
+      },
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b9",
+      "description": "三个变体的域比 |Δ| 全部 <= 1.0",
+      "value": 0.5909197513192797,
+      "threshold": 1.0,
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b10",
+      "description": "校正后域比仍落在 [2.0, 4.0]（同档）",
+      "value": {
+        "legacy": 3.113252911075283,
+        "shift_mean": 3.112220043710082,
+        "affine": 2.4695764102256095
+      },
+      "threshold": [
+        2.0,
+        4.0
+      ],
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b11",
+      "description": "被丢弃行（mu_corr <= 0）在三个变体下都 <= 30 且登记",
+      "value": {
+        "legacy": 26,
+        "shift_mean": 26,
+        "affine": 0
+      },
+      "threshold": {
+        "max": 30
+      },
+      "verdict": "成立"
+    },
+    {
+      "id": "H43b12",
+      "description": "输入文件生成前后 sha256 不变（标签一字未改）",
+      "value": 1.0,
+      "threshold": 1.0,
+      "verdict": "成立"
+    }
+  ],
+  "registered_negatives": [],
+  "headline": [
+    "协议 dipole_transfer_v1 状态 = registered_not_authorized（未执行）。",
+    "估计 n=103：slope=0.7506、R2=0.6142、LOO CI 不含 0（偏置真实）。",
+    "未校正域比 2.581713 → 三变体 2.4696–3.1726，Δ 全部 ≤ 1.0（同档扰动）。",
+    "0 shot（累计仍 19）；标签一字未改。"
+  ]
+}

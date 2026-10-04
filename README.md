@@ -40,8 +40,18 @@
 - **W39：QM9 第三轨道层落地 —— 层级对齐 + 偶极质量审计（后验，不占 shot，累计仍 19）**。W38-D 把可商用轨道线扩到「Batt-P30K（MIT）+ PubChemQC（CC-BY-4.0，最小切片 325 GB 不可行）+ QM9（原始 deposition，**CC BY 4.0**，整份 28.6 MB）」之后，本轮**把 QM9 落到盘上**（`data/external/qm9_dataset.csv`，**28,637,864 B** / sha256 `01d196218c78…e053` / **133,885 行**）并做了三件事。① **W39-A 层级对齐**：名册命中 **103 / 241** —— 三条轨道线里**最宽**（Batt-P30K 73、Batt-SLM.smi 79）；xTB GFN2 间隙 vs B3LYP 间隙 **Spearman `0.885628`**、Pearson `0.840944`，但**量级系统性压缩**（中位数比 `0.705757`、MAE `2.532944 eV`、标定 `xTB = 2.026697·B3LYP − 8.872895`、标定 R² `0.707187`）⇒ 与主记分牌「**排序学会了、量级学不会**」同构。② **W39-B 偶极质量审计**：W38-C 登记的那条自我削弱（`dipole_D` 有质量疑点）被独立证实 —— **Spearman `0.802206`**、MAE `0.610310 D`、绝对差 ≥ 1 D 的 **13 / 103**；**但「构象自由度是主因」这条判否**（H39a7：刚性域中位绝对差 `0.4442 D` 反而**高于**柔性域 `0.4205 D`）⇒ 机制更正为「**约 0.39 D 的系统偏置**（90 个基本一致的化合物上签署差中位数 `−0.3914 D`，我们的列系统性偏高）+ 少数两端都有的极端样本（formamide −3.29 D、hexanedinitrile +5.68 D）」。③ **W39-C 结论稳健性**：同一 103 子集上换 μ 来源重算 W38-C 的给体 / 非给体 `g_rel` 中位数比 —— **`2.980102`（我们的 μ）vs `3.045860`（QM9 的 μ）**，结论不依赖 μ 来源。判据 **10 条 = 9 成立 + 1 条已登记判否（H39a7）**；QM9 只作**对照 / 审计层**，数值**不写进任何标签池或特征列**。详见 `reports/w39_qm9_crosscheck.md`。
 
 - **W40：四个已登记项合并交付（0 shot，累计仍 19）**。用户要求把多个计划并进一轮，因此 W40 一次执行四条 lane。① **W40-A 三条判据改法**（README §11 第 1 / 20 / 21 条）：反解预算后 tau=30 上 `alpha* = 0.06`（10 条推荐守住 precision **0.9000**；注册锚点 alpha=0.05 精度 **1.000** / 6 条逐位复现），**tau=15 上反解为空（H40a5 登记判否）**；零命中的绝对阈值换成**相对判据**（十分位比 **0.6518**，置换 p **0.000**）加**指纹盲区判据**（26 对，其中 4 对绝对 Δε ≥ 5）；绝对门 `0.08` 换成**比值判据**，在五个干净阶梯上 **21.04 / 13.71 / 8.09 / 4.18 / 7.27**，AUC30 极差全部 < 0.02。附带一条口径修正：W28 表里混入的安慰剂臂与换表示臂会把 AUC30 极差从 `0.0056` 抬到 **`0.5438`**，把比值压到 1.29 —— **比值判据的第一要求是阶梯定义干净**。② **W40-B 稳定写入迁移（含 19 行例外登记）**：复算清单 **121** 件 = 已迁移 **95** + **有理由不迁移 19**（22 个 owner）+ 待迁移 **0** + 无写入器 7；全仓「有写入调用却未用稳定写入**且未登记例外**的 owner」= **0**；三个探针各连跑两遍**零新增脏路径** ⇒ **第 19 条关闭（带例外）**。**第一版执行的教训**：把「全量」当成「全部写入站点」是错的 —— 机械迁移扫出三类**不该动**的站点：**(a)** 字节被**冻结摘要 / 锁前预注册**钉死（16 个 owner，迁移即让已交付 summary 与盘上脚本不再一致，例如 erratum 的 `version_1_pins`）；**(b)** 写入站点是**追加写**（3 个，稳定写入是整篇改写，会抹掉 JSONL 历史行）；**(c)** 原写入器带 **`allow_nan=False`** 的严格 JSON 语义（3 个，稳定写入会把 `NaN` 写进交付件）。三类共 **22 个 owner**（1 个同时属 (a)(b)）**全部回退到 W39 字节**，并逐条带非空理由登记进 `EXEMPT_WRITERS`，由 **H40b9** 机械复核「理由非空、且被登记的 owner 确实不含稳定写入」。**例外登记不是豁免**：这 22 个 owner 重跑**仍会弄脏工作树**，是明确保留的已知代价。③ **W40-C Onsager 域规则精化**：域规则从继承的 RDKit Lipinski donor 换成**显式可给体质子**；被改判只有 3 条（water、1-Butanethiol、1-Pentanethiol）；新域间比 **2.581713**（旧 `2.501616` 逐位复现），高介电族比 **15.6504 降到 13.4044**（**变保守而非变好看**）；双 μ 秩一致 **0.800684**（n = 76）、域间比相对差 **0.0021**；并入约 0.39 D 偏置后 **3.113253**（相对变化 0.2059，**H40c10 判否**），水的 `g_rel` 低于给体域中位数（**H40c11 判否**：域纠正不等于量级证据）。④ **W40-D 轨道外部对照层**：QM9 接进轨道通道作对照 —— 覆盖 **103 / 241**、Spearman **0.885628**、Kendall **0.711442**、未标定绝对差中位数 **2.577390 eV**（102 / 103 条 ≥ 1 eV）、留一标定把 MAE 从 `2.532944` 降到 **`1.601998 eV`**（下降 **36.8%** < 50% ⇒ 只作排序先验）；PubChemQC 的结论从「325 GB 不可行」改成分片级实测 —— 全局最小分片 **536,126,834 B**（< 1 GiB），**受阻在可定位性**（无 CID 索引、无 parquet 分支、本机 PubChem 不可达），**H40d8 登记判否**。判据 **14 + 13 + 10 + 8 条，含 4 条已登记判否**。详见 `reports/week40_delivery_readme.md`。
+- **W41：把 W40 登记的四条欠账写成机器规则（0 shot，累计仍 19）**。① **W41-A 阶梯池准入**：把「阶梯 = 同一配置网格 + 剔除安慰剂/换表示/重复不完整」写死为 R1–R4，40 臂切成 33 准入 + 7 剔除，准入池比值 **21.044062 / 13.712271 / 8.092207 / 4.178785 / 7.272894** 逐位复现 W40-A；W28 全 13 臂反事实只有 **1.293416**（污染池会给假判否）。② **W41-B 域比双读数**：从 W40-C 逐化合物表独立重算，未校正 **2.5817133417** / 校正后 **3.1132529111**，相对变化 **0.2058863627 > 0.10** ⇒ 只能声明方向稳健（**H41b5 在册判否**）；高压电族 13.4044 → 17.3170。③ **W41-C 例外登记准入**：按源码证据把 22 个 owner 分到 pinned/append/strict = **16/4/3**，反向漏网 0；**更正 W40 手写分组**（真重叠是 `pubchem_identity_layer.py`）。④ **W41-D 轨道层级声明**：三条件（GFN2-xTB / QM9-B3LYP / Batt-ωB97X-V）两两排序迁移**不可传递** —— 同一 48 化合物上 ρ(xTB,QM9)=0.860、ρ(QM9,Batt)=0.818，但 ρ(xTB,Batt) 只有 0.538（**H41d8 在册判否**）；同层级外部源数 0。判据 **40 条 = 38 成立 + 2 在册判否**；26 项测试全绿。详见 `reports/week41_delivery_readme.md`。
+- **W42：计算密集型周 —— 第三外部轨道层、四层迁移网络与三源偶极归因（0 shot，累计仍 19）**。把盘上已有的 PubChemQC（B3LYP/6-31G*//PM6 气相，CC BY 4.0）接成第三外部轨道源，一次跑完四条只读计算 lane。① **W42-A 四层迁移网络**：覆盖 xTB **237** / QM9 **103** / PubChemQC **205** / Batt **73**，四路交集 **48**，15 个交集全部复算自洽；6 对迁移 ρ(xTB,QM9)=**0.8855**、ρ(xTB,PubChemQC)=**0.8824**、ρ(xTB,Batt)=**0.3280**、ρ(QM9,PubChemQC)=**0.9823**、ρ(QM9,Batt)=**0.8177**、ρ(PubChemQC,Batt)=**0.7386**（bootstrap CI 下界全 > 0、置换 p ≤ 0.006）；QM9–PubChemQC 判 **near_same_level**（同泛函+同相，gap MAE 0.1612 eV），strict same_level 仍 0；最大三角形断口 **0.4897**（断链边恒为 xTB–Batt）。② **W42-B isotonic 代理上界**：ρ raw 0.3280 → 样本内 0.5461 / 5 折 CV **0.4150**，CV R² **0.2225**；中位数二分 AUC raw 0.6922 → CV **0.7305**、上四分位 CV **0.7719**；代理保真度比 **0.3704**。③ **W42-C 偶极三源归因**：QM9−PubChemQC bias **−0.0341 D**（CI 含 0），our−QM9 **+0.3945 D**、our−PubChemQC **+0.5130 D**（CI 不含 0）；三源 OLS R² **0.6515**、定位比 **0.7691** ⇒ ~0.4 D 偏置在方法层（xTB vs B3LYP），本轮仍只归因不修数。④ **W42-D 抽样律 + 域比重抽**：6 条曲线最大 rmse **0.0084**、Spearman(s0,1−τ)=**0.9429**；xTB–QM9 N=12 噪声地板 **0.1138**；域比 **2.5817133417** 逐位复现，bootstrap 95% CI **[2.1220, 3.2271]**、置换 p **0.0005**。判据 **45 条全部成立**（本轮无新增判否）；30 项测试全绿。详见 `reports/week42_delivery_readme.md`。
+- **W43：把 W42 登记的两条欠账写成机器件 + 一条治理守卫（后验，0 shot，累计仍 19）**。① **W43-A 层级残差分解**：把 xTB–Batt 对从名册 73 行扩到大样本扩展层 `themol_orbital_layer_expanded.csv`（5117 行，GFN2-xTB//B3LYP-D3(BJ)/DZVP 单点，DFT 几何），ρ 从 **0.3280** 抬到 **0.5985**（n=4668）⇒ **名册 73 行是悲观尾**；同方法换几何（THEMol vs DFT，n=137）**保序极好**（ρ **0.9916**）但电平平移 **MAE 0.1599 eV**；near_same_level 基组残留（QM9 vs PubChemQC，n=103）|Δ|≤0.2 eV 覆盖 **0.6893** ⇒ 只能当**带容差的替换上界**；isotonic 5 折 CV ρ **0.5995** / CV R² **0.4041**、CV AUC **0.7957**。② **W43-B 偶极校正协议预注册**：写成 `dipole_transfer_v1`（三变体 + 适用范围 + 回退 + LOO 失效闸），**状态 registered_not_authorized**；离线影响评估：未校正域比 **2.5817** → legacy 变体 **3.1133**（精确复现 W40-C）、shift/affine 2.4696–3.1726，**Δ 全部 ≤ 1.0**（同档扰动），**标签一字未改**。③ **W43-C 层准入选排序先验的机械规则**：四层判决 = xTB defer / QM9 defer / **PubChemQC admit** / Batt reject（目标层）；near_same_level(qm9,pubchemqc) **未自动准入**，strict same_level 计数仍 0。④ **W43-D 仓库级治理台账守卫**：扫 **337** 个 JSON，登记负结果并集 == 已知 **9** 条、冻结读数越界 **0**、累计 shot 单调不减且上限 **19**。判据 **45 条全部成立**（无新增判否）；36 项测试全绿。详见 `reports/week43_delivery_readme.md`。
 - **论文按期刊模版重排并导出 docx**：`paper/make_paper_docx_template.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性_期刊模版.docx`（**459 段 / 22 张表 / 23 张图**；W40 改稿后已重新生成，含 §3.8.1 的 W20-4 单键定价表、§3.8.2 的 W30 组合/交互阶梯、图 8b/8c/10b）。
 
+- **W44：把 W43 登记的两条治理欠账接进机器 + strict same-level 机器要求 + AST 静态守卫（后验，0 shot，累计仍 19）**。① **W44-A 层准入闸门**：`admit_prior(layer, use)` 只在 `verdict == admit` 时返回，否则抛 `PriorRefused`；扫 **611** 个 `*.py` / `*.md` 得 **18** 个（文件 × 层）对，运营性先验使用 **1**（正对照 pubchemqc，已过闸）、未申报 **0**；负对照 `ccsd_t` / `qm9` / `batt` 全被拒，正对照 PubChemQC **过闸**。② **W44-B 逐轮验收运行器**：复用 W43-D 四个不变式，扫 **41** 轮交付摘要、**33** 轮声明验收字段、判 **fail 0** 轮，最近五轮 week40–week44 全过。③ **W44-C strict same_level 规格**：四属性（泛函 / 基组 / 相 / 几何来源）全同 + 独立来源；六个在仓候选与 Batt 距离 0 的 **0** 个，最近一对 **QM9–PubChemQC 属性距离 2**（仅泛函 + 相相同），near_same_level 合法对恰为 `qm9-pubchemqc` 与 `xtb-expanded`，越权 **0**。④ **W44-D AST 静态守卫**：解析 **359** 个 `*.py` / **1,302,367** 个 AST 节点、解析错误 **0**；冻结注册表 2 处全等于冻结 7 项（**mutation 0**），冻结读数写入 **0**、引用 **267**，`promoted = True` 未登记 **0**。判据 **31 条全部成立**（无新增判否）；31 项测试全绿。详见 `reports/week44_delivery_readme.md`。
+
+- **W45：把三个「一个数」拆成分层表 —— 标定列泄漏审计、4668 行分层残差与偶极偏置分层归因（计算周，0 shot，累计仍 19）**。① **W45-A 标定列保真与泄漏审计**：扩展层的 `calib_homo_eV` 是 `homo_gfn2_eV` 的**精确一元仿射**（4668 行最大残差 **1.8e-15**），且与 `homo_gfn2 → homo_batt` 的 in-sample OLS **逐位同映射**（Δslope 4.4e-16）；仿射保序 ⇒ ρ(calib,batt) 与 ρ(gfn2,batt) **完全相同**（Δ **0.0**）—— **标定只补电平（MAE 1.2066 → 0.3032 eV）不补序**；5 折 out-of-sample 复拟合 MAE **0.30329 eV**、泄漏缺口 **1.3e-4 eV**；`calib_lumo_eV` 在 4668 行上**全为空**（登记 H45a7）。② **W45-B 4668 行分层残差**：总体 ρ 逐位复现 **0.5984785837315431**（CI **[0.5800, 0.6173]**、置换 p **0.0005**）；tier ρ 0.5974 / 0.5280 / 0.5130（同质）；重原子分箱 ρ **0.8107 / 0.7315 / 0.4810** ⇒ xTB 排序信息集中在**小分子**；Δgap 含 **6.9873 eV** 系统电平差（MAD 0.6400 eV），稳健离群比例 **0.1165**（|z|>3.5）。③ **W45-C 偶极偏置分层归因**：重合 n = **103**、均值偏置 **+0.39451165048543685 D** 逐位复现 W42-C（CI **[0.2296, 0.5639]**、Wilcoxon p **9.4e-11**）；**偶极三分位中位 0.0598 / 0.4817 / 0.5207 D** ⇒ **偏置随偶极幅度增长**（vs 幅度 ρ **0.4775**、vs 重原子数仅 **0.0234**，非尺寸伪影），支撑协议 **affine 优先于 shift**。④ **W45-D 三条守卫复跑**：闸门拒 3 / PubChemQC 过闸 / 未申报 0；验收 **42** 轮 / fail 0 / 最近五轮全过；静态 **365** 文件 / mutation 0 / 写入 0；台账并集 **9** / 越界 0 / shot 上限 **19**。判据 **37 条全部成立**（无新增判否）；24 项测试全绿。详见 `reports/week45_delivery_readme.md`。
+
+- **W46：把「还原轴需要重新定义」推进成可执行结论 —— 候选族定义、锚点缺口与 τ_b 功效边界（侦察/治理周，0 shot，累计仍 19）**。① **W46-A 候选描述符族**：预注册四候选（D0 裸 LUMO / D1 门禁过滤绝热 EA / D2 Li⁺ 耦合还原位移 / D3 溶剂化垂直 EA）放进 (候选 × 层) 网格 —— r2SCAN-3c 层 D1 合法子集 **0**、D3 合法子集 **2 < 5** ⇒ 判**不可判定**，D2 无 r2SCAN-3c 原料；GFN2 合法气相 n = 48 上方向性 τ_b（不判）D0–D1 **0.7394** / D0–D2 **−0.3794** / D1–D2 **−0.4486**（未解析占比 0.3980 / 0.8697 / 0.8874）。因锚点 0，主判据按 H46a2 不执行、产出为**不可判定 + 功效下限**（与 W33 ORCA 层同规格）。② **W46-B 锚点侦察**：扫 **518** 个 CSV，候选列 151 + 命名对照 32，计算系列一律 `rejected_computed_only`（181 行）、介电锚点 `rejected_criterion_mismatch`（2 件）、离盘参照（FEC/VC/EC，DOE APR FY2016，secondary，n_pairs = 3）`not_available_on_disk`；层准入仅 PubChemQC 过闸 ⇒ **n_anchors = 0、n_pairs_effective = 0**。③ **W46-C τ_b 功效工具化**（`tools/taub_power.py`，只读）：n = 7 下 MDE **0.6541**、过 0.9 阈概率 **0.0044 / 0.0114 / 0.0809**、达到 80% 功效需 **17 / 8 / 6** 个锚点、离散 α_eff(7) **0.03452**、与 W33 精确零分布**逐点一致（Δ 0.0）**、观测 τ_b 0.428571 的精确单侧 p = **602/5040**。④ **W46-D 论文回填**：论文 v3 升 **v1.10**、新增 §3.31（含图 21/22）、§1.2 T1/T2 定位段、Gate 1 措辞三处修订与 7 篇引用。**四个冻结读数未动**。
+
+- **W47：把「还原轴需要重新定义」落到可执行结算 —— 双轨还原锚点、主判据执行与投稿就绪评估（只读转录/治理周，0 shot，累计仍 19）**。① **三张转录锚点**：Borodin 2013 Table 1 计算氧化 16 行 / Table 3 实验氧化 26 行 / Borodin 2015 图 6–8 Li⁺ 耦合还原 8 行，行数 + sha256 钉住；**关键更正**：「Borodin 2013 有 68 EA 表」是错误归属（实为其 ref51 Vydrov 2006 的 G2 离子测试集，**58 EA**，无电解液溶剂），Borodin 2013 为**纯氧化**论文、全文无还原/EA 表。② **覆盖核算**：核心集 7 溶剂上计算氧化 4/7、实验氧化 4/7、计算还原 1/7、实验还原 1/7 ⇒ 还原轨并集 **2 < 5**，**H47a2 拒答分支触发**，D0–D3 主判据**不可判定**（与 W33 ORCA 层先例同规格，不算失败）。③ **氧化轴交叉一致性**：n = 4 上 τ_b = **0.6667**（精确单侧 p = **0.1667**，Top-1 重叠 1.00 / Top-2 0.50，未解析占比 0.3333）——**只作敏感性读数，不进判决**。④ **实验轨降级**：Moshkovich 2001 为 PC 单溶剂 ⇒ `mechanism_evidence_only`，实验轨 `not_evaluable_condition_differs`；台账 9 件逐件有 verdict + 非空 `condition_flag`。⑤ **Lane C 协议冻结**：D2 六项 + D3 四项 + 腈类 3×3 = 9 行齐备，无 ORCA ⇒ 全部 `pending_orca_compute`，排期估算 76 个单点。⑥ **投稿就绪**：引用 13 篇、§3.32、§1.2 补 Abaei/Deng 2026、§4.6 局限更新，**无附录**、25 张图全在盘，10 条闸门全过（剩余阻塞项为科学证据，非稿件形式）。
 ## 1. 这个仓库是什么
 
 一个**筛选导向**的可审计管线：给候选有机溶剂预测电解液关心的物性，并且把「哪些路走不通」与「哪些路走通了」用同一套预注册纪律记下来。三条硬约束贯穿全部轮次：
@@ -94,7 +104,7 @@
 - **非冻结的第四条读数（W31，登记但不入冻结表）：`0.622389`** —— Physical 单表示、五种子均值、深度 4 + `min_child_weight` 7 + `max_bin` 128（`bin128_mcw7_d4`）。它是**首次在名义上**高于 W20-4 注册臂 `0.6216672295270079` 的档位，但幅度只有 `+0.000722`，**远小于种子间抖动**（该量级的 sd 约 0.0175）且落在预注册的 0.005 松弛带内，故按预注册判据读作「天花板未被打破」。**不得读作新纪录、不得当作晋升**（W27 声明未变）。
 - 任何新读数都必须注明它属于哪一行口径；跨行比较一律无效。
 
-## 5. 负结果登记（截至 W40，全部保留）
+## 5. 负结果登记（截至 W47，全部保留）
 
 - **换拟合器**：GPR 0.2313、MLP -0.172 —— 证否。
 - **网络叠加 / bagging**：+0.00175，惰性 —— 证否。
@@ -116,10 +126,22 @@
 - **介电响应描述符块**（W27）：五种子增量均值 -0.096956，确认线与部分线双判否；**且安慰剂不惰性**（-0.006099 > 0.005），故净信息效应 -0.090857 + 容量效应 0.0061 必须并报 —— 判否。
 - **「全量迁移」＝「全部写入站点都可以迁移」（W40-B，第一版执行）** —— **判否并回退**：机械迁移扫出三类**不该动**的站点 —— (a) 字节被**冻结摘要 / 锁前预注册**钉死（迁移即让已交付 summary 与盘上脚本不再一致）、(b) 写入站点是**追加写**（稳定写入是整篇改写，会抹掉 JSONL 历史行）、(c) 原写入器带 **`allow_nan=False`** 的严格 JSON 语义（稳定写入会把 `NaN` 写进交付件）。共 **22 个 owner** 全部回退到 W39 字节并逐条带理由登记为例外；迁移读数因此从「110 / 110」变成 **95 / 121**（19 行例外 + 7 件无写入器 + 0 待迁移）。**例外登记不是豁免**：这 22 个 owner 重跑**仍会弄脏工作树**。
 
+- **还原锚点缺口填不上（W47）**：核心集还原轨覆盖并集 **2/7 < 5** ⇒ D0–D3 主判据按 `H47a2` **不可判定**（不是失败，是拒答）；「Borodin 2013 有 68 EA 表」为**错误归属**（其 ref51 Vydrov 2006 的 G2 离子测试集只有 58 EA 且无电解液溶剂），Borodin 2013 为纯氧化论文。
 - **保形短名单在 τ=30 / α=0.10 上精度不足（W38-A）**：合并精度 `0.8125`（16 条推荐 / 3 假阳），低于 0.90 门 —— **已登记判否**；同池、同表示、把预算收紧到 α=0.05 时精度 `1.000`（6 条推荐）⇒ 真实读数是「**预算换精度**」，不是「排序失败」。阈值不原地改，改法登记进下一份预注册。
 - **「像而不同」的阈值型判据失效（W38-B，H38b1）**：Tanimoto ≥ 0.80 且 |Δε| ≥ 30 的对**不存在**（实测上限 `25.98`）—— **已登记判否**；机制读数改为「**指纹盲区**」：Tanimoto ≥ 0.99 的 26 对里有 4 对 |Δε| ≥ 5，最大 `13.25`（1,4-dioxane 2.2 vs 15-crown-5 15.5）。
 - **`g_rel` 在 μ → 0 处发散（W38-C）**：不加门槛时 `L/x` 的排名被烷烃占据（环戊烷 μ = 0.001 D → g_rel `7.2e5`）—— **统计量病态**，不是物理；主判据全用中位数/秩，并加 μ ≥ 1.0 D 的数值门槛（H38c8：该门槛下 top-10 有 9/10 落在给体域）。
 - **「构象自由度是偶极差异的主因」（W39-B，H39a7）** —— **已登记判否**：刚性域（可旋转键 = 0，n = 48）的 |Δμ| 中位数 `0.444150 D` **不低于**柔性域（n = 55）的 `0.420500 D`，即差异**不是**主要由构象自由度放大。机制更正（后验）拆成两块：**约 0.39 D 的系统偏置**（90/103 个基本一致的化合物上签署差中位数 `−0.3914 D`，我们的 `dipole_D` 列系统性偏高）＋**少数两端都有的极端样本**（最小 −3.29 D 即 formamide、最大 +5.68 D 即 hexanedinitrile）。阈值不原地改，改法（双 μ 读数化 + 追查偏置来源）登记在 §11 第 28 条。
+
+- **H41b5 域比「量级稳健」（W41-B）**：**判否** —— 同报未校正 / 校正后两个读数时，域间比相对变化 **0.2058863627 > 0.10**（2.5817133417 → 3.1132529111）；方向稳健、幅度不稳健。域比对偶极系统偏置敏感，任何域比引用必须双读数同报。
+- **H41d8 跨层排序先验可传递 / 可代理（W41-D）**：**判否** —— 三条件（GFN2-xTB 气相 / QM9-B3LYP 气相 / Batt-ωB97X-V+SMD）在**同一 48 化合物**上 min(ρ(xTB,QM9), ρ(QM9,Batt)) − ρ(xTB,Batt) = **0.281 > 0.2**；两条「与 Batt 一致」的链条推不出第三条，同层级外部源数 = 0。
+- **本轮（W42）无新增判否，但有三条「受限」读数必须随引用一起给**：① QM9–PubChemQC 只到 **near_same_level**（同泛函 B3LYP + 同相气相，但基组 6-31G(2df,p) vs 6-31G*、几何 B3LYP vs PM6 不同），**strict same_level 源数仍为 0**；② xTB→Batt 的 isotonic 代理上界只有 **CV ρ 0.4150 / CV R² 0.2225**（样本内 0.5461 来自并列归并，不得引用），代理保真度比 **0.3704** ⇒ xTB 不可代理 ωB97X-V/SMD 通道；③ 偶极 ~0.4 D 偏置已定位到**方法层（xTB vs B3LYP）**（QM9−PubChemQC bias 仅 −0.0341 D），但**修数仍未授权**。
+- **本轮（W43）无新增判否，但有三条「受限」读数必须随引用一起给**：① 名册 **73 行**上的 ρ(xTB,Batt)=0.3280 **不是层级真值**，扩到 4668 行是 **0.5985**（名册子集是悲观尾）；② 几何残留**保序**（ρ 0.9916）但**平移 0.1599 eV**，基组残留 |Δ|≤0.2 eV 只覆盖 **0.6893** ⇒ `near_same_level` 只能当带 **±0.2 eV 容差**的替换上界，不得当 same-level 互换；③ 偶极校正协议只有 **registered_not_authorized** 状态：LOO 偏置 CI 不含 0（偏置真实），但**授权未给**，任何校正后偶极不得入标签或特征列。
+
+- **本轮（W44）无新增判否，且四条读数都是「接线 / 守卫」性质，随引用一起给**：① `admit_prior` 的 `admit` 只表示「可作**只读**排序先验」，且当前运营性先验使用为 **1**（正对照 pubchemqc，已过闸）；② 逐轮验收运行器对早期轮次缺字段记为 `not_declared`（**不补字段、也不算 fail**）；③ `strict same_level` 在仓候选计数仍为 **0**（最近一对 QM9–PubChemQC 距离 2），near_same_level 只能作**带容差的替换上界**；④ 静态守卫只读源码，三个老探针的 4 项私有同名局部量登记为 `legacy_local`、**不是**冻结注册表。
+
+- **本轮（W45）无新增判否，但四条「受限」读数必须随引用一起给**：① 扩展层的 `calib_homo_eV` 是 **in-sample 仿射**（与 `homo_gfn2 → homo_batt` 的 OLS 同映射），**只补电平不补序**（Δρ = 0.0），且 `calib_lumo_eV` **全空** ⇒ 它不是独立层、不是同层级源，不得当作 Batt 通道的标签替换；② xTB 秩一致随分子变大**单调退化**（5–12 原子 ρ 0.8107 → 18–40 原子 ρ 0.4810）⇒ 任何 xTB→Batt 代理只能声明**小分子域**；③ 偶极偏置**随偶极幅度增长**（低档 0.0598 → 高档 0.5207 D），是**尺度问题不是平移问题** ⇒ 支持 `affine` 变体优先于 `shift`，但**修数仍未授权**；④ 三条治理守卫的复跑快照（闸门拒 3 / 验收 42 轮 / 静态 365 文件 / 台账并集 9）只作读数，不改任何既有 summary。
+
+- **本轮（W46）无新增判否，但四条「受限」读数必须随引用一起给**：① 同装置还原锚点数为 **0**（盘上只有计算系列与介电锚点；唯一的还原旁证是 secondary 的 3 条且未结构化落盘）⇒ 还原轴主判据**不可判定**，**不得**用任何计算系列补造实验锚点；② 方向性 τ_b 与未解析占比（GFN2 合法气相 n = 48）**只作机制读法、不进判决**；③ Gate 1 的阈 0.9 在 n = 7 上等价于「至多 1 对不一致」，τ_true = 0.8 时过阈概率仅 8.1% ⇒ 「未过阈」必须与「功效不足」并列陈述；④ D3（ddCOSMO 溶剂化垂直 EA）与 D2 的 r2SCAN-3c 版本**未计算**（需新 ORCA 单点），且本次不授权任何修数（`dipole_transfer_v1` 维持 `registered_not_authorized`）。
 
 ## 6. 口径铁律
 
@@ -143,11 +165,67 @@ python scripts\verify_four_core_registry.py --check
 python scripts\verify_dielectric_v04.py
 python scripts\verify_v032_benchmarks.py
 
-# 最近一轮（W39）：QM9 第三轨道层落地 —— 层级对齐 + 偶极质量审计（后验，不占 shot）
+# 最近一轮（W47）：双轨还原锚点 + 主判据执行 + 投稿就绪评估（只读转录/治理周，0 shot）
 $env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
-python probes\w39_qm9_crosscheck.py
-python -m pytest tests\test_repo_hygiene.py tests\test_w39_qm9_crosscheck.py -q -p no:cacheprovider
-python probes\export_week39_results.py --overwrite
+python probes\w47_anchor_crosscheck.py
+python probes\w47_experimental_track.py
+python probes\w47_lane_c_plan.py
+python probes\w47_paper_readiness.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w47_anchor_crosscheck.py tests\test_w47_experimental_track.py tests\test_w47_lane_c_plan.py tests\test_w47_paper_readiness.py -q -p no:cacheprovider
+python probes\export_week47_results.py --overwrite
+# 上一轮（W46）：还原轴描述符重定义 + 锚点侦察 + τ_b 功效工具化 + 论文回填（侦察/治理周，0 shot）
+$env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
+python probes\w46_taub_power.py
+python probes\w46_reduction_anchor_recon.py
+python probes\w46_reduction_family.py
+python probes\w46_paper_governance.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w46_taub_power.py tests\test_w46_reduction_anchor_recon.py tests\test_w46_reduction_family.py tests\test_w46_paper_governance.py -q -p no:cacheprovider
+python probes\export_week46_results.py --overwrite
+
+# 上一轮（W45）：标定列泄漏审计 + 4668 行分层残差 + 偶极偏置分层归因 + 三条守卫复跑（计算周，0 shot）
+$env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
+python probes\w45_calibration_audit.py
+python probes\w45_stratified_residual.py
+python probes\w45_dipole_strata.py
+python probes\w45_governance_rerun.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w45_calibration_audit.py tests\test_w45_stratified_residual.py tests\test_w45_dipole_strata.py tests\test_w45_governance_rerun.py -q -p no:cacheprovider
+python probes\export_week45_results.py --overwrite
+
+# 更早一轮（W44）：层准入闸门 + 逐轮验收运行器 + strict same-level 机器要求 + AST 静态守卫（0 shot）
+$env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
+python probes\w44_prior_gate.py
+python probes\w44_acceptance_runner.py
+python probes\w44_same_level_spec.py
+python probes\w44_static_shot_guard.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w44_prior_gate.py tests\test_w44_acceptance_runner.py tests\test_w44_same_level_spec.py tests\test_w44_static_shot_guard.py -q -p no:cacheprovider
+python probes\export_week44_results.py --overwrite
+
+# 再早一轮（W43）：层级残差适用域 + 偶极校正协议预注册 + 层准入 + 治理台账守卫（0 shot）
+$env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
+python probes\w43_layer_residual.py
+python probes\w43_dipole_protocol.py
+python probes\w43_prior_admission.py
+python probes\w43_governance_ledger.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w43_layer_residual.py tests\test_w43_dipole_protocol.py tests\test_w43_prior_admission.py tests\test_w43_governance_ledger.py -q -p no:cacheprovider
+python probes\export_week43_results.py --overwrite
+
+# 更早（W42）：第三外部轨道层、四层迁移网络与三源偶极归因（计算密集型，不占 shot）
+$env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
+python probes\w42_orbital_transfer_network.py
+python probes\w42_proxy_calibration.py
+python probes\w42_dipole_sources.py
+python probes\w42_sampling_law.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w42_orbital_transfer_network.py tests\test_w42_proxy_calibration.py tests\test_w42_dipole_sources.py tests\test_w42_sampling_law.py -q -p no:cacheprovider
+python probes\export_week42_results.py --overwrite
+
+# 更早（W41）：把 W40 登记的四条欠账写成机器规则（后验，不占 shot）
+$env:PYTHONIOENCODING="utf-8"; $env:OMP_NUM_THREADS=1; $env:OPENBLAS_NUM_THREADS=1
+python probes\w41_ladder_admission.py
+python probes\w41_domain_ratio_robustness.py
+python probes\w41_exemption_admission.py
+python probes\w41_orbital_level_declaration.py
+python -m pytest tests\test_repo_hygiene.py tests\test_w41_ladder_admission.py tests\test_w41_domain_ratio_robustness.py tests\test_w41_exemption_admission.py tests\test_w41_orbital_level_declaration.py -q -p no:cacheprovider
+python probes\export_week41_results.py --overwrite
 ```
 
 > 全套 `pytest -q` 很慢（3,362 条测试函数）。日常验收用逐轮文档化的子集：`tests\test_repo_hygiene.py` 加该轮的 `tests\test_wN_*.py`。
@@ -158,7 +236,8 @@ python probes\export_week39_results.py --overwrite
 - **论文源（中文）**：`paper/paper_zh_draft_v2.md`
 - **期刊模版 docx**：`paper/make_paper_docx_template.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性_期刊模版.docx`（A4、正文五号宋体、固定行距 15 磅、字间距 0.15 磅；**414 段 / 18 张三线表 / 23 张图**）
 - **另一版 docx**：`paper/make_paper_docx.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性.docx`
-- **逐轮交付导出**：`成果输出/week1` … `week39`。每一轮的 `weekN_summary.json` 带 `artifacts_commit`（标识交付字节的提交）、`worktree_dirty`、`lanes_missing` 与 `verification_passed`；导出按 **AF-12 三步走**：先封树提交 → 用该提交干净重导 → 按需补修复提交。
+- **重写版论文源（无附录、图片按相对路径）**：`paper/paper_zh_draft_v3.md` → 渲染器 `paper/make_paper_v3_docx.py` → `成果输出/论文_电解液溶剂筛选中的描述符决策稳定性_v3.docx`（v1.11，含 §3.30 W45 收口、§3.31 W46 还原轴描述符重定义与功效边界、§3.32 W47 双轨还原锚点与投稿就绪评估）
+- **逐轮交付导出**：`成果输出/week1` … `week47`。每一轮的 `weekN_summary.json` 带 `artifacts_commit`（标识交付字节的提交）、`worktree_dirty`、`lanes_missing` 与 `verification_passed`；导出按 **AF-12 三步走**：先封树提交 → 用该提交干净重导 → 按需补修复提交。
 
 ## 9. 许可与第三方数据
 
@@ -218,10 +297,42 @@ python probes\export_week39_results.py --overwrite
 24. **η 覆盖最高件是 CC BY-NC 4.0（W38-D 登记；W40-D 复核后仍未解决，保持登记）**：`data/external/chew_2024_viscosity_supp_2.csv` 名册命中 **140/241**（全项目 η 覆盖最高），但其 Data availability 段把该数据**单独**声明为 **CC BY-NC 4.0**（文章级 CC BY 4.0 被该例外覆盖）⇒ **不得入商用池**。另两件同理：`chew_2024_viscosity_supp_3.csv` 是 `_pred`（模型输出，不入池）；`chodera_2015_data_dielectric.csv` 命中 **45/241**，仓库许可 **GPL-2.0**（可商用但带 copyleft 义务），且口径是**零频** ε，需先对齐。下一步二选一：只作非商业内部对照，或另找可商用 η 源。
 25. **可商用轨道线已变宽（W38-D 登记；QM9 那一半于 W39 执行、PubChemQC 评估于 W40-D 执行）**：`hf-mirror.com` 上 `molssiai-hub/pubchemqc-b3lyp` 与 `-pm6` 为 **CC-BY-4.0** 且字段表 + 抽样 JSON 命中 `energy-{alpha,beta}-homo/lumo/gap`；QM9 原始 deposition（DataCite rightsList）亦为 **CC BY 4.0**（133,885 分子）。相对地 **OMat24 是无机材料、OMol25 只有 `energy` + `atomic forces`** ⇒ 两者都**不是**轨道源。下一步：只取名册命中化合物的**单文件子集**，不要整仓（PubChemQC 全量约 7.7 TB / 8.4 TB）。
 26. **红线渠道已钉死（W38-D 登记）**：NIST WebBook（Standard Reference Data Act，「All rights reserved」）、DDBST（条款明文禁保存/下载/系统性抓取建库）、Cheméo（明文禁整库下载与整体嵌入）、MNSol（商业授权 6000 USD，且只含溶剂化自由能）—— 一律不入池；QMugs（CC BY-NC-SA）、THEMol（CC BY-NC）、MolSSI liquid-electrolytes（CC BY-NC-ND）同为红线。`huggingface.co` / `zenodo.org` / `pubchemqc.riken.jp` 在本机 **DNS 不可达**，登记为「环境受阻」而非「源不存在」。渠道表见 `probes/artifacts/w38_recon_channels.csv`。
-27. **QM9 对照层已落地，下一步两件（W39 登记，W40-D 已执行）**：① 把 `data/external/qm9_dataset.csv` 的 `homo`/`lumo`/`gap` 接到轨道通道的**外部对照层**（不是标签层）；口径按「**只能谈排序与标定，不得直接互换**」—— 它是 B3LYP/6-31G(2df,p) 气相轨道能差，我们的是 xTB GFN2 单点，标定式 `xTB = 2.026697·B3LYP − 8.872895` 只在 103 个命中化合物上成立；② 若要扩覆盖，走 **PubChemQC 按名册命中的单文件子集**（全量 7.7 / 8.4 TB 不可取），且不引入任何 NC 件。
-28. **偶极列的质量更正与后续修法（W39 登记；双 μ 读数 W40-C 已执行，偏置来源追查仍未执行）**：`dipole_D` 相对 QM9 有**约 0.39 D 的系统偏置**（90/103 个基本一致的化合物上签署差中位数 `−0.3914 D`，我们的列系统性偏高）＋少数两端都有的极端样本（−3.29 → +5.68 D）；H39a7 判否说明**构象自由度不是主因**（刚性 `0.4442 D` vs 柔性 `0.4205 D`）。下一份预注册应：① 把 W38-C 的 `g_rel` 主判据改成「对 `dipole_D` **同时报我们与 QM9 两套 μ** 的双读数」；② 追查偏置来源（单位 / 构象 / 来源列口径），在查清之前**不修数、不插补**。
+27. **QM9 对照层已落地，下一步两件（W39 登记，W40-D 已执行；W41-D 已补三方层级声明）**：① 把 `data/external/qm9_dataset.csv` 的 `homo`/`lumo`/`gap` 接到轨道通道的**外部对照层**（不是标签层）；口径按「**只能谈排序与标定，不得直接互换**」—— 它是 B3LYP/6-31G(2df,p) 气相轨道能差，我们的是 xTB GFN2 单点，标定式 `xTB = 2.026697·B3LYP − 8.872895` 只在 103 个命中化合物上成立；② 若要扩覆盖，走 **PubChemQC 按名册命中的单文件子集**（全量 7.7 / 8.4 TB 不可取），且不引入任何 NC 件。
+28. **偶极列的质量更正与后续修法（W39 登记；双 μ 读数 W40-C 已执行，W42-C 已把偏置来源定位到方法层，修数仍未执行）**：`dipole_D` 相对 QM9 有**约 0.39 D 的系统偏置**（90/103 个基本一致的化合物上签署差中位数 `−0.3914 D`，我们的列系统性偏高）＋少数两端都有的极端样本（−3.29 → +5.68 D）；H39a7 判否说明**构象自由度不是主因**（刚性 `0.4442 D` vs 柔性 `0.4205 D`）。下一份预注册应：① 把 W38-C 的 `g_rel` 主判据改成「对 `dipole_D` **同时报我们与 QM9 两套 μ** 的双读数」；② 追查偏置来源（单位 / 构象 / 来源列口径），在查清之前**不修数、不插补**。
 
-29. **W40-A 的三条判据与「干净阶梯」定义一起预注册（W40-A 登记，未执行）**：比值判据必须写死「阶梯 = **同一配置网格上的档位**」，并把安慰剂臂与换表示臂的剔除写成机械规则（W28 全 13 臂会把 AUC30 极差从 0.0056 抬到 0.5438）；`alpha*` 的反解只声明为**存在性**，不是对未见化合物的覆盖保证。
-30. **偶极列的双读数已具备、修数仍未授权（W40-C 登记，未执行）**：约 0.39 D 系统偏置的来源（单位 / 构象 / 来源列口径）查清之前**不修数、不插补**；偏置校正后域间比相对变化 0.2059 已超过 0.10 稳健门，因此只能声明「方向稳健」，不得声明「量级稳健」。
-31. **PubChemQC 的入口问题（W40-D 登记，未执行）**：在能访问 PubChem 的机器上先做 InChIKey→CID（只读、便宜），再按 CID 定位分片；单次实证成本约 0.5–6 GB/片。最小分片 `536,126,834 B`，阻塞在可定位性而非体量。
-32. **例外登记表的准入规则（W40-B 登记，未执行）**：`EXEMPT_WRITERS` 现在按「冻结字节 / 追加写 / 严格 JSON」三类理由登记 22 个 owner，但**准入规则本身只写在探针里**。下一份预注册应把三件事写死：① 新增例外必须落在三类之内（新类别要先改预注册）；② 被冻结点名的脚本若要改字节，先走「解冻 / 更正」流程而不是默默改；③ 例外件的重跑脏树必须继续被当成**已知代价**报出来，不得计入「迁移完成率」。
+29. **W40-A 的三条判据与「干净阶梯」定义一起预注册（W40-A 登记，W41-A 已执行）**：比值判据必须写死「阶梯 = **同一配置网格上的档位**」，并把安慰剂臂与换表示臂的剔除写成机械规则（W28 全 13 臂会把 AUC30 极差从 0.0056 抬到 0.5438）；`alpha*` 的反解只声明为**存在性**，不是对未见化合物的覆盖保证。
+30. **偶极列的双读数已具备、修数仍未授权（W40-C 登记，W41-B 已执行双读数条款，W42-C 已归因）**：约 0.39 D 系统偏置的来源（单位 / 构象 / 来源列口径）查清之前**不修数、不插补**；偏置校正后域间比相对变化 0.2059 已超过 0.10 稳健门，因此只能声明「方向稳健」，不得声明「量级稳健」。
+31. **PubChemQC 的入口问题（W40-D 登记，W41-D 复核后仍未执行）**：在能访问 PubChem 的机器上先做 InChIKey→CID（只读、便宜），再按 CID 定位分片；单次实证成本约 0.5–6 GB/片。最小分片 `536,126,834 B`，阻塞在可定位性而非体量。
+32. **例外登记表的准入规则（W40-B 登记，W41-C 已执行，并更正 W40 手写分组）**：`EXEMPT_WRITERS` 现在按「冻结字节 / 追加写 / 严格 JSON」三类理由登记 22 个 owner，但**准入规则本身只写在探针里**。下一份预注册应把三件事写死：① 新增例外必须落在三类之内（新类别要先改预注册）；② 被冻结点名的脚本若要改字节，先走「解冻 / 更正」流程而不是默默改；③ 例外件的重跑脏树必须继续被当成**已知代价**报出来，不得计入「迁移完成率」。
+
+33. **同层级外部源仍然缺位（W41-D 登记，W42-A 已补 near_same_level 源，strict 仍缺）**：三条轨道层两两都是 cross_level（GFN2-xTB 气相 / B3LYP 气相 / ωB97X-V+SMD），给 HOMO/LUMO 通道加权前必须先补一个与 Batt ωB97X-V 同层级的独立源；PubChemQC 入口（先 InChIKey→CID 再按分片定位）仍未执行。
+34. **xTB→Batt 的排序迁移弱（W41-D 登记，W42-B 已给出样本外上界）**：同一 48 化合物上 ρ(xTB,Batt) 仅 **0.538428**、Pearson **0.088435**；任何用 xTB 作 Batt 代理的读数必须显式声明这一层差。
+35. **例外类别扩展要走预注册（W41-C 登记，未执行）**：新增例外只能落在三类之内；确需第四类时先改 `probes/w41_governance_prereg.json` 的 `evidence_rules` 再登记。
+36. **near_same_level 不得当同层级互换（W42-A 登记，W43-A 已执行）**：基组/几何残差已量化成适用域条款 `probes/artifacts/w43_applicability_clause.json` —— 同方法换几何（THEMol vs DFT，n=137）ρ **0.9916** / MAE **0.1599 eV**（保序、平移），near_same_level 基组残留（QM9 vs PubChemQC，n=103）|Δ|≤0.2 eV 覆盖 **0.6893**，跨方法恒判 `not_same_level`；`strict same_level` 计数写死为 **0**。**未闭合的部分**：要为 HOMO/LUMO 通道加权，仍须补一个 strict same-level 独立源。
+37. **偶极偏置的更正本身要单独预注册（W42-C 登记，W43-B 已执行）**：协议 `dipole_transfer_v1` 已锁定（`probes/artifacts/w43_dipole_protocol.json`），状态 **registered_not_authorized**；LOO 偏置 CI **[0.2248, 0.5788] 不含 0**（偏置真实）、legacy 变体逐位复现域表 `mu_corr_D`；离线影响：域比 2.5817 → **2.4696–3.1726**（Δ ≤ 1.0，同档扰动）。**修数仍未授权**，任何校正后偶极不得入标签或特征列。
+
+38. **（W43 登记，W44-A 已执行）层当排序先验要先过准入表**：任何外部或自有轨道层要作 Batt 通道的**只读**排序先验，先过 `probes/artifacts/w43_prior_admission.csv` 的机械评分（score ≥ 0.6 + ρ ≥ 0.5 + unit_check_frac ≥ 0.9 + license 合规）；当前只有 **PubChemQC admit**，QM9 因元数据缺项 defer，xTB 因 ρ=0.328 未达门槛 defer，Batt 作标签目标恒 reject。admit 只表示「可当只读排序先验」，不等于同层级标签替换。
+
+39. **（W43 登记，W44-B 已执行）治理台账守卫纳入每轮验收**：`probes/w43_governance_ledger.py` 的四个不变式（登记负结果并集稳定、冻结读数越界 0、累计 shot 单调且 ≤ 19、本周各件 shots = 0）后续每一轮都要重跑；逐文件台账在 `probes/artifacts/w43_governance_ledger.csv`。
+
+40. **（W44 登记，W45-D 与 W46-D 复核）strict same_level 的机器定义已写死，在仓候选仍为 0**：四属性（functional / basis_set / phase / geometry_source）**全同 + 独立来源**；六个在仓候选（xTB / QM9 / PubChemQC / Batt(target) / ORCA r2SCAN-3c / 扩展层）与 Batt 距离 0 的 **0** 个，最近一对 **QM9–PubChemQC 距离 2**（仅泛函 + 相相同）。规格与候选表在 `probes/artifacts/w44_same_level_spec.json` 与 `probes/artifacts/w44_layer_candidates.csv`。**未闭合**：要给 HOMO/LUMO 通道加权，仍须补一个 **strict same-level 独立源**；near_same_level 只能作带容差的替换上界。
+
+41. **（W44 登记，W45-D 与 W46-D 已复跑）主记分牌与冻结读数走 AST 静态守卫**：`probes/w44_static_shot_guard.py` 后续每一轮都要重跑。任何新探针若改写 `METRIC_NAMES` / `EXPECTED_METRIC_NAMES` 的冻结 7 项、把四个冻结读数写到赋值左侧、或擅自置 `promoted = True`，都会被机械拦下；三个老探针的 4 项私有同名局部量登记为 `legacy_local` 例外（历史代价，不得计入「守卫通过率」）。
+42. **新登记（W45）：扩展层的标定列是 in-sample 仿射，不是独立层**：`calib_homo_eV` 与 `homo_gfn2 → homo_batt` 的 in-sample OLS 逐位同映射（最大残差 1.8e-15、Δslope 4.4e-16），仿射保序（Δρ = 0.0），`calib_lumo_eV` 在 paired 行上全空。证据在 `probes/artifacts/w45_calibration_audit.json`。**约束**：该列**不得**当独立层、同层级源或标签替换；它只补电平不补序。**未闭合**：要给 HOMO/LUMO 通道加权，仍须补一个 strict same-level 独立源。
+
+43. **新登记（W45）：偶极偏置随偶极幅度增长，affine 优先于 shift，但仍不授权修数**：重合 n=103 上偏置三分位中位 **0.0598 / 0.4817 / 0.5207 D**，偏置幅度 vs 偶极幅度秩相关 **0.4775**、vs 重原子数仅 **0.0234**（非尺寸伪影）。这条支撑 `dipole_transfer_v1` 里 **affine 变体优先于 shift**；W43-B 的 **registered_not_authorized** 状态不变，任何校正后偶极仍不得入标签或特征列。
+
+44. **新登记（W45）：xTB→Batt 代理只能声明小分子域**：4668 行的重原子数分箱 ρ **0.8107（5–12）→ 0.7315（13–17）→ 0.4810（18–40）** 单调退化。任何用 xTB 作 Batt 代理的读数必须声明分子尺寸适用域，并随 W43-A 的名册悲观尾条款一起引用。
+
+45. **新登记（W46）：还原轴候选描述符族在门禁后判「不可判定」，不给数值。** 预注册锁死四候选（D0 裸 LUMO / D1 门禁过滤绝热 EA / D2 Li⁺ 耦合还原位移 / D3 溶剂化垂直 EA）放进 (候选 × 层) 网格：r2SCAN-3c 层 D1 合法子集 **0**、D3 合法子集 **2 < 5** ⇒ 判**不可判定**；D2 在 r2SCAN-3c 层无原料（需新 ORCA 单点）。因同装置锚点 = 0，主判据按 H46a2 不执行，产出为**不可判定 + 功效下限**（与 W33 ORCA 层同规格）。方向性读数（只作机制读法）：GFN2 合法气相 n = 48 上 D0–D1 τ_b **0.7394**、D0–D2 **−0.3794**、D1–D2 **−0.4486**，对应未解析占比 **0.3980 / 0.8697 / 0.8874**。证据在 `probes/artifacts/w46_reduction_family_summary.json`。
+
+46. **新登记（W46）：盘上同装置还原锚点数 = 0。** 扫 518 个 CSV，候选列词元族命中 151 列 + 命名对照 32 件，逐件裁定：计算系列一律 `rejected_computed_only`（181 行），盘上实验件（介电锚点）`rejected_criterion_mismatch`（2 件），离盘参照（FEC/VC/EC，DOE APR FY2016，secondary，n_pairs = 3）`not_available_on_disk`；层准入仅 PubChemQC 过闸。**约束**：**不得**用任何计算系列（RX-392 / Batt-P30K / 门禁后 xTB 层）补造实验锚点。台账在 `probes/artifacts/w46_reduction_anchor_ledger.csv`。
+
+47. **新登记（W46）：τb 功效边界已工具化（只读）。** `tools/taub_power.py` 给出正问题（n_min）、反问题（MDE）与回顾性功效；Gate 1 的 n = 7 下 MDE = **0.6541**、过 0.9 阈概率 **0.0809**（τ_true = 0.8）、离散 α_eff = **0.03452**、要分辨 τ = 0.6 需 **8** 个锚点。**约束**：该工具不接主记分牌、不改任何 summary；任何「未过阈」读数必须与功效边界同报。证据在 `probes/artifacts/w46_taub_power_summary.json`。
+
+48. **新登记（W46）：论文升 v1.10——新增 §3.31、T1/T2 定位段、Gate 1 措辞三处修订与 7 篇引用。** §1.2 把创新点收窄为「纪律 + 判据 + 拒答」（删除「首次用秩相关」类表述：Korth 2014 已用 Kendall τ、Rathnakumaran 2026 已证单描述符失效）；Gate 1 措辞改为「阈 0.9 在 n = 7 的操作特性进局限 + P0 0.5238 vs P1 0.4286 不声称优劣 + p = 0.1194 的两竞争解释并列」。论文 sha256 变化在 W46-D 登记。
+
+49. **新登记（W47）：还原锚点缺口未被填上——还原轨覆盖并集 2/7 < 5，主判据按 `H47a2` 不可判定。** 核心集 7 溶剂上计算氧化 4/7（EC/PC/EMC/SL）、实验氧化 4/7（同为 EC/PC/EMC/SL 单溶剂行）、计算还原 1/7（仅 EC，Borodin 2015 Li⁺ 耦合，且为计算件）、实验还原 1/7（仅 PC，Moshkovich 2001）⇒ 还原轨并集 **2 < 5**，**H47a2 拒答分支触发**，D0–D3 主判据不执行，降级为「不可判定 + 功效下限」（与 W33 ORCA 层先例同规格，不算失败）。证据在 `probes/artifacts/w47_anchor_crosscheck_summary.json`。**约束**：不得用任何计算系列补造实验锚点。
+50. **新登记（W47）：Borodin 2013 是纯氧化论文，「68 EA + 86 IP 的 G4MP2 表」是错误归属。** 取件核实：Borodin/Behl/Jow 2013（JPCC 117, 8661）只有 Table 1 计算氧化（16 行）、Table 3 实验氧化（26 行）与 Table 2 阴离子氧化，**全文无还原/EA 表**；计划所称的 EA/IP 表实为其 ref51 = Vydrov & Van Voorhis 2006（G2 离子测试集，**58 个 EA**，无电解液溶剂）。三张转录表的行数 + sha256 钉在 `probes/w47_anchor_prereg.json` 与 `tests/test_w47_anchor_crosscheck.py`。
+51. **新登记（W47）：氧化轴计算-实验交叉一致性 τ_b = 0.6667（精确 p = 0.1667，n = 4）只作敏感性读数。** G4MP2 绝热氧化自由能（ε=20）对实验氧化电位，Top-1 重叠 1.00 / Top-2 0.50、未解析占比 0.3333（ε=1 敏感性列 τ_b 降到 0.3333）；门禁过滤在本件**不适用**（W33 门禁按 InChIKey 在 gfn2/orca 层注册，转录表是外部 G4MP2 层、无 InChIKey），已显式登记。**约束**：n = 4、6 对，τ_b 必须与精确单侧 p 同报，禁止单独引用、禁止写进摘要级结论。
+52. **新登记（W47）：论文升 v1.11——新增 §3.32、§1.2 补 Abaei/Deng 2026、13 篇引用与 §4.6 局限更新；投稿就绪闸门 10/10 通过。** §3.32「W47 收口：双轨还原锚点、主判据执行与投稿就绪评估」在位；**无附录标题**、论文引用的 25 张图全部在盘；四个冻结读数无变体、9 条负结果不变、shot 上限 19。**剩余阻塞项是科学证据而非稿件形式**：同装置实验还原锚点 0、D2 的 r2SCAN-3c 版本与 D3（ddCOSMO 垂直 EA）未计算（转 round-2，待 ORCA 机时）、Ue 1997 还原侧未核实。论文 sha256 变化在 W47-D 登记。

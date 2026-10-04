@@ -1,0 +1,93 @@
+{
+  "rule": {
+    "admission_score": "score = 0.5*spearman + 0.2*coverage_frac + 0.2*unit_check_frac + 0.1*structure_check_frac",
+    "admit": "score >= 0.6 且 spearman >= 0.5 且 unit_check_frac >= 0.9 且 license 为 CC BY 4.0 或 MIT",
+    "defer": "0.4 <= score < 0.6 或元数据缺项",
+    "reject": "score < 0.4 或 spearman < 0.3 或 license 不允许再分发",
+    "same_level_rule": "near_same_level（同泛函同相）不得当 strict same_level；strict 需泛函+基组+相+几何来源全同"
+  },
+  "verdicts": {
+    "xtb": "defer",
+    "qm9": "defer",
+    "pubchemqc": "admit",
+    "batt": "reject"
+  },
+  "rows": [
+    {
+      "layer": "xtb",
+      "role": "本仓自有层（非外部先验候选）",
+      "source_level": "GFN2-xTB 气相（THEMol 几何）",
+      "license": "in_repo",
+      "n_overlap_roster": 237,
+      "coverage_frac": 0.983402489626556,
+      "spearman_vs_batt": 0.32799580402320133,
+      "unit_check_frac": 1.0,
+      "structure_check_frac": 1.0,
+      "metadata_complete": true,
+      "score": 0.6606783999369118,
+      "verdict": "defer",
+      "reason": "分数或秩相关未达 admit 门槛"
+    },
+    {
+      "layer": "qm9",
+      "role": "外部先验候选",
+      "source_level": "B3LYP/6-31G(2df,p) 气相",
+      "license": "CC BY 4.0",
+      "n_overlap_roster": 103,
+      "coverage_frac": 0.42738589211618255,
+      "spearman_vs_batt": 0.8176735614281957,
+      "unit_check_frac": 0.0,
+      "structure_check_frac": 0.0,
+      "metadata_complete": false,
+      "score": 0.49431395913733434,
+      "verdict": "defer",
+      "reason": "元数据缺项：unit/structure 核验字段未随层发布"
+    },
+    {
+      "layer": "pubchemqc",
+      "role": "外部先验候选",
+      "source_level": "B3LYP/6-31G*//PM6 气相",
+      "license": "CC BY 4.0",
+      "n_overlap_roster": 205,
+      "coverage_frac": 0.8506224066390041,
+      "spearman_vs_batt": 0.7386459868154263,
+      "unit_check_frac": 1.0,
+      "structure_check_frac": 1.0,
+      "metadata_complete": true,
+      "score": 0.839447474735514,
+      "verdict": "admit",
+      "reason": "四元条件全过"
+    },
+    {
+      "layer": "batt",
+      "role": "标签目标层（永不作先验）",
+      "source_level": "ωB97X-V/def2-TZVPPD/SMD",
+      "license": "MIT",
+      "n_overlap_roster": 73,
+      "coverage_frac": 0.3029045643153527,
+      "spearman_vs_batt": 1.0,
+      "unit_check_frac": 0.0,
+      "structure_check_frac": 0.0,
+      "metadata_complete": false,
+      "score": 0.5605809128630705,
+      "verdict": "reject",
+      "reason": "标签目标层：永不作排序先验（硬规则）"
+    }
+  ],
+  "same_level_pairs": [
+    {
+      "pair": "qm9-pubchemqc",
+      "declaration": "near_same_level",
+      "strict_same_level": false,
+      "admitted_as_prior": false
+    }
+  ],
+  "counterfactual": {
+    "admitted_layers": [
+      "pubchemqc"
+    ],
+    "rank_agreement_with_batt": {
+      "pubchemqc": 0.7386459868154263
+    }
+  }
+}

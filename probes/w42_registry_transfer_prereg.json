@@ -1,0 +1,181 @@
+{
+  "schema": "w42_computation/prereg@1",
+  "task": "week42_computation_heavy",
+  "revision": 1,
+  "status": "locked_before_run",
+  "locked_before_run": true,
+  "date": "2026-10-04",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "四条 lane 全是只读离线统计：引入 PubChemQC B3LYP 层做四层轨道迁移与偶极三源分解、isotonic 代理校正、抽样律/域比 bootstrap。不重拟合主记分牌臂、不新增特征列、不改 METRIC_NAMES、不动四个冻结读数。"
+  },
+  "why": "W41-D 登记了三条欠账：(a) item 33 缺同层级外部轨道源（同名册上 strict same-level 源数 = 0）；(b) item 34 xTB→Batt 迁移弱（同一 48 化合物 ρ=0.5384、Pearson 0.0884）；(c) item 28/30 ~0.39 D 偶极系统偏置来源未追溯。本轮把新落的第三外部层 PubChemQC（B3LYP/6-31G*//PM6 气相，CC BY 4.0）接进来，做一次计算密集的四 lane：W42-A 四层覆盖/两两交集/迁移网络与非传递闭合；W42-B xTB→Batt 单调（isotonic）校正与代理上界（含 5 折 CV 与阈值 AUC）；W42-C 偶极三源回归分解与 Bland–Altman（our/QM9/PubChemQC）；W42-D 四层抽样律 s0 拟合 + 域比 bootstrap 与置换检验。",
+  "disclosure": "非盲。设计本预注册时已见盘上既有读数（W41-D 的三层覆盖 237/103/73 与 ρ(xTB,Batt)=0.5384、W39/W40 的 QM9 对照层、W40-C 的域比 2.5817、W32-A 的轨道 s0=0.5828）。跑前写死的是四层覆盖分母、判据阈值、bootstrap/置换的重抽数与闭合口径；被读的是规则之后重算的量。按本仓惯例显式声明，不当作盲测。",
+  "forbidden_moves": [
+    "把 PubChemQC 层或任意外部层的数值写进标签池或特征列（只作只读对照）",
+    "在未有预注册前把 near_same_level 声明升格为 strict same_level",
+    "用 isotonic 校正后的代理值替换 Batt 标签做任何主记分牌读数",
+    "对偶极偏置做修数/插补（本轮只做归因，不改任何标签）"
+  ],
+  "roster": {
+    "path": "data/processed/dielectric_physical_features_v03.csv",
+    "n": 241,
+    "denominator_note": "覆盖分母固定为 241 行名册；缺行照实登记不插补。"
+  },
+  "lanes": {
+    "w42_orbital_transfer_network": {
+      "question": "把 PubChemQC B3LYP 层接进四层网络后，四层覆盖、全部 15 个交集、6 个两两排序迁移与三角形非传递闭合各是多少？QM9–PubChemQC 这对『同泛函 B3LYP + 同气相』的源能不能算 same-level？",
+      "inputs": {
+        "roster": "data/processed/dielectric_physical_features_v03.csv",
+        "xtb": "data/processed/w23_orbital_medium_layer.csv",
+        "qm9": "probes/artifacts/w39_qm9_overlap.csv",
+        "pubchemqc": "data/processed/orbital_second_source_layer.csv",
+        "batt": "probes/artifacts/w41_orbital_batt_hits.csv"
+      },
+      "expected_coverage": {
+        "xtb": 237,
+        "qm9": 103,
+        "pubchemqc": 205,
+        "batt": 73,
+        "four_way": 48
+      },
+      "expected_pairs": {
+        "xtb-qm9": {
+          "n": 103,
+          "spearman": 0.885538,
+          "kendall": 0.711443
+        },
+        "xtb-pubchemqc": {
+          "n": 205,
+          "spearman": 0.88245,
+          "kendall": 0.703223
+        },
+        "xtb-batt": {
+          "n": 73,
+          "spearman": 0.327996,
+          "kendall": 0.232885
+        },
+        "qm9-pubchemqc": {
+          "n": 103,
+          "spearman": 0.982328,
+          "kendall": 0.913474
+        },
+        "qm9-batt": {
+          "n": 48,
+          "spearman": 0.817674,
+          "kendall": 0.635315
+        },
+        "pubchemqc-batt": {
+          "n": 71,
+          "spearman": 0.738631,
+          "kendall": 0.564235
+        }
+      },
+      "near_same_level_rule": "两个外部源若泛函与相都相同（B3LYP + gas），判为 near_same_level；基组或几何不同则在声明里注明残留差。strict same_level 要求泛函、基组、相、几何来源全同。",
+      "bootstrap_draws": 2000,
+      "permutation_draws": 2000,
+      "rng_seed": 20261004,
+      "gates": {
+        "near_same_level_spearman": 0.95,
+        "near_same_level_mae_ev": 0.3,
+        "xtb_qm9_spearman": [
+          0.85,
+          0.92
+        ],
+        "xtb_pubchemqc_spearman": 0.85,
+        "xtb_batt_spearman_max": 0.6,
+        "bootstrap_ci_lower_min": 0,
+        "permutation_p_max": 0.01,
+        "non_transitivity_gap_min": 0.2
+      }
+    },
+    "w42_proxy_calibration": {
+      "question": "把 xTB 当作 Batt-P30K 轨道通道的代理时，单调（isotonic）校正能把排序保真度抬多高？样本外（5 折 CV）的代理上界是多少？",
+      "subset": "73 个同时有 xTB gap 与 Batt gap 的化合物（InChIKey 对齐）",
+      "isotonic_direction": "Batt gap ~ 单调递增(xTB gap)，out_of_bounds=clip",
+      "cv_folds": 5,
+      "cv_seed": 42,
+      "auc_label_rule": "Batt gap > 中位数（36/73 为阳性）；另做上四分位（19/73）",
+      "gates": {
+        "isotonic_in_sample_r2": 0.3,
+        "isotonic_in_sample_spearman": 0.5,
+        "isotonic_cv_r2": 0.2,
+        "isotonic_cv_spearman": 0.4,
+        "auc_raw_min": 0.65,
+        "auc_cv_min": 0.7,
+        "auc_top_quartile_cv_min": 0.7,
+        "proxy_fidelity_ratio_max": 0.4
+      }
+    },
+    "w42_dipole_sources": {
+      "question": "~0.4 D 偶极系统偏置出在哪个层？把 QM9 与 PubChemQC 两个 B3LYP 气相源与我们的 xTB 偶极做三源回归分解 + Bland–Altman，能不能把偏置定位到方法层（xTB vs B3LYP）而不是某一个源？",
+      "inputs": {
+        "our": "data/processed/dielectric_physical_features_v03.csv:dipole_D",
+        "qm9": "probes/artifacts/w39_qm9_overlap.csv:qm9_dipole_D",
+        "pubchemqc": "data/processed/orbital_second_source_layer.csv:dipole_debye"
+      },
+      "gates": {
+        "our_qm9_bias_abs_max": 0.5,
+        "our_pubchemqc_bias_abs_max": 0.6,
+        "qm9_pubchemqc_bias_abs_max": 0.1,
+        "qm9_pubchemqc_mae_max": 0.3,
+        "attribution_r2_min": 0.6,
+        "localization_ratio_min": 0.5,
+        "bootstrap_draws": 2000
+      },
+      "rng_seed": 20261004
+    },
+    "w42_sampling_law": {
+      "question": "W32-A 的抽样律 sd(N)=s0·sqrt(1/N−1/N_pop) 在四层轨道对上是否仍成立？s0 是否随排序保真度变化？域间比 2.5817 的 bootstrap 区间与置换 p 是多少？",
+      "sequences": [
+        "xtb-qm9",
+        "xtb-pubchemqc",
+        "xtb-batt",
+        "qm9-pubchemqc",
+        "qm9-batt",
+        "pubchemqc-batt"
+      ],
+      "n_grid": [
+        10,
+        18,
+        25,
+        49,
+        100
+      ],
+      "draws_per_n": 1000,
+      "metric": "kendall_tau_b",
+      "w32a_orbital_s0_reference": 0.5828,
+      "domain_ratio": {
+        "source": "probes/artifacts/w40_onsager_domain_compounds.csv",
+        "rule": "median(L/x | domain_new=B) / median(L/x | domain_new=A)",
+        "x_column": "L_over_x",
+        "expected": 2.5817133416784355,
+        "bootstrap_draws": 2000,
+        "permutation_draws": 2000,
+        "corrected_reference": 3.1132529110752816
+      },
+      "rng_seed": 20261004,
+      "gates": {
+        "law_rmse_max": 0.012,
+        "s0_fidelity_spearman_min": 0.9,
+        "noise_floor_n12_xtb_qm9": [
+          0.1,
+          0.13
+        ],
+        "w32a_consistency_rel_max": 0.15,
+        "domain_ratio_tol": 1e-9,
+        "domain_ci_lower_min": 1,
+        "domain_perm_p_max": 0.01,
+        "domain_bootstrap_sd_max": 0.5
+      }
+    }
+  },
+  "frozen_readings": [
+    0.4091179943351143,
+    0.4766400383507876,
+    0.5861142332208197,
+    0.6216672295270079
+  ],
+  "frozen_note": "四个冻结读数一个不动；本轮不产生新主记分牌读数。"
+}

@@ -1,0 +1,183 @@
+{
+  "schema": "w43_protocol/prereg@1",
+  "task": "week43_residual_admission_governance",
+  "revision": 1,
+  "status": "locked_before_run",
+  "locked_before_run": true,
+  "date": "2026-10-04",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "四条 lane 全是只读离线统计与治理件：大样本层级残差分解、偶极校正协议预注册（只登记不执行）、外部层排序先验准入规则、仓库级治理台账守卫。不拟合主记分牌臂、不新增特征列、不改 METRIC_NAMES、不动四个冻结读数、不改任何标签。"
+  },
+  "why": "W42 收口时登记两条欠账：(a) item 36 near_same_level 不能当同层级替换，需要把基组/几何残留量化成适用域条款与加权准入规则；(b) item 37 偶极校正协议要预注册（校正本身仍未授权，只登记协议 + 离线影响评估）。W43 另接大样本同层级扩展层 data/processed/themol_orbital_layer_expanded.csv（5117 行，GFN2-xTB//B3LYP-D3(BJ)/DZVP 单点，DFT 几何），把 241 名册上只有 73 行的 xTB–Batt 对扩到 4668 行，做层级残差分解；并用 W42 的 6 对秩相关 + 层元数据写一条外部层当排序先验的机器准入规则；最后把全仓 summary 台账扫成治理守卫。",
+  "disclosure": "非盲。设计本预注册时已见盘上既有读数：W42 的四层覆盖 237/103/205/73 与六对 Spearman（ρ(xTB,Batt)=0.327996 等）、W40-C 的域比 2.5817133417 与『新口径 + mu 偏置校正』域比 3.11325、W39/W40 的 QM9 对照层、扩展层 4668 行的 xTB×Batt ρ=0.5985。跑前写死的是：四条 lane 的判据阈值、bootstrap/置换重抽数、准入规则的机械阈值、治理守卫的不变式。被读的是规则之后重算的量。按本仓惯例显式声明，不当作盲测。",
+  "forbidden_moves": [
+    "把任意外部层的数值写进标签池或特征列（只作只读对照）",
+    "把 near_same_level 声明升格为 strict same_level",
+    "执行偶极校正：本轮只登记协议与离线影响评估，不改任何标签或特征列",
+    "用外部层作为先验去替换 Batt 标签做任何主记分牌读数",
+    "改动四个冻结读数或任何已登记的负结果"
+  ],
+  "roster": {
+    "path": "data/processed/dielectric_physical_features_v03.csv",
+    "n": 241,
+    "denominator_note": "名册覆盖分母固定为 241 行；缺行照实登记不插补。扩展层分母固定为其自身行数。"
+  },
+  "lanes": {
+    "w43_layer_residual": {
+      "question": "把 xTB–Batt 对从 73 行扩到大样本扩展层 4668 行后，层级残留（基组/几何）降了多少？残留能不能用描述符分解、并写成一条适用域条款？",
+      "inputs": {
+        "roster": "data/processed/dielectric_physical_features_v03.csv",
+        "expanded": "data/processed/themol_orbital_layer_expanded.csv",
+        "xtb": "data/processed/w23_orbital_medium_layer.csv",
+        "batt": "probes/artifacts/w41_orbital_batt_hits.csv"
+      },
+      "expected": {
+        "expanded_rows": 5117,
+        "xtb_batt_expanded_n": 4668,
+        "xtb_batt_expanded_spearman": 0.5984785837315431,
+        "xtb_batt_expanded_kendall": 0.4243380128602942,
+        "xtb_batt_expanded_pearson": 0.43426840895578406,
+        "roster_xtb_batt_n": 73,
+        "roster_xtb_batt_spearman": 0.32799580402320133,
+        "isotonic_in_sample_r2": 0.41462859329284574,
+        "isotonic_in_sample_spearman": 0.6172241723893919,
+        "isotonic_cv_r2": 0.40413466378707663,
+        "isotonic_cv_spearman": 0.5994823471948241,
+        "auc_raw": 0.7968942402794941,
+        "auc_cv": 0.7957433572045887
+      },
+      "descriptor_panel": [
+        "heavy_atom_count",
+        "hbd",
+        "hba",
+        "tpsa_A2",
+        "molecular_volume_A3",
+        "polarizability_A3",
+        "dipole_D",
+        "mean_gap_ev",
+        "homo_lumo_gap_ev"
+      ],
+      "cv_folds": 5,
+      "cv_seed": 42,
+      "bootstrap_draws": 2000,
+      "permutation_draws": 2000,
+      "rng_seed": 20261005,
+      "gates": {
+        "expanded_min_rows": 4500,
+        "expanded_spearman_min": 0.5,
+        "expanded_spearman_max": 0.7,
+        "roster_vs_expanded_gap_min": 0.2,
+        "isotonic_cv_r2_min": 0.3,
+        "isotonic_cv_spearman_min": 0.5,
+        "auc_cv_min": 0.7,
+        "max_abs_descriptor_spearman_min": 0.2,
+        "residual_mae_max_ev": 0.35
+      }
+    },
+    "w43_dipole_protocol": {
+      "question": "把 ~0.39 D 偶极偏置的校正写成预注册协议（估计口径 / 适用范围 / 回退 / 失效条件），并在离线数据上量化若执行会改变多少行、域比会动多少？",
+      "inputs": {
+        "domain": "probes/artifacts/w40_onsager_domain_compounds.csv",
+        "roster": "data/processed/dielectric_physical_features_v03.csv",
+        "qm9": "probes/artifacts/w39_qm9_overlap.csv"
+      },
+      "expected": {
+        "domain_rows": 241,
+        "usable_rows": 227,
+        "corrected_rows": 211,
+        "mu_corr_minus_dipole_mean_D": -0.3914,
+        "g_rel_new_mean": 3248.7705,
+        "g_rel_corr_mean": 449.0309
+      },
+      "protocol": {
+        "version": "dipole_transfer_v1",
+        "status": "registered_not_authorized",
+        "estimator": "mu_transfer(mu) = mu + intercept + slope*mu，系数在名册 ∩ QM9 的 103 行上做 our ~ QM9 的 OLS，跑前写死",
+        "applicability": "仅当目标行同时有 xTB 偶极与任一 B3LYP 气相偶极层（QM9 或 PubChemQC）时可用；否则回退到未校正偶极",
+        "fallback": "缺外部偶极 ⇒ 原样返回 mu_xTB，并在输出行标注 correction_applied=false",
+        "invalidation": "若留一交叉验证的 |bias| 的 95% CI 跨 0，或 MAE 未下降，则协议判为未通过、不得发布",
+        "authorization": "本轮不执行任何校正；只在离线域表量化影响，标签与特征列一字不改"
+      },
+      "gates": {
+        "qm9_overlap_n_min": 100,
+        "slope_close_to_one": [
+          0.5,
+          1.5
+        ],
+        "offline_corrected_rows_min": 200,
+        "domain_ratio_delta_max": 1,
+        "labels_unchanged": true
+      }
+    },
+    "w43_prior_admission": {
+      "question": "任意外部轨道层能不能当排序先验用？用 W42 六对秩相关 + 层元数据写一条机械准入规则，对四层逐一判 admit / defer / reject。",
+      "inputs": {
+        "transfer_pairs": "probes/artifacts/w42_transfer_pairs.csv",
+        "pubchemqc": "data/processed/orbital_second_source_layer.csv",
+        "expanded": "data/processed/themol_orbital_layer_expanded.csv",
+        "batt": "probes/artifacts/w41_orbital_batt_hits.csv"
+      },
+      "rule": {
+        "admission_score": "score = 0.5*spearman + 0.2*coverage_frac + 0.2*unit_check_frac + 0.1*structure_check_frac",
+        "admit": "score >= 0.6 且 spearman >= 0.5 且 unit_check_frac >= 0.9 且 license 为 CC BY 4.0 或 MIT",
+        "defer": "0.4 <= score < 0.6 或元数据缺项",
+        "reject": "score < 0.4 或 spearman < 0.3 或 license 不允许再分发",
+        "same_level_rule": "near_same_level（同泛函同相）不得当 strict same_level；strict 需泛函+基组+相+几何来源全同"
+      },
+      "expected": {
+        "trainable_pairs": 6,
+        "min_spearman": 0.32799580402320133,
+        "max_spearman": 0.9823336400382101
+      },
+      "gates": {
+        "four_layers_scored": 4,
+        "at_least_one_admit": 1,
+        "at_least_one_defer_or_reject": 1,
+        "batt_never_prior": true,
+        "strict_same_level_count": 0
+      }
+    },
+    "w43_governance_ledger": {
+      "question": "全仓所有 summary JSON 的治理台账能不能机器校验：登记负结果集合稳定、四个冻结读数无人改动、累计 shot 单调不超 19？",
+      "inputs": {
+        "summary_glob": "probes/artifacts/*_summary.json",
+        "frozen_readings_reference": "probes/w42_common.py"
+      },
+      "expected": {
+        "known_registered_negatives": [
+          "H38a2",
+          "H38b1",
+          "H39a7",
+          "H40a5",
+          "H40c10",
+          "H40c11",
+          "H40d8",
+          "H41b5",
+          "H41d8"
+        ],
+        "frozen_readings": [
+          0.4091179943351143,
+          0.4766400383507876,
+          0.5861142332208197,
+          0.6216672295270079
+        ],
+        "cumulative_shots_ceiling": 19,
+        "min_summaries_scanned": 300
+      },
+      "gates": {
+        "negatives_stable": true,
+        "frozen_readings_intact": true,
+        "shots_monotone_nondecreasing": true,
+        "shots_ceiling_respected": true,
+        "summaries_scanned_min": 300
+      }
+    }
+  },
+  "outputs": {
+    "artifacts_dir": "probes/artifacts",
+    "reports_dir": "reports",
+    "tests_dir": "tests"
+  }
+}

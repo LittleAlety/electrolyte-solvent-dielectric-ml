@@ -1,0 +1,182 @@
+{
+  "schema": "w44_governance_wiring/prereg@1",
+  "task": "week44_governance_wiring",
+  "revision": 1,
+  "status": "locked_before_run",
+  "locked_before_run": true,
+  "date": "2026-10-04",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "四条 lane 全是只读治理件与静态审计：准入闸门与消费者审计、每轮验收运行器、strict same-level 要求规格与候选审计、静态 shot/冻结读数守卫。不拟合主记分牌臂、不新增特征列、不改 METRIC_NAMES、不动四个冻结读数。"
+  },
+  "why": "W43 交付了两张新表（层准入表 w43_prior_admission.json、适用域条款 w43_applicability_clause.json）与一条治理守卫（w43_governance_ledger.py），但它们在 README §11 第 38/39 条里只是『登记为下一步』。W44 把这两件事接进机器：W44-A 把准入表升成会抛异常的闸门并审计全仓消费者；W44-B 把治理守卫做成逐轮验收运行器；W44-C 给 strict same_level 写机器要求并审计在仓候选（避免再拿 near_same_level 冒充同层级）；W44-D 用 AST 静态守住主记分牌与四个冻结读数。",
+  "disclosure": "非盲。设计本预注册时已见盘上既有读数：W43 的四层判决（xTB defer / QM9 defer / pubchemqc admit / batt reject）、W43 的适用域三档判决、W43-D 的台账不变式（337 JSON / 9 负结果 / shot 上限 19）、W24-2 的 ORCA r2SCAN-3c 层与 w24_2_orca_dft_layer.csv 的存在。跑前写死的是四条 lane 的判据阈值、闸门的拒绝集合、静态守卫的扫描口径与 AST 规则。被读的是规则之后重算的量。",
+  "forbidden_moves": [
+    "把 defer / reject 的层当作 admit 层使用（闸门必须抛异常）",
+    "改动四个冻结读数或任何已登记负结果",
+    "把 near_same_level 声明升格为 strict same_level",
+    "用静态守卫的输出改写任何既有 summary 或标签",
+    "执行偶极校正（W43-B 协议仍未授权）"
+  ],
+  "roster": {
+    "path": "data/processed/dielectric_physical_features_v03.csv",
+    "n": 241
+  },
+  "lanes": {
+    "w44_prior_gate": {
+      "question": "把 W43 的层准入表升成会抛异常的闸门，并对全仓消费者做机械审计：哪些消费者引用了某一层当排序先验、是否全部过闸、有没有未申报的使用？",
+      "inputs": {
+        "admission": "probes/artifacts/w43_prior_admission.json",
+        "admission_csv": "probes/artifacts/w43_prior_admission.csv",
+        "consumers_decl": "probes/artifacts/w44_prior_consumers.csv"
+      },
+      "gate": {
+        "admitted_only": "只有 verdict == admit 的层可作排序先验；否则抛 PriorRefused",
+        "refuse_set_expected": [
+          "batt",
+          "qm9",
+          "xtb"
+        ],
+        "admit_set_expected": [
+          "pubchemqc"
+        ]
+      },
+      "consumer_scan": {
+        "roots": [
+          "probes",
+          "reports"
+        ],
+        "patterns": [
+          "*.py",
+          "*.md"
+        ],
+        "tokens": [
+          "先验",
+          "prior",
+          "ranking prior"
+        ],
+        "min_files_scanned": 300
+      },
+      "negative_controls": [
+        {
+          "layer": "ccsd_t",
+          "why": "从未登记的新层级"
+        },
+        {
+          "layer": "qm9",
+          "why": "verdict = defer"
+        },
+        {
+          "layer": "batt",
+          "why": "标签目标层，恒 reject"
+        }
+      ],
+      "gates": {
+        "refused_controls": 3,
+        "admitted_layers": [
+          "pubchemqc"
+        ],
+        "undeclared_prior_uses_max": 0,
+        "declared_consumers_min": 1
+      }
+    },
+    "w44_acceptance_runner": {
+      "question": "把 W43-D 的治理守卫做成逐轮验收运行器：每一轮的交付摘要能否机械判定通过，四类验收字段（verification_passed / lanes_missing / frozen_red_lines_intact / 判否是否全部登记）在各轮的分布是多少？",
+      "inputs": {
+        "output_root": "E:/Claude Code/电解质ML/成果输出",
+        "ledger_probe": "probes/w43_governance_ledger.py",
+        "prereg": "probes/w43_protocol_prereg.json"
+      },
+      "acceptance_fields": [
+        "verification_passed",
+        "lanes_missing_empty",
+        "frozen_red_lines_intact",
+        "no_unregistered_failures",
+        "governance_invariants_hold"
+      ],
+      "gates": {
+        "weeks_scanned_min": 40,
+        "weeks_with_summary_min": 30,
+        "all_recent_weeks_pass_min": 5,
+        "invariants_hold": true
+      }
+    },
+    "w44_same_level_spec": {
+      "question": "strict same_level 的机器要求是什么？在仓候选里有没有一层能满足（泛函+基组+相+几何来源全同且独立来源）？最接近的一对差几维？",
+      "inputs": {
+        "layers": [
+          "data/processed/w23_orbital_medium_layer.csv",
+          "probes/artifacts/w39_qm9_overlap.csv",
+          "data/processed/orbital_second_source_layer.csv",
+          "probes/artifacts/w41_orbital_batt_hits.csv",
+          "data/processed/w24_2_orca_dft_layer.csv",
+          "data/processed/themol_orbital_layer_expanded.csv"
+        ]
+      },
+      "spec": {
+        "attributes": [
+          "functional",
+          "basis_set",
+          "phase",
+          "geometry_source"
+        ],
+        "rule": "strict same_level 要求四属性全同 + 独立来源（provenance 不同）；target 是 Batt（ωB97X-V/def2-TZVPPD/SMD 相）",
+        "near_same_level_rule": "只允许 functional + phase 相同者声明 near_same_level，且必须带基组残留容差"
+      },
+      "expected": {
+        "candidate_layers": 6,
+        "strict_same_level_with_batt": 0,
+        "closest_distance": 2,
+        "closest_pair": "qm9-pubchemqc"
+      },
+      "gates": {
+        "candidates_scored": 6,
+        "strict_with_target": 0,
+        "closest_distance_min": 2,
+        "spec_attributes": 4
+      }
+    },
+    "w44_static_shot_guard": {
+      "question": "用 AST 静态守住主记分牌：全仓探针/脚本里有没有人改写 METRIC_NAMES、把四个冻结读数写到赋值左侧、或擅自置 promoted=True？",
+      "inputs": {
+        "scan_roots": [
+          "probes",
+          "scripts",
+          "src"
+        ],
+        "frozen_metric_names": [
+          "r2",
+          "mae",
+          "rmse",
+          "spearman",
+          "mae_lt20",
+          "mae_20_60",
+          "mae_gt60"
+        ],
+        "frozen_readings": [
+          0.4091179943351143,
+          0.4766400383507876,
+          0.5861142332208197,
+          0.6216672295270079
+        ]
+      },
+      "rules": [
+        "METRIC_NAMES / EXPECTED_METRIC_NAMES 的元组字面量必须等于冻结 7 项",
+        "四个冻结读数不得出现在赋值语句的左侧或作为被写对象",
+        "promoted = True 必须伴随登记（否则记为未登记晋升）"
+      ],
+      "gates": {
+        "files_scanned_min": 200,
+        "metric_name_mutations_max": 0,
+        "frozen_reading_writes_max": 0,
+        "unregistered_promotions_max": 0
+      }
+    }
+  },
+  "outputs": {
+    "artifacts_dir": "probes/artifacts",
+    "reports_dir": "reports",
+    "tests_dir": "tests"
+  }
+}

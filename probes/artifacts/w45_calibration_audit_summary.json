@@ -1,0 +1,152 @@
+{
+  "schema": "w45_calibration_audit/summary@1",
+  "task": "week45_calibration_audit",
+  "generated_at_utc": "2026-10-04T11:37:40.565687+00:00",
+  "elapsed_seconds": 0.2102524999936577,
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "只读审计扩展层标定列，不拟合主记分牌臂、不加特征列、不动冻结读数。"
+  },
+  "inputs": {
+    "E:\\Claude Code\\电解质ML\\电解质ML\\probes\\w45_compute_prereg.json": "3b0ff05708fab6fb9184e2962cc2fa21c54a35115e4094b15a978733ab57e43f",
+    "E:\\Claude Code\\电解质ML\\电解质ML\\data\\processed\\themol_orbital_layer_expanded.csv": "8b10b23f3da60c48cafc96cf783605180869b890ff0c5a4df7d0dd9c2036703b"
+  },
+  "inputs_unchanged": true,
+  "frozen_readings_untouched": [
+    0.4091179943351143,
+    0.4766400383507876,
+    0.5861142332208197,
+    0.6216672295270079
+  ],
+  "paired_rows": 4668,
+  "calibrated_rows": 449,
+  "audit_rows": [
+    {
+      "n": 4668,
+      "affine_slope": 0.8702565775077505,
+      "affine_intercept": -0.20421040258262516,
+      "affine_max_abs_residual": 1.7763568394002505e-15,
+      "batt_fit_slope": 0.870256577507751,
+      "batt_fit_intercept": -0.20421040258262502,
+      "slope_delta": 4.440892098500626e-16,
+      "intercept_delta": 1.3877787807814457e-16,
+      "spearman_gfn2_batt": 0.8388852321667876,
+      "spearman_calib_batt": 0.8388852321667876,
+      "rank_invariance_delta": 0.0,
+      "mae_before_ev": 1.206598583979079,
+      "mae_after_ev": 0.3031706538321493,
+      "mae_cv_ev": 0.3032870786108595,
+      "leakage_gap_ev": 0.00013051895059329466,
+      "target": "homo"
+    }
+  ],
+  "calibrated_same_map_max_abs_residual": 1.7763568394002505e-15,
+  "criteria": [
+    {
+      "id": "H45a1",
+      "description": "paired_anchor 行数 >= 4600（双端 gap 齐备）",
+      "value": 4668,
+      "threshold": 4600,
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a2",
+      "description": "calibrated_estimate 行数 >= 400",
+      "value": 449,
+      "threshold": 400,
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a3",
+      "description": "calib_homo 是 homo_gfn2 的精确一元仿射（残差上限 <= 1e-9）",
+      "value": 1.7763568394002505e-15,
+      "threshold": 1e-09,
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a4",
+      "description": "该仿射与 homo_gfn2->homo_batt 的 in-sample OLS 同一映射",
+      "value": {
+        "slope_delta": 4.440892098500626e-16,
+        "intercept_delta": 1.3877787807814457e-16
+      },
+      "threshold": {
+        "tolerance": 1e-06
+      },
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a5",
+      "description": "仿射保序：rho(calib_homo,batt) == rho(homo_gfn2,batt)",
+      "value": {
+        "spearman_gfn2_batt": 0.8388852321667876,
+        "spearman_calib_batt": 0.8388852321667876,
+        "delta": 0.0
+      },
+      "threshold": {
+        "tolerance": 1e-06
+      },
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a6",
+      "description": "标定只补电平：homo MAE 从 >= 1.0 降到 <= 0.35 eV",
+      "value": {
+        "before": 1.206598583979079,
+        "after": 0.3031706538321493
+      },
+      "threshold": {
+        "before_min": 1,
+        "after_max": 0.35
+      },
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a7",
+      "description": "标定只覆盖 homo：calib_lumo 在 paired 行上非空计数 = 0（登记为已知边界）",
+      "value": {
+        "calib_homo_nonempty": 4668,
+        "calib_lumo_nonempty": 0
+      },
+      "threshold": {
+        "calib_lumo_nonempty": 0
+      },
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a8",
+      "description": "449 行 calibrated_estimate 套用同一映射（残差上限 <= 1e-9）",
+      "value": 1.7763568394002505e-15,
+      "threshold": 1e-09,
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a9",
+      "description": "5 折 out-of-sample 复拟合 MAE <= 0.45 eV 且泄漏缺口 >= 0",
+      "value": {
+        "cv_mae": 0.3032870786108595,
+        "leakage_gap": 0.00013051895059329466
+      },
+      "threshold": {
+        "cv_mae_max": 0.45,
+        "leakage_gap_min": 0
+      },
+      "verdict": "成立"
+    },
+    {
+      "id": "H45a10",
+      "description": "输入（扩展层 + prereg）sha256 未变",
+      "value": true,
+      "threshold": true,
+      "verdict": "成立"
+    }
+  ],
+  "registered_negatives": [],
+  "headline": [
+    "calib_homo 是 homo_gfn2 的精确一元仿射（残差 1.7763568394002505e-15），且与 homo_gfn2->homo_batt 的 in-sample OLS 同一映射。",
+    "仿射保序：rho(calib,batt) == rho(gfn2,batt)（差 0.0）=> 只补电平不补序。",
+    "homo MAE 1.206598583979079 -> 0.3031706538321493 eV；5 折 CV MAE 0.3032870786108595 eV。",
+    "0 shot（累计仍 19）。"
+  ]
+}

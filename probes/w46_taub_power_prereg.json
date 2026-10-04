@@ -1,0 +1,106 @@
+{
+  "schema": "w46_taub_power/prereg@1",
+  "task": "week46_taub_power",
+  "status": "locked_before_run",
+  "revision": 3,
+  "locked_at_utc": "2026-10-04T12:00:00Z",
+  "lane": "W46-C",
+  "ledger": {
+    "main_scoreboard_shots_this_week": 0,
+    "cumulative_main_scoreboard_attempts_after": 19,
+    "why_not_a_shot": "W46 四条 lane 全是只读计算、侦察与治理件：不拟合 ε 主记分牌臂、不新增特征列、不改 METRIC_NAMES、不动四个冻结读数。"
+  },
+  "why": "调研报告 P4：R1 有限总体修正闭式（噪声地板 0.122 @ N=12）目前只是论文里的一个读数，未工具化；Gate 1 的阈 0.9 在 n=7 下只允许 ≤1 对不一致，p=0.1194 使「机制脱节」与「功效不足」两个解释无法用文字并列。本 lane 把它变成可复用工具：正问题（给 n/τ_true/α/power 求 n_min）、反问题（给 n 求 MDE 曲线）、回顾性功效（Gate 1 在 τ_true ∈ {0.4,0.6,0.8} 下的功效与过阈概率）。",
+  "disclosure": "非盲。设计本预注册前已见：W33 精确零分布工具（probes/w33_kendall_null_tool.py）与 w33_kendall_null_summary.json、W33 态合法性门禁的四介质合法子集（气相 52 / THF 154 / 苯甲醛 154 / 水 161；ORCA 层 0）、W24 C1/C2 阶梯与 w24_2 ORCA 层（28 分子）、data/processed/redox_merged.csv（29,911 行，全部 source_native_dft）、data/processed/anchor_crosscheck.csv（介电锚点，非电位）。跑前写死的是分母、阈值、重抽数、替代模型与拒答分支；被算的是规则之后重算的量。",
+  "forbidden_moves": [
+    "用本轮的侦察结论去补造任何缺失的实验锚点数字",
+    "把计算系列（RX-392 / Batt-P30K / 门禁后的 xTB 层）当实验锚点进主检验",
+    "改动四个冻结读数或任何已登记负结果",
+    "把门禁后 τb 下降当成「重定义无效」（已知现象，禁事后美化）",
+    "把本轮任何读数写回既有 summary 或授权任何修数"
+  ],
+  "null_model": {
+    "id": "exact_mahonian",
+    "statement": "Kendall tau_b（无并列）与逆序数 K 一一对应：tau = 1 - 4K/(n(n-1))；K 的 Mahonian 分布由 prod_{i=1..n}(1+x+...+x^{i-1}) 精确给出。",
+    "p_upper": "P(tau_null >= t) 用 Fraction 精确算，与 probes/w33_kendall_null_tool.py 同规格。",
+    "reference_artifact": "probes/artifacts/w33_kendall_null_summary.json"
+  },
+  "alternative_model": {
+    "id": "shifted_null",
+    "statement": "tau_alt = tau_true + (1 - tau_true) * tau_null，其中 tau_null 取自零分布。",
+    "properties": [
+      "tau_true = 0 时 tau_alt 恒等于 tau_null ⇒ 拒绝率与精确零分布逐点一致（H46c2 的基础）",
+      "E[tau_alt] = tau_true（零分布均值为 0），无系统偏置",
+      "tau_true -> 1 时功率 -> 1，且对 tau_true 单调不减"
+    ],
+    "continuous_null": "H46c1 的校准检查用连续化零分布：把精确 p_upper 在 tau 网格上做分段线性插值（网格点取值与精确值逐位相同），使拒绝率在 tau_true = 0 上恰为 alpha。",
+    "why_continuous": "精确零分布是离散的，alpha = 0.05 处落在网格点之间（n=7 时精确拒绝率为 174/5040），离散口径下不可能等于 0.05；分段线性连续化是标准做法，且不改变网格点上的精确值。"
+  },
+  "params": {
+    "alpha": 0.05,
+    "power_target": 0.8,
+    "n_grid": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      12,
+      15,
+      20,
+      25,
+      30
+    ],
+    "gate1_n": 7,
+    "gate1_threshold": 0.9,
+    "gate1_observed_tau": 0.4285714285714286,
+    "retrospective_tau_true": [
+      0.4,
+      0.6,
+      0.8
+    ],
+    "mde_alpha": 0.05,
+    "mde_power": 0.8,
+    "finite_population": {
+      "s0_source": "probes/artifacts/w32_rank_stability.json",
+      "closed_form": "sd(N) = s0 * sqrt(1/N - 1/N_pop)",
+      "note": "闭式对应有限总体，精确零分布对应无限总体；两者只在同一 N 上并排，不相互替换。"
+    }
+  },
+  "gates": {
+    "rejection_window_n7_tau0": [
+      0.04,
+      0.06
+    ],
+    "w33_pointwise_tolerance": 1e-12,
+    "mde_monotone_tolerance": 1e-12,
+    "expected_alpha_level_tolerance": 1e-9,
+    "gate1_threshold_pass_probability_max": 0.15,
+    "discreteness_gap_min": 0.01,
+    "permutation_mc_tolerance": 0.005,
+    "permutation_mc_draws": 100000,
+    "continuous_mc_draws": 200000,
+    "finite_population_min_delta_tau": 0.15,
+    "gate1_observed_p_upper_expected": 0.11944444444444445,
+    "gate1_observed_p_tolerance": 1e-12
+  },
+  "deliverables": [
+    "tools/taub_power.py",
+    "probes/w46_taub_power.py",
+    "probes/artifacts/w46_taub_power_summary.json",
+    "probes/artifacts/w46_taub_power_table.csv",
+    "probes/artifacts/w46_taub_power_mde.csv",
+    "probes/artifacts/w46_taub_power.png",
+    "reports/w46_taub_power.md",
+    "tests/test_w46_taub_power.py"
+  ],
+  "lock_reason": "r1 -> r2：在首次运行探针之前，把三条次级判据（MDE 单调性、Gate 1 阈 0.9 的回顾性过阈概率、离散精确口径的保守缺口）与置换抽样校准判据写进 gates，避免跑后再加判据。 r2 -> r3：见 revision_history[1]；补入 gate1_observed_p_upper_expected = 602/5040（替换错误的 0.5 猜测）与 gate1_observed_p_tolerance = 1e-12。",
+  "revision_history": [
+    {
+      "from": 2,
+      "to": 3,
+      "reason": "首次执行探针时发现 H46c9 的实现把「观测 tau 的单侧精确 p」误写成 abs(p - 0.5) <= 0.05（阈值文本「约 0.5」是错误猜测）。按已锁 null_model（P(tau_null >= t)，与 w33_kendall_null_tool.p_upper 同规格）在预注册观测值 0.4285714285714286 上精确重算得 602/5040 = 0.11944444444444445，故把期望值与容差补进 gates（gate1_observed_p_upper_expected / gate1_observed_p_tolerance）。被丢弃的 0.5 猜测保留在此，避免成为隐性负结果。H46c2 的逐点对照由 p_value_table 的 p_upper（实为下尾/CDF）改为同规格的 p_upper（上尾）函数，属实现与已锁规格对齐，未改判据语义。"
+    }
+  ]
+}

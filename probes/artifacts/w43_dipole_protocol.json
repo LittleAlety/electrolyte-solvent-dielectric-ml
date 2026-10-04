@@ -1,0 +1,65 @@
+{
+  "protocol_id": "dipole_transfer_v1",
+  "status": "registered_not_authorized",
+  "authorization": "本轮不执行：只登记协议与离线影响评估；名册偶极列与特征列一字未改。",
+  "variants": {
+    "legacy": {
+      "kind": "signed_shift",
+      "offset": -0.39139999999999997,
+      "definition": "mu_corr = mu + offset（带符号增量，抽自 W40-C 域表，用于精确复现）"
+    },
+    "shift_mean": {
+      "kind": "signed_shift",
+      "offset": -0.39451165048543685,
+      "definition": "mu_corr = mu + offset（带符号增量 = -mean(mu_xTB - mu_QM9)）"
+    },
+    "shift_median": {
+      "kind": "signed_shift",
+      "offset": -0.40880000000000005,
+      "definition": "mu_corr = mu + offset（带符号增量 = -median(mu_xTB - mu_QM9)）"
+    },
+    "affine": {
+      "kind": "affine",
+      "slope": 0.7505560209207711,
+      "intercept": 0.16227395046765383,
+      "definition": "mu_corr = intercept + slope*mu，QM9 ~ our 的 OLS"
+    }
+  },
+  "applicability": "仅当目标行同时有 xTB 偶极与任一 B3LYP 气相偶极层（QM9 或 PubChemQC）时可用；否则回退到未校正偶极",
+  "fallback": "缺外部偶极 ⇒ 原样返回 mu_xTB，并在输出行标注 correction_applied=false",
+  "invalidation": "若留一交叉验证的 |bias| 的 95% CI 跨 0，或 MAE 未下降，则协议判为未通过、不得发布",
+  "estimate_overlap": {
+    "n": 103,
+    "scope": "名册 ∩ QM9"
+  },
+  "affine_diagnostics": {
+    "slope": 0.7505560209207711,
+    "intercept": 0.16227395046765383,
+    "r2": 0.6141809025552685,
+    "mae_uncorrected": 0.610309708737864,
+    "mae_corrected": 0.4604847987809531,
+    "bias_our_minus_qm9": 0.39451165048543685,
+    "bootstrap": {
+      "slope_point": 0.7505560209207711,
+      "slope_lo": 0.5656987021253073,
+      "slope_hi": 0.8930882528753882,
+      "intercept_point": 0.16227395046765383,
+      "intercept_lo": -0.16580282559823067,
+      "intercept_hi": 0.5393995238540341,
+      "draws": 2000
+    },
+    "leave_one_out": {
+      "n": 103,
+      "bias": 0.39451165048543685,
+      "sd": 0.9127629940966863,
+      "mae": 0.610309708737864,
+      "ci_lo": 0.22482240291262132,
+      "ci_hi": 0.5788337621359223,
+      "loo_offset_mean": 0.39451165048543696,
+      "loo_offset_sd": 0.008948656804869472,
+      "zero_inside_ci": false
+    }
+  },
+  "legacy_reproduction_max_abs_D": 1.7763568394002505e-15,
+  "uncorrected_domain_ratio": 2.5817134002985758
+}
