@@ -1,0 +1,89 @@
+{
+  "schema": "plan_b.temporary_exception_record/v1",
+  "record_id": "TEMPREC-B02-001",
+  "generated_at_utc": "2026-11-23T04:45:00Z",
+  "work_package": "B02",
+  "exception_kind": "OWN_CODE_DEFECT_IN_REVIEW_INFRASTRUCTURE",
+
+  "trigger": {
+    "symptom": "admission_review_queue.csv 的 j04_condition_pair_valid 与 j04_invalidity_reason 两列在 70/70 行全部为空",
+    "root_cause": "build_admission_review_queue.py 第一版用 condition_pair_validity_v1.csv 的 aggregate_id 列 (v04row-NNN) 建字典, 却用 measurement_id (EPSV04-RNNN) 查询. 两套键永不相等.",
+    "why_it_was_silent": "Python 的 dict.get(key, '') 默认值把一次彻底的 join 失败转换成'看起来正常的空白', 不抛异常",
+    "discovered_by": [
+      "Reviewer 2 (来源/证据追溯)",
+      "Reviewer 3 (代码正确性)",
+      "Reviewer 4 (反向审计)"
+    ],
+    "discovery_mode": "三位独立子智能体在互不可见的情况下各自发现, 非自查",
+    "severity": "HIGH",
+    "consequence_if_unshipped": "审阅者若只读队列, 无法区分真实测量与合成复合值; 62 个测量中 30 个是合成复合值"
+  },
+
+  "remedy_applied": {
+    "step_1_explicit_bridge": {
+      "what": "在 v04row-NNN 与 EPSV04-RNNN 之间建立显式映射, 不再依赖隐式键相等",
+      "verification": "248/248 行按数字后缀对齐, 0 行错位",
+      "code_location": "scripts/b02/build_admission_review_queue.py::pv_by_measurement"
+    },
+    "step_2_fatal_self_check": {
+      "what": "关键列若在全部行上为空则 FATAL 退出 (return 3), 不再静默产出",
+      "critical_columns": [
+        "j04_condition_pair_valid",
+        "j03_verdict",
+        "j03_pair_in_single_observation",
+        "temperature_raw_K",
+        "dielectric_raw"
+      ],
+      "code_location": "scripts/b02/build_admission_review_queue.py::_empty_critical"
+    },
+    "step_3_coverage_publication": {
+      "what": "把每一列的非空率写入 manifest, 任何 0.0% 的列对下游可见",
+      "code_location": "admission_review_queue_manifest.json::column_coverage_pct"
+    },
+    "step_4_regression_guard": {
+      "what": "新增测试锁定该缺陷不会复发",
+      "test": "tests/test_b02_consensus_gate.py::test_queue_critical_columns_are_not_all_empty"
+    },
+    "step_5_revalidation": {
+      "what": "队列重建后, 校验三份已提交评审仍对同一批记录作答",
+      "result": "R1/R3/R4 的 queue_id 序列与最终队列逐条一致 (70/70, 顺序相同)",
+      "queue_sha256_before": "1b701aaa...2cdbab",
+      "queue_sha256_after": "02be88c78bade79f8a1937cc4ac916e9f9cd70314bd51b01ec99c6fb9e8148b6"
+    }
+  },
+
+  "impact_assessment": {
+    "conclusion_changed": false,
+    "reasoning": [
+      "三位 Reviewer 均未依赖该空列: 他们各自回到 condition_pair_validity_v1.csv 重建了 j04",
+      "Reviewer 3 独立重算: 21 个多来源聚合全部精确复现为中位数, 0 漂移",
+      "修正后 j04 与 j03 在 70/70 行完全一致, 说明 j04 本就不是独立门禁, 而是同一计算的重复表达",
+      "三份评审对 j04=false 行的判定与修正后数据高度吻合 (R3/R4 40/40, R1 39/40)"
+    ],
+    "independent_corroboration": "修正后数据反而加强了评审结论的可信度, 因为评审是在缺少该字段的情况下自行推导出同一结论的"
+  },
+
+  "frozen_bytes_touched": false,
+  "frozen_artifacts_verified_after_remedy": {
+    "J01": "9/9 MATCH",
+    "J02A": "4/4 MATCH",
+    "J02B": "5/5 MATCH",
+    "J03": "6/6 MATCH",
+    "recorded_inputs": "14/14 MATCH",
+    "v56_r007_baseline": "20 files hashed",
+    "overall": "PASS"
+  },
+
+  "plan_b_compliance": {
+    "chapter": "第四章 临时补救",
+    "allowed_because": "四智能体发现错误后重新建立新版本",
+    "not_a_violation_of": [
+      "未推断不存在的测量",
+      "未修改实验标签",
+      "未静默更换温度或频率条件",
+      "未覆盖 J01/J02/J03"
+    ],
+    "record_required": true,
+    "record_generated": true
+  }
+}

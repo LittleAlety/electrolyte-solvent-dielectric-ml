@@ -1,0 +1,120 @@
+{
+  "schema": "b04.pool_lineage/v2-draft",
+  "generator": "build_candidate_pool_v2/1.0.0",
+  "generated_at_utc": "2026-11-23T10:21:50Z",
+  "declaration": "candidate_pool_v2_draft 是本项目第一个**有资格**构造的新候选池. 它的准入是三个独立门的交集, 任何一个不通过即不入选.",
+  "eligibility_gates": {
+    "gate_1_b02_four_agent": {
+      "source": "outputs\\admission_v2\\consensus_decisions.csv",
+      "required_status": "AI_CONSENSUS_ACCEPTED",
+      "n_passing": 22
+    },
+    "gate_2_v06_model_ready": {
+      "source": "outputs\\b01\\dataset_v06_model_ready.csv",
+      "required": "model_ready == true",
+      "n_passing": 73
+    },
+    "gate_3_no_unresolved_blocker": {
+      "source": "outputs\\b01\\dataset_v06_exclusions.csv",
+      "note": "v06 已把未解决冲突/压力异质/合成中点/推定温度排除在外",
+      "n_excluded": 175
+    }
+  },
+  "counts": {
+    "n_in_pool": 22,
+    "n_distinct_molecules": 22,
+    "n_rows_audited_not_in_pool": 226,
+    "audit_by_reason": {
+      "NO_CONTRIBUTING_MEASUREMENT;PAIR_NOT_VALID": 123,
+      "MODEL_READY_NOT_REVIEWED": 43,
+      "NO_CONTRIBUTING_MEASUREMENT;PAIR_NOT_VALID;TEMPERATURE_IMPUTED": 22,
+      "SYNTHETIC_PAIR;PAIR_NOT_VALID": 11,
+      "PRESSURE_HETEROGENEOUS;PAIR_NOT_VALID;CONFLICT_UNRESOLVED": 9,
+      "MODEL_READY_BUT_NOT_UNANIMOUS": 8,
+      "PRESSURE_HETEROGENEOUS;CONFLICT_UNRESOLVED": 4,
+      "PRESSURE_HETEROGENEOUS;PAIR_NOT_VALID": 2,
+      "CONFLICT_UNRESOLVED": 1,
+      "CONFLICT_UNRESOLVED;PAIR_NOT_VALID;NO_CONTRIBUTING_MEASUREMENT": 1,
+      "NO_CONTRIBUTING_MEASUREMENT;PAIR_NOT_VALID;OUTSIDE_ROOM_BAND": 1,
+      "PAIR_NOT_VALID;OUTSIDE_ROOM_BAND": 1
+    }
+  },
+  "pool_character": {
+    "n_records": 22,
+    "n_molecules": 22,
+    "records_per_molecule": 1,
+    "n_distinct_source_documents": 16,
+    "n_molecules_sharing_a_document": 9,
+    "independence_warning": "22 个分子只来自 16 个来源文档；9 个分子与其他分子共享文档 (Reviewer 2, B04+B05)。因此『22 个独立观测』是错的，有效独立文档数只有 16。",
+    "aggregation_breakdown": {
+      "single_observation": 15,
+      "single_source_aggregate": 7,
+      "multi_source_aggregate": 0,
+      "note": "SINGLE_SOURCE_AGGREGATE 的行把同一篇论文内的 3-5 条观测聚合成 1 个值 (n_independent_experiments=1). 这本身是正确标注, 但『22 个分子』不应被读成『22 条独立测量』. (Reviewer 4, B04+B05)"
+    },
+    "range_restriction": {
+      "pool_epsilon_sd": 12.46,
+      "note": "候选池只覆盖 73 个 model-ready 分子的 30.1%，且 ε 标准差明显小于全量. 因此任何性能数字都受严重范围限制影响, 不可外推."
+    },
+    "phase_state": {
+      "n_liquid_at_stated_T": 14,
+      "n_solid_or_supercooled": 4,
+      "n_unknown_no_mp": 4,
+      "finding": "有分子在其设定温度下低于熔点, 即样品是固态/过冷液体 (Reviewer 1, B04+B05). 液体静态介电常数是**液相**性质, 对过冷样品测得的值描述的是亚稳态.",
+      "rule": "SOLID_OR_SUPERCOOLED 的行必须显式标记, 不得静默当作正常液体; 剔除非液相证据后再讨论模型性能"
+    },
+    "assessment": "22 个分子、每分子 1 条记录. 这是**筛选可行性集**, 不是训练集. B05 必须以此为前提设计实验, 不得宣称统计功效充分.",
+    "primary_k_implication": "按冻结规则 primary_k = max(1, ceil(n/10)) = ceil(22/10) = 3. 但 B07 必须报告这 22 个分子是否有足够独立来源做聚类检验."
+  },
+  "frozen_artifacts": {
+    "candidate_pool_C": {
+      "path": "E:\\Claude Code\\电解质ML\\v56_standalone\\reports\\candidate_pool_C_R001.csv",
+      "sha256": "c50f9349ec6de434f2b81d7a138292581fb661f4b1b9b1d54fdd3f7dc9055ba8",
+      "status": "AUTHORITATIVE_HISTORICAL_UNCHANGED",
+      "n_rows": 49
+    },
+    "master_in_49_preview": {
+      "status": "HISTORICAL_S4_FOLD_UNCHANGED",
+      "merge_forbidden": true,
+      "merge_forbidden_reason": "并集会把两套不同筛选规则混成既非预览也非正式池的第三物, 并伪造更大的分母"
+    },
+    "j01_j02_j03": "byte-identical, verified by b00/verify_frozen_artifacts.py"
+  },
+  "inputs": {
+    "dataset_v06_model_ready": {
+      "sha256": "49777e3d80aab6e4a6a6a0bd5179c511d8f22d2ba3361741f6fce3b7fb2c7470",
+      "rows": 73
+    },
+    "dataset_v06_exclusions": {
+      "sha256": "94893e28316c7acb79eeb08e83b47b3a62f3d86c7b3d40513ad5c063f20dfc47",
+      "rows": 175
+    },
+    "consensus_decisions": {
+      "sha256": "3e2aeb7609df6d4baa3fdc39ef6025484966c31c2a574b571863a46ea73a6f6d",
+      "rows": 72
+    }
+  },
+  "outputs": {
+    "candidate_pool_v2_draft": {
+      "path": "outputs\\b04\\candidate_pool_v2_draft.csv",
+      "sha256": "8d171febaf713d18bf8684fd8c07e473203e5cd2be916217f7a6af4ba62d8bbd",
+      "rows": 22
+    },
+    "candidate_exclusion_audit": {
+      "path": "outputs\\b04\\candidate_exclusion_audit.csv",
+      "sha256": "748fa755fbadad952f504f6e7fc1f6df0f263771ac39d876d6b31f4aaf252377",
+      "rows": 226
+    },
+    "temperature_vocabulary_mapping": {
+      "path": "outputs\\b04\\temperature_vocabulary_mapping.json",
+      "sha256": "38d04325356db584ecbf99f57ba0b946eabfe4cfcc878dff9442eff4b8e0916f"
+    }
+  },
+  "integrity_rules_applied": [
+    "所有新增行必须有 measurement_id 与来源 DOI",
+    "所有温度原始值保留, 未折算",
+    "未为扩大样本数降低准入标准",
+    "未合并 master.in_49_preview (merge_forbidden 继续有效)",
+    "未覆盖 candidate_pool_C"
+  ]
+}

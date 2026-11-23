@@ -1,0 +1,90 @@
+{
+  "schema": "b01.dataset_v06/v1",
+  "generator": "build_dataset_v06/1.0.0",
+  "generated_at_utc": "2026-11-23T10:21:45Z",
+  "declaration": "v06 是**新版本**, 不修改 v04/v05/J01/J02/J03 的任何字节. 被排除的行仍保留在 exclusions.csv 中, 因此旧分母可完整复现.",
+  "inputs": {
+    "dielectric_v04": {
+      "sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c",
+      "rows": 248
+    },
+    "measurement_ledger_v1": {
+      "sha256": "1031611d703a5a29360d511cab24e6f7acc08032445650620b0bbd55c0b2957b",
+      "rows": 2065
+    },
+    "condition_pair_validity_v1": {
+      "sha256": "8baea7bc87842d6c6d2af3efa4e5f01754ddc5f72a20ad6d3477ca44cb0c12b1",
+      "rows": 248
+    },
+    "reconstruction_exceptions": {
+      "sha256": "938e51a97b19b5704e04edc9013a212bcb470ca8e61cf52cc0052fd565468bd0",
+      "rows": 170
+    }
+  },
+  "repairs_applied": {
+    "pressure_heterogeneity": "贡献观测跨越常压与加压两种状态的聚合行被排除出 model_ready, 标记 PRESSURE_HETEROGENEOUS. 不做静默替换.",
+    "synthetic_midpoints": "由两个独立中位数拼成的 (T,ε) 对不是测量, 排除并标记 SYNTHETIC_PAIR.",
+    "temperature_imputation": "温度为推定值的行保留 (ε 可能仍真实), 但标记 TEMPERATURE_IMPUTED, 不得作为同温证据使用.",
+    "unresolved_source_conflicts": "v06 现在**读取**冲突登记表与四智能体裁决. 未解决冲突 (CONFLICT_UNRESOLVED) 排除出 model_ready; 已由 4/4 PASS 裁决为可接受的冲突保留 (CONFLICT_RESOLVED_PASS). 早期版本完全没读该登记表, 导致冲突行靠『恰好没有别的阻断理由』泄漏.",
+    "duplicate_experiment_dedup": "同一实验被两篇论文重复报告时, 贡献来源计数与中位数都会被高估. v06 用并查集在 (molecule, T) 层面合并逐字节相同的文档, 输出 n_independent_experiments."
+  },
+  "conflict_adjudication": {
+    "BTANRVKWQNVYAZ-UHFFFAOYSA-N": {
+      "conflict_id": "MCONF-BTANRVKWQNVYAZ-298",
+      "pass": 4,
+      "hold": 0,
+      "fail": 0,
+      "verdict": "RESOLVED_PASS",
+      "resolutions": [
+        "KEEP_V06_VALUE"
+      ]
+    },
+    "FXHOOIRPVKKKFG-UHFFFAOYSA-N": {
+      "conflict_id": "MCONF-FXHOOIRPVKKKFG-303.15",
+      "pass": 0,
+      "hold": 4,
+      "fail": 0,
+      "verdict": "UNRESOLVED_HOLD",
+      "resolutions": [
+        "EXCLUDE_FROM_MODEL_READY",
+        "KEEP_V06_VALUE",
+        "NEEDS_PRIMARY_DOCUMENT"
+      ]
+    }
+  },
+  "counts": {
+    "n_v04_rows": 248,
+    "n_model_ready_v06": 73,
+    "n_excluded_v06": 175,
+    "n_pair_valid_v05": 78,
+    "delta_vs_v05_pair_valid": -5,
+    "exclusions_by_reason": {
+      "PAIR_NOT_VALID": 170,
+      "NO_CONTRIBUTING_MEASUREMENT": 147,
+      "TEMPERATURE_IMPUTED": 22,
+      "PRESSURE_HETEROGENEOUS": 15,
+      "CONFLICT_UNRESOLVED": 15,
+      "SYNTHETIC_PAIR": 11,
+      "OUTSIDE_ROOM_BAND": 2
+    }
+  },
+  "denominator_note": "v05 的 pair_valid 计数是 78; v06 的 model_ready 是 73. 两者**不是**同一口径: v05 只判 (T,ε) 是否同源, v06 额外要求温度非推定且压力同质. 差额 5 行全部列在 exclusions.csv, 可逐行追溯.",
+  "lineage": {
+    "supersedes": "none -- v06 与 v04/v05 并列, 不替代",
+    "v04_unchanged": true,
+    "v05_unchanged": true,
+    "frozen_artifacts_unchanged": true
+  },
+  "outputs": {
+    "model_ready": {
+      "path": "outputs\\b01\\dataset_v06_model_ready.csv",
+      "sha256": "49777e3d80aab6e4a6a6a0bd5179c511d8f22d2ba3361741f6fce3b7fb2c7470",
+      "rows": 73
+    },
+    "exclusions": {
+      "path": "outputs\\b01\\dataset_v06_exclusions.csv",
+      "sha256": "94893e28316c7acb79eeb08e83b47b3a62f3d86c7b3d40513ad5c063f20dfc47",
+      "rows": 175
+    }
+  }
+}

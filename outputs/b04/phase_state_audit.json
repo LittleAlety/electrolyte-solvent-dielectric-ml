@@ -1,0 +1,65 @@
+{
+  "schema": "b04.phase_state_audit/v1",
+  "generator": "audit_pool_phase_state/1.0.0",
+  "generated_at_utc": "2026-11-23T09:40:09Z",
+  "question": "候选池中每个分子在其**设定温度**下是否真的是液体? 判据: mp_C < (T_K - 273.15).",
+  "why_the_existing_gate_cannot_answer_this": "liquid_window_gate_report.csv 的 blocked 理由统一写作 mp_above_T_low, 它比较的是**熔点与观测窗口下界(-20 C)**, 不是**熔点与实测温度**. 因此它无法回答相态问题. 例如二甲基碳酸酯 mp=0.5 C 在 25 C 下是液体, 但该门会因为它高于窗口下界而判 blocked.",
+  "inputs": {
+    "candidate_pool_v2_draft": {
+      "sha256": "479b4cf958cc3e647e3151b1492641c04274d33576b930eed90ad8dc514b59bf",
+      "rows": 22
+    },
+    "liquid_window_gate_report": {
+      "sha256": "afcff965856274fc19333a236fb819b16631ae0bb9f49e59daa5d21b4519e0d2",
+      "rows": 314
+    }
+  },
+  "counts": {
+    "n_pool": 22,
+    "by_phase_status": {
+      "LIQUID_AT_STATED_T": 14,
+      "SOLID_OR_SUPERCOOLED_AT_STATED_T": 4,
+      "UNKNOWN_NO_MP": 4
+    },
+    "by_gate_agreement": {
+      "AGREE": 12,
+      "GATE_BLOCKED_BUT_ACTUALLY_LIQUID": 6,
+      "NOT_COMPARABLE": 4
+    },
+    "n_solid_or_supercooled": 4
+  },
+  "solid_or_supercooled": [
+    {
+      "name": "cyclohexanol",
+      "T_C": 25.0,
+      "mp_C": 25.93,
+      "margin_K": -0.93
+    },
+    {
+      "name": "2-amino-2-methylpropan-1-ol",
+      "T_C": 30.0,
+      "mp_C": 31.0,
+      "margin_K": -1.0
+    },
+    {
+      "name": "sulfolane",
+      "T_C": 25.0,
+      "mp_C": 27.8,
+      "margin_K": -2.8
+    },
+    {
+      "name": "N-(2-hydroxypropyl)-2-hydroxy-1-propanamine",
+      "T_C": 30.0,
+      "mp_C": 42.0,
+      "margin_K": -12.0
+    }
+  ],
+  "finding": "4/22 个候选分子在其设定温度下**低于熔点**, 即样品是固态或过冷液体, 不是热力学液体.",
+  "consequence": "液体静态介电常数是**液相**性质. 对过冷样品测得的 ε 在数值上可能正确, 但它描述的是一个亚稳态, 列为『液体』会误导下游使用者. 处理方式: 保留数据但显式标记, 或从确认性样本中排除 —— 不得静默当作正常液体.",
+  "reviewer": "Reviewer 1 (B04+B05) 独立发现; 本审计用正确判据复现其结论",
+  "output": {
+    "path": "outputs\\b04\\phase_state_audit.csv",
+    "sha256": "9574ce8ee30457aae270ba467ed7a3c7a16c486e1c80a74ea17bc4f7d2836fb7",
+    "rows": 22
+  }
+}

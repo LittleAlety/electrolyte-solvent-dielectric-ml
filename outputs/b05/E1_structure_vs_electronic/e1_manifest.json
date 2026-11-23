@@ -1,0 +1,148 @@
+{
+  "schema": "b05.e1/v1",
+  "generator": "run_e1_structure_vs_electronic/1.0.0",
+  "generated_at_utc": "2026-11-23T10:16:41Z",
+  "status": "EXPLORATORY_NOT_CONFIRMATORY",
+  "exploratory_reason": "n=22 个分子; PLAN B B05 禁止把不足样本的结果包装成确认性结论",
+  "inputs": {
+    "candidate_pool_v2_draft": {
+      "sha256": "8d171febaf713d18bf8684fd8c07e473203e5cd2be916217f7a6af4ba62d8bbd",
+      "rows": 22
+    },
+    "dielectric_physical_features": {
+      "sha256": "daf1b03b16f2967cd93704892a3a83e2d1dde119bd3ae18116ea748caf965295",
+      "rows": 209
+    }
+  },
+  "feature_sets": {
+    "X0": [
+      "heavy_atom_count",
+      "hbd",
+      "hba",
+      "tpsa_A2",
+      "molecular_volume_A3",
+      "molar_volume_m3_mol",
+      "formal_charge"
+    ],
+    "X1_added": [
+      "dipole_D",
+      "polarizability_au",
+      "polarizability_A3",
+      "homo_lumo_gap_ev"
+    ],
+    "excluded": {
+      "total_energy_hartree": "E1 初版曾使用. 排除理由: 特征审计显示它是分子大小代理 (与重原子数 r=-0.957, 与 ε r=0.007), 与 X0 信息重复; 且使 E1 的特征集与其他实验不一致 (Reviewer 3/4, B04+B05)."
+    },
+    "n_features_total": 11,
+    "consistency_note": "本版本与 E4/E6/B07 使用相同的 11 列特征集. 初版多用了 total_energy_hartree (12 列), 导致跨实验比较实际在比较不同的模型."
+  },
+  "coverage": {
+    "n_pool": 22,
+    "n_with_x0": 22,
+    "n_with_x0_x1": 22,
+    "n_comparable": 22,
+    "missing_x0": [],
+    "missing_x1": []
+  },
+  "metrics": [
+    {
+      "model": "X0_structure_only",
+      "n_features": 7,
+      "n_samples": 22,
+      "mae": 10.243548,
+      "rmse": 13.137138,
+      "bias": 0.594558,
+      "r2": -0.110961,
+      "validation": "leave_one_out",
+      "beats_constant_baseline": "true",
+      "constant_baseline_mae": 10.806223
+    },
+    {
+      "model": "X0_plus_X1_electronic",
+      "n_features": 11,
+      "n_samples": 22,
+      "mae": 6.788274,
+      "rmse": 8.88418,
+      "bias": 0.376999,
+      "r2": 0.49192,
+      "validation": "leave_one_out",
+      "beats_constant_baseline": "true",
+      "constant_baseline_mae": 10.806223
+    }
+  ],
+  "permutation_null": [
+    {
+      "model": "X0_structure_only",
+      "observed_mae": 10.243548,
+      "null_mae_q05": 10.005786,
+      "null_mae_median": 12.213429,
+      "null_mae_min": 7.951133,
+      "permutation_p_value": 0.07,
+      "n_permutations": 500,
+      "beats_null_at_0.05": "false"
+    },
+    {
+      "model": "X0_plus_X1_electronic",
+      "observed_mae": 6.788274,
+      "null_mae_q05": 9.893611,
+      "null_mae_median": 12.772305,
+      "null_mae_min": 7.133519,
+      "permutation_p_value": 0.0,
+      "n_permutations": 500,
+      "beats_null_at_0.05": "true"
+    }
+  ],
+  "feature_permutation_null": [
+    {
+      "model": "X0_structure_only",
+      "observed_r2": -0.110961,
+      "feature_permutation_p_value": 0.166,
+      "null_r2_q95": -0.811167,
+      "null_r2_median": -0.370562,
+      "n_permutations": 500,
+      "beats_null_at_0.05": "false"
+    },
+    {
+      "model": "X0_plus_X1_electronic",
+      "observed_r2": 0.49192,
+      "feature_permutation_p_value": 0.004,
+      "null_r2_q95": -0.983265,
+      "null_r2_median": -0.464963,
+      "n_permutations": 500,
+      "beats_null_at_0.05": "true"
+    }
+  ],
+  "feature_permutation_note": "两组零假设都报告: ① 置换标签 y (检验『这个 y 是否特殊』), ② 置换特征行 (检验『这组特征是否携带关于标签的信息』). 对 E1 的问题而言 (2) 更贴切且功效更高 (Reviewer 3, B04+B05).",
+  "delta_mae_x1_minus_x0": -3.455274,
+  "constant_baseline": {
+    "mae": 10.806223,
+    "rmse": 12.463826,
+    "note": "『直接预测训练集均值』的基线. 任何模型的 MAE 若大于该值, 说明它没有学到超出中心趋势的信息.",
+    "n_models_beating_baseline": 2
+  },
+  "validation": {
+    "scheme": "leave_one_out",
+    "why": "n=22 时随机 K 折会让相似化学结构同时出现在训练与测试集; 留一法至少保证不在同一分子上训练和测试. 两种划分的差异本身是泄漏的指示.",
+    "grouping": "每个分子自成一折 (分子级分组, 防止同一分子泄漏)"
+  },
+  "seed": 20261123,
+  "n_permutations": 500,
+  "outputs": {
+    "metrics": {
+      "path": "outputs\\b05\\E1_structure_vs_electronic\\metrics.csv",
+      "sha256": "d3925b4df4f3470d8944b9d2d9aa4910bdcfb50e6b458b2b08eaae2efbeac36e"
+    },
+    "permutation_null": {
+      "path": "outputs\\b05\\E1_structure_vs_electronic\\permutation_null.csv",
+      "sha256": "2636cb26a6d570fca3c26ca8499b5223eeaf53f25f4bc3c6db329742c94baca4"
+    },
+    "predictions": {
+      "path": "outputs\\b05\\E1_structure_vs_electronic\\predictions_loo.csv",
+      "sha256": "bdabe9520e9799bd20ab6ad54b9cd41031f21e936e6f7194ea9d8e25f8711806"
+    },
+    "report": {
+      "path": "outputs\\b05\\E1_structure_vs_electronic\\e1_report.md",
+      "sha256": "39db373831eb30e72de41f67a584bbf8f8e7abdf20d073432a7255a2b4530e84"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+claim_id,claim,evidence_grade,evidence_file,note
+C-01,J01/J02/J03 冻结产物字节未改变，可逐字节复核,CONFIRMED_FROZEN,outputs/b00/j01_j02_j03_hash_lock.json,24 个产物重算 sha256 与生成器回执一致；14 个上游输入全部匹配
+C-02,本地 main 是 origin/main 的纯快进（ahead 5 / behind 0）,CONFIRMED_FROZEN,outputs/b00/w49_commit_reconciliation.json,merge-base == origin/main，因此对账 W49 是推送决策而非合并决策
+C-03,v1.3 独立论文包是 git 标签而非目录（14 个文件在包内，22 个是包外草稿）,CONFIRMED_FROZEN,outputs/b00/paper_v13_inventory.json,把 v2/v3 草稿当作 v1.3 内容会改变包的身份
+C-04,J03 报告的 460 是 v04 聚合窗口内观测数，不是全量测量数；全量为 2065,CONFIRMED_FROZEN,outputs/confirm_2027/provenance_repair/measurement_reconstruction_verification.json,独立重算确认；J03 曾把它标为 N_measurement，是约 4.5 倍低估
+C-05,条件配对有效行数是 78，不是 58；58 是 J03 的分类计数 (48+10),CONFIRMED_FROZEN,outputs/confirm_2027/provenance_repair/measurement_reconstruction_verification.json,J03 的数据列也给出 78，只有叙述文字写成 58
+C-06,"170 个聚合行的 (T,ε) 不对应真实测量（147 无贡献测量 + 22 合成条件对 + 1 假阴性）",CONFIRMED_FROZEN,outputs/confirm_2027/provenance_repair/reconstruction_exceptions.csv,不可恢复项已逐行登记，未插值、未反推
+C-07,27 组跨文档逐字节相同的观测存在，DOI 数不等于独立实验数,CONFIRMED_FROZEN,outputs/confirm_2027/provenance_repair/source_independence_report.json,涉及 9 个文档、28 个聚合行；注册表对 61/61 文档标注 independence=not_evaluated
+C-08,15 个聚合行的介电常数来自压力扫描的中位数，不是常压测量,CONFIRMED_FROZEN,outputs/b01/pressure_heterogeneity_audit.json,R097 的 14.26 恰为 100/150 MPa 中点；pressure_kpa 在队列中原本为空
+C-09,22/248 行的温度是推定值，其中 18 行标记 model_ready=true,CONFIRMED_FROZEN,outputs/b01/temperature_imputation_audit.json,GVL 冲突的『同温』前提正是两次独立推定碰巧一致
+C-10,gap_aggregation_audit 的 v04_epsilon 列在 3 行上被 InChIKey 骨架连接污染,CONFIRMED_FROZEN,outputs/b01/source_conflict_register.json,R174 报 2.14 而真值为 9.2（−77%）；gap_epsilon 列 248/248 正确
+C-11,四智能体准入审核：22 条记录达成 4/4 PASS,FOUR_AGENT_PASS,outputs/admission_v2/consensus_decisions.csv,未使用多数投票；未把 AI 共识写入 HUMAN_SIGNED
+C-12,γ-戊内酯 36.1 vs 36.9 冲突：四审未达成 4/4，两条记录均被拒绝,FOUR_AGENT_REJECT,outputs/admission_v2/gvl_conflict_consensus.json,R1/R3 认可数值，R2/R4 质疑溯源；未取平均、未择一主值
+C-13,EA/MA 的 NBS514 核实是转录完整性检查，不是独立佐证,FOUR_AGENT_REJECT,outputs/confirm_2027/evidence_backfill/b03_consensus.json,v04 的 source_record_id 与页面读取相同；EA/MA 共享参考文献 63，不独立
+C-20,候选池中有 4 个分子在其设定温度下低于熔点（固态/过冷液体），而液体静态介电常数是液相性质,CONFIRMED_FROZEN,outputs/b04/phase_state_audit.json,sulfolane −2.8 K、cyclohexanol −0.9 K、AMP −1.0 K、N-(2-hydroxypropyl) −12.0 K；已逐行标记，未静默当作液体
+C-21,现有 liquid_window_gate 无法回答相态问题：它比较的是熔点与观测窗口下界，不是熔点与实测温度,CONFIRMED_FROZEN,outputs/b04/phase_state_audit.json,6 个分子被旧门误判为 blocked 但实际是液体（如 DMC mp=0.5 C 在 25 C）
+C-14c,电子描述符块（6.0789）优于结构块，且**合并后反而变差** +0.55；偶极矩单独即达 6.4303（电子块的 105.8%）,EXPLORATORY,outputs/b05/E1c_feature_block_ablation/e1c_manifest.json,E1 只比较 X0 与 X0+X1，无法区分『电子块有用』与『合并块有用』；E1c 用同一嵌套协议补上该比较
+C-22,名义 12 列特征的有效秩只有 10：极化率两列完全相同，摩尔体积列等于分子体积 × N_A（vdW 腔体积和）,EXPLORATORY,outputs/b05/feature_quality_audit.json,"因此『12 维特征』高估信息量；已改为报告有效秩，并在 manifest 登记两处冗余. 分级按 EXPLORATORY: 该审计依赖建模输入, 不属冻结证据"
+C-23,E1 初版用 12 列而 E4/E6/B07 用 11 列，跨实验比较实际在比较不同模型,EXPLORATORY,outputs/b05/feature_quality_audit.json,已统一为 11 列（排除 total_energy_hartree，它与重原子数 r=−0.957、与 ε r=0.007）
+C-14,修正后 X0+X1 显著优于常数基线（MAE 6.79 vs 10.81，R² = 0.492）,EXPLORATORY,outputs/b05/E1_structure_vs_electronic/e1_manifest.json,早期版本因 ridge 缺截距得出相反结论，已由 R1 发现并修复
+C-14b,原始 E1 结论是模型规格错误：|bias|/MAE = 1.0，去偏后 MAE 10.0012 优于基线 10.8062,EXPLORATORY,outputs/b05/E1b_physics_constrained/e1b_manifest.json,"「描述符无信号」的推论不成立；这是标定失败而非信息缺失. 虽属确定性算术, 但因建立在建模结果上, 仍按 EXPLORATORY 分级"
+C-15,指纹相同（Tanimoto=1.0）的分子对误差为 2.7917；早期报告的 19.48 是模型缺截距造成的假象,EXPLORATORY,outputs/b05/E4_domain_generalization/e4_manifest.json,「描述符无法分辨相似分子」的强结论不成立
+C-16,误差随结构距离增大而增大（Spearman -0.505），适用域信号存在；域外/域内 MAE 比 1.398,EXPLORATORY,outputs/b05/E4_domain_generalization/e4_manifest.json,修正后 Tanimoto 距离在方向上可用，但域外占 68%，样本仍不足
+C-17,Top-3 筛选与随机不可区分（p = 0.16）,INSUFFICIENT_POWER,outputs/b05/E6_screening_decisions/e6_manifest.json,"n=22, k=3；冻结规则，未调参"
+C-18,H3 得到支持：加入噪声后 MAE 恶化但 regret 下降，回归精度与筛选收益脱钩,EXPLORATORY,outputs/b05/E6_screening_decisions/e6_manifest.json,Top-1 排序正确（sulfolane），rank 2-6 发生错位；该区间 ε 差异小于模型 MAE，正确排序本就不可分辨
+C-19,三种划分（随机/留一分子/留一家族）MAE 几乎相同，因此泄漏未被演示；推论是更严格的划分只会让数字更差,EXPLORATORY,outputs/b07/random_split_manifest.json,不能宣称『改用分组划分带来改进』

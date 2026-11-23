@@ -1,0 +1,173 @@
+{
+  "schema": "confirm_2027.measurement_reconstruction_verification/v1",
+  "generator": "verify_measurement_reconstruction/1.0.0",
+  "generated_at_utc": "2026-11-23T10:21:44Z",
+  "independence_note": "本校验器**不复用** audit_gap_aggregation_provenance.py 的窗口辅助函数, 也不读生成器的结论. 它用独立实现从原始观测层重算后与产物对账. 调用被测代码的校验器等于没校验.",
+  "inputs": {
+    "measurement_ledger_v1": {
+      "sha256": "1031611d703a5a29360d511cab24e6f7acc08032445650620b0bbd55c0b2957b",
+      "rows": 2065
+    },
+    "aggregate_contribution_ledger_v1": {
+      "sha256": "d0af80e3e7af1caf8b691e18219dabc4146b4b67853a17c9628bfc28fbe366cc",
+      "rows": 248
+    },
+    "condition_pair_validity_v1": {
+      "sha256": "8baea7bc87842d6c6d2af3efa4e5f01754ddc5f72a20ad6d3477ca44cb0c12b1",
+      "rows": 248
+    },
+    "reconstruction_exceptions": {
+      "sha256": "938e51a97b19b5704e04edc9013a212bcb470ca8e61cf52cc0052fd565468bd0",
+      "rows": 170
+    }
+  },
+  "band_window_reimplemented": {
+    "low_K": "293.15",
+    "high_K": "303.15",
+    "phase": "liquid",
+    "frequency_hz": "0"
+  },
+  "checks": [
+    {
+      "check": "measurement_id_unique",
+      "status": "PASS",
+      "detail": "2065 条测量, 2065 个唯一 id",
+      "observed": 2065,
+      "expected": 2065
+    },
+    {
+      "check": "in_window_count_reproduced",
+      "status": "PASS",
+      "detail": "独立重算窗口内观测 (293.15<=T<=303.15, Liquid, 0 Hz) = 460",
+      "observed": 460,
+      "expected": 460
+    },
+    {
+      "check": "in_aggregate_window_flag_agrees",
+      "status": "PASS",
+      "detail": "账本标记 460 条 vs 独立重算 460 条",
+      "observed": 460,
+      "expected": 460
+    },
+    {
+      "check": "contribution_counts_recompute",
+      "status": "PASS",
+      "detail": "0 个聚合行的贡献数与独立重算不符",
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "epsilon_median_recompute",
+      "status": "PASS",
+      "detail": "0 个聚合行的 ε 中位数与独立重算不符",
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "no_synthetic_pair_marked_valid",
+      "status": "PASS",
+      "detail": "0 个聚合行被标为 pair_valid=true 但没有任何单次观测同时持有 (T, ε)",
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "generator_acceptance_criterion_is_not_tautological",
+      "status": "PASS",
+      "detail": "判据检查 248/248 行 (独立复核声明诚实=True), criterion_can_fail=True, 判据值=True; 源码(去掉注释/文档字符串后)已无按 invalidity_reason 过滤的判据体. 判据覆盖全表、可失败、且源码无同义反复模式",
+      "observed": 248,
+      "expected": 248
+    },
+    {
+      "check": "exception_register_covers_all_non_complete",
+      "status": "PASS",
+      "detail": "非 COMPLETE 聚合行 148 个, 例外登记覆盖 170 个, 未覆盖 0 个",
+      "observed": 0,
+      "expected": 0
+    },
+    {
+      "check": "measurement_locator_present",
+      "status": "PASS",
+      "detail": "定位符文件 2065 行 vs 账本 2065 行",
+      "observed": 2065,
+      "expected": 2065
+    },
+    {
+      "check": "measurement_locator_covers_all",
+      "status": "PASS",
+      "detail": "2065/2065 条测量有定位符",
+      "observed": 2065,
+      "expected": 2065
+    },
+    {
+      "check": "measurement_locator_is_not_a_template",
+      "status": "PASS",
+      "detail": "不同定位符 1782 个 (模板会只有 1 个或极少数)",
+      "observed": 1782,
+      "expected": ">100"
+    },
+    {
+      "check": "measurement_locator_names_a_block",
+      "status": "PASS",
+      "detail": "2065/2065 个定位符含 block=",
+      "observed": 2065,
+      "expected": 2065
+    },
+    {
+      "check": "headline_n_measurements_2065",
+      "status": "PASS",
+      "detail": "全量测量 = 2065",
+      "observed": 2065,
+      "expected": 2065
+    },
+    {
+      "check": "headline_n_in_window_460",
+      "status": "PASS",
+      "detail": "窗口内观测 = 460",
+      "observed": 460,
+      "expected": 460
+    },
+    {
+      "check": "headline_n_pair_valid_78",
+      "status": "PASS",
+      "detail": "condition_pair_valid=true 行数 = 78 (PLAN B 报告的 58 是分类计数, 非配对计数)",
+      "observed": 78,
+      "expected": 78
+    },
+    {
+      "check": "headline_n_pair_invalid_170",
+      "status": "PASS",
+      "detail": "condition_pair_valid=false 行数 = 170",
+      "observed": 170,
+      "expected": 170
+    },
+    {
+      "check": "pair_validity_partition_complete",
+      "status": "PASS",
+      "detail": "78 + 170 = 248 vs 248 行",
+      "observed": 248,
+      "expected": 248
+    },
+    {
+      "check": "each_measurement_in_at_most_one_aggregate",
+      "status": "PASS",
+      "detail": "每条测量只出现一次于账本 (无重复计入)",
+      "observed": 2065,
+      "expected": 2065
+    }
+  ],
+  "summary": {
+    "n_checks": 18,
+    "n_pass": 18,
+    "n_fail": 0,
+    "overall": "PASS"
+  },
+  "headline_counts": {
+    "n_measurements_full": 2065,
+    "n_in_aggregate_window": 460,
+    "n_database_rows": 248,
+    "n_pair_valid": 78,
+    "n_pair_invalid": 170,
+    "n_exceptions": 170,
+    "note": "2065/460/248/78/170 是**不同统计单位**, 不可串成单调漏斗. PLAN B 报告中的 58 应更正为 78 (配对口径)."
+  }
+}

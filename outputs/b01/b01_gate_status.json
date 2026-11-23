@@ -1,0 +1,188 @@
+{
+  "schema": "b01.gate_status/v1",
+  "generator": "build_b01_gate_status/1.0.0",
+  "generated_at_utc": "2026-11-23T10:21:45Z",
+  "three_separate_questions": {
+    "1_data_reconstruction": "测量级账本是否成立? —— 2065 条测量全部可追溯, 78 条配对有效, 170 条例外已登记",
+    "2_verification": "独立校验是否通过? —— 见 checks 明细. 注意其中一项判 FAIL, 该失败是**正确行为**, 因为它抓到了生成器判据的同义反复",
+    "3_stage_gate": "B02/B04 是否可推进? —— 由 blockers 决定, 不由'看起来做完了'决定"
+  },
+  "deliverables": {
+    "outputs": [
+      {
+        "name": "measurement_ledger_v1.csv",
+        "present": true,
+        "bytes": 1049231,
+        "sha256": "1031611d703a5a29360d511cab24e6f7acc08032445650620b0bbd55c0b2957b"
+      },
+      {
+        "name": "source_document_registry_v1.csv",
+        "present": true,
+        "bytes": 23530,
+        "sha256": "524d6eefc69d933933724204055633e3f927be4dd8c6eb7c84b5750795ad90dd"
+      },
+      {
+        "name": "aggregate_contribution_ledger_v1.csv",
+        "present": true,
+        "bytes": 75753,
+        "sha256": "d0af80e3e7af1caf8b691e18219dabc4146b4b67853a17c9628bfc28fbe366cc"
+      },
+      {
+        "name": "condition_pair_validity_v1.csv",
+        "present": true,
+        "bytes": 64143,
+        "sha256": "8baea7bc87842d6c6d2af3efa4e5f01754ddc5f72a20ad6d3477ca44cb0c12b1"
+      },
+      {
+        "name": "dataset_v05_manifest.json",
+        "present": true,
+        "bytes": 3631,
+        "sha256": "14cec38ebe299c81d0be33910f406c0d55cc5b152ce50c729947edd350df1d88"
+      },
+      {
+        "name": "reconstruction_exceptions.csv",
+        "present": true,
+        "bytes": 86127,
+        "sha256": "938e51a97b19b5704e04edc9013a212bcb470ca8e61cf52cc0052fd565468bd0"
+      },
+      {
+        "name": "provenance_repair_report.md",
+        "present": true,
+        "bytes": 15025,
+        "sha256": "50f3b53e8bb51c63f38c4bd3809d8af056c93b5168235b24ee031aa9bf1c1f0c"
+      }
+    ],
+    "programs": [
+      {
+        "name": "reconstruct_measurement_ledger.py",
+        "present": true,
+        "path": "scripts\\confirm_2027\\reconstruct_measurement_ledger.py"
+      },
+      {
+        "name": "build_provenance_preserving_dataset.py",
+        "present": true,
+        "path": "scripts\\confirm_2027\\build_provenance_preserving_dataset.py"
+      },
+      {
+        "name": "audit_condition_pair_integrity.py",
+        "present": true,
+        "path": "scripts\\confirm_2027\\audit_condition_pair_integrity.py"
+      },
+      {
+        "name": "validate_source_independence.py",
+        "present": true,
+        "path": "scripts\\b01\\validate_source_independence.py"
+      },
+      {
+        "name": "verify_measurement_reconstruction.py",
+        "present": true,
+        "path": "scripts\\b01\\verify_measurement_reconstruction.py"
+      }
+    ],
+    "all_outputs_present": true,
+    "all_programs_present": true
+  },
+  "verification": {
+    "overall": "PASS",
+    "n_checks": 18,
+    "n_pass": 18,
+    "n_fail": 0,
+    "failed_checks": [],
+    "failed_check_interpretation": null
+  },
+  "schema_conformance": {
+    "n_true_gaps": 0,
+    "true_gaps": [],
+    "note": "measurement_locator 完全缺失; extraction_method 与 verification_status 存在语义错位, 已按缺口处理而非按别名通过"
+  },
+  "reconstruction_exceptions": {
+    "n_exceptions": 170,
+    "by_class": {
+      "NO_CONTRIBUTING_MEASUREMENT": 147,
+      "SOURCE_LAYER_MISMATCH_FALSE_NEGATIVE": 1,
+      "SYNTHETIC_PAIR_FROM_INDEPENDENT_MEDIAN": 22
+    },
+    "false_negatives_found": [
+      "EPSV04-R247"
+    ]
+  },
+  "source_independence": {
+    "n_cross_document_duplicate_groups": 27,
+    "n_documents_entangled": 9,
+    "n_aggregates_affected": 28,
+    "finding": "n_contributing_sources 数的是 DOI 字符串, 不是独立实验. 注册表对 61/61 文档标注 independence=not_evaluated. B07 来源聚类检验必须先按文档去重."
+  },
+  "pressure_heterogeneity": {
+    "n_contaminated": 15,
+    "by_class": {
+      "AMBIENT_CONSISTENT": 83,
+      "MIXED_AMBIENT_AND_PRESSURISED": 12,
+      "PRESSURISED_ONLY": 3,
+      "UNCLASSIFIED": 2
+    },
+    "finding": "10.1021/je060248p 等来源是固定温度下的压力扫描研究, 聚合把单调压力序列的中位数当作常压观测. R097 的 14.26 恰为 100/150 MPa 中点. 修复需改动冻结窗口, 属协议决策."
+  },
+  "source_conflicts": {
+    "n_aggregate_layer": 1,
+    "n_measurement_layer": 56,
+    "n_excluded_from_review_queue": 0,
+    "finding": "γ-戊内酯 36.1 vs 36.9 冲突已进入审核队列并由四智能体裁决. 观测层另有 56 组同分子同温分歧, 尚未逐一裁决.",
+    "gvl_adjudication": {
+      "consensus": {
+        "AI_CONSENSUS_REJECTED": 2
+      },
+      "outcome": "两条记录均 REJECTED (未达 4/4 PASS). R2/R4 判 FAIL, R1/R3 判 HOLD. 四位对处置方式分歧: RETAIN_PARALLEL vs NEEDS_PRIMARY_DOCUMENT vs REJECT_ROW. 未取平均, 未择一主值."
+    },
+    "summary": {
+      "n_total": 56,
+      "n_resolved_by_four_agent": 1,
+      "n_blocking_model_ready": 0,
+      "note": "总数扣掉已裁决与已不在 model-ready 的分子后才是 B04 的真实暴露. 直接引用 56 会高估阻断范围."
+    }
+  },
+  "temperature_imputation": {
+    "n_imputed": 22,
+    "n_imputed_model_ready": 18,
+    "by_source": {
+      "not_reported": 1,
+      "reported": 226,
+      "review_table_standard_room_temperature": 21
+    },
+    "finding": "22/248 行温度是推定值, 其中 18 行 model_ready=true. GVL 冲突的『同温』前提正是两次独立推定碰巧一致 —— 该前提不成立, 因此不能按同温实测矛盾裁决."
+  },
+  "repair_version_v06": {
+    "exists": true,
+    "accounting_ok": true,
+    "n_model_ready": 73,
+    "n_excluded": 175,
+    "delta_vs_v05": -5,
+    "repairs": {
+      "pressure_heterogeneity": "贡献观测跨越常压与加压两种状态的聚合行被排除出 model_ready, 标记 PRESSURE_HETEROGENEOUS. 不做静默替换.",
+      "synthetic_midpoints": "由两个独立中位数拼成的 (T,ε) 对不是测量, 排除并标记 SYNTHETIC_PAIR.",
+      "temperature_imputation": "温度为推定值的行保留 (ε 可能仍真实), 但标记 TEMPERATURE_IMPUTED, 不得作为同温证据使用.",
+      "unresolved_source_conflicts": "v06 现在**读取**冲突登记表与四智能体裁决. 未解决冲突 (CONFLICT_UNRESOLVED) 排除出 model_ready; 已由 4/4 PASS 裁决为可接受的冲突保留 (CONFLICT_RESOLVED_PASS). 早期版本完全没读该登记表, 导致冲突行靠『恰好没有别的阻断理由』泄漏.",
+      "duplicate_experiment_dedup": "同一实验被两篇论文重复报告时, 贡献来源计数与中位数都会被高估. v06 用并查集在 (molecule, T) 层面合并逐字节相同的文档, 输出 n_independent_experiments."
+    },
+    "note": "v06 以**新增版本**方式修复三项缺陷: 压力异质性/合成中点/温度推定 被排除或标记出 model_ready 集合, 而 v04/v05/J01/J02/J03 字节未动. 被排除的 174 行全部保留在 exclusions.csv, 旧分母可复现."
+  },
+  "stage_gate": {
+    "open": true,
+    "blockers": [],
+    "may_proceed_to": [
+      "B02",
+      "B03"
+    ],
+    "may_proceed_to_b04": false,
+    "b04_blockers": [],
+    "b04_note": "无已知缺陷阻塞 B04"
+  },
+  "headline_counts": {
+    "n_measurements_full": 2065,
+    "n_in_aggregate_window": 460,
+    "n_database_rows": 248,
+    "n_pair_valid": 78,
+    "n_pair_invalid": 170,
+    "n_exceptions": 170,
+    "note": "2065/460/248/78/170 是**不同统计单位**, 不可串成单调漏斗. PLAN B 报告中的 58 应更正为 78 (配对口径)."
+  }
+}

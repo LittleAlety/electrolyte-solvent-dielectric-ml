@@ -1,0 +1,86 @@
+{
+  "a18_presence": {
+    "layer": "not_evaluated",
+    "note": "A18 命中数由 B-G0-J01 的 joint_eligibility.csv 报告, 本模块不重复计算"
+  },
+  "analysis_id": "B-G0-J02B",
+  "contract_version": "confirm_2027.pool_lineage/v1",
+  "decision": "PREVIEW_IS_HISTORICAL_PRESERVE_AND_KEEP_POOL_C_AUTHORITATIVE",
+  "decision_reasons": [
+    "两个层的上游输入不同: preview 源自 S4 折角色表, pool_C 源自 evidence_backfill",
+    "pool_C 生成器完全不读预览表, 因此不存在'池更新未回写预览'的链路",
+    "两池互不嵌套 (preview_only=26, pool_c_only=26), 排除了'一个是另一个的子集'的解释"
+  ],
+  "forbidden_actions": [
+    "merge the two layers into a new 49 or 75 row pool",
+    "overwrite candidate_pool_C_R001.csv",
+    "overwrite master.in_49_preview in place",
+    "modify B-G0-J01 frozen outputs"
+  ],
+  "generator_of": {
+    "candidate_pool_C": {
+      "admission_rule": "backfill.status == \"RESOLVED\" and not REJECT and no salt token",
+      "grants_approval": "no (decision_v2=CANDIDATE, never ACCEPT)",
+      "producer_field": "candidate_pool_C_R001.csv",
+      "producer_script": "tools/build_candidate_pool_R001.py",
+      "semantics": "candidate pool built from RESOLVED mechanical evidence",
+      "upstream_input": "reports/evidence_backfill_R001.csv"
+    },
+    "master_49_preview": {
+      "admission_rule": "none (role table carries no admission decision)",
+      "grants_approval": "no",
+      "producer_field": "candidate_master.in_49_preview",
+      "producer_script": "tools/candidate_master_R001.py",
+      "semantics": "S4 fold role assignment (holdout/train/validation), not a candidate pool",
+      "upstream_input": "drafts/artifacts/s4_fold_DRAFT_INDICATIVE_R293.csv"
+    }
+  },
+  "input_contract_version": "confirm_2027.j02b_inputs/v1",
+  "known_gaps": [
+    "evidence_backfill 的 measurement_id 名单出处不在代码库里 (--measurements 由外部传入)",
+    "candidate_master 生成时 MANIFEST 尚未覆盖 R007 产物"
+  ],
+  "lineage_checks": [
+    {
+      "check": "master_in_49_preview_upstream_is_s4_preview",
+      "detail": "candidate_master_R001.py 用 S4_PREVIEW = s4_fold_DRAFT_INDICATIVE_R293.csv 派生 in_49_preview",
+      "evidence_file": "candidate_master_R001.py",
+      "evidence_sha256": "c911972d658cf45491471f75c94ae04d9a461ff0718152490d236ab3e7a9af52",
+      "status": "PASS"
+    },
+    {
+      "check": "candidate_pool_C_upstream_is_evidence_backfill",
+      "detail": "build_candidate_pool_R001.py 以 backfill[m][\"status\"] == \"RESOLVED\" 作为池 C 成员条件",
+      "evidence_file": "build_candidate_pool_R001.py",
+      "evidence_sha256": "84c6744078b4be80a5d7d7fd50cdfb00eacae672e4b284177ee5d2a0ef100f30",
+      "status": "PASS"
+    },
+    {
+      "check": "candidate_pool_C_does_not_read_preview",
+      "detail": "build_candidate_pool_R001.py 完全不引用 S4 预览表, 因此不存在'pool_C 更新后未回写 preview' 的链路",
+      "evidence_file": "build_candidate_pool_R001.py",
+      "status": "PASS"
+    },
+    {
+      "check": "evidence_backfill_requires_explicit_measurement_list",
+      "detail": "evidence_backfill_R001.py 要求外部显式提供 measurement_id 列表 (--measurements required=True); 名单本身的出处不在代码里, 属下游可复现性的已知缺口",
+      "evidence_file": "evidence_backfill_R001.py",
+      "evidence_sha256": "645efd34d55f58c3e7fee84d6ac5e6de669c3cfeb6d5c3089b9b1b4c637a1f97",
+      "status": "PASS"
+    }
+  ],
+  "membership_summary": {
+    "is_subset_relation": "neither_subset",
+    "n_common": 23,
+    "n_pool_c": 49,
+    "n_pool_c_only": 26,
+    "n_preview": 49,
+    "n_preview_only": 26,
+    "n_union": 75
+  },
+  "merge_forbidden": true,
+  "merge_forbidden_reason": "并集会把两套不同筛选规则混成既非预览也非正式池的第三物, 并伪造更大的分母",
+  "next_action": "保留 preview 历史版本, pool_C 继续作为当前权威操作池; 不重出 joint_eligibility",
+  "pool_c_status": "CURRENT_AUTHORITATIVE_OPERATIONAL_POOL",
+  "preview_classification": "LEGACY_OR_UNRESOLVED_PREVIEW"
+}

@@ -1,0 +1,195 @@
+{
+  "schema": "b05.e4/v1",
+  "generator": "run_e4_domain_generalization/1.0.0",
+  "generated_at_utc": "2026-11-23T10:16:03Z",
+  "status": "EXPLORATORY_NOT_CONFIRMATORY",
+  "exploratory_reason": "n=22 个分子, 多个家族成员数 < 2",
+  "inputs": {
+    "candidate_pool_v2_draft": {
+      "sha256": "8d171febaf713d18bf8684fd8c07e473203e5cd2be916217f7a6af4ba62d8bbd",
+      "rows": 22
+    },
+    "dielectric_v04": {
+      "sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c"
+    },
+    "dielectric_physical_features": {
+      "sha256": "daf1b03b16f2967cd93704892a3a83e2d1dde119bd3ae18116ea748caf965295"
+    }
+  },
+  "coverage": {
+    "n_pool": 22,
+    "n_usable": 22,
+    "n_missing_smiles": 0,
+    "n_missing_features": 0,
+    "n_unclassified_family": 3
+  },
+  "family_counts": {
+    "alcohol": 3,
+    "carbonate": 2,
+    "carboxylic_acid": 1,
+    "dinitrile": 2,
+    "ester": 1,
+    "ether": 1,
+    "imidazole": 1,
+    "ketone": 2,
+    "primary_secondary_amine": 4,
+    "sulfone": 1,
+    "tertiary_amine": 1,
+    "unclassified": 3
+  },
+  "family_rules_precedence": {
+    "order": [
+      "sulfone",
+      "sulfoxide",
+      "carboxylic_acid",
+      "dinitrile",
+      "carbonate",
+      "ester",
+      "ketone",
+      "imidazole",
+      "thiophene",
+      "primary_secondary_amine",
+      "tertiary_amine",
+      "nitrile",
+      "alcohol",
+      "ether",
+      "aromatic"
+    ],
+    "smarts": {
+      "sulfone": "[#16X4](=[OX1])(=[OX1])",
+      "sulfoxide": "[#16X3](=[OX1])",
+      "carboxylic_acid": "[CX3](=O)[OX2H1]",
+      "dinitrile": "N#C.*C#N",
+      "carbonate": "[OX2][CX3](=O)[OX2]",
+      "ester": "[CX3](=O)[OX2][#6]",
+      "ketone": "[#6][CX3](=O)[#6]",
+      "imidazole": "c1cncn1",
+      "thiophene": "c1ccsc1",
+      "primary_secondary_amine": "[NX3;H2,H1;!$(NC=O)]",
+      "tertiary_amine": "[NX3;H0;!$(NC=O)]",
+      "nitrile": "N#C",
+      "alcohol": "[OX2H]",
+      "ether": "[OD2]([#6])[#6]",
+      "aromatic": "a"
+    },
+    "note": "首个匹配者胜出, 顺序即优先级. 杂原子身份规则先于碳骨架规则, 因此环状砜归为 sulfone 而非 aromatic. Reviewer 3 (B04+B05) 指出原列表声称『最具体优先』但实际顺序任取.",
+    "n_molecules_matching_multiple_rules": 13,
+    "multi_rule_examples": [
+      {
+        "name": "N-methylaniline",
+        "matched": "primary_secondary_amine;aromatic"
+      },
+      {
+        "name": "methyl propenoate",
+        "matched": "ester;ether"
+      },
+      {
+        "name": "octanedinitrile",
+        "matched": "dinitrile;nitrile"
+      },
+      {
+        "name": "2-amino-2-methylpropan-1-ol",
+        "matched": "primary_secondary_amine;alcohol"
+      },
+      {
+        "name": "triethanolamine",
+        "matched": "tertiary_amine;alcohol"
+      },
+      {
+        "name": "dimethyl carbonate",
+        "matched": "carbonate;ester;ether"
+      },
+      {
+        "name": "heptanedinitrile",
+        "matched": "dinitrile;nitrile"
+      },
+      {
+        "name": "N-(2-hydroxypropyl)-2-hydroxy-1-propanamine",
+        "matched": "primary_secondary_amine;alcohol"
+      },
+      {
+        "name": "1-methylimidazole",
+        "matched": "imidazole;aromatic"
+      },
+      {
+        "name": "diethyl carbonate",
+        "matched": "carbonate;ester;ether"
+      }
+    ]
+  },
+  "min_test_n_rule": 2,
+  "applicability_domain_threshold": 0.4,
+  "counts": {
+    "n_families": 12,
+    "n_families_measured": 6,
+    "n_families_beating_baseline": 5,
+    "n_out_of_domain": 15,
+    "ad_coverage_pct": 31.82
+  },
+  "error_vs_distance_spearman": -0.5051,
+  "identical_fingerprint_analysis": {
+    "n_pairs_with_identical_fingerprint": 4,
+    "mae_among_identical": 2.7917,
+    "max_error_among_identical": 5.1494,
+    "examples": [
+      {
+        "name": "heptanedinitrile",
+        "nearest_neighbour": "octanedinitrile",
+        "abs_error": 5.1494
+      },
+      {
+        "name": "nonane",
+        "nearest_neighbour": "heptane",
+        "abs_error": 4.5305
+      },
+      {
+        "name": "heptane",
+        "nearest_neighbour": "nonane",
+        "abs_error": 1.1888
+      },
+      {
+        "name": "octanedinitrile",
+        "nearest_neighbour": "heptanedinitrile",
+        "abs_error": 0.2983
+      }
+    ],
+    "interpretation": "在指纹完全相同 (Tanimoto=1.0) 的分子对上, 误差本应接近 0. 但必须先排除『模型整体水平偏移』这一更简单的解释: 若 |bias|/MAE ≈ 1, 大部分误差属于标定失败而非描述符失明.",
+    "caveat": "早期版本因 ridge 回归缺少截距项而把整体偏差混入本指标, 得到 19.48 的虚高值. 修复截距后该值显著下降. 因此『描述符无法分辨相似分子』这一强结论**不成立** —— 它主要是模型规格错误造成的假象 (Reviewer 1, B04+B05)."
+  },
+  "in_vs_out_of_domain": {
+    "n_in_domain": 7,
+    "n_out_of_domain": 15,
+    "mae_in_domain": 5.3405,
+    "mae_out_of_domain": 7.4639,
+    "out_over_in_ratio": 1.398,
+    "separation": "NO_USEFUL_SEPARATION"
+  },
+  "seed": 20261123,
+  "outputs": {
+    "leave_one_family_out": {
+      "path": "outputs\\b05\\E4_domain_generalization\\leave_one_family_out.csv",
+      "sha256": "41a1d5e761e53c30dc0ddaaa4f8438958be5fed7fb67a5981352722926cf5a58"
+    },
+    "structural_distance_ood": {
+      "path": "outputs\\b05\\E4_domain_generalization\\structural_distance_ood.csv",
+      "sha256": "b26a8096c3eaefaf5d76699010e39cf09d336bcbf097cc2549304f1955f23922"
+    },
+    "source_ood": {
+      "path": "outputs\\b05\\E4_domain_generalization\\source_ood_results.csv",
+      "sha256": "8c09788890040a493a76d8e84b70e41dd6204e5ceb3f4f15cdb7d23bf20f36c5"
+    },
+    "applicability_domain": {
+      "path": "outputs\\b05\\E4_domain_generalization\\applicability_domain.csv",
+      "sha256": "f32372eabb902a6627be10b56143ee05b102a676a600324bf3027cbd9ba5e13e"
+    },
+    "report": {
+      "path": "outputs\\b05\\E4_domain_generalization\\e4_report.md",
+      "sha256": "c7218c9b03b4f7e8cdf2d0925a9a2d87b2a1ac3ca1b014f9dec5a41a56d17743"
+    }
+  },
+  "cannot_claim": [
+    "来源聚类稳健性 (来源独立性未评估)",
+    "确证性 OOD 性能",
+    "对 22 个分子之外化学空间的外推"
+  ]
+}

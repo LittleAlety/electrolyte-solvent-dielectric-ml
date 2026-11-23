@@ -1,0 +1,362 @@
+{
+  "static_scan": {
+    "build_candidate_pool_v2.py": {
+      "get_with_default": [
+        [
+          102,
+          "cands = obs_by_agg.get(agg_id, [])"
+        ],
+        [
+          140,
+          "\"b02_consensus_status\": cons.get(\"consensus_status\", \"\"),"
+        ],
+        [
+          158,
+          "cons = cons_by_id.get(mid, {})"
+        ],
+        [
+          165,
+          "\"b02_consensus_status\": cons.get(\"consensus_status\", \"NOT_IN_QUEUE\"),"
+        ],
+        [
+          171,
+          "f\"四审状态 {cons.get('consensus_status', 'NOT_IN_QUEUE')}; \""
+        ],
+        [
+          184,
+          "r[\"measurement_id\"], {}).get(\"consensus_status\", \"NOT_IN_QUEUE\"),"
+        ],
+        [
+          186,
+          "\"detail\": r.get(\"flags\", \"\"),"
+        ],
+        [
+          203,
+          "w.writerow({k: r.get(k, \"\") for k in pool_fields})"
+        ],
+        [
+          214,
+          "w.writerow({k: r.get(k, \"\") for k in audit_fields})"
+        ]
+      ]
+    },
+    "build_feature_registry.py": {
+      "get_with_default": [
+        [
+          103,
+          "v = (feats.get(r[\"inchikey\"], {}).get(name) or \"\").strip()"
+        ],
+        [
+          151,
+          "\"features_X0\": by_tier.get(\"X0\", []),"
+        ],
+        [
+          152,
+          "\"features_X1_added\": by_tier.get(\"X1\", []),"
+        ],
+        [
+          164,
+          "\"features\": by_tier.get(\"X0\", []) + by_tier.get(\"X1\", []),"
+        ],
+        [
+          172,
+          "\"features\": by_tier.get(\"X0\", []) + by_tier.get(\"X1\", []),"
+        ]
+      ]
+    },
+    "build_model_boundary_report.py": {
+      "get_with_default": [
+        [
+          147,
+          "h3 = e6.get(\"h3_test\", {})"
+        ],
+        [
+          175,
+          "if e4.get(\"in_vs_out_of_domain\", {}).get(\"separation\") == \"NO_USEFUL_SEPARATION\":"
+        ],
+        [
+          185,
+          "if e6.get(\"h3_test\", {}).get(\"h3_supported\") == \"true\":"
+        ]
+      ]
+    },
+    "run_e1b_physics_constrained.py": {
+      "get_with_default": [
+        [
+          169,
+          "f = feats.get(r[\"inchikey\"], {})"
+        ]
+      ],
+      "try_blocks": [
+        [
+          87,
+          "try:"
+        ]
+      ]
+    },
+    "run_e1_structure_vs_electronic.py": {
+      "get_with_default": [
+        [
+          188,
+          "f = feature_by_key.get(r[\"inchikey\"], {})"
+        ]
+      ],
+      "try_blocks": [
+        [
+          86,
+          "try:"
+        ]
+      ]
+    },
+    "run_e4_domain_generalization.py": {
+      "get_with_default": [
+        [
+          206,
+          "smi = (v04.get(ik, {}).get(\"smiles\") or \"\").strip()"
+        ],
+        [
+          208,
+          "f = feats.get(ik, {})"
+        ],
+        [
+          235,
+          "if not (v04.get(r[\"inchikey\"], {}).get(\"smiles\") or \"\").strip()),"
+        ],
+        [
+          237,
+          "if any(fnum(feats.get(r[\"inchikey\"], {}).get(c)) is None"
+        ],
+        [
+          552,
+          "f\"{r['test_n']} | {r['mae']} | {r.get('train_mean_baseline_mae','')} | \""
+        ],
+        [
+          553,
+          "f\"{r.get('beats_train_mean','')} | {r['status']} |\\n\")"
+        ]
+      ],
+      "try_blocks": [
+        [
+          116,
+          "try:"
+        ]
+      ]
+    },
+    "run_e6_screening_decisions.py": {
+      "get_with_default": [
+        [
+          178,
+          "f = feats.get(r[\"inchikey\"], {})"
+        ]
+      ],
+      "try_blocks": [
+        [
+          85,
+          "try:"
+        ]
+      ]
+    }
+  },
+  "L1_lambda": {
+    "script_hardcodes_lam_fixed": true,
+    "evidence": "ridge_loo(X, y, lam=1.0) called at every site; no grid search",
+    "calls": [
+      "ridge_loo(X, y, lam=1.0)",
+      "ridge_loo(X, yp, lam=1.0)",
+      "ridge_loo(X: list[list[float]], y: list[float], lam: float = 1.0)"
+    ],
+    "tuned_on_test": false,
+    "verdict": "NO_LEAKAGE (lambda fixed a priori at 1.0, not tuned at all)",
+    "side_effect": "lambda is never validated, and the project's own E1b sweep shows lambda=1.0 is NOT the MAE-optimal value -> a specification problem, not leakage"
+  },
+  "L2_scaler": {
+    "evidence": "ridge_loo lines 143-149: Xtr/ytr exclude `hold`; _standardise(Xtr) computes means/sds from the TRAINING fold only; X[hold] is transformed with those training stats",
+    "scaler_fit_on": "training fold only",
+    "verdict": "NO_LEAKAGE"
+  },
+  "L2_runtime_proof": {
+    "mean_col0_train_fold": 7.619048,
+    "mean_col0_all_data": 7.636364,
+    "differ": true,
+    "held_out_value": 8.0
+  },
+  "L3_e4_row_self_exclusion": {
+    "evidence": "run_e4_domain_generalization.py lines 313-318: tr = all j != i; fit_predict on [mols[j] for j in tr], predict mols[i]",
+    "n_rows": 22,
+    "verdict": "NO_LEAKAGE by construction"
+  },
+  "L4_lofo": {
+    "evidence": "lines 258-272: hold = set(idx) is the whole family; tr excludes all of it",
+    "rows": [
+      {
+        "family": "primary_secondary_amine",
+        "n_members": "4",
+        "n_train": "18",
+        "test_n": "4",
+        "status": "measured"
+      },
+      {
+        "family": "unclassified",
+        "n_members": "4",
+        "n_train": "18",
+        "test_n": "4",
+        "status": "measured"
+      },
+      {
+        "family": "alcohol",
+        "n_members": "3",
+        "n_train": "19",
+        "test_n": "3",
+        "status": "measured"
+      },
+      {
+        "family": "carbonate",
+        "n_members": "2",
+        "n_train": "20",
+        "test_n": "2",
+        "status": "measured"
+      },
+      {
+        "family": "dinitrile",
+        "n_members": "2",
+        "n_train": "20",
+        "test_n": "2",
+        "status": "measured"
+      },
+      {
+        "family": "ketone",
+        "n_members": "2",
+        "n_train": "20",
+        "test_n": "2",
+        "status": "measured"
+      },
+      {
+        "family": "carboxylic_acid",
+        "n_members": "1",
+        "n_train": "21",
+        "test_n": "1",
+        "status": "insufficient_power"
+      },
+      {
+        "family": "ester",
+        "n_members": "1",
+        "n_train": "21",
+        "test_n": "1",
+        "status": "insufficient_power"
+      },
+      {
+        "family": "ether",
+        "n_members": "1",
+        "n_train": "21",
+        "test_n": "1",
+        "status": "insufficient_power"
+      },
+      {
+        "family": "imidazole",
+        "n_members": "1",
+        "n_train": "21",
+        "test_n": "1",
+        "status": "insufficient_power"
+      },
+      {
+        "family": "tertiary_amine",
+        "n_members": "1",
+        "n_train": "21",
+        "test_n": "1",
+        "status": "insufficient_power"
+      }
+    ],
+    "all_n_train_plus_test_eq_22": true,
+    "verdict": "NO_LEAKAGE by construction"
+  },
+  "L5_e6_predictions": {
+    "n_compared": 22,
+    "n_match_with_e1_loo": 0,
+    "note": "E6 uses the same 11-feature set as E1's X0+X1 minus total_energy_hartree, so predictions are close but not identical",
+    "verdict": "E6 uses its own LOO predictions (loo_predictions at line 200)"
+  },
+  "L6_b04_circularity": {
+    "gates": [
+      "B02 AI consensus == AI_CONSENSUS_ACCEPTED",
+      "v06 model_ready == true",
+      "not in dataset_v06_exclusions"
+    ],
+    "label_used_as_admission_criterion": false,
+    "note": "The dielectric value is carried through but never used as a selection filter; admission is by provenance/quality gates only",
+    "caveat": "Gate 3 is vacuous: ready & excluded = 0 rows, so gate 3 removes nothing and the claim 'three independent gates' overstates the construction to two",
+    "verdict": "NO_LABEL_LEAKAGE, but gate independence claim is overstated"
+  },
+  "B04_gate_algebra": {
+    "n_accepted": 22,
+    "n_model_ready": 73,
+    "n_excluded": 175,
+    "ready_minus_excluded": 73,
+    "accepted_and_ready": 22,
+    "accepted_and_ready_and_not_excluded": 22,
+    "gate3_removes": 0,
+    "pool_size": 22,
+    "conclusion": "intersection == |accepted & ready|; gate 3 is a no-op. T_K all inside [293.15,303.15] so the temperature band test cannot fail either."
+  },
+  "numeric_output_hashes": [
+    [
+      "outputs\\b04\\candidate_exclusion_audit.csv",
+      "748fa755fbadad952f504f6e7fc1f6df0f263771ac39d876d6b31f4aaf252377"
+    ],
+    [
+      "outputs\\b04\\candidate_pool_v2_draft.csv",
+      "479b4cf958cc3e647e3151b1492641c04274d33576b930eed90ad8dc514b59bf"
+    ],
+    [
+      "outputs\\b05\\E1_structure_vs_electronic\\metrics.csv",
+      "2d4999cdd5bacbec5c17f7636e1667443b1666220ce4967974d3f3ad5378381c"
+    ],
+    [
+      "outputs\\b05\\E1_structure_vs_electronic\\permutation_null.csv",
+      "0fcb44002aac9e6131eae3f650eab2fd146515a318879797ac3cc732f2f3a8be"
+    ],
+    [
+      "outputs\\b05\\E1_structure_vs_electronic\\predictions_loo.csv",
+      "54b04ec0e21e9e543f40647839712db494a72bb4f707699f7a0a5b76c994eaa5"
+    ],
+    [
+      "outputs\\b05\\E1b_physics_constrained\\lambda_sweep.csv",
+      "3ae0089ac4a97abe84a121e2fa5a6ce36f42743657a3aea50f7ecac396f51bd7"
+    ],
+    [
+      "outputs\\b05\\E1b_physics_constrained\\log_space_results.csv",
+      "e84a0ad153748528f1677328ca6c99d038ecbaaaf539eb982bbe35fb1babb729"
+    ],
+    [
+      "outputs\\b05\\E4_domain_generalization\\applicability_domain.csv",
+      "b5e92627870573f120641178c9452a2faf53fdc85bfda2801c05dafa08ad20da"
+    ],
+    [
+      "outputs\\b05\\E4_domain_generalization\\leave_one_family_out.csv",
+      "4180d8aa7f419c14e28b50291f1d539579f7f01b1a845498a3a220a1f5da7077"
+    ],
+    [
+      "outputs\\b05\\E4_domain_generalization\\source_ood_results.csv",
+      "e5e9e3441cf543f290ad5ae329d80fdcff50fd63fa932c875c32a542157958e7"
+    ],
+    [
+      "outputs\\b05\\E4_domain_generalization\\structural_distance_ood.csv",
+      "669b15cc4ceca59442ae5b8eb1e12a371b55ddc00252ba871e45a870b381a625"
+    ],
+    [
+      "outputs\\b05\\E6_screening_decisions\\rank_vs_error.csv",
+      "28a5feddb1d8b9947de1905478467cdf47407d2567a39e75e2293e289d368488"
+    ],
+    [
+      "outputs\\b05\\E6_screening_decisions\\screening_reliability.csv",
+      "761a5b8b94df7b2e88ddc206cc68c1609bec2e48766e0d79cf981ff50fc3cc6d"
+    ],
+    [
+      "outputs\\b05\\E6_screening_decisions\\topk_regret.csv",
+      "1b6176b5684f98c5995ff9318f841b790db4c50ecc619feff39782d61e911555"
+    ],
+    [
+      "outputs\\b05\\feature_registry_v2.csv",
+      "c1917433c42a8fd467edd8370d69f44597c71c34c00651e28e56f09ab0c0c1d8"
+    ]
+  ]
+}

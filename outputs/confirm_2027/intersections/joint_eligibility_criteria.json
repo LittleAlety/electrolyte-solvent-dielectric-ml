@@ -1,0 +1,135 @@
+{
+  "admission_gates": [
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7",
+    "A8",
+    "A9",
+    "A10",
+    "A11",
+    "A12"
+  ],
+  "admitted_definition": "gap measurement_decision=ACCEPT 且人类签批状态为 SIGNED_ACCEPT",
+  "analysis_id": "B-G0-J01",
+  "condition_resolvable_definition": "分子出现在 candidate_master / pool_c / pool_b / worksheet_40 / formal_draft_20 任一层",
+  "contract_version": "confirm_2027.joint_eligibility/v1",
+  "dimensions": [
+    {
+      "allowed": [
+        "IDENTITY_FULL_KEY",
+        "IDENTITY_SKELETON_ONLY",
+        "IDENTITY_ABSENT"
+      ],
+      "key": "identity_status"
+    },
+    {
+      "allowed": [
+        "NO_SOURCE",
+        "SINGLE_SOURCE",
+        "DUAL_SOURCE",
+        "CLUSTER_GE3"
+      ],
+      "key": "independent_source_status"
+    },
+    {
+      "key": "temperature",
+      "windows_K": [
+        {
+          "high": 303.15,
+          "low": 293.15,
+          "name": "room_temperature",
+          "source": "scripts/build_dielectric_v04.py -> temperature_band_v03"
+        },
+        {
+          "high": 323.15,
+          "low": 313.15,
+          "name": "extended_temperature",
+          "source": "scripts/build_dielectric_v04.py -> temperature_band_v03"
+        },
+        {
+          "high": 373.15,
+          "low": 333.15,
+          "name": "high_temperature",
+          "source": "scripts/build_dielectric_v04.py -> HIGH_TEMPERATURE_RANGE_K"
+        }
+      ]
+    },
+    {
+      "allowed": [
+        "LIQUID_EVIDENCED_IN_V11",
+        "MIXED_PHASE_EVIDENCE",
+        "PHASE_UNKNOWN",
+        "NOT_EVALUATED"
+      ],
+      "key": "phase"
+    },
+    {
+      "allowed": [
+        "STATIC_ZERO_HZ_EVIDENCED",
+        "RF_ONLY",
+        "FREQUENCY_UNKNOWN",
+        "NOT_EVALUATED"
+      ],
+      "key": "frequency"
+    },
+    {
+      "allowed": [
+        "SIGNED_ACCEPT",
+        "NOT_SIGNED",
+        "NO_ADMISSION_ROW"
+      ],
+      "key": "human_admission"
+    },
+    {
+      "ge2_for_source_robustness": true,
+      "ge3_for_cluster_claims": true,
+      "key": "independent_source_count"
+    }
+  ],
+  "forbidden": [
+    "以单一 matched=true 代替七维裁决",
+    "把 Li 配合物或带电态直接 join 到纯液体实验记录",
+    "在分母不足时产出 Top-k / regret 等确认性指标",
+    "为了让 GO 成立而事后放宽本文件"
+  ],
+  "freeze_state": "NOT_FROZEN_DRAFT",
+  "join_rule": "A 侧只取 18 个中性母体的规范 SMILES -> InChIKey, 以首段骨架与 B 的 molecule_id / v04 inchikey 连接; Li 配合物(LiM_plus/LiM_2plus)与带电态不参与连接",
+  "join_unit": "neutral_parent_inchikey_skeleton",
+  "k_rule": {
+    "_status": "FROZEN_DECLARATION",
+    "adopted_rule": "screening_metrics.yaml::primary_k.default_rule_if_human_declines_to_choose",
+    "approved_by": "Codex: user-delegated B2 beta ruling 2026-10-29",
+    "authority_ruling": "delegated_rulings_2026-10-27.md rules 6-7",
+    "does_not_edit": "drafts/configs/frozen/screening_metrics.yaml (v1 stays byte-identical)",
+    "meaning": "the human declines to choose a different headline k, so the contract's default rule governs.",
+    "rule": "primary_k = max(1, ceil(n_eligible / 10))"
+  },
+  "layers_reported_separately": [
+    "candidate_master",
+    "pool_c",
+    "pool_b",
+    "worksheet_40",
+    "formal_draft_20"
+  ],
+  "never_default_rules": [
+    "未知温度不得默认 298.15 K",
+    "未知相态不得默认 liquid",
+    "未知频率不得写 0 Hz",
+    "未知压强不得写 1 atm",
+    "epsilon 不得跨来源平均",
+    "缺失必需字段只能 HOLD/REJECT, 不得静默补 0",
+    "缺失 DOI 的行不计入独立来源数, 另计 missing_doi_rows"
+  ],
+  "room_band_qualified_definition": "condition_resolvable 且至少一条候选行的 T_K 落在 room_temperature 温窗内",
+  "verdict_rules": [
+    "ELIGIBLE_ADMITTED: human_admission=SIGNED_ACCEPT 且 gap measurement_decision=ACCEPT",
+    "CONDITION_QUALIFIED_ADMISSION_PENDING: condition_resolvable=true 且候选行存在室温带",
+    "CONDITION_QUALIFIED_OFF_ROOM_BAND: condition_resolvable=true 但候选行全部在室温带之外",
+    "OBSERVATION_READY_NOT_IN_CANDIDATE_POOL: 有 v11 观测但不属于任何候选层",
+    "IDENTITY_ONLY_NO_CONDITION_OBSERVATION: 身份命中但无 v11 观测"
+  ]
+}

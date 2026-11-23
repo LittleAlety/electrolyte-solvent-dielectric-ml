@@ -1,0 +1,88 @@
+{
+  "schema": "b05.gate_status/v1",
+  "generator": "build_model_boundary_report/1.0.0",
+  "generated_at_utc": "2026-11-23T10:17:15Z",
+  "required_deliverables": {
+    "feature_registry_v2.csv": true,
+    "model_input_manifest.json": true,
+    "model_boundary_report.md": true
+  },
+  "experiments": {
+    "E1": {
+      "required": true,
+      "done": true,
+      "status": "EXPLORATORY_NOT_CONFIRMATORY"
+    },
+    "E1b": {
+      "required": false,
+      "done": true,
+      "status": "EXPLORATORY_ROBUSTNESS_CHECK",
+      "why": "物理约束重估. Reviewer 1/3 发现 E1 的 ridge 缺截距项 导致结论反转; E1b 记录该更正与偏差诊断"
+    },
+    "E1c": {
+      "required": false,
+      "done": true,
+      "status": "EXPLORATORY_NOT_CONFIRMATORY",
+      "why": "特征块消融. Reviewer 4 发现 X1 单独优于 X0+X1, E1 无法区分『电子块有用』与『合并块有用』"
+    },
+    "E2": {
+      "required": false,
+      "done": false,
+      "status": "NOT_RUN"
+    },
+    "E3": {
+      "required": false,
+      "done": false,
+      "status": "NOT_RUN_CONDITIONAL"
+    },
+    "E4": {
+      "required": true,
+      "done": true,
+      "status": "EXPLORATORY_NOT_CONFIRMATORY"
+    },
+    "E5": {
+      "required": false,
+      "done": false,
+      "status": "NOT_RUN_CONDITIONAL"
+    },
+    "E6": {
+      "required": true,
+      "done": true,
+      "status": "INSUFFICIENT_POWER"
+    }
+  },
+  "required_experiments_complete": true,
+  "estimator_version": "ridge_with_intercept/v2",
+  "estimator_version_note": "v2 = 带截距的岭回归. v1 (无截距) 产生过错误结论, 已被 E1b 记录并替换. Reviewer 3 (B04+B05) 指出两个状态之间没有版本号区分, 此处显式登记.",
+  "self_corrections_applied": [
+    "E1 ridge 缺截距 -> 加截距 (MAE 17.29 -> 6.50, 结论反转)",
+    "E4 fit_predict 同一缺陷 -> 同步修复 (指纹对误差 19.48 -> 2.79)",
+    "E6 loo_predictions 同一缺陷 -> 同步修复",
+    "B07 fit_predict 同一缺陷 -> 同步修复",
+    "E6 verdict ANTI_CORRELATED -> LOCAL_RANK_INVERSION (与 Spearman +0.73 自洽)"
+  ],
+  "gate_open": true,
+  "supported_conclusions": [
+    "X0+X1 的描述符组合**优于**常数基线（MAE 6.79 vs 10.81，R² = 0.492）（E1）",
+    "X0_plus_X1_electronic **优于**标签置换零假设（p = 0.0）（E1）",
+    "跨家族预测中 5/6 个家族优于基线 —— 但每个家族 n_test 只有 2-4，该计数**不可分辨**（E4）",
+    "误差随结构距离增大而增大（Spearman -0.505），说明存在可用的适用域信号（E4）",
+    "指纹相同处的误差为 2.7917（早期报告的 19.48 是模型缺少截距造成的假象）（E4）",
+    "模型 Top-k 与随机筛选**不可区分**（E6，p = 0.16）",
+    "**H3 得到支持**：回归误差与筛选收益脱钩 —— 加入噪声后 MAE 恶化但 regret 下降（E6）"
+  ],
+  "cannot_claim": [
+    "电子描述符普遍无价值",
+    "对 22 个分子之外的外推",
+    "模型可用于材料筛选",
+    "来源聚类稳健性",
+    "确认性性能数字",
+    "完整描述符体系"
+  ],
+  "outputs": {
+    "model_boundary_report": {
+      "path": "outputs\\b05\\model_boundary_report.md",
+      "sha256": "cfecc66c979a92a8f7e0b563b717b38100cc3cdb5b71726db591f70064994b4e"
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "schema": "admission_v2.status_machine/v1",
+  "generator": "build_consensus_gate/1.0.0",
+  "generated_at_utc": "2026-11-23T10:21:46Z",
+  "states": {
+    "PENDING_REVIEW": "队列已建立, 尚未四审",
+    "AI_CONSENSUS_ACCEPTED": "四位独立 Reviewer 全部 PASS. 这是 AI 共识, 不是人工签名",
+    "AI_CONSENSUS_HOLD": "至少一位 HOLD 且无 FAIL. 需补证据后重审",
+    "AI_CONSENSUS_REJECTED": "至少一位 FAIL. 该记录不得通过",
+    "AI_CONSENSUS_INCOMPLETE": "缺少某位 Reviewer 的结论, 不能判",
+    "HUMAN_SIGNED": "有权的人完成的法律/机构签名. 本流程**不产生**此状态"
+  },
+  "transitions": [
+    {
+      "from": "PENDING_REVIEW",
+      "to": "AI_CONSENSUS_ACCEPTED",
+      "condition": "4/4 PASS"
+    },
+    {
+      "from": "PENDING_REVIEW",
+      "to": "AI_CONSENSUS_HOLD",
+      "condition": "any HOLD, no FAIL"
+    },
+    {
+      "from": "PENDING_REVIEW",
+      "to": "AI_CONSENSUS_REJECTED",
+      "condition": "any FAIL"
+    },
+    {
+      "from": "PENDING_REVIEW",
+      "to": "AI_CONSENSUS_INCOMPLETE",
+      "condition": "a reviewer missing"
+    },
+    {
+      "from": "AI_CONSENSUS_HOLD",
+      "to": "AI_CONSENSUS_ACCEPTED",
+      "condition": "new evidence, re-reviewed 4/4 PASS"
+    },
+    {
+      "from": "AI_CONSENSUS_REJECTED",
+      "to": "AI_CONSENSUS_HOLD",
+      "condition": "rebuttal accepted, re-review"
+    }
+  ],
+  "hard_constraints": [
+    "AI_CONSENSUS_ACCEPTED 不得写入任何 HUMAN_SIGNED 字段",
+    "不得使用多数投票 (3 PASS + 1 HOLD = HOLD, 不是 PASS)",
+    "HUMAN_SIGNED 只能由有权的人产生, 本流水线无此代码路径",
+    "法律声明/作者确认/机构责任/正式投稿授权仍须人工完成"
+  ],
+  "terminal_states": [
+    "AI_CONSENSUS_ACCEPTED",
+    "AI_CONSENSUS_HOLD",
+    "AI_CONSENSUS_REJECTED"
+  ],
+  "non_terminal_states": [
+    "PENDING_REVIEW",
+    "AI_CONSENSUS_INCOMPLETE"
+  ],
+  "human_signed_reachable_from_ai_pipeline": false,
+  "counts": {
+    "AI_CONSENSUS_ACCEPTED": 22,
+    "AI_CONSENSUS_HOLD": 8,
+    "AI_CONSENSUS_INCOMPLETE": 2,
+    "AI_CONSENSUS_REJECTED": 40
+  },
+  "n_records": 72,
+  "n_admitted_by_ai_consensus": 22
+}

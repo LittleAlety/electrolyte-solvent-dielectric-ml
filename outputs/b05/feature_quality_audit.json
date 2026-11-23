@@ -1,0 +1,102 @@
+{
+  "schema": "b05.feature_quality/v1",
+  "generator": "audit_feature_quality/1.0.0",
+  "generated_at_utc": "2026-11-23T10:15:11Z",
+  "why_this_exists": "Reviewer 3 与 Reviewer 4 (B04+B05) 指出『12 个特征』这个说法高估了有效信息量. 本审计量化四个具体问题.",
+  "n_molecules": 22,
+  "defect_1_unregistered_feature": {
+    "unregistered": [
+      "total_energy_hartree"
+    ],
+    "registry_only": [],
+    "consequence": "E1 实际拟合 12 列, 而注册表只列 11 项. manifest 没有描述模型真正消费的特征集合."
+  },
+  "defect_2_exact_collinearity": {
+    "pairs": [
+      {
+        "feature_a": "molecular_volume_A3",
+        "feature_b": "molar_volume_m3_mol",
+        "pearson_r": 1.0,
+        "verdict": "EXACTLY_COLLINEAR"
+      },
+      {
+        "feature_a": "polarizability_au",
+        "feature_b": "polarizability_A3",
+        "pearson_r": 1.0,
+        "verdict": "EXACTLY_COLLINEAR"
+      }
+    ],
+    "consequence": "完全共线的两列等价于重复投喂同一信息; 岭回归会把它平分, 但『特征数』因此虚高."
+  },
+  "defect_3_derived_feature_disguised": {
+    "identities": [
+      {
+        "identity": "molar_volume_m3_mol == molecular_volume_A3 * N_A",
+        "n_checked": 22,
+        "ratio_min": 0.999999991233,
+        "ratio_max": 1.000000014876,
+        "relative_spread": 2.3643e-08,
+        "holds_exactly": "true",
+        "tolerance_note": "判据用相对偏差 < 1e-6 而非按位相等: CSV 存储精度有限, 代数恒等式会表现为极小的抖动而非完全相等.",
+        "consequence": "molar_volume_m3_mol 不是独立的体相摩尔体积测量, 而是 vdW 腔体积求和的重述. 把它解释为『一摩尔液体占据的体积』是错的."
+      }
+    ]
+  },
+  "defect_4_inconsistent_feature_sets": {
+    "E1_columns": [
+      "heavy_atom_count",
+      "hbd",
+      "hba",
+      "tpsa_A2",
+      "molecular_volume_A3",
+      "molar_volume_m3_mol",
+      "formal_charge",
+      "dipole_D",
+      "polarizability_au",
+      "polarizability_A3",
+      "homo_lumo_gap_ev",
+      "total_energy_hartree"
+    ],
+    "E4_E6_B07_columns": [
+      "heavy_atom_count",
+      "hbd",
+      "hba",
+      "tpsa_A2",
+      "molecular_volume_A3",
+      "molar_volume_m3_mol",
+      "formal_charge",
+      "dipole_D",
+      "polarizability_au",
+      "polarizability_A3",
+      "homo_lumo_gap_ev"
+    ],
+    "difference": [
+      "total_energy_hartree"
+    ],
+    "consequence": "E1 用 12 列而 E4/E6/B07 用 11 列. 跨实验比较因此在比较不同的模型, 但报告读起来像是同一个."
+  },
+  "effective_rank": {
+    "nominal_columns_E1": 12,
+    "rank_of_E1_matrix": 10,
+    "nominal_columns_E4_E6": 11,
+    "rank_of_E4_E6_matrix": 9,
+    "interpretation": "名义 12 列的设计矩阵实际秩为 10. 因此『12 维特征』应改为『秩 10 的特征块』, 否则会高估信息量."
+  },
+  "inputs": {
+    "candidate_pool_v2_draft": {
+      "sha256": "8d171febaf713d18bf8684fd8c07e473203e5cd2be916217f7a6af4ba62d8bbd",
+      "rows": 22
+    },
+    "dielectric_physical_features": {
+      "sha256": "daf1b03b16f2967cd93704892a3a83e2d1dde119bd3ae18116ea748caf965295"
+    },
+    "feature_registry_v2": {
+      "sha256": "c1917433c42a8fd467edd8370d69f44597c71c34c00651e28e56f09ab0c0c1d8"
+    }
+  },
+  "output": {
+    "path": "outputs\\b05\\feature_quality_audit.csv",
+    "sha256": "d5b3ccbc20dd2275e28832ef1915d5aca50149c88155b625602225bb8cf61207",
+    "rows": 12
+  }
+}

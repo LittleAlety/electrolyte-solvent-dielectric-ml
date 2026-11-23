@@ -1,0 +1,364 @@
+{
+  "analysis_id": "B-G0-J01",
+  "analysis_title": "A18 x B 共同候选资格审计与证据缺口登记",
+  "blocking_reasons": [
+    {
+      "code": "NO_ADMITTED_LABEL",
+      "detail": "18 个 A 母体中 0 个取得 ACCEPT 标签; B 的 admission 仍全部停在 HOLD/待人类签批",
+      "evidence": "joint_eligibility.csv::human_admission_status"
+    },
+    {
+      "code": "CONDITION_RESOLVABLE_POOL_TOO_SMALL",
+      "detail": "条件可解析 4/18; 室温带合格 3/18; 按冻结 k 规则 primary_k=1, 需 n>=21 才能得到 primary_k>=3",
+      "evidence": "joint_pool_layer_summary.json + joint_go_nogo.json::denominators"
+    },
+    {
+      "code": "NO_DUAL_INDEPENDENT_SOURCE_IN_QUALIFIED_POOL",
+      "detail": "合格池内独立来源组 >=2 的分子 0 个、>=3 的 0 个; 来源簇稳健性检验在合格池上不可估",
+      "evidence": "joint_eligibility.csv::v11_n_source_groups"
+    },
+    {
+      "code": "A_SIDE_REDOX_NOT_EVALUATED",
+      "detail": "A 侧 redox/pair 合格标签 (ox_eligible) 本轮未评估, 联合分母不能只按 B 侧算",
+      "evidence": "joint_go_nogo.json::not_evaluated"
+    }
+  ],
+  "confirmatory_metrics_emitted": [],
+  "contract_version": "confirm_2027.joint_eligibility/v1",
+  "denominators": {
+    "n_a_core_neutral_parents": 18,
+    "n_admitted": 0,
+    "n_cluster_ge3_independent_sources_in_qualified_pool": 0,
+    "n_condition_resolvable": 4,
+    "n_dual_or_more_independent_sources_in_qualified_pool": 0,
+    "n_identity_common_in_candidate_master": 18,
+    "n_required_for_primary_k_ge_3": 21,
+    "n_room_band_qualified": 3,
+    "primary_k_rule_text": "primary_k = max(1, ceil(n_eligible / 10))",
+    "primary_k_under_frozen_rule": 1
+  },
+  "descriptive_only": true,
+  "environment": {
+    "platform": "Windows-11",
+    "python": "3.12.14",
+    "rdkit": "2026.03.6"
+  },
+  "forbidden_outputs": [
+    "joint_topk_sets",
+    "joint_mean_regret",
+    "joint_model_comparison",
+    "joint_confirmatory_effect_size",
+    "any_per_molecule_ranking_presented_as_confirmatory"
+  ],
+  "gap_groups": {
+    "condition_qualified_pending_human": {
+      "count": 3,
+      "criterion": "候选行落在室温带且只缺人工签批",
+      "mol_ids": [
+        "C01",
+        "C03",
+        "C14"
+      ]
+    },
+    "condition_resolvable_off_room_band": {
+      "count": 1,
+      "criterion": "属于候选层但候选行温度全部在室温带之外",
+      "mol_ids": [
+        "C18"
+      ]
+    },
+    "observation_ready_unqualified": {
+      "count": 5,
+      "criterion": "有 v11 观测但不属于任何带证据裁决的候选层",
+      "mol_ids": [
+        "C08",
+        "C10",
+        "C13",
+        "C15",
+        "C16"
+      ]
+    },
+    "zero_observation": {
+      "count": 9,
+      "criterion": "身份命中但 v11 观测层 0 条",
+      "mol_ids": [
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C09",
+        "C11",
+        "C12",
+        "C17"
+      ]
+    }
+  },
+  "gate_table": [
+    {
+      "blocking_molecules": [],
+      "criterion": "A 母体在 B 主表中身份命中",
+      "dimension": "identity",
+      "n_pass": 18,
+      "n_total": 18
+    },
+    {
+      "blocking_molecules": [
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C09",
+        "C11",
+        "C12",
+        "C17"
+      ],
+      "criterion": "至少一条可追溯来源 (DOI 或来源文件)",
+      "dimension": "source",
+      "n_pass": 9,
+      "n_total": 18
+    },
+    {
+      "blocking_molecules": [
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C09",
+        "C11",
+        "C12",
+        "C17",
+        "C18"
+      ],
+      "criterion": "存在室温带 (293.15-303.15 K) 观测或候选行",
+      "dimension": "temperature",
+      "n_pass": 8,
+      "n_total": 18
+    },
+    {
+      "blocking_molecules": [
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C09",
+        "C11",
+        "C12",
+        "C17"
+      ],
+      "criterion": "v11 逐行相态证据均为液体",
+      "dimension": "phase",
+      "n_pass": 9,
+      "n_total": 18
+    },
+    {
+      "blocking_molecules": [
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C09",
+        "C11",
+        "C12",
+        "C16",
+        "C17"
+      ],
+      "criterion": "存在 static/zero-frequency 逐行证据",
+      "dimension": "frequency",
+      "n_pass": 8,
+      "n_total": 18
+    },
+    {
+      "blocking_molecules": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18"
+      ],
+      "criterion": "存在显式 ACCEPT 签批",
+      "dimension": "human_admission",
+      "n_pass": 0,
+      "n_total": 18
+    },
+    {
+      "blocking_molecules": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C09",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C17",
+        "C18"
+      ],
+      "criterion": "独立来源组 >= 2",
+      "dimension": "independent_source_count_ge2",
+      "n_pass": 4,
+      "n_total": 18
+    },
+    {
+      "blocking_molecules": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C16",
+        "C17",
+        "C18"
+      ],
+      "criterion": "独立来源组 >= 3 (来源簇检验下限)",
+      "dimension": "independent_source_count_ge3",
+      "n_pass": 1,
+      "n_total": 18
+    }
+  ],
+  "generator_version": "build_joint_eligibility/1.0.0",
+  "input_contract_version": "confirm_2027.joint_inputs/v1",
+  "inputs": {
+    "a_core_set": "630b0ee8c09dc4141124e335181572bf27a63f297a8df95f9c774683a10cf91b",
+    "b_dielectric_v04": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c",
+    "b_observations_v11plus": "159b928f800a55969963da275ed05c30ce8a19cffc48353a9c490eec68a49af9",
+    "v56_admission_gap": "597efaf8355483a937dfaed5706694c3591df64f655e28fdfc9bd3bc458a2ec1",
+    "v56_candidate_master": "63b9ff45561c9a49f203f98a10588c003b0af16b7e376269f333c882618a495d",
+    "v56_candidate_pool_b": "e2f18d4fd09b2ba9a9c5680c55c943d93a7381bef0c3d78a87676dc00540c176",
+    "v56_candidate_pool_c": "c50f9349ec6de434f2b81d7a138292581fb661f4b1b9b1d54fdd3f7dc9055ba8",
+    "v56_formal_decision_draft": "d2bfea53546f6197237f5b51d5fad9143eab4e3c842e1019ea6afe2e528d132a",
+    "v56_human_audit_worksheet": "2346b707c46e8204d01bc516556288f73a194b170887bf4324b9fcc160a0f1ab",
+    "v56_manifest": "ec289e3dcd39b8afa35e397e846ad956a589fdea466b7f63d1bad7b008bd9703",
+    "v56_primary_k_adoption": "c44d83583f38ba02bb83efc562876c4e75025fa5ef4abc85e0b4f7455e143052",
+    "v56_round_r007": "3a223479ab4d66876bf6d129d8eba2e85c0e95acb662d45f7694a6c5c8c14ce3",
+    "v56_target_protocol": "0e848eb6fd8619f89611b70237c17b6ac0d9b117422d9d2a988be681f69bc6a4",
+    "v56_three_questions_r001": "95bd6ed86668821c40520df43de372c2e66aac65f00270d190b02b246989e236"
+  },
+  "join_unit": "neutral_parent_inchikey_skeleton",
+  "not_evaluated": [
+    "a_side_redox_pair_eligible",
+    "joint_topk",
+    "joint_regret",
+    "joint_cluster_robustness",
+    "source_license_redistribution_scope"
+  ],
+  "preregistration_requirement": {
+    "criteria_sha256": "0906bf7898e1756a3758edaae23b1dc476e8089d9ddb41d80f3a1a797117123b",
+    "gate_ids": [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8",
+      "A9",
+      "A10",
+      "A11",
+      "A12"
+    ],
+    "protocol_frozen": false,
+    "protocol_status": "DRAFT_PENDING_HUMAN_APPROVAL",
+    "protocol_version": "0.1.0-draft",
+    "rule": "本条裁决的资格标准由 joint_eligibility_criteria.json 固化; 新证据可以重评 GO, 但必须先冻结该文件与统计方案, 再让新证据进入确认分析",
+    "status": "NOT_FROZEN"
+  },
+  "question": "在当前可准入证据上, A18 x B 的确认性联合 Top-k / regret 是否可以评估?",
+  "reopen_conditions": [
+    {
+      "condition": "联合室温带合格并签批的分子数 >= 21, 使 primary_k = max(1, ceil(n/10)) >= 3",
+      "current": 0,
+      "id": "R1",
+      "status": "OPEN",
+      "target": 21
+    },
+    {
+      "condition": "新证据进入确认分析之前, 资格标准与统计方案已冻结并预注册",
+      "current": "criteria_sha256=0906bf7898e1756a; target_protocol.status=DRAFT_PENDING_HUMAN_APPROVAL, frozen=False",
+      "id": "R2",
+      "status": "OPEN",
+      "target": "protocol 由 DRAFT_PENDING_HUMAN_APPROVAL 转为人工批准版本 + 预注册件"
+    },
+    {
+      "condition": "任何来源簇/聚类稳健性主张要求所报分组内独立来源组 >= 3",
+      "current": 0,
+      "id": "R3",
+      "status": "OPEN",
+      "target": 3
+    },
+    {
+      "condition": "输入 SHA256 与契约版本一并显式升级, 并重建本目录",
+      "current": "confirm_2027.joint_inputs/v1",
+      "id": "R4",
+      "status": "OPEN",
+      "target": "新 input contract 版本 + 新 joint_inputs_manifest.json"
+    }
+  ],
+  "snapshot": {
+    "condition_resolvable_ids": [
+      "C01",
+      "C03",
+      "C14",
+      "C18"
+    ],
+    "n_admitted": 0,
+    "n_condition_resolvable": 4,
+    "n_identity_common": 18,
+    "n_room_band_qualified": 3,
+    "off_room_band_condition_resolvable": [
+      {
+        "candidate_T_K": "333.15",
+        "candidate_bands": "high_temperature",
+        "mol_id": "C18",
+        "name": "SN"
+      }
+    ],
+    "room_band_qualified_ids": [
+      "C01",
+      "C03",
+      "C14"
+    ]
+  },
+  "v56_version_record": {
+    "counts": {
+      "bytes": 390647812,
+      "files": 6618,
+      "rewritten_files": 18
+    },
+    "generated_by": "tools/build_from_prior_repo.py",
+    "project": "electrolyte-ml v5.6 standalone"
+  },
+  "verdict": "NO_GO_INSUFFICIENT_ELIGIBLE_DATA",
+  "verdict_scope": "仅限确认性联合 Top-k / regret / 联合模型对比; 逐分子处置与证据缺口登记仍照常报告"
+}

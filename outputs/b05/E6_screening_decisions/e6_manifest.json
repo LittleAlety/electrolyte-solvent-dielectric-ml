@@ -1,0 +1,180 @@
+{
+  "schema": "b05.e6/v1",
+  "generator": "run_e6_screening_decisions/1.0.0",
+  "generated_at_utc": "2026-11-23T10:11:25Z",
+  "status": "INSUFFICIENT_POWER",
+  "power_statement": "n=22, k=3; Top-k 覆盖 3/22 个分子, 可能组合 1540 种. 单次抽样不足以支持确认性结论.",
+  "k_rule": "primary_k = max(1, ceil(n/10))",
+  "k": 3,
+  "k_fixed_in_advance": true,
+  "baseline_predefined": "random_uniform_screening",
+  "inputs": {
+    "candidate_pool_v2_draft": {
+      "sha256": "b69b9b94f046acc16dada87064fbcefed5590cd6b8c5d9a4268863a9e1377059",
+      "rows": 22
+    },
+    "dielectric_physical_features": {
+      "sha256": "daf1b03b16f2967cd93704892a3a83e2d1dde119bd3ae18116ea748caf965295"
+    }
+  },
+  "metrics": {
+    "mae": 6.7883,
+    "spearman_pred_vs_true": 0.7256,
+    "oracle_topk_mean": 37.83,
+    "model_topk_mean": 24.45,
+    "pool_mean": 17.3155,
+    "regret": 13.38,
+    "regret_fraction_of_headroom": 0.6522,
+    "p_model_beats_random": 0.16,
+    "p_exact_random_ge_model": 0.15714,
+    "n_possible_topk_sets": 1540,
+    "min_achievable_p": 0.00065,
+    "model_percentile_among_all_sets": 15.7,
+    "screening_verdict_exact": "NOT_DEMONSTRATED_SUPERIOR_AT_THIS_POWER",
+    "topk_overlap_with_oracle": 1
+  },
+  "h3_test": {
+    "mae_span_across_noise_ladder": 44.6191,
+    "regret_span_across_noise_ladder": 4.1852,
+    "spearman_pred_vs_true": 0.7256,
+    "regret_monotone_decreasing_with_noise": false,
+    "noise_improves_screening": true,
+    "topk_overlap_fraction": 0.3333,
+    "fraction_of_headroom_captured": 0.3478,
+    "top6_rank_detail": [
+      {
+        "rank": 1,
+        "name": "sulfolane",
+        "y_true": 44.0,
+        "y_pred": 38.8601
+      },
+      {
+        "rank": 2,
+        "name": "N-(2-hydroxypropyl)-2-hydroxy-1-propanamine",
+        "y_true": 13.87,
+        "y_pred": 34.6393
+      },
+      {
+        "rank": 3,
+        "name": "1,4,7,10,13-pentaoxacyclopentadecane",
+        "y_true": 15.48,
+        "y_pred": 30.9217
+      },
+      {
+        "rank": 4,
+        "name": "octanedinitrile",
+        "y_true": 25.94,
+        "y_pred": 26.2383
+      },
+      {
+        "rank": 5,
+        "name": "heptanedinitrile",
+        "y_true": 29.71,
+        "y_pred": 24.5606
+      },
+      {
+        "rank": 6,
+        "name": "1-methylimidazole",
+        "y_true": 39.78,
+        "y_pred": 24.485
+      }
+    ],
+    "top6_inversions": 10,
+    "top6_inversion_pairs": 15,
+    "interior_minimum_sigma": 6.0,
+    "interior_minimum_regret": 11.0288,
+    "regret_at_zero_sigma": 13.38,
+    "regret_is_non_monotone": true,
+    "random_regret": 20.6389,
+    "model_better_than_random_at_sigma_0": true,
+    "h3_supported": "true",
+    "verdict": "INTERIOR_REGRET_MINIMUM_LOCAL_INVERSION",
+    "interpretation": "regret 曲线是**凹的**：从 σ=0 的 13.38 降到 σ=6 的 最小值 11.03，随后回升；σ→∞ 时趋于随机筛选的 20.64。\n\n**这不能读作「预测有害」或「反相关」：** Spearman(pred, true) = +0.7256 明显为正，且 σ=0 时模型 Top-3 已比随机高 +7.26 ε 单位。\n\n真实机制是**局部排序倒置**：模型把 rank 1 排对，但 rank 2-6 之间错位（10/15 对逆序）。这些位置的真实 ε 差异远小于模型 MAE，正确排序本就不可分辨，噪声只是在重新洗牌并偶尔抬高 Top-3 均值。\n\n因此 H3（回归误差与筛选收益脱钩）**得到支持**，但强度是「存在内部最优噪声水平」，不是「预测有害」。"
+  },
+  "noise_ladder": [
+    {
+      "noise_sigma": 0.0,
+      "mean_mae": 6.7883,
+      "mean_topk_epsilon": 24.45,
+      "mean_regret": 13.38
+    },
+    {
+      "noise_sigma": 0.5,
+      "mean_mae": 6.7978,
+      "mean_topk_epsilon": 24.45,
+      "mean_regret": 13.38
+    },
+    {
+      "noise_sigma": 1.0,
+      "mean_mae": 6.8369,
+      "mean_topk_epsilon": 24.45,
+      "mean_regret": 13.38
+    },
+    {
+      "noise_sigma": 2.0,
+      "mean_mae": 6.9949,
+      "mean_topk_epsilon": 24.798,
+      "mean_regret": 13.032
+    },
+    {
+      "noise_sigma": 4.0,
+      "mean_mae": 7.5595,
+      "mean_topk_epsilon": 26.305,
+      "mean_regret": 11.525
+    },
+    {
+      "noise_sigma": 6.0,
+      "mean_mae": 8.4184,
+      "mean_topk_epsilon": 26.8012,
+      "mean_regret": 11.0288
+    },
+    {
+      "noise_sigma": 8.0,
+      "mean_mae": 9.453,
+      "mean_topk_epsilon": 26.7074,
+      "mean_regret": 11.1226
+    },
+    {
+      "noise_sigma": 12.0,
+      "mean_mae": 11.855,
+      "mean_topk_epsilon": 25.6953,
+      "mean_regret": 12.1347
+    },
+    {
+      "noise_sigma": 16.0,
+      "mean_mae": 14.5434,
+      "mean_topk_epsilon": 25.0631,
+      "mean_regret": 12.7669
+    },
+    {
+      "noise_sigma": 32.0,
+      "mean_mae": 26.3936,
+      "mean_topk_epsilon": 21.5883,
+      "mean_regret": 16.2417
+    },
+    {
+      "noise_sigma": 64.0,
+      "mean_mae": 51.4074,
+      "mean_topk_epsilon": 20.2648,
+      "mean_regret": 17.5652
+    }
+  ],
+  "outputs": {
+    "topk_regret": {
+      "path": "outputs\\b05\\E6_screening_decisions\\topk_regret.csv",
+      "sha256": "74e6dcde40a02e08160503617fda65d73f00ca35ae45c2dc1884b428a15475d4"
+    },
+    "screening_reliability": {
+      "path": "outputs\\b05\\E6_screening_decisions\\screening_reliability.csv",
+      "sha256": "123f24f57692b814bee458c2c0864a476229c612894dfefd66bf92871bfc1110"
+    },
+    "rank_vs_error": {
+      "path": "outputs\\b05\\E6_screening_decisions\\rank_vs_error.csv",
+      "sha256": "1fed18d744802ae4e836878fc41a78adb168d21de458acb19a03fab009a620c4"
+    },
+    "report": {
+      "path": "outputs\\b05\\E6_screening_decisions\\e6_report.md",
+      "sha256": "fb59b010ad9915c09683699f305f24e935647771f6dd9389dcf8a325a679593b"
+    }
+  }
+}

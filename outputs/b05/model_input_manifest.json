@@ -1,0 +1,163 @@
+{
+  "schema": "b05.model_input_manifest/v2",
+  "generator": "build_feature_registry/2.0.0",
+  "generated_at_utc": "2026-11-23T10:15:32Z",
+  "purpose": "让 E1/E4/E6 的每个数字都能追溯回确切的特征清单与输入哈希",
+  "feature_tiers_present": {
+    "X0": [
+      "heavy_atom_count",
+      "hbd",
+      "hba",
+      "tpsa_A2",
+      "molecular_volume_A3",
+      "molar_volume_m3_mol",
+      "formal_charge"
+    ],
+    "X1": [
+      "dipole_D",
+      "polarizability_au",
+      "polarizability_A3",
+      "homo_lumo_gap_ev",
+      "total_energy_hartree"
+    ]
+  },
+  "feature_tiers_absent": [
+    {
+      "tier": "X2",
+      "name": "conformer statistics",
+      "status": "NOT_COMPUTED",
+      "why": "PLAN B B05 E3 为条件性实验, 当前未授权运行",
+      "planned_in": "E3_conformer_ablation"
+    },
+    {
+      "tier": "X3",
+      "name": "condensed-phase independent physics",
+      "status": "NOT_AVAILABLE",
+      "why": "PLAN B B05 E5 依赖有限独立相互作用信息, 当前证据不足以构造",
+      "planned_in": "E5_physical_information"
+    }
+  ],
+  "n_features_present": 12,
+  "inputs": {
+    "candidate_pool_v2_draft": {
+      "path": "outputs\\b04\\candidate_pool_v2_draft.csv",
+      "sha256": "8d171febaf713d18bf8684fd8c07e473203e5cd2be916217f7a6af4ba62d8bbd",
+      "rows": 22
+    },
+    "dielectric_physical_features": {
+      "path": "data\\processed\\dielectric_physical_features.csv",
+      "sha256": "daf1b03b16f2967cd93704892a3a83e2d1dde119bd3ae18116ea748caf965295",
+      "rows": 209
+    }
+  },
+  "experiments": {
+    "E1_structure_vs_electronic": {
+      "features_X0": [
+        "heavy_atom_count",
+        "hbd",
+        "hba",
+        "tpsa_A2",
+        "molecular_volume_A3",
+        "molar_volume_m3_mol",
+        "formal_charge"
+      ],
+      "features_X1_added": [
+        "dipole_D",
+        "polarizability_au",
+        "polarizability_A3",
+        "homo_lumo_gap_ev",
+        "total_energy_hartree"
+      ],
+      "status": "COMPLETED_EXPLORATORY"
+    },
+    "E2_xtb_vs_dft": {
+      "status": "NOT_RUN",
+      "why": "针对性实验; 需先确认 xTB 与 DFT 的可比口径"
+    },
+    "E3_conformer_ablation": {
+      "status": "NOT_RUN_CONDITIONAL",
+      "why": "条件性实验, 需多构象数据; 当前 X2 未计算"
+    },
+    "E4_domain_generalization": {
+      "features": [
+        "heavy_atom_count",
+        "hbd",
+        "hba",
+        "tpsa_A2",
+        "molecular_volume_A3",
+        "molar_volume_m3_mol",
+        "formal_charge",
+        "dipole_D",
+        "polarizability_au",
+        "polarizability_A3",
+        "homo_lumo_gap_ev",
+        "total_energy_hartree"
+      ],
+      "status": "COMPLETED_EXPLORATORY"
+    },
+    "E5_physical_information": {
+      "status": "NOT_RUN_CONDITIONAL",
+      "why": "依赖有限独立相互作用信息, 证据不足"
+    },
+    "E6_screening_decisions": {
+      "features": [
+        "heavy_atom_count",
+        "hbd",
+        "hba",
+        "tpsa_A2",
+        "molecular_volume_A3",
+        "molar_volume_m3_mol",
+        "formal_charge",
+        "dipole_D",
+        "polarizability_au",
+        "polarizability_A3",
+        "homo_lumo_gap_ev",
+        "total_energy_hartree"
+      ],
+      "status": "COMPLETED_INSUFFICIENT_POWER"
+    }
+  },
+  "honesty_rules": [
+    "缺失的特征层必须显式登记, 不得静默省略",
+    "X2/X3 未计算, 因此任何『完整描述符体系』的宣称都不成立",
+    "所有实验共用同一分子身份与同一候选池",
+    "名义特征数不等于有效信息量: 必须同时报告有效秩"
+  ],
+  "redundancies": [
+    {
+      "features": [
+        "polarizability_au",
+        "polarizability_A3"
+      ],
+      "relation": "same quantity, two units (ratio 0.148184)",
+      "kind": "EXACT_UNIT_DUPLICATE",
+      "consequence": "投喂两列等于投喂一列两次; 岭回归会把权重平分"
+    },
+    {
+      "features": [
+        "molecular_volume_A3",
+        "molar_volume_m3_mol"
+      ],
+      "relation": "molar_volume = molecular_volume * N_A (vdW cavity sum)",
+      "kind": "ALGEBRAIC_IDENTITY",
+      "consequence": "molar_volume_m3_mol 不是独立的体相摩尔体积, 而是 vdW 腔体积求和的重述; 不得解释为『一摩尔液体占据的体积』"
+    }
+  ],
+  "effective_rank": {
+    "nominal_columns_E1": 12,
+    "rank_of_E1_matrix": 10,
+    "nominal_columns_E4_E6": 11,
+    "rank_of_E4_E6_matrix": 9,
+    "interpretation": "名义 12 列的设计矩阵实际秩为 10. 因此『12 维特征』应改为『秩 10 的特征块』, 否则会高估信息量."
+  },
+  "feature_set_inconsistency": {
+    "E1_uses": "12 列 (含 total_energy_hartree)",
+    "E4_E6_B07_use": "11 列 (不含 total_energy_hartree)",
+    "note": "跨实验比较因此不是完全同一个模型 (Reviewer 3/4, B04+B05). E1c 已按 11 列口径重做块消融, 与 E4/E6/B07 对齐."
+  },
+  "output": {
+    "path": "outputs\\b05\\feature_registry_v2.csv",
+    "sha256": "cb495ed072151eb77d773e26fdee912666f4ff30c4a356a41d1e67982e9f681a",
+    "rows": 12
+  }
+}

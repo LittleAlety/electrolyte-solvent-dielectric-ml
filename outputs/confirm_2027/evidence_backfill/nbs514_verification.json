@@ -1,0 +1,85 @@
+{
+  "schema": "confirm_2027.nbs514_verification/v1",
+  "generator": "verify_nbs514_evidence/1.0.0",
+  "generated_at_utc": "2026-11-23T10:21:49Z",
+  "declaration": "本模块只做 NBS Circular 514 的**页面读取核实**, 不新增测量、不把页面读取写入 measurement_ledger. 账本口径是 ThermoML + source_file_sha256, NBS514 转录是另一条录入路径, 混入会破坏账本的可追溯不变量.",
+  "inputs": {
+    "A18_gap_register": {
+      "sha256": "296a0e1fcb7aac09fa57538cda44dc07eca20339e4e62cc9e554f7bb68fa48ff",
+      "rows": 18
+    },
+    "nbs514_organic_parts": [
+      {
+        "path": "data\\interim\\nbs514_organic_part1.csv",
+        "sha256": "32648c0ef79a64b71090034e2cffcf50a6fdd6132ba8848e94e94abebc748383",
+        "rows": 200
+      },
+      {
+        "path": "data\\interim\\nbs514_organic_part2.csv",
+        "sha256": "d1fba7fa276f8141ff68a3fcb8dad6d3c277c7dda5a589dee52940787bcbfa3c",
+        "rows": 184
+      },
+      {
+        "path": "data\\interim\\nbs514_organic_part3.csv",
+        "sha256": "b57b424e3a3d30f59f356319e7085d2384a0f8e48bc8f0b77379895d76224157",
+        "rows": 196
+      },
+      {
+        "path": "data\\interim\\nbs514_organic_part4.csv",
+        "sha256": "68f737c447df49cbb331c6ffc04ae506de47ed5bd926b96286a48b63ad5ececb",
+        "rows": 56
+      }
+    ],
+    "nbs514_pdf": {
+      "path": "data\\raw\\nbs514\\nbscircular514.pdf",
+      "sha256": "cb3fa9239fd977d7fa85389fbc219baea69667d5cc7c9e5382b09157fda40683",
+      "bytes": 4991438
+    }
+  },
+  "counts": {
+    "n_p4_molecules": 9,
+    "by_verification_status": {
+      "NO_NBS514_COVERAGE": 7,
+      "VERIFIED_AGAINST_PAGE_READ": 2
+    },
+    "n_verified": 2,
+    "n_uncovered": 7,
+    "n_condition_qualified": 2
+  },
+  "verified_molecules": [
+    "EA",
+    "MA"
+  ],
+  "uncovered_molecules": [
+    "DOL",
+    "EC",
+    "EMC",
+    "FEC",
+    "PC",
+    "TMP",
+    "VC"
+  ],
+  "key_finding": "PLAN B B03 假设「EA、MA 已有 NBS514 资料」。核实结果: EA 与 MA **确有** NBS514 页面读取 (MA ε=6.68 @ 298.15 K, EA ε=6.02 @ 298.15 K), PDF 在场, 页面定位可复现, 数值与 dielectric_v04.csv 一致. 但另外 7 个 P4 分子在 NBS514 中无覆盖 (注意: 它们在 v04 中仍有整理值, 只是不在 ThermoML 观测层).",
+  "circularity_warning": {
+    "finding": "dielectric_v04.csv 中 EA/MA 两行的 source_doi 就是 10.6028/nbs.circ.514, source_record_id 与本次页面读取完全相同. 因此『与冻结 v04 值一致』是**转录完整性检查**, 不是两个独立来源的相互印证.",
+    "consequence": "EA 与 MA 仍各自是 SINGLE_SOURCE. 不得把 epsilon_agrees=true 引用为独立佐证, 也不得据此宣称证据基数增长.",
+    "reviewers": [
+      "Reviewer 1 (B03)",
+      "Reviewer 4 (B03)"
+    ]
+  },
+  "why_not_in_ledger": "measurement_ledger_v1.csv 的不变量是「每条测量可追溯到带 sha256 的源文件」。NBS514 转录没有 ThermoML 源文件, 强行加入会让该不变量失效, 并使 2065 这个已报告计数发生未声明的变化. 因此页面读取作为**条件级证据**单独交付, 由四智能体审核决定是否使用.",
+  "next_step": "这 2 条条件合格测量需送四智能体审核; 通过后方可进入 B04 候选行构造.",
+  "outputs": {
+    "source_verification": {
+      "path": "outputs\\confirm_2027\\evidence_backfill\\source_verification.csv",
+      "sha256": "7db34bf6dab61599942ade4075d94082cd1f79c3137a7784db3bb2850fbd39c1",
+      "rows": 9
+    },
+    "condition_qualified_measurements": {
+      "path": "outputs\\confirm_2027\\evidence_backfill\\condition_qualified_measurements.csv",
+      "sha256": "638b1e1326525495f520b954e86f60cad0f28e7f95f407528c3c31b0ce72cbc1",
+      "rows": 2
+    }
+  }
+}
