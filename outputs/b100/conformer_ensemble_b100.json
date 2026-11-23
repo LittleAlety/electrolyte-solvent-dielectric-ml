@@ -1,0 +1,35 @@
+{
+  "schema": "b100.conformer_ensemble/v1",
+  "generator": "run_b100_conformers/1.0.0",
+  "generated_at_utc": "2026-11-23T15:36:21Z",
+  "question": "单一构象的偶极矩是否代表该分子的真实热力学平均? 若不能, 建模表中的电子描述符就是在拟合任意一个构象.",
+  "protocol": {
+    "conformer_generation": "RDKit ETKDGv3, up to 6 confs, RMSD prune 0.5 A, seed 42",
+    "geometry_optimisation": "xtb ['--opt', '--gfn', '2', '--chrg', '0', '--uhf', '0'] (same as main table)",
+    "weighting": "Boltzmann at 298.15 K from GFN2 total energies",
+    "sample": "目的性抽样: 取可旋转键最多的 40 个分子. 刚性分子对构象依赖性问题没有信息量, 因此不是随机抽样."
+  },
+  "n_selected": 40,
+  "n_ok": 39,
+  "n_polar_analysed": 36,
+  "n_reliable": 6,
+  "n_unreliable": 30,
+  "n_nonpolar_insensitive": 3,
+  "polar_floor_D": 0.3,
+  "nonpolar_note": "3 个分子的 Boltzmann 偶极 < 0.30 D, 属于非极性分子. 对它们构象不影响偶极, 因此不计入可靠性比例 —— 否则对近零值做相对比较会得出虚假的『不可靠』.",
+  "dipole_relative_spread": {
+    "median": 0.3227,
+    "max": 1.9274
+  },
+  "single_vs_boltzmann": {
+    "median_rel_dev": 0.0786,
+    "max_rel_dev": 1.7892
+  },
+  "finding": "在 36 个**极性**柔性分子中, 30 个的单构象偶极矩与 Boltzmann 平均相差 >10%, 或构象间相对展宽 >10%. 另 3 个是非极性分子 (|<mu>| < 0.30 D), 构象对它们无影响. 结论: 单构象不足以代表柔性极性分子的偶极矩.",
+  "consequence_for_modelling": "标志为 SINGLE_CONFORMER_UNRELIABLE 的分子在 E1/E4 中仍被使用, 但其电子描述符带有额外测量误差. 这是一个已知的、已量化的误差来源, 不是被忽略的问题.",
+  "input": {
+    "model_matrix_b100": {
+      "sha256": "4eae19d199b13c1b2d1118ce9fddcda45ccc9fe7c066e838f0003a536998f24d"
+    }
+  }
+}
