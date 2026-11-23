@@ -1,12 +1,12 @@
 # B00 W49 提交对账（w49_commit_reconciliation.md）
-> 生成器 `build_branch_reconciliation/1.0.0` · 2026-11-23T04:02:10Z
+> 生成器 `build_branch_reconciliation/1.0.0` · 2026-11-23T13:56:30Z
 > 本文件只读 git。未执行 commit / push / merge / checkout / release。
 
 ## 一、结论先行
 **本地 `main` 是 `origin/main` 的纯快进（fast-forward）后继。**
 
-- `merge-base(origin/main, HEAD)` = `04b27e3cdb20`
-- `origin/main`                  = `04b27e3cdb20`
+- `merge-base(origin/main, HEAD)` = `88f6c3313a80`
+- `origin/main`                  = `88f6c3313a80`
 - 两者相等 ⇒ origin 上没有任何本地缺失的提交（behind = 0）。
 
 因此「对账 W49」在技术上不是一次合并决策，而是一次 **推送决策**。本计划不授权推送，所以此处只登记状态，不推进。
@@ -14,27 +14,22 @@
 ## 二、端点确认
 | 项 | 值 | 判定 |
 |---|---|---|
-| 本地 HEAD | `7c58a22f516d` — W49 投稿包落地：venue 默认决断 + 形式适配 + 期刊模板 docx 重渲染 + 投稿四件 + week48 证据包 | ✅ W49 存在 |
-| origin/main | `04b27e3cdb20` — W40-B 收口更正：22 个 owner 回退并登记为例外（冻结字节 / 追加写 / 严格 JSON）+ 修掉裸导入回归；论文 §3.28、README、交付说明同步 | ✅ W40 一致 |
-| ahead / behind | 5 / 0 | ✅ 仅领先 |
+| 本地 HEAD | `88f6c3313a80` — B 仓（PLAN B 第二仓库）研究体系交付：测量级重建 + 四智能体审核 + 描述符边界 | ⚠️ 未见 W49 |
+| origin/main | `88f6c3313a80` — B 仓（PLAN B 第二仓库）研究体系交付：测量级重建 + 四智能体审核 + 描述符边界 | ⚠️ 非 W40 开头 |
+| ahead / behind | 0 / 0 | ✅ 仅领先 |
 
 ## 三、5 个未推送提交的实际差异
 | # | 短 SHA | 日期 | 主题 | 文件 | +行 | −行 | 主要目录 |
 |---|---|---|---|---|---|---|---|
-| 1 | `7c58a22` | 2026-10-05 | W49 投稿包落地：venue 默认决断 + 形式适配 + 期刊模板 docx 重渲染 + 投稿四件 + week48  | 13 | 1287 | 0 | `reports`×6, `probes`×5, `README.md`×1, `tests`×1 |
-| 2 | `92d47b8` | 2026-10-05 | W48-B/C/D 收口：Ue 1997 三态落定（not_available + DOI 更正）、§4.6 欠账逐条终 | 22 | 1712 | 0 | `probes`×13, `reports`×4, `tests`×3, `README.md`×1 |
-| 3 | `151cf69` | 2026-10-05 | W48-A 收口：封树与干净重导 8/8 成立，包改钉版本态 | 3 | 421 | 0 | `probes`×2, `reports`×1 |
-| 4 | `e583242` | 2026-10-05 | W48-A 校验器修正：自身产出登记 + 导出前 purge + 补 H48a2 判据修正说明 | 1 | 71 | 9 | `probes`×1 |
-| 5 | `78349a3` | 2026-10-05 | W47 封树：W21–W47 全部产物入库（AF-12 步①） | 254 | 39024 | 65 | `probes`×158, `reports`×52, `tests`×31, `paper`×8 |
 
-合计：**293** 文件、**+42515** / **−74** 行。
+合计：**0** 文件、**+0** / **−0** 行。
 
 ## 四、分支与标签清单
 | 类型 | ref | tip | 当前 |
 |---|---|---|---|
-| local | `main` | `7c58a22` | 是 |
+| local | `main` | `88f6c33` | 是 |
 | remote | `remotes/origin/HEAD` | `->` |  |
-| remote | `remotes/origin/main` | `04b27e3` |  |
+| remote | `remotes/origin/main` | `88f6c33` |  |
 
 标签（按创建时间倒序）：
 
@@ -49,8 +44,8 @@
 ## 五、与 B00 要求的对应
 | B00 要求 | 状态 | 依据 |
 |---|---|---|
-| 1. 确认本地 W49 | ✅ | HEAD = `7c58a22f516d` |
-| 2. 确认 origin/main 的 W40 | ✅ | `04b27e3cdb20` — W40-B 收口更正：22 个 owner 回退并登记为例外（冻结字节 / 追加写 / 严格 JSO |
-| 3. 检查 5 个未推送提交及实际差异 | ✅ | 见§三，共 5 条 |
+| 1. 确认本地 W49 | ❌ | HEAD = `88f6c3313a80` |
+| 2. 确认 origin/main 的 W40 | ❌ | `88f6c3313a80` — B 仓（PLAN B 第二仓库）研究体系交付：测量级重建 + 四智能体审核 + 描述符边界 |
+| 3. 检查 5 个未推送提交及实际差异 | ✅ | 见§三，共 0 条 |
 | 6. 不自动合并分支 | ✅ | 本脚本无 merge/checkout 调用路径 |
 | 7. 不 commit / push / release | ✅ | 本脚本无写 git 调用路径 |

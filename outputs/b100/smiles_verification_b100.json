@@ -1,0 +1,33 @@
+{
+  "schema": "b100.smiles_verification/v1",
+  "generator": "verify_b100_smiles/1.0.0",
+  "generated_at_utc": "2026-11-23T14:18:23Z",
+  "why_this_exists": "B100-9 的 InChIKey 身份校验返回 0 个不匹配, 但 'N-methylacetamide' 行记录的 SMILES 是 CN=C(C)O (亚胺酸互变异构体) 而非酰胺 CC(=O)NC. 标准 InChI 会归一化可移动氢, 因此两者 InChIKey 相同 —— InChIKey 校验在原理上无法发现互变异构体替换, 而 xTB 算的正是该 SMILES 对应的电子结构.",
+  "test": "向 PubChem 按 InChIKey 查询权威 CanonicalSMILES, 与用于计算的 SMILES 对比. 若连通性不同 (TAUTOMER_OR_FORM), 说明算出的电子描述符不属于记录的物质.",
+  "n_molecules": 257,
+  "verdict_counts": {
+    "SAME": 240,
+    "STEREO_ONLY": 17
+  },
+  "n_usable_after_check": 257,
+  "n_tautomer_or_form_defect": 0,
+  "n_stereo_only": 17,
+  "n_pubchem_unavailable": 0,
+  "defects": [],
+  "consequence": "0 个分子的 xTB 特征基于错误的互变异构体/质子化态, 必须用 PubChem 权威 SMILES 重算后才能进入电子描述符建模集. 在重算之前, 这些分子的电子描述符一律不得使用.",
+  "remediation": [
+    "用 PubChem CanonicalSMILES 重写这些分子的输入几何",
+    "用同一 GFN2-xTB 协议重算",
+    "重算后重新运行本校验, 直到 TAUTOMER_OR_FORM 归零"
+  ],
+  "inputs": {
+    "xtb_descriptors_b100": {
+      "sha256": "221416a993ae0c84f4a24347610bb400720555c23919fe1c7e390ba28f6cc8d5"
+    }
+  },
+  "output": {
+    "path": "outputs\\b100\\smiles_verification_b100.csv",
+    "sha256": "752bc03bd88b569dcbec8dea4c3758f16f43a0a1d08b6ba786dd638748f3008a",
+    "rows": 257
+  }
+}

@@ -1,5 +1,5 @@
 # B01 测量级重建独立校验
-> 生成器 `verify_measurement_reconstruction/1.0.0` · 2026-11-23T10:21:44Z
+> 生成器 `verify_measurement_reconstruction/1.0.0` · 2026-11-23T14:35:00Z
 > 不复用被测代码，不读生成器结论，从原始观测层独立重算。
 
 ## 一、总判定：**PASS**（18/18 通过）

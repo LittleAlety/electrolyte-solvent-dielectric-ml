@@ -1,0 +1,101 @@
+{
+  "schema": "b100.admission_gate/v1",
+  "generator": "build_b100_admission_gate/1.0.0",
+  "generated_at_utc": "2026-11-23T13:36:16Z",
+  "question": "按 B100 的准入标准, 仓库现在真正有多少个合格独立分子?",
+  "criteria": {
+    "identity": "按完整 InChIKey 去重, 一分子计一次",
+    "core_layer_requirements": [
+      "在 measurement_ledger_v1 中有可定位的测量 (traceability 非 UNTRACEABLE)",
+      "在 dataset_v06 中为 model_ready",
+      "在设定温度下为液态 (phase_state_audit)",
+      "无未裁决的跨来源冲突"
+    ],
+    "expansion_layer_requirements": [
+      "在 NBS514 转录中有 source_id 可定位",
+      "来源级静态介电常数定义 (见 nbs514 频率审计)",
+      "有统一 xTB 特征 (dipole 非空)",
+      "在设定温度下为液态",
+      "无未裁决的跨来源冲突"
+    ],
+    "grades": {
+      "Q1": "原始实验, 条件可逐条追溯",
+      "Q2": "NIST 批判性汇编, 来源级静态定义",
+      "Q3": "条件不完整, 不进入主确认集"
+    },
+    "hard_rule": "不得降低标准凑数; 不得把多条测量记录当成多个独立分子; 未通过审核的候选不得计入合格数."
+  },
+  "core_layer_traceability": {
+    "MATCHED_BY_INCHIKEY": 113,
+    "UNTRACEABLE": 135
+  },
+  "cross_source_check": {
+    "n_molecules_in_both_layers": 147,
+    "n_agree": 136,
+    "n_conflict": 11,
+    "relative_tolerance": 0.05,
+    "temperature_tolerance_K": 5.0,
+    "note": "协和检查是免费得到的独立验证: 同一分子在两个独立来源下的 ε 若一致, 提升该分子的可信度; 若不一致则必须裁决而非取平均."
+  },
+  "result": {
+    "n_qualified_molecules": 306,
+    "n_qualified_with_xtb": 242,
+    "n_excluded_molecule_records": 330,
+    "hard_threshold": 100,
+    "meets_threshold": true,
+    "gap": 0,
+    "verdict": "MEETS_HARD_THRESHOLD"
+  },
+  "exclusion_reasons": {
+    "EXCLUDED_IN_V06": 174,
+    "ALREADY_COUNTED_IN_CORE_LAYER": 147,
+    "NO_MEASUREMENT_IN_LEDGER": 134,
+    "CROSS_SOURCE_CONFLICT_UNRESOLVED": 22,
+    "NOT_LIQUID_AT_STATED_T": 5,
+    "NO_XTB_FEATURES": 1
+  },
+  "inputs": {
+    "dielectric_v04": {
+      "sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c",
+      "rows": 248
+    },
+    "dataset_v06_exclusions": {
+      "rows": 175
+    },
+    "dataset_v06_model_ready": {
+      "rows": 73
+    },
+    "expansion_observations": {
+      "sha256": "c2afc37e89011352ad0b31b4d6080a44d89d781a0848b132280653c9f37ec5a1",
+      "rows": 392
+    },
+    "measurement_ledger_v1": {
+      "rows": 2065
+    },
+    "phase_state_audit": {
+      "rows": 22
+    }
+  },
+  "outputs": {
+    "qualified": {
+      "path": "outputs\\b100\\qualified_molecules_b100.csv",
+      "sha256": "f36526a3405ec938a45f0891de4e065973f41d71042125ee21c55fa2e62fd8bf",
+      "rows": 306
+    },
+    "excluded": {
+      "path": "outputs\\b100\\excluded_molecules_b100.csv",
+      "sha256": "c3e44f210358829b3b6199c38a8b45dbd44e08d8e529b8bf62591ce45f1fdb3f",
+      "rows": 330
+    },
+    "conflict": {
+      "path": "outputs\\b100\\cross_source_conflict_b100.csv",
+      "sha256": "d896784e32d67b469319e917a01c8d9b551de038dcd17bff16a868f70d4d8d77",
+      "rows": 11
+    }
+  },
+  "what_this_does_not_claim": [
+    "不宣称排除的分子在物理上无效, 只说它们未通过本轮准入判据",
+    "跨来源冲突未裁决前不得取平均",
+    "Q2 的静态定义是来源级集体判断, 非逐条频率报告"
+  ]
+}

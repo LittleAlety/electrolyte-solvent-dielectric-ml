@@ -1,0 +1,170 @@
+{
+  "schema": "b100.stage1_readiness/v1",
+  "generator": "build_b100_stage1_readiness/1.0.0",
+  "generated_at_utc": "2026-11-23T14:18:57Z",
+  "stage": "第一阶段（数据扩展与审计）",
+  "headline": "候选池 306 个分子通过第一轮准入, 其中 **257** 个经熔点验证在设定温度下确为液态, 剔除 27 个离子液体/混合物. 距硬门槛 100 还差 **0** 个.",
+  "integrity_filters": {
+    "neutral_single_molecule": {
+      "n_input": 306,
+      "n_excluded": 27,
+      "reasons": {
+        "SALT_SEPARATED_ION_PAIR": 21,
+        "MULTI_COMPONENT_MIXTURE": 6
+      },
+      "rule": "PLAN B v6.0: 离子液体、混合物、金属配合物不混入中性单分子核心数据集"
+    },
+    "phase_liquid_at_stated_T": {
+      "n_verified_liquid": 257,
+      "n_solid_or_supercooled": 14,
+      "n_unknown_no_mp": 35
+    },
+    "identity_inchikey": {
+      "status_counts": {
+        "MATCH": 240,
+        "MATCH_SKELETON_ONLY": 17
+      },
+      "note": "InChIKey 由记录的 SMILES 重算, 必须一致. 但 InChI 归一化可移动氢, 因此该检查抓不到互变异构体替换"
+    },
+    "tautomer_smiles_vs_pubchem": {
+      "verdict_counts": {
+        "SAME": 240,
+        "STEREO_ONLY": 17
+      },
+      "n_usable": 257,
+      "note": "用 PubChem 权威 SMILES 复核. 发现的 1 例 (N-甲基乙酰胺被写成亚胺酸) 已用正确酰胺 SMILES 重算, 偶极由 1.07 D 修正为 4.34 D"
+    },
+    "xtb_protocol_unified": {
+      "n_with_xtb": 257,
+      "n_phase_verified": 257,
+      "protocol": "GFN2-xTB/opt/charge0/uhf0",
+      "note": "全部 GFN2-xTB 几何优化, 同一命令同一二进制; 新增 16 个核心层分子后覆盖率 100%"
+    },
+    "source_independence": {
+      "by_evidence_grade": {
+        "Q2": 226,
+        "Q1": 31
+      },
+      "n_independently_corroborated": 18,
+      "claim_permitted": true,
+      "critical_point": "226/257 来自 NBS Circular 514 单一编校来源, 其内部一致性不构成独立复现. 跨来源结论只能基于被独立印证的分子与核心层 Q1 分子."
+    }
+  },
+  "hard_numbers": {
+    "union_candidate_molecules": 489,
+    "core_thermoml_molecules": 247,
+    "nbs514_molecules": 389,
+    "overlap": 147,
+    "admission_pass_first_round": 306,
+    "phase_verified_liquid_now": 257,
+    "also_verified_solid": 14,
+    "still_unknown_no_mp": 35,
+    "hard_threshold": 100,
+    "gap": 0,
+    "meets_threshold": true
+  },
+  "melting_point_lookup": {
+    "n_rows": 306,
+    "n_with_mp": 271,
+    "n_missing_mp": 35,
+    "hit_rate": 0.886,
+    "note": "PubChem 的实验熔点覆盖率约 40-45%. 未命中不等于分子无熔点, 而是该库无可用实验值; 需从原始文献补充, 不得估算填充."
+  },
+  "family_status": {
+    "families_with_zero_molecules": [
+      "sulfone_sulfoxide",
+      "amide",
+      "nitro"
+    ],
+    "families_below_target_low": [
+      "sulfone_sulfoxide",
+      "phosphate",
+      "amide",
+      "nitrile",
+      "nitro",
+      "carboxylic_acid",
+      "carbonate"
+    ],
+    "n_families_present": 12,
+    "epsilon_distribution": {
+      "MID_5-20": 148,
+      "LOW_eps<5": 121,
+      "HIGH_eps>=20": 37
+    },
+    "note": "PLAN B v6.0 要求 8-12 个家族分层. 当前已覆盖多数家族, 但仍有家族为 0, 必须补充而非用相近家族替代."
+  },
+  "known_defects_found_and_fixed_in_stage1": [
+    {
+      "defect": "家族规则 SMARTS 被逗号分割破坏",
+      "impact": "amine 的正则 [NX3;H2,H1,H0;!$(NC=O)] 内含逗号, 被 split(',') 切成三段无效片段, 导致 28 个含胺基分子被误归为醇类, amine 家族计数为 0",
+      "fix": "规则表改为 SMARTS 元组, 不再按逗号切分; 并重排优先级",
+      "verification": "amine 由 0 恢复为 23 个"
+    },
+    {
+      "defect": "相态审计只覆盖 22 个分子",
+      "impact": "306 个『合格』分子中 290 个从未检查相态",
+      "fix": "把同一判据扩展到全部候选 (B100-3)",
+      "verification": "37 个通过相态验证, 其余标记 UNKNOWN 而非默认液态"
+    },
+    {
+      "defect": "v04 有 135/248 行无法追溯到账本",
+      "impact": "这些行的 value 无 measurement 支撑, 不能进入以测量级可追溯为核心价值的数据集",
+      "fix": "准入时标记 UNTRACEABLE 并排除出合格集",
+      "verification": "core traceability = 113 matched / 135 untraceable"
+    }
+  ],
+  "nbs514_frequency_finding": {
+    "summary": "**扩展层的 392 行全部来自不带频率脚注的转录行**, 因此空白的 frequency_mhz 应解释为『来源级静态定义』而不是『频率未知』. 另有 244 条转录行未被选入扩展表, 其中 127 条带非静态频率脚注 (3.6-5e8 cycles/sec, 即 360-500 MHz), 已被正确排除. **因此 NBS 层可以按 Q2 处理, 但必须标记为来源级静态定义, 不得与逐条报告频率的 ThermoML 测量等同.**",
+    "n_footnotes": 127,
+    "selected_with_footnote": 0,
+    "verdict": "扩展层 392 行全部来自不带频率脚注的转录行, 空白 frequency_mhz 属来源级静态定义, 按 Q2 处理"
+  },
+  "cross_source_check": {
+    "n_in_both_layers": 147,
+    "n_agree": 136,
+    "n_conflict": 11,
+    "assessment": "136 对一致 / 11 对冲突. 高一致率说明两层介电数值总体可信; 11 个冲突已单独登记, 未取平均."
+  },
+  "paths_to_close_the_gap": {
+    "a_audit_existing": [
+      "补充 35 个缺熔点分子的熔点 (PubChem 已尽力, 剩余需原始文献)",
+      "把 v04 中 135 个 UNTRACEABLE 行追溯回原始文档或正式排除",
+      "对 NBS 扩展层做来源独立性检查 (全部来自 NBS 514 单一汇编, 不构成来源稳健性证据)"
+    ],
+    "b_fetch_external": [
+      "Chodera 2015 (45 SMILES) 与 LiquidBenchmark (69 记录) 交叉核查",
+      "补入 PLAN B v6.0 要求但当前为 0 的家族 (amide / nitro 等)"
+    ],
+    "c_new_curation": [
+      "DFT / 构象 / MD 三层尚未开始, 需要新的计算",
+      "xTB 只覆盖 NBS 扩展层; 核心层 64 个合格分子尚无 xTB 特征"
+    ],
+    "explicitly_forbidden": [
+      "降低准入标准以凑够 100",
+      "用缺少熔点的分子默认当作液态",
+      "把同一分子的多条测量记成多个独立分子",
+      "对跨来源冲突取平均"
+    ]
+  },
+  "inputs": {
+    "b100_asset_inventory": {
+      "sha256": "5dc97e6e937881c09e02b30b23beb2ecdce86f80982ca4e022f8336cb28767d6"
+    },
+    "b100_admission_gate": {
+      "sha256": "63761a40956a97482f23916ee7bc445ec0312d20b9132d6e27898648f8e18783"
+    },
+    "phase_state_audit_b100": {
+      "sha256": "d7e435e7468de2277a74ddbfffd1dfac99380e636fb6434e7d4daf05b93e4c6e"
+    },
+    "family_coverage_b100": {
+      "sha256": "7d535292ff79b6e15bc8e1be64d5e2ccfd631c9b974186b03da224fb8d6c31c6"
+    },
+    "pubchem_mp_lookup_b100": {
+      "sha256": "70551cc6b7f553a2cbf52655190e60c2628637dfe8a583042f64c93d18741cce",
+      "rows": 306
+    },
+    "molecule_registry_b100": {
+      "rows": 306
+    }
+  }
+}

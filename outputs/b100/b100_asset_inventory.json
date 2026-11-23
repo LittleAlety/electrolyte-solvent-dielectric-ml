@@ -1,0 +1,160 @@
+{
+  "schema": "b100.asset_inventory/v1",
+  "generator": "build_b100_asset_inventory/1.0.0",
+  "generated_at_utc": "2026-11-23T13:35:18Z",
+  "question": "仓库现有多少**可用的实验证据**, 以及多少分子能达到 B100 的准入标准? 本盘点只做计数与审计, 不新增任何测量.",
+  "target": {
+    "plan": "PLAN B v6.0",
+    "min_qualified_molecules": 100,
+    "suggested_candidate_pool": "150-200",
+    "aspirational_qualified": "120-150",
+    "hard_rule": "不得以降低数据质量凑数; 不得把多条测量记录冒充多个独立分子; 未审核候选不得直接宣布为合格分子."
+  },
+  "layer_1_experimental_labels": {
+    "core_thermoml": {
+      "source": "outputs\\confirm_2027\\provenance_repair\\measurement_ledger_v1.csv",
+      "n_measurements": 2065,
+      "n_molecules": 153,
+      "n_source_documents": 61,
+      "n_v04_aggregate_rows": 248,
+      "n_v04_molecules": 247,
+      "evidence_grade": "Q1 (原始实验, 条件可追溯)",
+      "admission_status": "已在 88f6c33 冻结. 其中 78 行条件配对有效, 170 行无效 (见 reconstruction_exceptions.csv)."
+    },
+    "nbs514_expansion": {
+      "source": "data\\processed\\dielectric_pool_expansion_observations.csv",
+      "n_measurement_rows": 392,
+      "n_molecules": 389,
+      "n_duplicate_rows_same_molecule": 3,
+      "evidence_grade": "Q2 (NIST 批判性汇编, 条件可核查)",
+      "phase_all_liquid": true,
+      "component_count_all_one": true,
+      "license": "public domain (US Government work, NIST Circular 514)",
+      "admission_status": "**尚未准入**. 需完成条件审计后才能进入正式数据集."
+    }
+  },
+  "layer_2_xtb": {
+    "source": "data\\processed\\dielectric_pool_expansion_features.csv",
+    "n_molecules_with_features": 389,
+    "n_with_dipole": 388,
+    "n_missing_dipole": 1,
+    "note": "现有 xTB 计算只覆盖 NBS 扩展层. 核心 ThermoML 层与新增分子仍需统一计算. B100 要求统一 xTB 覆盖 >=100."
+  },
+  "layer_3_dft_conformer": {
+    "status": "NOT_STARTED",
+    "n_computed": 0,
+    "note": "DFT 与构象计算尚未开始; 需先完成 12 分子方法验证."
+  },
+  "layer_4_md": {
+    "status": "NOT_STARTED",
+    "n_systems": 0,
+    "note": "液相 MD 尚未开始."
+  },
+  "auxiliary_discovery_only": {
+    "solvfunc_87": {
+      "source": "data\\external\\SolvFunc-87.csv",
+      "n_records": 87,
+      "use": "分子候选发现, **不得作为实验介电标签**"
+    },
+    "batt_slm_392": {
+      "source": "data\\external\\Batt-SLM-RX-392.csv",
+      "n_records": 392,
+      "use": "分子电子性质与候选发现. **其中计算得到的介电环境参数不得冒充实测介电常数**"
+    }
+  },
+  "nbs514_frequency_audit": {
+    "question": "扩展表 frequency_mhz 全部为空 —— 这是『频率未知』(Q3 缺陷), 还是『来源把该量定义为低频极限』(合法)?",
+    "expansion_frequency_all_empty": true,
+    "n_expansion_rows": 392,
+    "n_transcription_rows": 636,
+    "n_transcription_with_frequency_footnote": 127,
+    "frequency_footnote_values": {
+      "f=5x10^8 cycles/sec": 57,
+      "f=4x10^8 cycles/sec": 35,
+      "f=3.6x10^8 cycles/sec": 27,
+      "f = 5x10^8 cycles/sec": 4,
+      "f = 3.6x10^8 cycles/sec": 2,
+      "f=5x10^8 cycles/sec (reference 60)": 1,
+      "f = 4x10^8 cycles/sec": 1
+    },
+    "n_selected_rows_matched_to_transcription": 392,
+    "n_selected_unmatched": 0,
+    "n_selected_with_frequency_footnote": 0,
+    "n_selected_static_by_definition": 392,
+    "n_not_selected_transcription_rows": 244,
+    "n_not_selected_with_frequency_footnote": 127,
+    "not_selected_eligibility": {
+      "candidate_near_room": 228,
+      "candidate_exception": 16
+    },
+    "conclusion": "**扩展层的 392 行全部来自不带频率脚注的转录行**, 因此空白的 frequency_mhz 应解释为『来源级静态定义』而不是『频率未知』. 另有 244 条转录行未被选入扩展表, 其中 127 条带非静态频率脚注 (3.6-5e8 cycles/sec, 即 360-500 MHz), 已被正确排除. **因此 NBS 层可以按 Q2 处理, 但必须标记为来源级静态定义, 不得与逐条报告频率的 ThermoML 测量等同.**",
+    "residual_risk": "来源级定义仍是**集体判断**: 若某条测量实际在 400 MHz 下进行而来源未加脚注, 本审计无法发现. 因此 Q2 证据必须保留这一保留意见, 并在来源敏感性分析中单独处理."
+  },
+  "union_estimate": {
+    "core_molecules": 247,
+    "expansion_molecules": 389,
+    "overlap_core_and_expansion": 147,
+    "union_candidate_molecules": 489,
+    "headline": "核心 247 + 扩展 389 - 重叠 147 = **489** 个唯一分子候选. 这已超过 B100 候选池下限 150, 但**远不等于 100 个合格分子** —— 扩展层尚未准入, 核心层有 170 行条件配对无效."
+  },
+  "gap_to_target": {
+    "hard_threshold_molecules": 100,
+    "currently_admissible_molecules": "待定: 需完成扩展层准入审核后重新计数",
+    "what_is_missing": [
+      "NBS 扩展层 389 个分子的正式准入审核 (Q1/Q2 分级 + 身份去重)",
+      "核心层 170 行条件配对无效记录的处理结论",
+      "核心层分子的统一 xTB 计算 (目前只有扩展层有)",
+      "DFT / 构象 / MD 全部未开始",
+      "跨来源重复转录检查 (核心层与扩展层之间)"
+    ]
+  },
+  "inputs": {
+    "expansion_observations": {
+      "sha256": "c2afc37e89011352ad0b31b4d6080a44d89d781a0848b132280653c9f37ec5a1",
+      "rows": 392
+    },
+    "expansion_features": {
+      "sha256": "51aee586ad85174c3a408c44e724d14fbbd0993efe790bd4b03332475cde8b6b",
+      "rows": 389
+    },
+    "nbs514_transcription_parts": [
+      {
+        "path": "data\\interim\\nbs514_organic_part1.csv",
+        "sha256": "32648c0ef79a64b71090034e2cffcf50a6fdd6132ba8848e94e94abebc748383",
+        "rows": 200
+      },
+      {
+        "path": "data\\interim\\nbs514_organic_part2.csv",
+        "sha256": "d1fba7fa276f8141ff68a3fcb8dad6d3c277c7dda5a589dee52940787bcbfa3c",
+        "rows": 184
+      },
+      {
+        "path": "data\\interim\\nbs514_organic_part3.csv",
+        "sha256": "b57b424e3a3d30f59f356319e7085d2384a0f8e48bc8f0b77379895d76224157",
+        "rows": 196
+      },
+      {
+        "path": "data\\interim\\nbs514_organic_part4.csv",
+        "sha256": "68f737c447df49cbb331c6ffc04ae506de47ed5bd926b96286a48b63ad5ececb",
+        "rows": 56
+      }
+    ],
+    "measurement_ledger_v1": {
+      "sha256": "1031611d703a5a29360d511cab24e6f7acc08032445650620b0bbd55c0b2957b",
+      "rows": 2065
+    },
+    "dielectric_v04": {
+      "sha256": "e046a3831630e36aae6b67666f74f787b8b33303057877c3402ff7a414e0873c",
+      "rows": 248
+    }
+  },
+  "warnings": [],
+  "outputs": {
+    "nbs514_condition_audit": {
+      "path": "outputs\\b100\\nbs514_condition_audit.csv",
+      "sha256": "3a3ac6d6159889b1d455d33e23fb56d99d812884d802ea7fa57478c23131aea6",
+      "rows": 392
+    }
+  },
+  "next_step": "按 PLAN B v6.0 第一阶段: 用本盘点结果做扩展层准入审核 (身份去重 / Q1-Q2 分级 / 来源独立性), 得到可计数的合格分子, 再判断距 100 还差多少."
+}

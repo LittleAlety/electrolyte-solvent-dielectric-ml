@@ -1,0 +1,87 @@
+{
+  "schema": "b100.identity_audit/v1",
+  "generator": "audit_b100_identity/1.0.0",
+  "generated_at_utc": "2026-11-23T14:07:48Z",
+  "test": "从记录中的 SMILES 用 RDKit 重算 InChIKey, 必须等于记录的 InChIKey. 不等则说明该 SMILES 描述的不是被测物质, 因此由它算出的电子描述符 不属于该物质.",
+  "why_this_matters": "发现的第一个例子: 名为 N-methylacetamide 的行带有 SMILES CN=C(C)O, 那是亚胺酸互变异构体 (methyl acetimidate), 不是酰胺 CC(=O)NC. 用它算出的偶极矩 1.07 D 与酰胺相距甚远, 而流程里没有任何环节会报警.",
+  "n_molecules": 257,
+  "status_counts": {
+    "MATCH": 240,
+    "MATCH_SKELETON_ONLY": 17
+  },
+  "n_identity_ok": 240,
+  "n_mismatch": 0,
+  "n_skeleton_only": 17,
+  "mismatches": [],
+  "skeleton_only_examples": [
+    {
+      "name": "1-Phenyl-1-propene",
+      "inchikey_recorded": "QROGIFZRVHSFLM-QHHAFSJGSA-N",
+      "inchikey_from_smiles": "QROGIFZRVHSFLM-UHFFFAOYSA-N"
+    },
+    {
+      "name": "Cinnamaldehyde",
+      "inchikey_recorded": "KJPRLNWUNMBNBZ-QPJJXVBHSA-N",
+      "inchikey_from_smiles": "KJPRLNWUNMBNBZ-UHFFFAOYSA-N"
+    },
+    {
+      "name": "Ethyl oleate",
+      "inchikey_recorded": "LVGKNOAMLMIIKO-QXMHVHEDSA-N",
+      "inchikey_from_smiles": "LVGKNOAMLMIIKO-UHFFFAOYSA-N"
+    },
+    {
+      "name": "Linoleic acid",
+      "inchikey_recorded": "OYHQOLUKZRVURQ-HZJYTTRNSA-N",
+      "inchikey_from_smiles": "OYHQOLUKZRVURQ-UHFFFAOYSA-N"
+    },
+    {
+      "name": "Oleic acid",
+      "inchikey_recorded": "ZQPPMHVWECSIRJ-KTKRTIGZSA-N",
+      "inchikey_from_smiles": "ZQPPMHVWECSIRJ-UHFFFAOYSA-N"
+    },
+    {
+      "name": "Triolein",
+      "inchikey_recorded": "PHYFQTYBJUILEZ-IUPFWZBJSA-N",
+      "inchikey_from_smiles": "PHYFQTYBJUILEZ-UHFFFAOYSA-N"
+    },
+    {
+      "name": "cis-3-Octene",
+      "inchikey_recorded": "YCTDZYMMFQCTEO-ALCCZGGFSA-N",
+      "inchikey_from_smiles": "YCTDZYMMFQCTEO-UHFFFAOYSA-N"
+    },
+    {
+      "name": "cis-4-Octene",
+      "inchikey_recorded": "IRUCBBFNLDIMIK-FPLPWBNLSA-N",
+      "inchikey_from_smiles": "IRUCBBFNLDIMIK-UHFFFAOYSA-N"
+    },
+    {
+      "name": "cis-5-Decene",
+      "inchikey_recorded": "UURSXESKOOOTOV-KTKRTIGZSA-N",
+      "inchikey_from_smiles": "UURSXESKOOOTOV-UHFFFAOYSA-N"
+    },
+    {
+      "name": "d-Limonene",
+      "inchikey_recorded": "XMGQYMWWDOXHJM-JTQLQIEISA-N",
+      "inchikey_from_smiles": "XMGQYMWWDOXHJM-UHFFFAOYSA-N"
+    }
+  ],
+  "consequence": "identity 不一致的分子**不得**进入电子描述符建模集: 它们的 xTB 结果属于另一种化学物种. 这直接限制了 B100 的可用样本量, 必须如实扣减.",
+  "remediation": [
+    "优先: 用 InChIKey 反查 PubChem 取标准 SMILES, 重算 xTB",
+    "次选: 从原始文献核对正确的互变异构体/质子化态",
+    "禁止: 直接沿用不一致的 SMILES 结论"
+  ],
+  "inputs": {
+    "xtb_descriptors_b100": {
+      "sha256": "293fe3c56e032af16d60a8ec9240d923203e697983eaa425df5e24adfabef876"
+    },
+    "phase_state_audit_b100": {
+      "sha256": "d2a552f5a521251863b1e9d0ac23d67610a36fbfb9be0856f316d06e574ab578"
+    }
+  },
+  "output": {
+    "path": "outputs\\b100\\identity_audit_b100.csv",
+    "sha256": "f26ba9636101fb5bb08535e3b36d821e180548fe757d20640a647437cfadfef7",
+    "rows": 257
+  }
+}
