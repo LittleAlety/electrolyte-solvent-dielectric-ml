@@ -265,6 +265,16 @@ def main() -> int:
 
     # expansion molecules: transcribed with source id, has xTB, liquid at T,
     # not in unresolved conflict
+    #
+    # IMPORTANT: a molecule that failed the CORE layer is NOT thereby disqualified from
+    # the NBS layer. The two layers are independent evidence sources; the core layer's
+    # defects (synthetic condition pairs, pressure contamination, no ledger
+    # observation) say nothing about whether NBS 514 records a usable static value.
+    # The earlier version skipped every molecule seen in the core layer -- including
+    # the excluded ones -- which wrongly dropped 135 molecules that have a valid NBS
+    # row, among them acetonitrile (epsilon = 37.5 at 20 C). That is why the dataset
+    # was missing most of its own named solvents.
+    qualified_keys = {q["inchikey"] for q in qualified}
     for r in exp_rows:
         ik = r["inchikey"]
         reasons = []
@@ -276,10 +286,10 @@ def main() -> int:
             reasons.append("CROSS_SOURCE_CONFLICT_UNRESOLVED")
         if r["phase_status"] == "SOLID_OR_SUPERCOOLED_AT_STATED_T":
             reasons.append("NOT_LIQUID_AT_STATED_T")
-        # already counted through the core layer?
-        if ik in {q["inchikey"] for q in qualified} or \
-           ik in {e["inchikey"] for e in excluded if e["layer"] == "core_thermoml"}:
-            reasons.append("ALREADY_COUNTED_IN_CORE_LAYER")
+        # only a molecule already QUALIFIED through the core layer is a duplicate;
+        # one that was EXCLUDED there is still eligible on this layer's merits.
+        if ik in qualified_keys:
+            reasons.append("ALREADY_QUALIFIED_VIA_CORE_LAYER")
         if reasons:
             excluded.append({
                 "inchikey": ik, "name": r["name"], "layer": "nbs514_expansion",
@@ -297,6 +307,7 @@ def main() -> int:
                     "NBS514 transcription with source id + static-by-source "
                     "definition + xTB features + liquid at T"),
             })
+            qualified_keys.add(ik)
 
     q_keys = {q["inchikey"] for q in qualified}
     n_q = len(q_keys)

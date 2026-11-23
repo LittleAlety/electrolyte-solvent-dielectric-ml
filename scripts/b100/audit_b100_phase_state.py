@@ -139,6 +139,14 @@ def main() -> int:
         # Boiling point sanity: a measurement far above bp is also suspect.
         above_bp = (bp_c is not None and t_c is not None and t_c > bp_c)
 
+        # Boiling point sanity: a measurement ABOVE the normal boiling point is a
+        # vapour, not a liquid. Previously this was only recorded as a flag while the
+        # molecule still counted as phase-verified liquid.
+        above_bp = (bp_c is not None and t_c is not None and t_c > bp_c)
+        if above_bp and status == "LIQUID_AT_STATED_T":
+            status = "ABOVE_BOILING_POINT"
+            margin = None
+
         rows.append({
             "inchikey": ik,
             "name": q.get("name", ""),

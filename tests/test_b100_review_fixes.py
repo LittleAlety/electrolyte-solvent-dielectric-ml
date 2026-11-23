@@ -117,8 +117,8 @@ def test_no_boiling_point_accepted_as_melting_point() -> None:
 
 
 def test_melting_points_are_physically_plausible() -> None:
-    """Real organic liquids reach about -130 C (1-chlorobutane is -123.1 C), so the
-    lower bound must not be tighter than that or a genuine value is called a defect."""
+    """Real organic liquids reach about -190 C (propene is -185.3, 1-pentene -165.2),
+    so the bound must not be tighter than that or genuine values are called defects."""
     rows = _load(MPLOOKUP)
     if not rows:
         pytest.skip("mp lookup missing")
@@ -127,7 +127,7 @@ def test_melting_points_are_physically_plausible() -> None:
         if not v:
             continue
         f = float(v)
-        assert -150.0 <= f <= 400.0, f"{r['name']} has mp={f} C"
+        assert -200.0 <= f <= 400.0, f"{r['name']} has mp={f} C"
 
 
 # ------------------------------------------------ 3. nitro family

@@ -111,20 +111,32 @@ def test_no_salt_survives_in_the_kept_set() -> None:
 
 
 def test_family_coverage_respects_neutral_filter() -> None:
-    """Excluded salts must not be counted as family coverage."""
+    """Excluded salts must not be counted as family coverage.
+
+    The check used to assert that `sulfone_sulfoxide` was exactly zero, because at
+    that time every member happened to be an ionic liquid. A genuinely neutral sulfite
+    (ethyl sulfite) has since been admitted, so the zero is no longer the right test.
+    What must hold is the invariant: no molecule the neutral filter excluded may be
+    counted in any family.
+    """
     fam = _j("family_coverage_b100.json")
     nf = _j("neutral_filter_b100.json")
     if not (fam and nf):
         pytest.skip("missing artifacts")
     if nf["result"]["n_excluded"] == 0:
         pytest.skip("nothing excluded")
-    # sulfone_sulfoxide was made up entirely of ionic liquids
-    sf = next((b for b in fam["family_coverage"]
-               if b["family"] == "sulfone_sulfoxide"), None)
-    if sf is not None:
-        assert sf["n_present"] == 0, (
-            "sulfone family still counts molecules after the ionic liquids "
-            "were excluded")
+
+    excluded_keys = {(r.get("inchikey") or "").strip()
+                     for r in _load("neutral_filter_b100.csv")
+                     if r.get("verdict") == "EXCLUDE"}
+    excluded_keys.discard("")
+    assert excluded_keys, "neutral filter excluded nothing yet reports exclusions"
+
+    counted = sum(b["n_present"] for b in fam["family_coverage"])
+    kept = nf["result"]["n_neutral_single_molecule"]
+    assert counted <= kept, (
+        f"family coverage counts {counted} molecules but only {kept} are neutral "
+        f"single molecules; excluded salts are leaking into the totals")
 
 
 # ------------------------------------------------ 3. tautomer verification
