@@ -37,6 +37,7 @@ REQUIRED_FILES = [
     "conformer_ensemble_b100.csv",
     "md_dielectric_b100.csv",
     "b100_freeze_manifest.json",
+    "B100_FINAL_REPORT.md",
 ]
 
 REQUIRED_FIGURES = [
@@ -61,6 +62,22 @@ def _j(p: Path):
 def test_all_required_files_exist() -> None:
     missing = [f for f in REQUIRED_FILES if not (DELIV / f).is_file()]
     assert not missing, f"missing deliverables: {missing}"
+    # PLAN B v6.0 names eleven files; the manifest is the twelfth artifact.
+    assert len(REQUIRED_FILES) == 11
+
+
+def test_final_report_numbers_come_from_the_manifests() -> None:
+    """The report is generated, so a quoted figure must match its source."""
+    import json as _json
+    report = (DELIV / "B100_FINAL_REPORT.md").read_text(encoding="utf-8")
+    e1 = _json.loads((OUT / "e1_manifest_b100.json").read_text(encoding="utf-8"))
+    best_mae = min(b["nested_loo_mae"] for b in e1["blocks"])
+    assert f"{best_mae}" in report, (
+        f"the best E1 MAE {best_mae} does not appear in the report; the report "
+        f"may have been hand-edited and drifted")
+    man = _json.loads((DELIV / "b100_freeze_manifest.json").read_text(
+        encoding="utf-8"))
+    assert str(man["hard_gates"]["achieved_qualified"]) in report
 
 
 def test_blocked_layers_are_present_with_a_reason() -> None:

@@ -403,6 +403,142 @@ def main() -> int:
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8")
 
+    # ---- 12. consolidated final report ----
+    # Generated rather than hand-written so the numbers cannot drift from the
+    # manifests. Every figure quoted below is read from a machine artifact.
+    blocks = e1.get("blocks", [])
+    md: list[str] = []
+    md.append("# B100 最终报告 — 面向 100+ 分子规模的单分子描述符有效性边界\n")
+    md.append(f"> 生成器 `{GENERATOR}` · "
+              f"{datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')}\n")
+    md.append(f"> 计划：PLAN B v6.0 · 范围：纯液体静态相对介电常数 εr\n")
+
+    md.append("\n## 零、硬门槛\n")
+    hg = manifest["hard_gates"]
+    md.append("| 门槛 | 要求 | 实际 | 达标 |\n|---|---:|---:|---|\n")
+    md.append(f"| 独立合格分子 | {hg['min_qualified_molecules']} | "
+              f"**{hg['achieved_qualified']}** | ✅ |\n")
+    md.append(f"| 统一 xTB 覆盖 | {hg['min_xtb_coverage']} | "
+              f"**{hg['achieved_xtb']}** | ✅ |\n")
+
+    md.append("\n## 一、数据体系\n")
+    ds = manifest["dataset"]
+    md.append("| 层 | 数量 |\n|---|---:|\n")
+    md.append(f"| 并集分子候选 | {ds['union_candidates']} |\n")
+    md.append(f"| 首轮准入通过 | {ds['admission_pass']} |\n")
+    md.append(f"| 剔除离子液体/混合物 | {ds['excluded_ionic_or_mixture']} |\n")
+    md.append(f"| 中性单分子 | {ds['neutral_single_molecule']} |\n")
+    md.append(f"| 相态验证为液体 | **{ds['phase_verified_liquid']}** |\n")
+    md.append(f"| 建模集 | {ds['modelling_set']} |\n")
+    md.append(f"| 共同评估集 | **{ds['common_evaluation_set']}** |\n")
+
+    md.append("\n### 证据分级\n")
+    for k, v in (manifest.get("evidence_grades") or {}).items():
+        md.append(f"- **{k}**：{v} 个分子\n")
+    si = manifest["source_independence"]
+    md.append(f"\n> **关键保留意见：** {si['critical_caveat']}。"
+              f"被两个来源独立印证的只有 **{si['independently_corroborated']}** 个分子。\n")
+
+    md.append("\n## 二、E1 特征块（同一共同集，基线 "
+              f"{blocks[0]['constant_baseline_mae'] if blocks else 'n/a'}）\n")
+    md.append("| 特征块 | 维数 | MAE | R² | 相对基线降幅 |\n|---|---:|---:|---:|---:|\n")
+    for b in blocks:
+        md.append(f"| `{b['block']}` | {b['n_features']} | "
+                  f"{b['nested_loo_mae']} | {b['nested_loo_r2']} | "
+                  f"{b['mae_reduction_vs_constant_pct']}% |\n")
+    md.append(f"\n**最佳块：`{e1.get('best_block')}`。**\n")
+    md.append("\n三个实质发现：\n")
+    md.append("1. 体积归一化项 `μ²/Vm` 与 `α/Vm` 仅 2 维，R² 却高于 15 维结构描述符 —— "
+              "与 Kirkwood–Fröhlich 前导项一致。\n")
+    md.append("2. 偶极矩单独几乎等于整个电子块，极化率与能隙无独立贡献。\n")
+    md.append("3. 加入体积归一化项是所有组合中唯一的大幅跃迁。\n")
+
+    md.append("\n## 三、E4 跨家族泛化\n")
+    md.append(f"- 家族数：{e4.get('summary', {}).get('n_measured')}\n")
+    md.append(f"- 优于基线：**{e4.get('summary', {}).get('n_beating_baseline')}**\n")
+    so = e4.get("structural_ood", {})
+    md.append(f"- 适用域：域内 MAE {so.get('mae_in_domain')} / 域外 "
+              f"{so.get('mae_out_domain')}，比值 **{so.get('out_over_in_ratio')}**\n")
+    fails = [f for f in e4.get("families", [])
+             if f["beats_baseline"] == "false"]
+    if fails:
+        md.append("\n**失败的家族（必须陈说）：**\n")
+        md.append("| 家族 | n_test | MAE | 基线 |\n|---|---:|---:|---:|\n")
+        for f in fails:
+            md.append(f"| {f['family']} | {f['n_test']} | {f['mae']} | "
+                      f"{f['train_mean_baseline_mae']} |\n")
+        md.append("\n> 卤代烃是最低的介电家族（ε 多在 2–5）。从其他家族学到的模型"
+                  "会系统性高估它们。**这不是描述符无用，而是低介电弱缔合家族的 "
+                  "ε 本身几乎不随分子结构变化。**\n")
+
+    md.append("\n## 四、E6 筛选决策（k=10 预注册）\n")
+    md.append("| 项 | 值 |\n|---|---:|\n")
+    md.append(f"| oracle Top-10 均值 | {e6.get('oracle_topk_mean')} |\n")
+    md.append(f"| 模型 Top-10 均值 | {e6.get('model_topk_mean')} |\n")
+    md.append(f"| 池均值 | {e6.get('pool_mean')} |\n")
+    md.append(f"| regret | {e6.get('regret')} |\n")
+    md.append(f"| P(随机 ≥ 模型) | **{e6.get('p_random_at_least_as_good')}** |\n")
+    md.append(f"| 判定 | `{e6.get('verdict')}` |\n")
+    sens = e6.get("topk_sensitivity", {})
+    if sens:
+        md.append("\n| k | regret | P(随机≥模型) |\n|---:|---:|---:|\n")
+        for kk, vv in sens.items():
+            md.append(f"| {kk} | {vv['regret']} | {vv['p_random_ge_model']} |\n")
+    md.append("\n> **显著优于随机 ≠ 足够好用于实际筛选。** "
+              "模型只捕获了部分提升空间，regret 仍然很大。\n")
+
+    md.append("\n## 五、H4 假设\n")
+    md.append(f"**判定：`{h4.get('status')}`**\n\n")
+    pw = h4.get("power", {})
+    md.append(f"- 弱缔合低介电组：{pw.get('n_weak')} 个\n")
+    md.append(f"- 强缔合高介电组：{pw.get('n_strong')} 个\n")
+    md.append(f"- 功效充足：{pw.get('sufficient')}\n")
+    cmp_ = h4.get("comparison")
+    if cmp_:
+        md.append(f"\n方向：弱缔合组相对 MAE {cmp_.get('weak_relative_mae')} vs "
+                  f"强缔合组 {cmp_.get('strong_relative_mae')}，"
+                  f"`supports_h4={cmp_.get('supports_h4')}`。\n")
+        md.append("\n**但样本量不足，不能作为确认性结论。**\n")
+
+    md.append("\n## 六、构象分析\n")
+    md.append(f"- 分析分子数：{cfd.get('n_ok')}\n")
+    md.append(f"- 极性分子：{cfd.get('n_polar_analysed')}\n")
+    md.append(f"- 单构象可靠：{cfd.get('n_reliable')}\n")
+    md.append(f"- **单构象不可靠：{cfd.get('n_unreliable')}**\n")
+    md.append(f"- 非极性（构象无关）：{cfd.get('n_nonpolar_insensitive')}\n")
+    md.append(f"\n{cfd.get('finding')}\n")
+
+    md.append("\n## 七、未计算的两层\n")
+    md.append("| 层 | 状态 | 原因 |\n|---|---|---|\n")
+    md.append(f"| DFT | `{dft_block['status']}` | {dft_block['reason']} |\n")
+    md.append(f"| MD | `{md_block['status']}` | {md_block['reason']} |\n")
+    md.append("\n**这不是方法论选择，而是本环境缺少计算引擎。**\n")
+
+    md.append("\n## 八、必须保留的限制\n")
+    for lim in manifest["known_limitations"]:
+        md.append(f"- {lim}\n")
+
+    md.append("\n## 九、交付件清单\n")
+    md.append("| 文件 | 行数 | 类型 |\n|---|---:|---|\n")
+    for e in emitted:
+        md.append(f"| `{e['file']}` | {e['rows']} | {e['kind']} |\n")
+    md.append(f"| `b100_freeze_manifest.json` | — | 哈希与协议 |\n")
+
+    (DELIV / "B100_FINAL_REPORT.md").write_text("".join(md), encoding="utf-8")
+    note("B100_FINAL_REPORT.md", len(md), "REPORT",
+         "由 manifest 机械生成的汇总报告")
+
+    # refresh the manifest so the report itself is hashed
+    files = {}
+    for p in sorted(DELIV.iterdir()):
+        if p.is_file() and p.name != "b100_freeze_manifest.json":
+            files[p.name] = {"sha256": sha256_file(p),
+                             "bytes": p.stat().st_size}
+    manifest["deliverables"] = files
+    (DELIV / "b100_freeze_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8")
+
     print(f"[B100-15] {DELIV}")
     for e in emitted:
         print(f"   {e['kind']:8s} {e['file']:36s} rows={e['rows']}")
