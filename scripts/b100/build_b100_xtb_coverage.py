@@ -320,6 +320,37 @@ def main() -> int:
 
     verified = [r for r in phase if r.get("phase_verified") == "true"]
 
+    # Authoritative SMILES: once a molecule has been checked against PubChem, its
+    # canonical SMILES is THE structure of record. Preferring it over the source-table
+    # SMILES makes the tautomer repair durable -- an earlier version keyed the repair
+    # off the transient TAUTOMER_OR_FORM verdict, so a plain rebuild silently restored
+    # the wrong imidic-acid geometry for N-methylacetamide.
+    canonical_smiles: dict[str, str] = {}
+    sv_path = OUT / "smiles_verification_b100.csv"
+    if sv_path.is_file():
+        for r in load(sv_path):
+            ik = (r.get("inchikey") or "").strip()
+            pub = (r.get("pubchem_canonical_smiles") or "").strip()
+            if ik and pub:
+                canonical_smiles[ik] = pub
+
+    def smi_for(ik: str, fallback: str) -> str:
+        return canonical_smiles.get(ik) or fallback
+
+    def same_molecule(a: str, b: str) -> bool:
+        """Chemical comparison, not string comparison.
+
+        Two SMILES can be textually different and still describe the same molecule
+        (different canonicalisation order, stereo notation, aromatic form). Comparing
+        raw strings marked 142 molecules as "stale" when only one actually was.
+        """
+        from rdkit import Chem, RDLogger
+        RDLogger.DisableLog("rdApp.*")
+        ma, mb = Chem.MolFromSmiles(a), Chem.MolFromSmiles(b) if a and b else None
+        if ma is None or mb is None:
+            return False
+        return Chem.MolToSmiles(ma) == Chem.MolToSmiles(mb)
+
     # rows already carrying xTB from the uniform expansion run
     rows: list[dict] = []
     need: list[dict] = []
@@ -329,7 +360,46 @@ def main() -> int:
         has = (ef is not None
                and (ef.get("dipole_D") or "").strip().lower()
                not in PLACEHOLDERS)
-        if has:
+        # A molecule whose authoritative SMILES differs from the SMILES used in the
+        # expansion run cannot reuse that run's numbers, even though they exist.
+        used_smi = (ef.get("smiles") or "").strip() if ef else ""
+        auth_smi = canonical_smiles.get(ik, "")
+        stale_geometry = bool(auth_smi) and bool(used_smi) and (
+            not same_molecule(auth_smi, used_smi))
+        if has and not stale_geometry:
+            # Carry the provenance hashes from the original cached run so every row,
+            # including reused ones, is individually verifiable. `data/interim/` is
+            # gitignored, so without these hashes a reader could not check that the
+            # descriptors came from the geometry recorded here.
+            #
+            # Cache directories are sometimes named `<inchikey>` and sometimes
+            # `<inchikey>__<prothash>` (283 of 493 carry a suffix, marking a protocol
+            # revision). An exact-name lookup therefore misses most of them, so match
+            # on the prefix and pick the newest matching directory.
+            ex_in = ex_opt = ex_out = ""
+            base = REPO_ROOT / "data" / "interim" / "xtb_features"
+            cands = []
+            if base.is_dir():
+                exact = base / ik / "cache_manifest.json"
+                if exact.is_file():
+                    cands = [exact]
+                else:
+                    cands = sorted(
+                        (d / "cache_manifest.json"
+                         for d in base.glob(f"{ik}__*")),
+                        key=lambda p: p.parent.name)
+            for cm in cands:
+                if not cm.is_file():
+                    continue
+                try:
+                    em = json.loads(cm.read_text(encoding="utf-8"))
+                except Exception:           # noqa: BLE001
+                    continue
+                if em.get("input_sha256"):
+                    ex_in = em.get("input_sha256", "")
+                    ex_opt = em.get("optimized_sha256", "")
+                    ex_out = em.get("output_sha256", "")
+                    break
             rows.append({
                 "inchikey": ik, "name": r.get("name", ""),
                 "smiles": (ef.get("smiles") or "").strip(),
@@ -344,8 +414,9 @@ def main() -> int:
                 "alpha_over_Vm": ef.get("alpha_over_Vm", ""),
                 "n_iterations": "",
                 "xtb_seconds": ef.get("xtb_seconds", ""),
-                "input_sha256": "", "optimized_sha256": "",
-                "output_sha256": "",
+                "input_sha256": ex_in,
+                "optimized_sha256": ex_opt,
+                "output_sha256": ex_out,
                 "source": "EXISTING_UNIFIED_RUN",
                 "epsilon": r.get("epsilon", ""),
                 "T_K": r.get("T_K", ""),
@@ -355,11 +426,13 @@ def main() -> int:
         else:
             need.append({
                 "inchikey": ik, "name": r.get("name", ""),
-                "smiles": registry.get(ik, {}).get("smiles", ""),
+                "smiles": smi_for(
+                    ik, registry.get(ik, {}).get("smiles", "") or used_smi),
                 "epsilon": r.get("epsilon", ""),
                 "T_K": r.get("T_K", ""),
                 "evidence_grade": r.get("evidence_grade", ""),
                 "family": registry.get(ik, {}).get("family", ""),
+                "reason": "STALE_GEOMETRY" if stale_geometry else "NO_XTB",
             })
 
     print(f"[B100-8] phase-verified molecules : {len(verified)}")
@@ -369,55 +442,21 @@ def main() -> int:
         need = need[:limit]
         print(f"[B100-8] limited to               : {len(need)}")
 
-    # Tautomer repair: where PubChem's authoritative SMILES differs in connectivity
-    # from the SMILES that was used, the computed electronic structure belongs to a
-    # different species and must be redone. This is checked before computing so a
-    # known-bad geometry is never reused.
-    smiles_fix: dict[str, str] = {}
-    sv_path = OUT / "smiles_verification_b100.csv"
-    if sv_path.is_file():
-        for r in load(sv_path):
-            if (r.get("verdict") or "").strip() == "TAUTOMER_OR_FORM":
-                ik = (r.get("inchikey") or "").strip()
-                pub = (r.get("pubchem_canonical_smiles") or "").strip()
-                if ik and pub:
-                    smiles_fix[ik] = pub
-        if smiles_fix:
-            print(f"[B100-8] tautomer repairs staged : {len(smiles_fix)}")
-            # drop any previously cached result for the affected molecules so the
-            # corrected geometry is actually computed
-            for ik, pub in smiles_fix.items():
-                d = CACHE_ROOT / ik
-                if d.is_dir():
-                    for f in ("xtb.out", "xtbopt.xyz", "manifest.json",
-                              "input.xyz"):
-                        p = d / f
-                        if p.is_file():
-                            p.unlink()
-                for r in rows:
-                    if r["inchikey"] == ik:
-                        r["status"] = "PENDING_REPAIR"
-                for rec in need:
-                    if rec["inchikey"] == ik:
-                        rec["smiles"] = pub
-                # a molecule that already had xTB may not be in `need`
-                if ik not in {x["inchikey"] for x in need}:
-                    phase_rec = next(
-                        (p for p in verified
-                         if (p.get("inchikey") or "").strip() == ik), None)
-                    if phase_rec is not None:
-                        need.append({
-                            "inchikey": ik,
-                            "name": phase_rec.get("name", ""),
-                            "smiles": pub,
-                            "epsilon": phase_rec.get("epsilon", ""),
-                            "T_K": phase_rec.get("T_K", ""),
-                            "evidence_grade": phase_rec.get("evidence_grade", ""),
-                            "family": registry.get(ik, {}).get("family", ""),
-                        })
-                # remove the stale row that came from the expansion run
-                rows[:] = [r for r in rows if r["inchikey"] != ik]
-            print(f"[B100-8] to compute (after repair): {len(need)}")
+    # Any molecule flagged STALE_GEOMETRY must have its cached result discarded so the
+    # corrected structure is actually recomputed (the cache is keyed by InChIKey, not
+    # by SMILES, so a wrong geometry would otherwise be reused).
+    stale = [x for x in need if x.get("reason") == "STALE_GEOMETRY"]
+    if stale:
+        print(f"[B100-8] stale geometries to recompute : {len(stale)}")
+        for rec in stale:
+            d = CACHE_ROOT / rec["inchikey"]
+            if d.is_dir():
+                for f in ("xtb.out", "xtbopt.xyz", "manifest.json",
+                          "input.xyz", ".xtboptok"):
+                    p = d / f
+                    if p.is_file():
+                        p.unlink()
+            print(f"         {rec['name'][:34]:34s} -> {rec['smiles'][:40]}")
 
     for i, rec in enumerate(need, 1):
         res = compute_one(rec)
@@ -478,6 +517,17 @@ def main() -> int:
             "note": (
                 "xTB 是半经验方法, 单分子几何优化约 0.4-30 秒; "
                 "不计入 DFT 授权额度, 但记录以便复现."
+            ),
+        },
+        "reproducibility": {
+            "n_rows_with_input_hash": sum(
+                1 for r in rows if (r.get("input_sha256") or "").strip()),
+            "n_rows_total": len(rows),
+            "note": (
+                "每一行都带 input/optimized/output 三个 SHA-256. "
+                "复用行取自 data/interim/xtb_features/<inchikey>/cache_manifest.json "
+                "(该目录被 gitignore, 因此哈希是本表唯一可核对的计算来源凭据); "
+                "新算行由本轮写入 manifest. 协议 id 与二进制哈希见 protocol 字段."
             ),
         },
         "failures": [
