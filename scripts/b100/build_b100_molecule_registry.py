@@ -58,7 +58,11 @@ FAMILY_RULES = [
     # 2. carbonyl-derived classes (specific before generic)
     ("amide", ("[NX3][CX3](=[OX1])",), 10, 15),
     ("nitrile", ("N#C",), 10, 15),
-    ("nitro", ("[NX3](=O)=O",), 10, 15),
+    # RDKit represents the nitro group in its charge-separated form
+    # [N+](=O)[O-], so `[NX3](=O)=O` can NEVER match. That bug left the nitro family
+    # at zero and misfiled 14 nitro + 6 nitrate compounds as "amine" (RDKit's amine
+    # pattern catches the nitro nitrogen). Both forms are accepted here.
+    ("nitro", ("[$([NX3](=O)=O),$([N+](=O)[O-])]",), 10, 15),
     ("carboxylic_acid", ("[CX3](=O)[OX2H1]",), 10, 15),
     ("carbonate", ("[OX2][CX3](=O)[OX2]",), 12, 18),
     ("ester", ("[CX3](=O)[OX2][#6]",), 12, 18),
@@ -146,11 +150,20 @@ def main() -> int:
     qualified = load(QUALIFIED)
     phase = {(r.get("inchikey") or "").strip(): r for r in load(PHASE_B100)}
 
-    # SMILES come from the expansion observation table (the qualified list carries
-    # identity but not structure).
+    # SMILES come from the xTB descriptor table, which holds the AUTHORITATIVE structure
+    # (verified against PubChem). Using the raw expansion table's SMILES instead kept
+    # the imidic-acid tautomer for N-methylacetamide, so the amide rule could not match
+    # and a real amide was filed as alcohol_polyol (Reviewer 1).
+    xdesc = OUT / "xtb_descriptors_b100.csv"
+    smiles_by_key = {}
+    for r in (load(xdesc) if xdesc.is_file() else []):
+        ik = (r.get("inchikey") or "").strip()
+        s = (r.get("smiles") or "").strip()
+        if ik and s:
+            smiles_by_key[ik] = s
+
     exp = load(REPO_ROOT / "data" / "processed"
                / "dielectric_pool_expansion_observations.csv")
-    smiles_by_key = {}
     for r in exp:
         ik = (r.get("inchikey") or "").strip()
         s = (r.get("smiles") or "").strip()

@@ -129,6 +129,54 @@ def main() -> int:
     skeleton_only = [r for r in rows
                      if r["identity_status"] == "MATCH_SKELETON_ONLY"]
 
+    # ---- duplicate-substance check by CONSTITUTION ----
+    # Full-InChIKey dedup cannot see stereoisomer aliases: limonene appears as both
+    # the d and dl forms (XMGQYMWWDOXHJM-UHFFFAOYSA-N and -JTQLQIEISA-N) with the
+    # same constitution but different epsilon. Counting those as two independent
+    # molecules overstates the sample. Two substances are the same molecule for the
+    # purposes of this dataset when their stereo-stripped canonical SMILES match.
+    from rdkit import Chem as _C
+    groups: dict[str, list[str]] = {}
+    for r in rows:
+        smi = (r.get("smiles_recorded") or "").strip()
+        mol = _C.MolFromSmiles(smi) if smi else None
+        if mol is None:
+            continue
+        try:
+            _C.RemoveStereochemistry(mol)
+            key = _C.MolToSmiles(mol, isomericSmiles=False)
+        except Exception:                   # noqa: BLE001
+            continue
+        groups.setdefault(key, []).append(r["name"])
+
+    dup_groups = {k: v for k, v in groups.items() if len(v) > 1}
+    n_dup_molecules = sum(len(v) - 1 for v in dup_groups.values())
+
+    # Not every constitution group is a duplicate substance. cis/trans isomers are
+    # genuinely different molecules with different dipole moments and permittivities,
+    # so merging them would be wrong. Only two kinds need action:
+    #   * stereoisomer aliases whose measured epsilon is nearly identical
+    #     (d- vs dl-limonene), which double-count one substance;
+    #   * differently-named entries for the same constitution, where at least one
+    #     name must be wrong (1-phenyl-1-propene vs "3-phenyl-1-propene").
+    def group_kind(members: list[str]) -> str:
+        low = [m.lower() for m in members]
+        if any(("cis-" in m or "trans-" in m) for m in low):
+            return "CIS_TRANS_ISOMERS_DISTINCT"
+        if any(("d-" in m or "dl-" in m or "l-" in m or "meso-" in m)
+               for m in low):
+            return "STEREO_ALIAS_LIKELY_DUPLICATE"
+        return "SAME_CONSTITUTION_DIFFERENT_NAME"
+
+    classified = []
+    n_actionable = 0
+    for k, v in dup_groups.items():
+        kind = group_kind(v)
+        if kind != "CIS_TRANS_ISOMERS_DISTINCT":
+            n_actionable += len(v) - 1
+        classified.append({"members": v, "kind": kind,
+                           "constitution": k})
+
     doc = {
         "schema": "b100.identity_audit/v1",
         "generator": GENERATOR,
@@ -149,6 +197,28 @@ def main() -> int:
         "n_identity_ok": counts.get("MATCH", 0),
         "n_mismatch": len(bad),
         "n_skeleton_only": len(skeleton_only),
+        "duplicate_substances": {
+            "method": (
+                "按去立体化学的 canonical SMILES 分组. 全 InChIKey 去重看不到"
+                "立体异构别名."
+            ),
+            "n_groups": len(dup_groups),
+            "n_groups_cis_trans_distinct": sum(
+                1 for c in classified
+                if c["kind"] == "CIS_TRANS_ISOMERS_DISTINCT"),
+            "n_actionable_excess": n_actionable,
+            "n_distinct_substances_after_dedup": len(rows) - n_actionable,
+            "groups": classified[:20],
+            "interpretation": (
+                f"共 {len(dup_groups)} 组同构成分子. 其中 "
+                f"{sum(1 for c in classified if c['kind'] == 'CIS_TRANS_ISOMERS_DISTINCT')} "
+                "组是 cis/trans 异构体 —— 它们**是不同物质**"
+                "(偶极矩与介电常数不同), 不应合并. "
+                f"真正需要处理的只有 {n_actionable} 个: "
+                "对映体别名 (d-/dl- 等) 与同名不同写的重复条目. "
+                f"因此去重后约 {len(rows) - n_actionable} 个不同物质."
+            ),
+        },
         "mismatches": [
             {"name": r["name"], "inchikey_recorded": r["inchikey"],
              "smiles": r["smiles_recorded"],

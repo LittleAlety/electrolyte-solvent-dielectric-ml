@@ -49,8 +49,21 @@ X0_COLS = ["heavy_atom_count", "hbd", "hba", "tpsa_A2",
            "molecular_volume_A3", "molar_volume_m3_mol", "formal_charge",
            "n_rings", "n_rotatable", "fraction_csp3", "n_aromatic_atoms",
            "n_hetero", "n_halogen", "morgan2_nbits", "mw"]
-X1_COLS = ["dipole_D", "polarizability_au", "homo_lumo_gap_ev"]
-XN_COLS = ["mu_sq_over_Vm", "alpha_over_Vm"]     # volume-normalised
+# polarizability_au is EXCLUDED, deliberately.
+#
+# Two independent reasons, both measured:
+#  1. This xTB build (6.7.1) does not emit a polarizability block at all -- verified
+#     by grepping the raw xtb.out files and by running --pop/--alpha/--esp. So the
+#     value is missing for 36 of 257 molecules, and those 36 are NOT a random subset:
+#     they include 10 of the 25 molecules with epsilon >= 20 (N-methylacetamide
+#     epsilon=178.5 among them). Requiring the column silently truncated the high-
+#     epsilon tail, made every model easier, and is the real reason H4's strong group
+#     fell to 15 instead of 25 (Reviewer 1).
+#  2. The column carries almost no information anyway: alone it gives R^2 = 0.036,
+#     and alpha/Vm adds nothing on top of mu^2/Vm.
+# Dropping it restores the full 257-molecule set and removes an inert column.
+X1_COLS = ["dipole_D", "homo_lumo_gap_ev"]
+XN_COLS = ["mu_sq_over_Vm"]     # volume-normalised dipole term only
 
 LAMBDA_GRID = [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
 N_PERM = 1000
@@ -323,11 +336,39 @@ def main() -> int:
         if any(fnum(r.get(c)) is None for c in union_cols):
             continue
         common_idx.append(i)
+    # Common-evaluation-set diagnostic: which column forces which rows out.
+    # A silently truncated sample is the defect this reports on.
+    dropped_by: dict[str, int] = {}
+    n_eps = sum(1 for r in rows if fnum(r.get("epsilon")) is not None)
+    for c in union_cols:
+        n_missing = sum(1 for r in rows
+                        if fnum(r.get("epsilon")) is not None
+                        and fnum(r.get(c)) is None)
+        if n_missing:
+            dropped_by[c] = n_missing
+    # how much of the high-epsilon tail the common set keeps
+    all_eps = [fnum(r.get("epsilon")) for r in rows
+               if fnum(r.get("epsilon")) is not None]
+    kept_eps = [fnum(rows[i]["epsilon"]) for i in common_idx]
+    n_high_all = sum(1 for e in all_eps if e >= 20)
+    n_high_kept = sum(1 for e in kept_eps if e >= 20)
+
     N_COMMON = len(common_idx)
     print(f"[E1] common evaluation set = {N_COMMON} molecules "
           f"(of {len(rows)} rows)")
     e1 = {"blocks": [], "n_input": len(rows),
           "n_common_evaluation_set": N_COMMON,
+          "common_set_diagnostics": {
+              "n_rows_with_epsilon": n_eps,
+              "n_kept": N_COMMON,
+              "columns_forcing_drops": dropped_by,
+              "high_epsilon_total": n_high_all,
+              "high_epsilon_kept": n_high_kept,
+              "note": (
+                  "若某列导致大量行被丢弃且这些行集中在高介电端, "
+                  "样本就被静默截断, 所有模型都会变得更容易. 本诊断显式报告该情况."
+              ),
+          },
           "comparability_note": (
               "所有块在**同一分子集**上评估, 因此 MAE 与基线可直接比较. "
               "早期版本按各块各自的完整行评估, 导致块间样本不同、基线相差 36%."
@@ -361,7 +402,9 @@ def main() -> int:
             random.shuffle(yp)
             null_lab.append(cv_mae(X, yp, lam_med))
         null_lab.sort()
-        p_lab = sum(1 for v in null_lab if v <= cv_obs) / len(null_lab)
+        # +1 correction: with N permutations the smallest attainable p is 1/(N+1),
+        # so reporting 0.0 is arithmetically impossible and overstates the evidence.
+        p_lab = (sum(1 for v in null_lab if v <= cv_obs) + 1) / (len(null_lab) + 1)
 
         # null B: permute feature rows
         null_feat = []
@@ -371,7 +414,8 @@ def main() -> int:
             Xp = [X[order[i]] for i in range(len(X))]
             null_feat.append(cv_mae(Xp, y, lam_med))
         null_feat.sort()
-        p_feat = sum(1 for v in null_feat if v <= cv_obs) / len(null_feat)
+        p_feat = (sum(1 for v in null_feat if v <= cv_obs) + 1) / (
+            len(null_feat) + 1)
 
         e1["blocks"].append({
             "block": label, "n_features": len(cols), "n_used": len(y),
@@ -385,6 +429,12 @@ def main() -> int:
             "mae_reduction_vs_constant_pct": round(100 * (1 - m["mae"] / cmae), 2),
             "p_label_permutation": round(p_lab, 4),
             "p_feature_permutation": round(p_feat, 4),
+            "n_permutations": N_NULL,
+            "p_value_floor": round(1.0 / (N_NULL + 1), 5),
+            "p_note": (
+                f"使用 {N_NULL} 次置换并加 +1 校正, 因此最小可能 p = "
+                f"{1.0/(N_NULL+1):.5f}; 报 0.0 在算术上不可能, 会高估证据强度."
+            ),
             "cv_mae_for_pvalue": round(cv_obs, 4),
             "null_note": (
                 "p 值两侧都用 5 折 CV 计算 (观测值 cv_mae_for_pvalue 对比零分布), "
@@ -475,7 +525,26 @@ def main() -> int:
 
     n_meas = len(e4["families"])
     n_beat = sum(1 for f in e4["families"] if f["beats_baseline"] == "true")
-    e4["summary"] = {"n_measured": n_meas, "n_beating_baseline": n_beat}
+    n_r2_pos = sum(1 for f in e4["families"] if f["r2"] > 0)
+    e4["summary"] = {
+        "n_measured": n_meas,
+        "n_beating_baseline": n_beat,
+        "n_with_positive_r2": n_r2_pos,
+        # The baseline here is the GLOBAL training mean. For a family whose epsilon
+        # sits far from that mean, beating it is easy and says little. R^2 is
+        # scale-free and answers the harder question: does the model explain
+        # variance WITHIN the family? Both counts are reported so neither can be
+        # quoted alone. (Reviewer 4 raised this.)
+        "baseline_definition": (
+            "全局训练均值 (不是家族均值). 对介电水平远离全局均值的家族, "
+            "该基线偏弱, 因此同时报告 R^2 为正的家族数."
+        ),
+        "caveat": (
+            f"{n_beat}/{n_meas} 个家族优于全局均值基线, "
+            f"但只有 {n_r2_pos}/{n_meas} 个家族 R^2 > 0. "
+            "前者容易被误读为泛化成功."
+        ),
+    }
 
     # structural distance OOD + applicability domain
     mols = []
@@ -568,7 +637,9 @@ def main() -> int:
             "model_topk_mean": round(model_mean, 4),
             "pool_mean": round(pool_mean, 4),
             "regret": round(regret, 4),
-            "p_random_at_least_as_good": round(p_exact, 6),
+            # +1 correction as well: a Monte Carlo p of exactly 0 is impossible.
+            "p_random_at_least_as_good": round(
+                (sum(1 for v in mc if v >= model_mean) + 1) / (len(mc) + 1), 6),
             "n_monte_carlo": n_mc,
             "method": (f"n={len(yall)} 时 C(n,{TOPK}) 无法穷举, 用 200000 次"
                        f"蒙特卡洛; 该 p 的分辨率下限约 5e-6"),
@@ -588,7 +659,7 @@ def main() -> int:
                 "oracle": round(o2, 4), "model": round(m2, 4),
                 "regret": round(o2 - m2, 4),
                 "p_random_ge_model": round(
-                    sum(1 for v in mc2 if v >= m2) / len(mc2), 5),
+                    (sum(1 for v in mc2 if v >= m2) + 1) / (len(mc2) + 1), 5),
             }
         # spearman between rank and error
         e6["spearman_pred_true"] = round(spearman(preds_all, yall), 4)

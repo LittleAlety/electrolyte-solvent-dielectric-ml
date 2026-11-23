@@ -1,7 +1,7 @@
 {
   "schema": "b100.identity_audit/v1",
   "generator": "audit_b100_identity/1.0.0",
-  "generated_at_utc": "2026-11-23T14:41:17Z",
+  "generated_at_utc": "2026-11-23T15:54:38Z",
   "test": "从记录中的 SMILES 用 RDKit 重算 InChIKey, 必须等于记录的 InChIKey. 不等则说明该 SMILES 描述的不是被测物质, 因此由它算出的电子描述符 不属于该物质.",
   "why_this_matters": "发现的第一个例子: 名为 N-methylacetamide 的行带有 SMILES CN=C(C)O, 那是亚胺酸互变异构体 (methyl acetimidate), 不是酰胺 CC(=O)NC. 用它算出的偶极矩 1.07 D 与酰胺相距甚远, 而流程里没有任何环节会报警.",
   "n_molecules": 257,
@@ -11,6 +11,72 @@
   "n_identity_ok": 257,
   "n_mismatch": 0,
   "n_skeleton_only": 0,
+  "duplicate_substances": {
+    "method": "按去立体化学的 canonical SMILES 分组. 全 InChIKey 去重看不到立体异构别名.",
+    "n_groups": 7,
+    "n_groups_cis_trans_distinct": 3,
+    "n_actionable_excess": 4,
+    "n_distinct_substances_after_dedup": 253,
+    "groups": [
+      {
+        "members": [
+          "1-Phenyl-1-propene",
+          "3-Phenyl-1-propene"
+        ],
+        "kind": "STEREO_ALIAS_LIKELY_DUPLICATE",
+        "constitution": "CC=Cc1ccccc1"
+      },
+      {
+        "members": [
+          "cis-3-Octene",
+          "trans-3-Octene"
+        ],
+        "kind": "CIS_TRANS_ISOMERS_DISTINCT",
+        "constitution": "CCC=CCCCC"
+      },
+      {
+        "members": [
+          "cis-4-Octene",
+          "trans-4-Octene"
+        ],
+        "kind": "CIS_TRANS_ISOMERS_DISTINCT",
+        "constitution": "CCCC=CCCC"
+      },
+      {
+        "members": [
+          "cis-5-Decene",
+          "trans-5-Decene"
+        ],
+        "kind": "CIS_TRANS_ISOMERS_DISTINCT",
+        "constitution": "CCCCC=CCCCC"
+      },
+      {
+        "members": [
+          "d-Limonene",
+          "dl-Limonene"
+        ],
+        "kind": "STEREO_ALIAS_LIKELY_DUPLICATE",
+        "constitution": "C=C(C)C1CC=C(C)CC1"
+      },
+      {
+        "members": [
+          "dl-2,3-Dibromobutane",
+          "meso-2,3-Dibromobutane"
+        ],
+        "kind": "STEREO_ALIAS_LIKELY_DUPLICATE",
+        "constitution": "CC(Br)C(C)Br"
+      },
+      {
+        "members": [
+          "dl-3,4-Dibromohexane",
+          "meso-3,4-Dibromohexane"
+        ],
+        "kind": "STEREO_ALIAS_LIKELY_DUPLICATE",
+        "constitution": "CCC(Br)C(Br)CC"
+      }
+    ],
+    "interpretation": "共 7 组同构成分子. 其中 3 组是 cis/trans 异构体 —— 它们**是不同物质**(偶极矩与介电常数不同), 不应合并. 真正需要处理的只有 4 个: 对映体别名 (d-/dl- 等) 与同名不同写的重复条目. 因此去重后约 253 个不同物质."
+  },
   "mismatches": [],
   "skeleton_only_examples": [],
   "consequence": "identity 不一致的分子**不得**进入电子描述符建模集: 它们的 xTB 结果属于另一种化学物种. 这直接限制了 B100 的可用样本量, 必须如实扣减.",

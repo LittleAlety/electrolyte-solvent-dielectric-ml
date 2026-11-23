@@ -120,25 +120,38 @@ def test_phase_audit_covers_every_qualified_molecule() -> None:
 # ---------------------------------------------------------------- families
 
 def test_amine_family_is_not_empty_when_amines_exist() -> None:
-    """A comma-splitting bug once made this family count zero."""
+    """A comma-splitting bug once made this family count zero.
+
+    The check must exclude nitro/nitrate compounds: RDKit's amine pattern matches the
+    nitro nitrogen (NX3), so counting every "amine-containing" molecule would demand
+    that nitro compounds be labelled amines -- the opposite of correct. What matters
+    is that genuine amines are classified as amine.
+    """
     reg = _load(REGISTRY)
     from rdkit import Chem, RDLogger
     RDLogger.DisableLog("rdApp.*")
-    patt = Chem.MolFromSmarts("[NX3;H2,H1,H0;!$(NC=O)]")
-    have = 0
+    amine = Chem.MolFromSmarts("[NX3;H2,H1,H0;!$(NC=O)]")
+    nitro = Chem.MolFromSmarts("[$([NX3](=O)=O),$([N+](=O)[O-])]")
+    genuine = 0
     for r in reg:
         smi = r.get("smiles") or ""
         mol = Chem.MolFromSmiles(smi) if smi else None
-        if mol is not None and patt is not None and mol.HasSubstructMatch(patt):
-            have += 1
+        if mol is None or amine is None:
+            continue
+        if not mol.HasSubstructMatch(amine):
+            continue
+        # a nitro/nitrate nitrogen is not an amine
+        if nitro is not None and mol.HasSubstructMatch(nitro):
+            continue
+        genuine += 1
     assigned = sum(1 for r in reg if r.get("family") == "amine")
-    if have > 0:
+    if genuine > 0:
         assert assigned > 0, (
-            f"{have} molecules contain an amine group but none are classified "
-            f"as amine -- the SMARTS list is probably being split on commas")
-        assert assigned >= have * 0.5, (
-            f"only {assigned} of {have} amine-containing molecules were assigned "
-            f"to the amine family")
+            f"{genuine} molecules contain a genuine amine group but none are "
+            f"classified as amine -- the SMARTS list is probably split on commas")
+        assert assigned >= genuine * 0.5, (
+            f"only {assigned} of {genuine} genuine amine-containing molecules "
+            f"were assigned to the amine family")
 
 
 def test_every_registry_row_has_a_structure_or_a_reason() -> None:

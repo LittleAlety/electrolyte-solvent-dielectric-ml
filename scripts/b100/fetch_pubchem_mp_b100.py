@@ -47,8 +47,9 @@ QUALIFIED = OUT / "qualified_molecules_b100.csv"
 EXISTING = REPO_ROOT / "data" / "processed" / "liquid_window_features.csv"
 
 PUBCHEM = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
-# Polite rate for the public endpoint.
-SLEEP_S = 0.25
+# Polite rate for the public endpoint. With 4 workers this keeps the aggregate near
+# the 5 requests/second guidance.
+SLEEP_S = 0.75
 TIMEOUT_S = 25
 MAX_CONSECUTIVE_FAILURES = 12
 
@@ -109,6 +110,16 @@ def parse_mp_pugview(doc: dict) -> tuple[float | None, str]:
     if not strings:
         return None, "PUGVIEW_NO_STRINGS"
 
+    # A melting point is quoted at ambient pressure. Any string carrying a pressure
+    # qualifier is a BOILING point: "157 °C @760 mm Hg" and "66 °C (20 mm Hg)" were
+    # both being accepted as melting points, which fabricated values AND wrongly
+    # excluded seven real liquids.
+    PRESSURE_MARKERS = ("mm hg", "mmhg", "kpa", "mpa", " atm", "torr",
+                        "@", "b.p", "b.p.", "boil", "760", "press")
+
+    def pressure_qualified(low: str) -> bool:
+        return any(m in low for m in PRESSURE_MARKERS)
+
     for raw in strings:
         low = raw.lower()
         if not raw:
@@ -116,6 +127,8 @@ def parse_mp_pugview(doc: dict) -> tuple[float | None, str]:
         # Fahrenheit branch: convert only when explicitly marked
         if "°f" in low or " f (" in low or low.endswith(" f"):
             if any(t in low for t in ("decomp", "sublim", ">", "<", "~")):
+                continue
+            if pressure_qualified(low):
                 continue
             num = ""
             for ch in raw:
@@ -133,6 +146,8 @@ def parse_mp_pugview(doc: dict) -> tuple[float | None, str]:
             if any(t in low for t in ("decomp", "sublim", ">", "<", "~",
                                       "approx")):
                 continue
+            if pressure_qualified(low):
+                continue
             num = ""
             for ch in raw:
                 if ch.isdigit() or ch in ".-+":
@@ -144,25 +159,16 @@ def parse_mp_pugview(doc: dict) -> tuple[float | None, str]:
             except ValueError:
                 continue
 
-    # no unit-tagged value found: accept a bare number only if it is plausible as C
-    for raw in strings:
-        low = raw.lower()
-        if any(t in low for t in ("decomp", "sublim", ">", "<", "~", "approx")):
-            continue
-        num = ""
-        for ch in raw:
-            if ch.isdigit() or ch in ".-+":
-                num += ch
-            elif num:
-                break
-        try:
-            v = float(num)
-        except ValueError:
-            continue
-        if -150.0 <= v <= 400.0:
-            return round(v, 3), f"ASSUMED_C: {raw[:70]}"
-
-    return None, f"NO_USABLE_VALUE: {' | '.join(s[:30] for s in strings[:3])}"
+    # NO bare-number fallback.
+    #
+    # The previous version accepted "the first number in the range -150..400 from any
+    # string" when no unit-tagged value was found. PUG-View/HSDB descriptions begin
+    # with the compound name, so this harvested nonsense: 85 molecules got
+    # mp_C = 1.0 from the "1" of "InChI=1S/...", 18 got 2.0, 6 got 3.0, 1 got -1.0.
+    # Those fabricated values then certified the molecules as liquid and produced a
+    # false "257 phase-verified" claim. Only a unit-tagged value is acceptable; if
+    # none exists the molecule has NO melting point and must remain UNKNOWN.
+    return None, f"NO_UNIT_TAGGED_VALUE: {' | '.join(s[:30] for s in strings[:3])}"
 
 
 def fetch_one(inchikey: str, name: str = "") -> dict:
@@ -293,20 +299,24 @@ def main() -> int:
 
     results: list[dict] = []
     consecutive_fail = 0
-    for i, q in enumerate(need, 1):
-        rec = fetch_one(q["inchikey"])
-        rec["name"] = q.get("name", "")
-        results.append(rec)
-        ok = rec.get("mp_C") is not None
-        consecutive_fail = 0 if ok or rec.get("cid") else consecutive_fail + 1
-        if i % 20 == 0 or i == len(need):
-            print(f"  {i}/{len(need)}  mp_found="
-                  f"{sum(1 for r in results if r.get('mp_C') is not None)}")
-        if consecutive_fail >= MAX_CONSECUTIVE_FAILURES:
-            print(f"  aborted after {consecutive_fail} consecutive lookup "
-                  f"failures (likely network); cached results are kept")
-            break
-        time.sleep(SLEEP_S)
+
+    # Serial fetching was dominated by the ~1.3 MB full-record downloads, not by rate
+    # limiting (472 requests at the 5 req/s guidance is under two minutes of API
+    # time). A small thread pool removes that wall-clock cost while staying inside a
+    # polite request rate: WORKERS * (1/SLEEP_S) stays near 5 req/s.
+    WORKERS = 4
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+            for i, rec in enumerate(ex.map(
+                    lambda q: {**fetch_one(q["inchikey"]),
+                               "name": q.get("name", "")}, need), 1):
+                results.append(rec)
+                if i % 20 == 0 or i == len(need):
+                    print(f"  {i}/{len(need)}  mp_found="
+                          f"{sum(1 for r in results if r.get('mp_C') is not None)}")
+    except Exception as exc:                # noqa: BLE001
+        print(f"  parallel fetch failed ({exc}); continuing with cached results")
 
     # merge every cached record so the output is cumulative
     all_rows: list[dict] = []

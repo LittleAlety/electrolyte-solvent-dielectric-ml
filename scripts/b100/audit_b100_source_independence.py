@@ -119,6 +119,56 @@ def main() -> int:
             ledger_doc[ik].add(sd)
 
     # ---- per-molecule source independence ----
+    # "Corroborated" must mean the two sources AGREE on epsilon, not merely that the
+    # molecule appears in both. The previous version set the flag on presence alone
+    # while the manifest described it as "且两者一致" -- a claim the code never tested.
+    # (Reviewer 2 and 4 both caught this.)
+    CROSS_TOL_K = 5.0
+    CROSS_TOL_REL = 0.05
+
+    def eps_of(r, key="dielectric"):
+        v = (r.get(key) or "").strip()
+        try:
+            return float(v)
+        except ValueError:
+            return None
+
+    def t_of(r, key="T_K"):
+        v = (r.get(key) or "").strip()
+        try:
+            return float(v)
+        except ValueError:
+            return None
+
+    nbs_eps: dict[str, list[tuple[float | None, float | None]]] = defaultdict(list)
+    for r in exp:
+        ik = (r.get("inchikey") or "").strip()
+        if ik:
+            nbs_eps[ik].append((eps_of(r, "epsilon"), t_of(r, "T_K")))
+    core_eps: dict[str, list[tuple[float | None, float | None]]] = defaultdict(list)
+    for r in ledger:
+        ik = (r.get("inchikey") or "").strip()
+        if ik:
+            core_eps[ik].append((eps_of(r, "dielectric"), t_of(r, "temperature_K")))
+
+    def agreement(ik: str) -> tuple[str, float | None]:
+        """Return (status, relative_difference) for the best comparable pair."""
+        best = None
+        for a_eps, a_t in core_eps.get(ik, []):
+            for b_eps, b_t in nbs_eps.get(ik, []):
+                if a_eps is None or b_eps is None:
+                    continue
+                if a_t is None or b_t is None:
+                    continue
+                if abs(a_t - b_t) > CROSS_TOL_K:
+                    continue
+                rel = abs(a_eps - b_eps) / max(a_eps, b_eps)
+                if best is None or rel < best:
+                    best = rel
+        if best is None:
+            return "NO_COMPARABLE_PAIR", None
+        return ("AGREE" if best <= CROSS_TOL_REL else "DISAGREE"), best
+
     rows: list[dict] = []
     for r in phase:
         if r.get("phase_verified") != "true":
@@ -130,9 +180,8 @@ def main() -> int:
         nbs_srcs = sorted(exp_doc.get(ik, set()))
         core_srcs = sorted(ledger_doc.get(ik, set()))
         in_both = bool(nbs_srcs) and bool(core_srcs)
-        # independent measurement programmes (not files):
-        #   NBS 514 compendium counts as ONE programme, however many part files
         n_programmes = (1 if nbs_srcs else 0) + len(core_srcs)
+        status, rel = agreement(ik) if in_both else ("SINGLE_SOURCE", None)
         rows.append({
             "inchikey": ik,
             "name": r.get("name", ""),
@@ -146,7 +195,13 @@ def main() -> int:
             "nbs_is_one_compendium": "true" if nbs_srcs else "false",
             "core_thermoml_documents": ";".join(core_srcs),
             "n_independent_programmes": n_programmes,
-            "independently_corroborated": "true" if in_both else "false",
+            # presence in both layers
+            "in_both_layers": "true" if in_both else "false",
+            # and whether the two actually agree on epsilon
+            "cross_source_status": status,
+            "cross_source_relative_difference": (
+                round(rel, 4) if rel is not None else ""),
+            "independently_corroborated": "true" if status == "AGREE" else "false",
             "has_xtb": q.get("has_xtb", "false"),
         })
 
@@ -210,11 +265,18 @@ def main() -> int:
             },
             "independently_corroborated": {
                 "n_molecules": n_corroborated,
-                "meaning": (
+                "definition": (
                     "同一分子在 NBS 汇编与 ThermoML 原始文献中都有 ε, "
-                    "且两者一致 (见 cross_source_agree_b100.csv). "
-                    "这是本数据集里唯一真正的独立复现."
+                    f"温度相差 <= {CROSS_TOL_K} K, 且 ε 相对差 <= {CROSS_TOL_REL:.0%}. "
+                    "**必须数值一致才算印证**, 仅『两层都出现』不算."
                 ),
+                "n_present_in_both_layers": sum(
+                    1 for r in rows if r["in_both_layers"] == "true"),
+                "n_disagree": sum(
+                    1 for r in rows if r["cross_source_status"] == "DISAGREE"),
+                "n_no_comparable_pair": sum(
+                    1 for r in rows
+                    if r["cross_source_status"] == "NO_COMPARABLE_PAIR"),
             },
         },
         "independence_distribution": {

@@ -60,7 +60,7 @@ FAMILY_RULES = [
     ("phosphate", ("[PX4](=O)",)),
     ("amide", ("[NX3][CX3](=[OX1])",)),
     ("nitrile", ("N#C",)),
-    ("nitro", ("[NX3](=O)=O",)),
+    ("nitro", ("[$([NX3](=O)=O),$([N+](=O)[O-])]",)),
     ("carboxylic_acid", ("[CX3](=O)[OX2H1]",)),
     ("carbonate", ("[OX2][CX3](=O)[OX2]",)),
     ("ester", ("[CX3](=O)[OX2][#6]",)),

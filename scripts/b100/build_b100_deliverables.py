@@ -106,6 +106,7 @@ def main() -> int:
     matrix_by_key = {(r.get("inchikey") or "").strip(): r for r in matrix}
     conf_by_key = {(r.get("inchikey") or "").strip(): r for r in conf}
     xtab_by_key = {(r.get("inchikey") or "").strip(): r for r in xtab}
+    phase_by_key = {(r.get("inchikey") or "").strip(): r for r in phase}
 
     emitted: list[dict] = []
 
@@ -127,7 +128,12 @@ def main() -> int:
             "epsilon_band": r.get("epsilon_band", ""),
             "association_class": r.get("association_class", ""),
             "xtb_protocol": x.get("protocol", ""),
-            "phase_verified": "true",
+            # DERIVED, not hard-coded. Writing "true" for every row made the column
+            # incapable of failing -- and it would have kept saying "true" even if the
+            # phase audit found the molecule solid.
+            "phase_status": phase_by_key.get(ik, {}).get("phase_status", "NOT_AUDITED"),
+            "phase_verified": phase_by_key.get(ik, {}).get("phase_verified", "false"),
+            "mp_source": phase_by_key.get(ik, {}).get("mp_source", ""),
             "conformer_verdict": conf_by_key.get(ik, {}).get("verdict", ""),
         })
     write_csv(DELIV / "molecule_registry_b100.csv", reg_rows)
@@ -407,6 +413,8 @@ def main() -> int:
     # Generated rather than hand-written so the numbers cannot drift from the
     # manifests. Every figure quoted below is read from a machine artifact.
     blocks = e1.get("blocks", [])
+    si_preview = (manifest.get("source_independence") or {}).get(
+        "independently_corroborated")
     md: list[str] = []
     md.append("# B100 最终报告 — 面向 100+ 分子规模的单分子描述符有效性边界\n")
     md.append(f"> 生成器 `{GENERATOR}` · "
@@ -416,10 +424,20 @@ def main() -> int:
     md.append("\n## 零、硬门槛\n")
     hg = manifest["hard_gates"]
     md.append("| 门槛 | 要求 | 实际 | 达标 |\n|---|---:|---:|---|\n")
+    # The tick must be derived. It was previously a literal "✅", i.e. a check that
+    # could never fail.
+    ok_q = hg["achieved_qualified"] >= hg["min_qualified_molecules"]
+    ok_x = hg["achieved_xtb"] >= hg["min_xtb_coverage"]
     md.append(f"| 独立合格分子 | {hg['min_qualified_molecules']} | "
-              f"**{hg['achieved_qualified']}** | ✅ |\n")
+              f"**{hg['achieved_qualified']}** | "
+              f"{'✅' if ok_q else '❌'} |\n")
     md.append(f"| 统一 xTB 覆盖 | {hg['min_xtb_coverage']} | "
-              f"**{hg['achieved_xtb']}** | ✅ |\n")
+              f"**{hg['achieved_xtb']}** | "
+              f"{'✅' if ok_x else '❌'} |\n")
+    md.append(f"\n> **「合格」的可核验含义：** 通过准入判据（中性单分子 + 相态验证为液体）"
+              f"的分子有 {hg['achieved_qualified']} 个。但其中**被两个独立来源交叉印证**"
+              f"的只有 {si_preview} 个 —— 这两个数字必须分开陈说，"
+              f"不能把前者称为「独立合格分子」。\n")
 
     md.append("\n## 一、数据体系\n")
     ds = manifest["dataset"]
@@ -463,13 +481,20 @@ def main() -> int:
              if f["beats_baseline"] == "false"]
     if fails:
         md.append("\n**失败的家族（必须陈说）：**\n")
-        md.append("| 家族 | n_test | MAE | 基线 |\n|---|---:|---:|---:|\n")
+        md.append("| 家族 | n_test | MAE | 基线 | R² |\n|---|---:|---:|---:|---:|\n")
         for f in fails:
             md.append(f"| {f['family']} | {f['n_test']} | {f['mae']} | "
-                      f"{f['train_mean_baseline_mae']} |\n")
-        md.append("\n> 卤代烃是最低的介电家族（ε 多在 2–5）。从其他家族学到的模型"
-                  "会系统性高估它们。**这不是描述符无用，而是低介电弱缔合家族的 "
-                  "ε 本身几乎不随分子结构变化。**\n")
+                      f"{f['train_mean_baseline_mae']} | {f['r2']} |\n")
+        md.append(
+            "\n> **卤代烃失败的机制（已修正）：** 最初的解释是「它是最低介电家族」，"
+            "这是**错的** —— 卤代烃 ε 均值 5.98、范围 2.24–10.19、变异系数 0.30，"
+            "只排第三低（烷烃 2.55、芳香 2.97 更低），且 67 个里只有 22 个低于 5。"
+            "真正机制是**偶极与介电的错配**：卤代烃平均偶极 3.45 D 与酮类 3.48 D 相当，"
+            "但介电常数低 2.4 倍；而最低介电的烷烃（偶极 0.19 D）反而校准良好。\n"
+            "\n> **同时必须承认基线偏弱：** 这里的基线是**全局训练均值**。"
+            "对介电水平远离全局均值的家族，击败它很容易。"
+            f"实际上只有 {e4.get('summary', {}).get('n_with_positive_r2')} 个家族 R² > 0，"
+            "因此「N 个家族泛化成功」这个说法必须与 R² 一起读。\n")
 
     md.append("\n## 四、E6 筛选决策（k=10 预注册）\n")
     md.append("| 项 | 值 |\n|---|---:|\n")
