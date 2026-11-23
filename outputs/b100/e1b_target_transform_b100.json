@@ -1,0 +1,65 @@
+{
+  "schema": "b100.target_transform/v1",
+  "generator": "run_b100_target_transforms/1.0.0",
+  "generated_at_utc": "2026-11-23T23:51:05Z",
+  "why": "所有既有模型都用无界线性回归拟合 epsilon, 会给出 epsilon<1 的非物理预测, 卤代烃外推爆掉也源于此. Clausius-Mossotti 给出正确的响应变量 (eps-1)/(eps+2), 它在 mu^2/Vm 上是线性的, 且把输出限制在 epsilon>1.",
+  "n_molecules": 239,
+  "constant_baseline_mae": 8.5428,
+  "transforms_compared": [
+    "identity",
+    "log",
+    "clausius_mossotti"
+  ],
+  "best_overall": {
+    "transform": "log",
+    "block": "X0_X1_Xn",
+    "n_features": 18,
+    "n_used": 239,
+    "mae": 4.4887,
+    "rmse": 13.3764,
+    "r2": 0.2679,
+    "bias": -0.9617,
+    "constant_baseline_mae": 8.5428,
+    "beats_constant": "true",
+    "mae_reduction_pct": 47.46,
+    "n_pred_below_eps_floor": 0,
+    "n_pred_clamped": 2,
+    "positivity_enforced": "true"
+  },
+  "by_transform": {
+    "identity": {
+      "best_block": "X0_plus_Xn",
+      "mae": 4.6522,
+      "r2": 0.399,
+      "n_pred_below_floor": 0
+    },
+    "log": {
+      "best_block": "X0_X1_Xn",
+      "mae": 4.4887,
+      "r2": 0.2679,
+      "n_pred_below_floor": 0
+    },
+    "clausius_mossotti": {
+      "best_block": "X1_electronic",
+      "mae": 10.8263,
+      "r2": -7.7398,
+      "n_pred_below_floor": 0
+    }
+  },
+  "positivity": {
+    "identity_predictions_below_floor": 0,
+    "clausius_mossotti_predictions_below_floor": 0,
+    "note": "identity 目标会产生 epsilon<1 的预测; 有界变换在结构上避免, 并在反变换处加 [1, 500] 夹取. 夹取次数已报告, 不隐藏."
+  },
+  "theory_note": "若 Kirkwood-Onsager 成立, mu^2/Vm 应对 (eps-1)/(eps+2) 有很高解释力. 这比『该特征与 epsilon 相关』强得多, 是本实验要检验的. 但 g 因子 (偶极关联) 仍不在任何单分子描述符中, 因此即使 CM 拟合良好, 也不等于液体介电常数可由单分子量预测.",
+  "inputs": {
+    "model_matrix_b100": {
+      "sha256": "e50e6ed57ea4e4c544feefbc33abed3c18bc900c0e3e3a944fb74aaaae2a4ae2"
+    }
+  },
+  "output": {
+    "path": "outputs\\b100\\e1b_target_transform_b100.csv",
+    "sha256": "8eb189aface9c2448a6547b3f18498725b2bb41ff5f92fe08e8a4063d218f0aa",
+    "rows": 15
+  }
+}

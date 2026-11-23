@@ -328,6 +328,8 @@ def main() -> int:
     e6 = jload(OUT / "e6_manifest_b100.json") or {}
     h4 = jload(OUT / "h4_manifest_b100.json") or {}
     cfd = jload(OUT / "conformer_ensemble_b100.json") or {}
+    ttf = jload(OUT / "e1b_target_transform_b100.json") or {}
+    solv = jload(OUT / "electrolyte_solvent_coverage_b100.json") or {}
 
     manifest = {
         "schema": "b100.freeze_manifest/v1",
@@ -390,14 +392,34 @@ def main() -> int:
             "H4_status": h4.get("status"),
             "conformer_unreliable_fraction": (
                 f"{cfd.get('n_unreliable')}/{cfd.get('n_polar_analysed')}"),
+            "target_transform": {
+                "best": ttf.get("best_overall", {}).get("transform"),
+                "by_transform": {k: {"mae": v["mae"], "r2": v["r2"]}
+                                 for k, v in (ttf.get("by_transform") or {}).items()},
+                "finding": (
+                    "Clausius-Mossotti 变换虽然物理上是正确响应变量, "
+                    "但反变换在高 eps 处病态, 预测表现最差 (MAE 10.8-26.7, R2 为负). "
+                    "对数变换 MAE 最优, 恒等变换 R2 最优."
+                ),
+            },
+            "solvent_coverage": {
+                "n_key_solvents": solv.get("n_key_solvents"),
+                "n_in_modelling_set": solv.get("n_in_modelling_set"),
+                "n_absent_from_all_sources": solv.get("n_absent_from_all_sources"),
+            },
         },
         "known_limitations": [
             "226/257 分子来自单一编校来源 (NBS 514), 跨来源复现未被证明",
-            "卤代烃家族 (67 分子) 跨家族迁移失败: MAE 6.78 vs 基线 2.53",
-            "H4 功效不足: 强缔合组仅 15 个分子",
+            f"卤代烃家族 ({next((f['n_test'] for f in e4.get('families', []) if f['family'] == 'halocarbon'), '?')} 分子) 跨家族迁移失败; 真实机制是 g 因子迁移失败 (卤代烃强极性但非缔合), 不是『最低介电家族』",
+            "H4 功效达标但方向与假设相反: 高介电强缔合分子反而预测更好",
             "DFT / MD 两层未计算, 结论停留在 xTB 层级",
-            "30/36 极性柔性分子的单构象偶极不可靠 (已量化)",
+            "构象分析: 30/36 是『构象间展宽』判据; 单构象与 Boltzmann 平均偏差判据只有 16/36",
             "7 个化学家族仍低于分层目标; NBS 514 已耗尽",
+            f"关键电解质溶剂: {solv.get('n_key_solvents')} 个中只有 {solv.get('n_in_modelling_set')} 个进入建模集, "
+            f"{solv.get('n_absent_from_all_sources')} 个在仓库所有来源中都不存在",
+            "Vm 是气相分子体积 x N_A, 不是液体摩尔体积 (实测比 0.53-0.72)",
+            "Clausius-Mossotti 变换预测表现最差 (反变换在高 eps 处病态)",
+            "E6 的 regret 高度依赖少数高介电离群分子",
         ],
         "frozen_prior_work_untouched": {
             "reference_commit": "88f6c33",
