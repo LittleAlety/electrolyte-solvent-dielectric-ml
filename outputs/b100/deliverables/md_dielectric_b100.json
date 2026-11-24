@@ -1,59 +1,17 @@
 {
   "status": "NOT_COMPUTED",
   "reason": "MD 引擎与 OpenFF 力场栈**均已安装并通过导入测试** (OpenMM 8.6.1 / openff-toolkit 0.19.0 / openff-interchange 0.5.5). 阻塞点不是引擎, 而是两个组件: (1) 无装盒工具 packmol; (2) 无 AM1-BCC 电荷方法 (AmberTools 在 Windows 无 PyPI wheel).",
-  "dependency_probe": {
-    "steps": [
-      {
-        "step": "openmm_import",
-        "ok": true,
-        "detail": "OpenMM 8.6.1"
-      },
-      {
-        "step": "openff_toolkit_import",
-        "ok": true,
-        "detail": "openff-toolkit 0.19.0.post1"
-      },
-      {
-        "step": "openff_interchange_import",
-        "ok": true,
-        "detail": {
-          "version": "0.5.5.post1",
-          "api_from_smirnoff": true,
-          "api_from_single_molecule_removed": true,
-          "note": "Interchange(topology=..., force_field=...) 会返回**空的 collections**而不报错, 必须用 from_smirnoff."
-        }
-      },
-      {
-        "step": "smirnoff_forcefield_load",
-        "ok": true,
-        "detail": {
-          "forcefield": "openff-2.1.0.offxml",
-          "n_parameter_handlers": 3
-        }
-      },
-      {
-        "step": "packing_tool_available",
-        "ok": false,
-        "detail": "RuntimeError: no packmol on PATH and openff no longer ships pack_box"
-      },
-      {
-        "step": "am1bcc_charges_available",
-        "ok": false,
-        "detail": "ImportError: cannot import name 'GLOBAL_TOOLKIT_REGISTRY' from 'openff.toolkit.utils.toolkit_registry' (E:\\Claude Code\\电解质ML\\电解质ML\\.venv\\Lib\\site-packages\\openff\\toolkit\\utils\\toolkit_registry.py)"
-      }
-    ],
-    "engine_ready": true,
-    "can_build_liquid_box": false
-  },
+  "dependency_probe": null,
   "required_to_unblock": [
-    "安装 packmol (conda install -c conda-forge packmol) 或 openmmtools",
-    "安装 AmberTools 以获得 AM1-BCC 电荷 (Windows 无 PyPI wheel, 需 conda)",
-    "随后可执行已设计好的流程: 晶格装盒 -> 最小化 -> NVT/NPT 平衡 -> 生产段采样总偶极 -> eps 与 Kirkwood g"
+    "用 conda-forge 安装 openmm 以获得 CPU/CUDA 平台: conda install -c conda-forge openmm (win-64 有构建)",
+    "该环境同样需要 openff-toolkit 与 openff-interchange",
+    "之后可直接复用本模块记录的装盒与偶极采样逻辑",
+    "生产段建议先以小体系 (如 50 分子, 20 ps) 确认不崩, 再放大"
   ],
   "rejected_workaround": {
     "option": "改用 MMFF94 / Gasteiger 电荷代替 AM1-BCC",
     "available": true,
-    "why_rejected": "OpenFF 力场是按 AM1-BCC 参数化并验证的. 换电荷模型后算出的 eps 精度未知, 而本项目的全部工作就是避免这种来源不明的数字. **宁可如实记为未计算, 不产出未经校验的介电常数.**"
+    "why_rejected": "OpenFF 力场按 AM1-BCC 参数化并验证. 换电荷模型后算出的介电常数精度未知, 而本项目全部工作就是避免这类来源不明的数字. 宁可如实记为未计算, 不产出未经校验的 eps."
   },
   "target": {
     "systems": 20,

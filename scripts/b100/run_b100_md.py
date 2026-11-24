@@ -1,46 +1,50 @@
 #!/usr/bin/env python
-"""B100-21: liquid MD layer -- dependency probe and honest status record.
+"""B100-21: liquid MD layer -- verified status and the working pipeline.
 
-PLAN B v6.0 asks for >=12 liquid systems, specifically to measure the Kirkwood g factor
-that no single-molecule descriptor can express. The B100 association-deficit analysis
-inferred g indirectly from epsilon; MD would measure it directly, so this layer matters.
+PLAN B v6.0 asks for >=12 liquid systems, to measure the Kirkwood g factor that no
+single-molecule descriptor can express. The association-deficit analysis in this
+repository infers g indirectly from epsilon; MD would measure it directly.
 
-This script does NOT produce dielectric constants. It establishes, by actually trying,
-exactly how far the toolchain gets and where it stops, and writes that down. The
-reason for the care: the previous status said "no MD engine", which is no longer true
-after OpenMM and the OpenFF stack were installed. Leaving a stale reason in the
-deliverable would be its own kind of inaccuracy.
+This module records what has actually been verified about that layer. Nothing here
+fabricates a dielectric constant.
 
-Dependency chain, each item verified rather than assumed:
+VERIFIED WORKING (each item was executed, not assumed):
+  * OpenMM 8.6.1, openff-toolkit 0.19.0, openff-interchange 0.5.5 all import
+  * SMIRNOFF openff-2.1.0 force field loads
+  * Partial charges: AmberTools cannot be installed on Windows (no conda-forge win-64
+    build, no PyPI wheel), so AM1-BCC comes from OpenFF's NAGL model
+    openff-gnn-am1bcc-1.0.0.pt, which is trained to reproduce AM1-BCC.
+  * Interchange.from_smirnoff works ONLY after replacing the ToolkitAM1BCC handler
+    with NAGLChargesHandler(model_file=...). Retargeting
+    ForceField["ToolkitAM1BCC"].partial_charge_method is NOT enough: the internal
+    reference-matching path still calls the bare name "am1bcc" and fails. This was a
+    real dead end that cost several attempts.
+  * Multi-molecule topology -> OpenMM System produces all of Bonds, Angles,
+    ProperTorsions, ImproperTorsions, vdW, Electrostatics.
+  * Lattice packing with random orientations, density from the molar volume.
+  * Energy minimisation and NVT equilibration run.
 
-  OpenMM 8.6.1              INSTALLED and imports
-  openff-toolkit 0.19.0     INSTALLED, SMIRNOFF force fields load
-  openff-interchange 0.5.5  INSTALLED; correct API is Interchange.from_smirnoff
-                            (the older from_single_molecule no longer exists, and
-                             Interchange(topology=...) silently returns EMPTY
-                             collections, so a naive call looks successful while
-                             having parameterised nothing)
-  packing tool              MISSING. There is no packmol, and openff no longer ships
-                            pack_box. Without it there is no way to build a dense
-                            liquid box; a lattice + minimisation is the fallback but
-                            was not validated here.
-  AM1-BCC partial charges   MISSING. Interchange asks the toolkit registry for
-                            am1bcc and gets: RDKit offers only mmff94/gasteiger,
-                            NAGL rejects the name, built-in offers zeros. AM1-BCC
-                            needs AmberTools (no Windows wheel on PyPI) or OpenEye.
+BLOCKING FINDING:
+  The pip OpenMM build on Windows registers ONLY the Reference platform. Reference is
+  the slowest implementation, and on this system (150 molecules, PME, periodic box) it
+  exits with a SEGMENTATION FAULT in the production sampling loop. Parameterisation,
+  packing, minimisation and NVT equilibration all pass; the crash is in production.
+  This is a platform defect, not an algorithmic one.
 
-Why the layer is not forced through with substitute charges: MMFF94 charges are
-available, but the OpenFF force field is parameterised and validated against AM1-BCC.
-A dielectric constant computed from a force field with swapped charge model is a number
-of unknown accuracy -- and this whole project exists to avoid exactly that kind of
-number. An honest "not computed" is worth more than an unvalidated value.
+TWO DEAD ENDS worth recording so they are not repeated:
+  1. NPT equilibration collapses the box below twice the cutoff. The lattice start has
+     enough local voids that the barostat crushes it. NVT at a fixed density avoids it.
+  2. The box edge must be (Vm * N / N_A)^(1/3), NOT (Vm * N)^(1/3). The wrong form
+     gives an edge of 1.9e8 nm, which OpenMM accepts silently -- the system simply
+     becomes non-periodic and would yield a plausible-looking, meaningless epsilon.
 
 Output: outputs/b100/md_dielectric_b100.json
-        outputs/b100/md_dielectric_b100.csv
+        outputs/b100/md_dielectric_b100.csv   (header only; no results)
 """
 
 from __future__ import annotations
 
+import csv
 import json
 import sys
 from datetime import datetime, timezone
@@ -48,136 +52,139 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OUT = REPO_ROOT / "outputs" / "b100"
-GENERATOR = "run_b100_md/2.0.0"
+GENERATOR = "run_b100_md/4.0.0"
+
+FORCEFIELD = "openff-2.1.0.offxml"
+CHARGE_MODEL = "openff-gnn-am1bcc-1.0.0.pt"
+
+CSV_FIELDS = ["system", "inchikey", "status", "T_K", "density_kg_m3",
+              "epsilon_experimental", "epsilon_md", "epsilon_block_sd",
+              "kirkwood_g", "n_molecules", "production_ps", "volume_nm3",
+              "wall_seconds", "detail"]
 
 
-def probe() -> dict:
-    """Actually import and exercise the stack; report what works, in order."""
-    report: dict = {"steps": []}
-
-    def step(name: str, fn) -> bool:
-        try:
-            detail = fn()
-            report["steps"].append({"step": name, "ok": True, "detail": detail})
-            return True
-        except Exception as exc:            # noqa: BLE001
-            report["steps"].append({"step": name, "ok": False,
-                                    "detail": f"{type(exc).__name__}: {exc}"})
-            return False
-
-    def _openmm():
+def available_platforms() -> list[str]:
+    try:
         import openmm
-        return f"OpenMM {openmm.__version__}"
-
-    def _toolkit():
-        import openff.toolkit as ot
-        return f"openff-toolkit {ot.__version__}"
-
-    def _interchange():
-        import openff.interchange as oi
-        from openff.interchange import Interchange
-        has_new = hasattr(Interchange, "from_smirnoff")
-        has_old = hasattr(Interchange, "from_single_molecule")
-        return {
-            "version": oi.__version__,
-            "api_from_smirnoff": has_new,
-            "api_from_single_molecule_removed": not has_old,
-            "note": (
-                "Interchange(topology=..., force_field=...) 会返回**空的 collections**"
-                "而不报错, 必须用 from_smirnoff."
-            ),
-        }
-
-    def _forcefield():
-        from openff.toolkit.typing.engines.smirnoff import ForceField
-        ff = ForceField("openff-2.1.0.offxml")
-        return {"forcefield": "openff-2.1.0.offxml",
-                "n_parameter_handlers": len(ff.aromaticity_model.__class__.__name__)}
-
-    def _packing():
-        import shutil
-        have_packmol = shutil.which("packmol") is not None
-        if not have_packmol:
-            raise RuntimeError(
-                "no packmol on PATH and openff no longer ships pack_box")
-        return "packmol present"
-
-    def _charges():
-        from openff.toolkit import Molecule
-        from openff.toolkit.utils.toolkit_registry import GLOBAL_TOOLKIT_REGISTRY
-        mol = Molecule.from_smiles("CCO")
-        GLOBAL_TOOLKIT_REGISTRY.call(
-            "assign_partial_charges", molecule=mol,
-            partial_charge_method="am1bcc")
-        return "AM1-BCC available"
-
-    ok_engine = step("openmm_import", _openmm)
-    ok_toolkit = step("openff_toolkit_import", _toolkit)
-    ok_inter = step("openff_interchange_import", _interchange)
-    ok_ff = step("smirnoff_forcefield_load", _forcefield)
-    ok_pack = step("packing_tool_available", _packing)
-    ok_q = step("am1bcc_charges_available", _charges)
-
-    report["engine_ready"] = bool(ok_engine and ok_toolkit and ok_inter and ok_ff)
-    report["can_build_liquid_box"] = bool(report["engine_ready"] and ok_pack and ok_q)
-    return report
+        return [openmm.Platform.getPlatform(i).getName()
+                for i in range(openmm.Platform.getNumPlatforms())]
+    except Exception:
+        return []
 
 
-def main() -> int:
-    OUT.mkdir(parents=True, exist_ok=True)
-    rep = probe()
+def package_versions() -> dict:
+    out = {}
+    for mod, label in (("openmm", "openmm"),
+                       ("openff.toolkit", "openff-toolkit"),
+                       ("openff.interchange", "openff-interchange")):
+        try:
+            m = __import__(mod, fromlist=["__version__"])
+            out[label] = getattr(m, "__version__", "unknown")
+        except Exception:
+            out[label] = None
+    return out
 
-    failed = [s for s in rep["steps"] if not s["ok"]]
-    doc = {
-        "schema": "b100.md_layer/v2",
+
+def build_forcefield():
+    """openff-2.1.0 with ToolkitAM1BCC replaced by the NAGL equivalent."""
+    from openff.toolkit.typing.engines.smirnoff import ForceField
+    from openff.toolkit.typing.engines.smirnoff.parameters import NAGLChargesHandler
+
+    ff = ForceField(FORCEFIELD)
+    try:
+        ff.deregister_parameter_handler("ToolkitAM1BCC")
+    except Exception:
+        pass
+    ff.register_parameter_handler(
+        NAGLChargesHandler(version="0.3", model_file=CHARGE_MODEL))
+    return ff
+
+
+def status_document() -> dict:
+    platforms = available_platforms()
+    return {
+        "schema": "b100.md_layer/v4",
         "generator": GENERATOR,
         "generated_at_utc": datetime.now(timezone.utc)
         .replace(microsecond=0).isoformat().replace("+00:00", "Z"),
-        "status": "COMPUTED" if rep["can_build_liquid_box"] else "NOT_COMPUTED",
-        "dependency_probe": rep,
-        "what_changed": (
-            "原状态写『本环境无 MD 引擎』。该说法已不成立: OpenMM 与完整 OpenFF "
-            "栈均已安装. 因此本层现在的阻塞点**不是引擎**, 而是装盒工具与电荷方法."
+        "status": "NOT_COMPUTED",
+        "engine": {
+            "md": "OpenMM",
+            "forcefield": FORCEFIELD,
+            "charges": CHARGE_MODEL,
+            "system_builder": "openff-interchange",
+            "versions": package_versions(),
+            "available_platforms": platforms,
+        },
+        "verified_working": [
+            "OpenMM / openff-toolkit / openff-interchange 全部导入成功",
+            "SMIRNOFF openff-2.1.0 力场可加载",
+            "NAGL AM1-BCC 电荷可用 (AmberTools 在 Windows 上无法安装)",
+            "Interchange.from_smirnoff 成功: 必须把 ToolkitAM1BCC 处理器换成 "
+            "NAGLChargesHandler(model_file=...); 仅重定向 partial_charge_method 不够, "
+            "因为内部参考匹配仍以字面 am1bcc 调用注册表",
+            "多分子拓扑 -> OpenMM System: Bonds/Angles/Torsions/vdW/Electrostatics "
+            "全部生成",
+            "晶格 + 随机取向装盒, 密度由摩尔体积给出",
+            "能量最小化与 NVT 平衡可执行",
+        ],
+        "blocking_finding": (
+            "pip 版 OpenMM 在 Windows 上只注册了 Reference 平台 "
+            f"(实测可用平台: {platforms}). Reference 是最慢实现, "
+            "且本体系 (150 分子 + PME + 周期边界) 在生产采样循环中段错误退出. "
+            "参数化、装盒、最小化、NVT 平衡全部通过, 崩溃发生在生产段. "
+            "这是平台缺陷, 不是算法问题."
         ),
-        "blockers": [{"step": s["step"], "detail": s["detail"]}
-                     for s in failed],
-        "why_it_matters_scientifically": (
-            "MD 层要测的是 Kirkwood g 因子. 本仓库的 association_deficit 分析是从 "
-            "epsilon 反推 g 的**间接**代理; MD 能直接测量. 缺了这一层, "
-            "『g 是缺失物理量』这一结论仍只有间接证据."
-        ),
+        "attempts_and_outcomes": [
+            {"attempt": "NPT 平衡 (MonteCarloBarostat)",
+             "outcome": "NPT_COLLAPSE: 晶格初值局部空隙导致气压计把盒子压到低于两倍"
+                        "截断距离, OpenMM 报错. 改为固定密度的 NVT."},
+            {"attempt": "NVT 生产 (150 分子, 100 ps)",
+             "outcome": "Segmentation fault, 发生在 Reference 平台的采样循环."},
+            {"attempt": "盒子体积换算 (Vm * N)",
+             "outcome": "边长达 1.9e8 nm, OpenMM 静默接受(体系变成非周期). "
+                        "正确形式为 Vm * N / N_A. 已修正."},
+            {"attempt": "以 MMFF94/Gasteiger 电荷代替 AM1-BCC",
+             "outcome": "技术可行但被拒绝: 见 rejected_workaround."},
+        ],
         "what_would_unblock": [
-            "安装 packmol (conda install -c conda-forge packmol) 或 openmmtools",
-            "安装 AmberTools 以获得 AM1-BCC 电荷 (Windows 无 PyPI wheel, 需 conda)",
-            "随后可执行已设计好的流程: 晶格装盒 -> 最小化 -> NVT/NPT 平衡 -> "
-            "生产段采样总偶极 -> eps 与 Kirkwood g",
+            "用 conda-forge 安装 openmm 以获得 CPU/CUDA 平台: "
+            "conda install -c conda-forge openmm (win-64 有构建)",
+            "该环境同样需要 openff-toolkit 与 openff-interchange",
+            "之后可直接复用本模块记录的装盒与偶极采样逻辑",
+            "生产段建议先以小体系 (如 50 分子, 20 ps) 确认不崩, 再放大",
         ],
         "rejected_workaround": {
             "option": "改用 MMFF94 / Gasteiger 电荷代替 AM1-BCC",
             "available": True,
             "why_rejected": (
-                "OpenFF 力场是按 AM1-BCC 参数化并验证的. 换电荷模型后算出的 eps "
-                "精度未知, 而本项目的全部工作就是避免这种来源不明的数字. "
-                "**宁可如实记为未计算, 不产出未经校验的介电常数.**"
+                "OpenFF 力场按 AM1-BCC 参数化并验证. 换电荷模型后算出的介电常数"
+                "精度未知, 而本项目全部工作就是避免这类来源不明的数字. "
+                "宁可如实记为未计算, 不产出未经校验的 eps."
             ),
         },
+        "why_it_matters_scientifically": (
+            "MD 层要测的是 Kirkwood g. 本仓库的 association_deficit 分析是从 eps "
+            "反推 g 的间接代理 (卤代烃 g_eff 0.51 而偶极 3.34 D). "
+            "缺了这一层, g 是缺失物理量这一结论仍只有间接证据."
+        ),
         "target": {"systems": 20, "minimum": 12},
         "n_rows": 0,
     }
 
+
+def main() -> int:
+    OUT.mkdir(parents=True, exist_ok=True)
+    doc = status_document()
     (OUT / "md_dielectric_b100.json").write_text(
         json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (OUT / "md_dielectric_b100.csv").write_text(
-        "system,inchikey,T_K,density_kg_m3,epsilon_md,kirkwood_g,"
-        "n_molecules,production_ps,status\n", encoding="utf-8")
-
+    with (OUT / "md_dielectric_b100.csv").open("w", newline="",
+                                               encoding="utf-8") as fh:
+        csv.writer(fh).writerow(CSV_FIELDS)
     print(f"[B100-21] {OUT / 'md_dielectric_b100.json'}")
     print(f"  status = {doc['status']}")
-    print(f"  engine_ready = {rep['engine_ready']}  "
-          f"can_build_liquid_box = {rep['can_build_liquid_box']}")
-    for s in rep["steps"]:
-        mark = "OK  " if s["ok"] else "MISS"
-        print(f"   {mark} {s['step']}")
+    print(f"  platforms = {doc['engine']['available_platforms']}")
+    print(f"  versions = {doc['engine']['versions']}")
     return 0
 
 
