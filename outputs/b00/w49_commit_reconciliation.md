@@ -1,12 +1,12 @@
 # B00 W49 提交对账（w49_commit_reconciliation.md）
-> 生成器 `build_branch_reconciliation/1.0.0` · 2026-11-23T13:56:30Z
+> 生成器 `build_branch_reconciliation/1.0.0` · 2026-11-24T01:58:03Z
 > 本文件只读 git。未执行 commit / push / merge / checkout / release。
 
 ## 一、结论先行
 **本地 `main` 是 `origin/main` 的纯快进（fast-forward）后继。**
 
-- `merge-base(origin/main, HEAD)` = `88f6c3313a80`
-- `origin/main`                  = `88f6c3313a80`
+- `merge-base(origin/main, HEAD)` = `9869728fc7a2`
+- `origin/main`                  = `9869728fc7a2`
 - 两者相等 ⇒ origin 上没有任何本地缺失的提交（behind = 0）。
 
 因此「对账 W49」在技术上不是一次合并决策，而是一次 **推送决策**。本计划不授权推送，所以此处只登记状态，不推进。
@@ -14,8 +14,8 @@
 ## 二、端点确认
 | 项 | 值 | 判定 |
 |---|---|---|
-| 本地 HEAD | `88f6c3313a80` — B 仓（PLAN B 第二仓库）研究体系交付：测量级重建 + 四智能体审核 + 描述符边界 | ⚠️ 未见 W49 |
-| origin/main | `88f6c3313a80` — B 仓（PLAN B 第二仓库）研究体系交付：测量级重建 + 四智能体审核 + 描述符边界 | ⚠️ 非 W40 开头 |
+| 本地 HEAD | `9869728fc7a2` — B100 机制定位：卤代烃失败的定量机制是 g 因子迁移失败（g_eff 0.51） | ⚠️ 未见 W49 |
+| origin/main | `9869728fc7a2` — B100 机制定位：卤代烃失败的定量机制是 g 因子迁移失败（g_eff 0.51） | ⚠️ 非 W40 开头 |
 | ahead / behind | 0 / 0 | ✅ 仅领先 |
 
 ## 三、5 个未推送提交的实际差异
@@ -27,9 +27,9 @@
 ## 四、分支与标签清单
 | 类型 | ref | tip | 当前 |
 |---|---|---|---|
-| local | `main` | `88f6c33` | 是 |
+| local | `main` | `9869728` | 是 |
 | remote | `remotes/origin/HEAD` | `->` |  |
-| remote | `remotes/origin/main` | `88f6c33` |  |
+| remote | `remotes/origin/main` | `9869728` |  |
 
 标签（按创建时间倒序）：
 
@@ -44,8 +44,8 @@
 ## 五、与 B00 要求的对应
 | B00 要求 | 状态 | 依据 |
 |---|---|---|
-| 1. 确认本地 W49 | ❌ | HEAD = `88f6c3313a80` |
-| 2. 确认 origin/main 的 W40 | ❌ | `88f6c3313a80` — B 仓（PLAN B 第二仓库）研究体系交付：测量级重建 + 四智能体审核 + 描述符边界 |
+| 1. 确认本地 W49 | ❌ | HEAD = `9869728fc7a2` |
+| 2. 确认 origin/main 的 W40 | ❌ | `9869728fc7a2` — B100 机制定位：卤代烃失败的定量机制是 g 因子迁移失败（g_eff 0.51） |
 | 3. 检查 5 个未推送提交及实际差异 | ✅ | 见§三，共 0 条 |
 | 6. 不自动合并分支 | ✅ | 本脚本无 merge/checkout 调用路径 |
 | 7. 不 commit / push / release | ✅ | 本脚本无写 git 调用路径 |

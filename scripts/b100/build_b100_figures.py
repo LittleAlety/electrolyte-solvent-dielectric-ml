@@ -117,6 +117,7 @@ def main() -> int:
     xtc = jload(OUT / "xtb_coverage_b100.json") or {}
     dft = jload(OUT / "deliverables" / "dft_descriptors_b100.json") or {}
     mdm = jload(OUT / "deliverables" / "md_dielectric_b100.json") or {}
+    e2_man = jload(OUT / "e2_xtb_vs_dft_b100.json") or {}
 
     # ---- 1. family coverage ----
     rows = fam.get("family_coverage", [])
@@ -166,11 +167,44 @@ def main() -> int:
         plt.close(fig)
         done("fig2_epsilon_distribution.png", "REAL")
 
-    # ---- 3. xTB vs DFT : blocked ----
-    placeholder(plt, FIG / "fig3_xtb_vs_dft.png",
-                "xTB - DFT comparison",
-                dft.get("reason", "no DFT program available"))
-    done("fig3_xtb_vs_dft.png", "EXPLICIT_NOT_COMPUTED")
+    # ---- 3. xTB vs DFT : real if the DFT layer has been computed ----
+    dft_rows = [r for r in load(OUT / "deliverables" / "dft_descriptors_b100.csv")
+                if r.get("status") == "OK"
+                and fnum(r.get("dft_dipole_D")) is not None
+                and fnum(r.get("xtb_dipole_D")) is not None]
+    if dft_rows:
+        xt = [fnum(r["xtb_dipole_D"]) for r in dft_rows]
+        dt = [fnum(r["dft_dipole_D"]) for r in dft_rows]
+        fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.8))
+        axes[0].scatter(xt, dt, s=22, alpha=0.7, color="#26a")
+        hi = max(max(xt), max(dt)) * 1.05
+        axes[0].plot([0, hi], [0, hi], "k--", lw=1, label="y = x")
+        axes[0].set_xlabel("GFN2-xTB dipole (D)")
+        axes[0].set_ylabel("B3LYP/def2-SVP dipole (D)")
+        ev = e2_man.get("dipole_xtb_vs_dft") or {}
+        axes[0].set_title(
+            f"xTB vs DFT dipole (n={len(dft_rows)})\n"
+            f"r={ev.get('pearson_r')}  MAE={ev.get('mean_abs_difference_D')} D")
+        axes[0].legend(fontsize=8)
+        axes[0].grid(alpha=0.3)
+        diff = [a - b for a, b in zip(xt, dt)]
+        axes[1].hist(diff, bins=35, color="#c73", edgecolor="white")
+        axes[1].axvline(0, color="k", lw=1)
+        axes[1].set_xlabel("xTB - DFT dipole (D)")
+        axes[1].set_ylabel("molecules")
+        axes[1].set_title(
+            f"systematic bias = {ev.get('systematic_bias_D')} D\n"
+            f"(xTB over-predicts when positive)")
+        axes[1].grid(alpha=0.3)
+        fig.tight_layout()
+        fig.savefig(FIG / "fig3_xtb_vs_dft.png", dpi=140)
+        plt.close(fig)
+        done("fig3_xtb_vs_dft.png", "REAL")
+    else:
+        placeholder(plt, FIG / "fig3_xtb_vs_dft.png",
+                    "xTB - DFT comparison",
+                    dft.get("reason", "no DFT program available"))
+        done("fig3_xtb_vs_dft.png", "EXPLICIT_NOT_COMPUTED")
 
     # ---- 4. conformer effect ----
     crows = [r for r in conf if r.get("status") == "OK"

@@ -1,7 +1,7 @@
 {
   "schema": "b100.freeze_manifest/v1",
   "generator": "build_b100_deliverables/1.0.0",
-  "generated_at_utc": "2026-11-24T00:46:28Z",
+  "generated_at_utc": "2026-11-24T01:57:18Z",
   "plan": "PLAN B v6.0",
   "scope": "纯液体静态相对介电常数 εr",
   "hard_gates": {
@@ -128,14 +128,39 @@
       "halocarbon_g_eff": 0.5082,
       "halocarbon_mean_dipole_D": 3.3403,
       "finding": "卤代烃 g_eff 最低 (0.51) 而偶极很高 (3.34 D), 氢键家族 g_eff 高 (胺 3.88, 醇 2.61). 这定量证实了迁移失败的机制: 强极性但反平行关联, 而单分子描述符只能表达 mu^2/Vm, 不能表达 g."
+    },
+    "E2_xtb_vs_dft": {
+      "verdict": "DFT_DOES_NOT_IMPROVE_LIQUID_PREDICTION",
+      "arms": [
+        {
+          "X0_plus_xtb_dipole": {
+            "mae": 5.5729,
+            "r2": 0.3087,
+            "regret": 30.001
+          }
+        },
+        {
+          "X0_plus_dft_dipole": {
+            "mae": 5.3692,
+            "r2": 0.3132,
+            "regret": 31.383
+          }
+        }
+      ],
+      "paired_mae_improvement_D": 0.2037,
+      "paired_ci95": [
+        -0.2035,
+        0.5759
+      ],
+      "implication": "把 xTB 升级到 DFT 只带来 0.20 D 的配对 MAE 改善, bootstrap CI 含 0, 且筛选 regret 反而变差. **这支持 H2: 更精确的电子计算不必然带来更好的液体性质预测.** 原因是缺失的物理量是集体关联 g, 而不是电子结构精度."
     }
   },
   "known_limitations": [
     "226/257 分子来自单一编校来源 (NBS 514), 跨来源复现未被证明",
     "卤代烃家族 (27 分子) 跨家族迁移失败; 机制已定量为 g 因子迁移失败 (卤代烃 g_eff 0.51 而偶极 3.34 D, 强极性但反平行), 不是『最低介电家族』—— 该解释已被证伪",
     "H4 功效达标但方向与假设相反: 高介电强缔合分子反而预测更好",
-    "DFT / MD 两层未计算, 结论停留在 xTB 层级",
-    "构象分析: 30/36 是『构象间展宽』判据; 单构象与 Boltzmann 平均偏差判据只有 16/36",
+    "MD 层未计算 (无 MD 引擎), E5 无法执行",
+    "DFT 层已计算, 但升级到 DFT 并未显著改善液体性质预测 (E2)",
     "7 个化学家族仍低于分层目标; NBS 514 已耗尽",
     "关键电解质溶剂: 15 个中只有 7 个进入建模集, 8 个在仓库所有来源中都不存在",
     "Vm 是气相分子体积 x N_A, 不是液体摩尔体积 (实测比 0.53-0.72)",
@@ -148,20 +173,20 @@
   },
   "deliverables": {
     "B100_FINAL_REPORT.md": {
-      "sha256": "933af3bf27e7b6cec55b66809eb969eb19ea7f50ce5130e9b8ed5c5bca9df80b",
-      "bytes": 6414
+      "sha256": "f55122cf671d278005835d4a989dfda4112b80bf4c9a922e63c9e5f4385cf3e7",
+      "bytes": 6828
     },
     "conformer_ensemble_b100.csv": {
       "sha256": "9820dffa72340649601c9bdcf56569b5fb6dfcc7f60733ee9d1b3ff3e6ff2044",
       "bytes": 6765
     },
     "dft_descriptors_b100.csv": {
-      "sha256": "07625c3e215e40683583adca496d908ae9b703f85536d7331f43419384a0f94e",
-      "bytes": 94
+      "sha256": "41228de41222c1c20b4043806250dcf53c39bf4c1c7a86f778aeb369db8db703",
+      "bytes": 30614
     },
     "dft_descriptors_b100.json": {
-      "sha256": "93e75bb06b5f50cd947cd82dac5b97d547556bf2ce2940e083601dd0e9365bdc",
-      "bytes": 791
+      "sha256": "acb9720058c166bd68c95340fd22c72002ca0dadd563601458bf6a1d73a87c08",
+      "bytes": 1860
     },
     "epsilon_labels_b100.csv": {
       "sha256": "78de80835a30dc6330fb1d49c4f1297340219071e05d5dde859fef24f5c54dc4",
@@ -172,12 +197,12 @@
       "bytes": 44282
     },
     "md_dielectric_b100.csv": {
-      "sha256": "3ea6b7375c4bb6909330716a1c035e202c6b2c9d1714ca1b8507cedb36900058",
-      "bytes": 64
+      "sha256": "4dc50f8c8eafe0e93d2b103e8200205495f7ac38c3a9d547dde5b2beea954878",
+      "bytes": 90
     },
     "md_dielectric_b100.json": {
-      "sha256": "a4753a621fc8652a87911194c8762586714e1f212fa5f41baabf68f5c8ababf2",
-      "bytes": 415
+      "sha256": "a803e36b99cf1da99ce973d4245baababdf824b7ce88d28abedcd79f67dfa61a",
+      "bytes": 2559
     },
     "measurement_ledger_b100.csv": {
       "sha256": "0bbdbd20e23540c103868e9578726038d59563f9c754df8309671e8cba555651",

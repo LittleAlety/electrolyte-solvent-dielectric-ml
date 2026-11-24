@@ -1,0 +1,69 @@
+{
+  "schema": "b100.e2_xtb_vs_dft/v1",
+  "generator": "run_b100_e2/1.0.0",
+  "generated_at_utc": "2026-11-24T01:49:01Z",
+  "question": "RQ2: 把 xTB 电子描述符换成 DFT, 是否改善液体介电常数预测?",
+  "design": "同一分子集、同一几何 (GFN2-xTB 优化)、同一嵌套 lambda 协议, **唯一变量是电子描述符的层级** (xTB -> B3LYP/def2-SVP).",
+  "n_paired": 235,
+  "shared_lambda": 10.0,
+  "constant_baseline_mae": 8.6091,
+  "arms": [
+    {
+      "arm": "X0_plus_xtb_dipole",
+      "n_features": 16,
+      "n": 235,
+      "mae": 5.5729,
+      "r2": 0.3087,
+      "bias": -0.0294,
+      "constant_baseline_mae": 8.6091,
+      "beats_constant": "true",
+      "spearman": 0.7956,
+      "topk_oracle_mean": 58.676,
+      "topk_model_mean": 28.675,
+      "topk_regret": 30.001
+    },
+    {
+      "arm": "X0_plus_dft_dipole",
+      "n_features": 16,
+      "n": 235,
+      "mae": 5.3692,
+      "r2": 0.3132,
+      "bias": -0.0192,
+      "constant_baseline_mae": 8.6091,
+      "beats_constant": "true",
+      "spearman": 0.7979,
+      "topk_oracle_mean": 58.676,
+      "topk_model_mean": 27.293,
+      "topk_regret": 31.383
+    }
+  ],
+  "paired_comparison": {
+    "mean_mae_improvement_D": 0.2037,
+    "n_molecules_dft_better": 141,
+    "n": 235,
+    "boot_ci95": [
+      -0.2035,
+      0.5759
+    ],
+    "frac_boot_positive": 0.8525,
+    "interpretation": "正值表示 DFT 偶极降低了该分子的绝对误差."
+  },
+  "dipole_xtb_vs_dft": {
+    "n": 235,
+    "pearson_r": 0.8965,
+    "mean_abs_difference_D": 0.5131,
+    "mean_xtb_D": 2.1112,
+    "mean_dft_D": 1.6683,
+    "systematic_bias_D": 0.4429
+  },
+  "verdict_rule": "若 DFT 臂在配对比较中显著更好 (bootstrap CI 不含 0 且多数分子改善), 则回答是『升级电子结构有用』; 否则是『无用, 因为缺失的是集体关联 g』.",
+  "inputs": {
+    "model_matrix_b100": {
+      "sha256": "e50e6ed57ea4e4c544feefbc33abed3c18bc900c0e3e3a944fb74aaaae2a4ae2"
+    },
+    "dft_descriptors_b100": {
+      "sha256": "41228de41222c1c20b4043806250dcf53c39bf4c1c7a86f778aeb369db8db703"
+    }
+  },
+  "verdict": "DFT_DOES_NOT_IMPROVE_LIQUID_PREDICTION"
+}

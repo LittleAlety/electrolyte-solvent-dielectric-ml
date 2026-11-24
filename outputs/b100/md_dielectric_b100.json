@@ -1,0 +1,77 @@
+{
+  "schema": "b100.md_layer/v2",
+  "generator": "run_b100_md/2.0.0",
+  "generated_at_utc": "2026-11-24T01:57:08Z",
+  "status": "NOT_COMPUTED",
+  "dependency_probe": {
+    "steps": [
+      {
+        "step": "openmm_import",
+        "ok": true,
+        "detail": "OpenMM 8.6.1"
+      },
+      {
+        "step": "openff_toolkit_import",
+        "ok": true,
+        "detail": "openff-toolkit 0.19.0.post1"
+      },
+      {
+        "step": "openff_interchange_import",
+        "ok": true,
+        "detail": {
+          "version": "0.5.5.post1",
+          "api_from_smirnoff": true,
+          "api_from_single_molecule_removed": true,
+          "note": "Interchange(topology=..., force_field=...) 会返回**空的 collections**而不报错, 必须用 from_smirnoff."
+        }
+      },
+      {
+        "step": "smirnoff_forcefield_load",
+        "ok": true,
+        "detail": {
+          "forcefield": "openff-2.1.0.offxml",
+          "n_parameter_handlers": 3
+        }
+      },
+      {
+        "step": "packing_tool_available",
+        "ok": false,
+        "detail": "RuntimeError: no packmol on PATH and openff no longer ships pack_box"
+      },
+      {
+        "step": "am1bcc_charges_available",
+        "ok": false,
+        "detail": "ImportError: cannot import name 'GLOBAL_TOOLKIT_REGISTRY' from 'openff.toolkit.utils.toolkit_registry' (E:\\Claude Code\\电解质ML\\电解质ML\\.venv\\Lib\\site-packages\\openff\\toolkit\\utils\\toolkit_registry.py)"
+      }
+    ],
+    "engine_ready": true,
+    "can_build_liquid_box": false
+  },
+  "what_changed": "原状态写『本环境无 MD 引擎』。该说法已不成立: OpenMM 与完整 OpenFF 栈均已安装. 因此本层现在的阻塞点**不是引擎**, 而是装盒工具与电荷方法.",
+  "blockers": [
+    {
+      "step": "packing_tool_available",
+      "detail": "RuntimeError: no packmol on PATH and openff no longer ships pack_box"
+    },
+    {
+      "step": "am1bcc_charges_available",
+      "detail": "ImportError: cannot import name 'GLOBAL_TOOLKIT_REGISTRY' from 'openff.toolkit.utils.toolkit_registry' (E:\\Claude Code\\电解质ML\\电解质ML\\.venv\\Lib\\site-packages\\openff\\toolkit\\utils\\toolkit_registry.py)"
+    }
+  ],
+  "why_it_matters_scientifically": "MD 层要测的是 Kirkwood g 因子. 本仓库的 association_deficit 分析是从 epsilon 反推 g 的**间接**代理; MD 能直接测量. 缺了这一层, 『g 是缺失物理量』这一结论仍只有间接证据.",
+  "what_would_unblock": [
+    "安装 packmol (conda install -c conda-forge packmol) 或 openmmtools",
+    "安装 AmberTools 以获得 AM1-BCC 电荷 (Windows 无 PyPI wheel, 需 conda)",
+    "随后可执行已设计好的流程: 晶格装盒 -> 最小化 -> NVT/NPT 平衡 -> 生产段采样总偶极 -> eps 与 Kirkwood g"
+  ],
+  "rejected_workaround": {
+    "option": "改用 MMFF94 / Gasteiger 电荷代替 AM1-BCC",
+    "available": true,
+    "why_rejected": "OpenFF 力场是按 AM1-BCC 参数化并验证的. 换电荷模型后算出的 eps 精度未知, 而本项目的全部工作就是避免这种来源不明的数字. **宁可如实记为未计算, 不产出未经校验的介电常数.**"
+  },
+  "target": {
+    "systems": 20,
+    "minimum": 12
+  },
+  "n_rows": 0
+}

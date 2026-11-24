@@ -81,15 +81,44 @@ def test_final_report_numbers_come_from_the_manifests() -> None:
 
 
 def test_blocked_layers_are_present_with_a_reason() -> None:
-    """An absent file is ambiguous; a file that explains itself is not."""
-    for name, reason_key in (("dft_descriptors_b100.json", "reason"),
-                            ("md_dielectric_b100.json", "reason")):
+    """An absent file is ambiguous; a file that explains itself is not.
+
+    DFT has since been computed (PySCF), so only MD remains blocked. The rule being
+    tested is that a layer which has NOT been computed must say so explicitly rather
+    than silently leaving an empty file.
+    """
+    for name in ("dft_descriptors_b100.json", "md_dielectric_b100.json"):
         doc = _j(DELIV / name)
-        assert doc is not None, f"{name} missing; blocked layers must be explicit"
-        assert doc.get("status") == "NOT_COMPUTED"
-        assert doc.get(reason_key), f"{name} does not state why it is empty"
-        assert doc.get("required_to_unblock"), (
-            f"{name} does not say what would unblock it")
+        assert doc is not None, f"{name} missing; every layer must be represented"
+        status = doc.get("status")
+        assert status in ("NOT_COMPUTED", "COMPUTED"), f"{name} has status {status}"
+        if status == "NOT_COMPUTED":
+            assert doc.get("reason"), f"{name} is empty with no stated reason"
+            assert doc.get("required_to_unblock"), (
+                f"{name} does not say what would unblock it")
+        else:
+            # a computed layer must carry its protocol and coverage
+            assert doc.get("protocol"), f"{name} computed without a protocol"
+            assert doc.get("coverage"), f"{name} computed without coverage info"
+
+
+def test_md_layer_is_still_explicitly_blocked() -> None:
+    """MD has no engine in this environment and must not be silently omitted."""
+    doc = _j(DELIV / "md_dielectric_b100.json")
+    assert doc is not None
+    assert doc["status"] == "NOT_COMPUTED"
+    assert doc.get("reason")
+
+
+def test_dft_layer_is_now_computed() -> None:
+    """The DFT layer was unblocked by installing PySCF; that must be visible."""
+    doc = _j(DELIV / "dft_descriptors_b100.json")
+    assert doc is not None
+    assert doc["status"] == "COMPUTED", (
+        "DFT results exist but the deliverable still reports it as blocked")
+    assert (doc.get("coverage") or {}).get("n_ok", 0) >= 60
+    assert doc.get("protocol_substitution_declared"), (
+        "the ORCA->PySCF protocol substitution must be declared")
 
 
 def test_blocked_csv_has_a_header_so_the_schema_is_visible() -> None:

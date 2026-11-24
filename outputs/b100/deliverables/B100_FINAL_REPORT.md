@@ -1,5 +1,5 @@
 # B100 最终报告 — 面向 100+ 分子规模的单分子描述符有效性边界
-> 生成器 `build_b100_deliverables/1.0.0` · 2026-11-24T00:46:28Z
+> 生成器 `build_b100_deliverables/1.0.0` · 2026-11-24T01:57:18Z
 > 计划：PLAN B v6.0 · 范围：纯液体静态相对介电常数 εr
 
 ## 零、硬门槛
@@ -97,20 +97,24 @@
 
 在 33 个**极性**柔性分子中: 32 个存在构象间相对展宽 >10%, 20 个的单构象偶极与 Boltzmann 平均相差 >10%. 后者才是『单构象不可靠』的直接证据, 前者只说明构象之间存在差异. 另 6 个是非极性分子 (|<mu>| < 0.30 D), 构象对它们无影响.
 
-## 七、未计算的两层
-| 层 | 状态 | 原因 |
+## 七、计算层状态
+| 层 | 状态 | 说明 |
 |---|---|---|
-| DFT | `NOT_COMPUTED` | 本环境未安装任何 DFT 程序 (ORCA / Psi4 / Gaussian / NWChem 均不可用). A 仓库的 r2SCAN-3c 计算提交到 WHU HPC 集群运行, 本会话无集群访问权限. |
-| MD | `NOT_COMPUTED` | 本环境未安装任何 MD 引擎, 且液相介电响应需要长时间采样. |
+| DFT | `COMPUTED` | PySCF PySCF 2.15.1 b3lyp/def2-svp, 235 分子 |
+| MD | `NOT_COMPUTED` | MD 引擎与 OpenFF 力场栈**均已安装并通过导入测试** (OpenMM 8.6.1 / openff-toolkit 0.19.0 / openff-interchange 0.5.5). 阻塞点不是引擎, 而是两个组件: (1) 无装盒工具 packmol; (2) 无 AM1-BCC 电荷方法 (AmberTools 在 Windows 无 PyPI wheel). |
 
-**这不是方法论选择，而是本环境缺少计算引擎。**
+**DFT 已计算**（方法验证 12 分子后冻结协议）。xTB 与 DFT 偶极 r=0.9067、MAE=0.4146 D；基组敏感度仅 0.1126 D。
+
+> PLAN B 建议沿用 A 仓库的 ORCA r2SCAN-3c, 但 ORCA 为商业软件且 A 仓库的计算跑在无法访问的集群上. 本层改用 PySCF 的 B3LYP/def2-SVP, **这是真正的 DFT, 不是 xTB 冒充**, 但方法与前计划不同, 必须显式声明.
+
+**MD 仍是环境缺失，不是方法论选择。**
 
 ## 八、必须保留的限制
 - 226/257 分子来自单一编校来源 (NBS 514), 跨来源复现未被证明
 - 卤代烃家族 (27 分子) 跨家族迁移失败; 机制已定量为 g 因子迁移失败 (卤代烃 g_eff 0.51 而偶极 3.34 D, 强极性但反平行), 不是『最低介电家族』—— 该解释已被证伪
 - H4 功效达标但方向与假设相反: 高介电强缔合分子反而预测更好
-- DFT / MD 两层未计算, 结论停留在 xTB 层级
-- 构象分析: 30/36 是『构象间展宽』判据; 单构象与 Boltzmann 平均偏差判据只有 16/36
+- MD 层未计算 (无 MD 引擎), E5 无法执行
+- DFT 层已计算, 但升级到 DFT 并未显著改善液体性质预测 (E2)
 - 7 个化学家族仍低于分层目标; NBS 514 已耗尽
 - 关键电解质溶剂: 15 个中只有 7 个进入建模集, 8 个在仓库所有来源中都不存在
 - Vm 是气相分子体积 x N_A, 不是液体摩尔体积 (实测比 0.53-0.72)
@@ -127,6 +131,6 @@
 | `epsilon_labels_b100.csv` | 239 | DATA |
 | `xtb_descriptors_b100.csv` | 239 | DATA |
 | `conformer_ensemble_b100.csv` | 40 | DATA |
-| `dft_descriptors_b100.csv` | 0 | BLOCKED |
+| `dft_descriptors_b100.csv` | 235 | DATA |
 | `md_dielectric_b100.csv` | 0 | BLOCKED |
 | `b100_freeze_manifest.json` | — | 哈希与协议 |

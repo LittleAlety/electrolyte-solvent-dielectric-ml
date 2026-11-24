@@ -1,20 +1,54 @@
 {
-  "status": "NOT_COMPUTED",
-  "reason": "本环境未安装任何 DFT 程序 (ORCA / Psi4 / Gaussian / NWChem 均不可用). A 仓库的 r2SCAN-3c 计算提交到 WHU HPC 集群运行, 本会话无集群访问权限.",
-  "required_to_unblock": [
-    "HPC 集群提交权限 (或本地安装 ORCA/Psi4)",
-    "PLAN B 第七章要求的 DFT 计算授权",
-    "先做 12 分子方法验证并冻结协议, 再批量计算"
-  ],
-  "planned_protocol": {
-    "method": "r2SCAN-3c / def2-mTZVPP / RIJCOSX / TightSCF",
-    "geometry": "GFN2-xTB 优化几何上的单点 (与 A 仓库口径一致)",
-    "note": "协议沿用 A 仓库已验证设置, 避免引入新的方法变量"
+  "status": "COMPUTED",
+  "engine": "PySCF 2.15.1",
+  "protocol": {
+    "xc": "b3lyp",
+    "basis": "def2-svp",
+    "engine": "PySCF 2.15.1",
+    "geometry": "GFN2-xTB optimised where available"
   },
-  "target": {
-    "molecules": 100,
-    "minimum": 60
+  "coverage": {
+    "n_input": 235,
+    "n_ok": 235,
+    "n_failed": 0,
+    "target": 100,
+    "minimum": 60,
+    "requirement_met": true,
+    "target_met": true,
+    "n_excluded_for_size": 4,
+    "max_heavy_atoms": 20,
+    "size_cap_reason": "Triolein (63 重原子) 在 def2-TZVP + 密度拟合下写出 49 GB 辅助张量并写满磁盘, 导致 ENOSPC 而非科学失败. 上限取 20 重原子, 保留 235/239 个分子, 覆盖率几乎不受影响."
   },
-  "n_rows": 0,
-  "rows": []
+  "compute": {
+    "dft_cpu_seconds": 1473.8,
+    "dft_core_hours": 0.4094
+  },
+  "validation": {
+    "n_molecules": 12,
+    "protocol": {
+      "xc": "b3lyp",
+      "basis_validation": [
+        "def2-svp",
+        "def2-tzvp"
+      ],
+      "basis_production": "def2-svp",
+      "geometry": "GFN2-xTB optimised (falls back to RDKit embedding, recorded per row)",
+      "max_cycle": 200,
+      "conv_tol": 1e-09,
+      "engine": "PySCF 2.15.1"
+    },
+    "xtb_vs_dft_dipole": {
+      "n": 12,
+      "pearson_r": 0.9067,
+      "spearman_rho": 0.8741,
+      "mean_abs_difference_D": 0.4146,
+      "max_abs_difference_D": 1.7757
+    },
+    "basis_sensitivity": {
+      "mean_abs_D": 0.1126,
+      "note": "def2-SVP -> def2-TZVP 的偶极变化. 若该值远小于 xTB-DFT 差, 则用 SVP 做生产计算是可接受的."
+    }
+  },
+  "protocol_substitution_declared": "PLAN B 建议沿用 A 仓库的 ORCA r2SCAN-3c, 但 ORCA 为商业软件且 A 仓库的计算跑在无法访问的集群上. 本层改用 PySCF 的 B3LYP/def2-SVP, **这是真正的 DFT, 不是 xTB 冒充**, 但方法与前计划不同, 必须显式声明.",
+  "n_rows": 235
 }

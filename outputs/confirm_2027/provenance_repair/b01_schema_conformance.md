@@ -1,5 +1,5 @@
 # B01 测量账本 schema 符合性检查
-> 生成器 `audit_b01_schema_conformance/1.0.0` · 2026-11-23T14:34:34Z
+> 生成器 `audit_b01_schema_conformance/1.0.0` · 2026-11-24T02:22:31Z
 > 只判断字段是否诚实存在。不重命名列、不改写账本字节。
 
 ## 一、结论

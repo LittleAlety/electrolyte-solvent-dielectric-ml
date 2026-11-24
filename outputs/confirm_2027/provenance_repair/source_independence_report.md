@@ -1,5 +1,5 @@
 # B01 来源独立性校验
-> 生成器 `validate_source_independence/1.0.0` · 2026-11-23T14:34:33Z
+> 生成器 `validate_source_independence/1.0.0` · 2026-11-24T02:22:30Z
 > 只报告**可观测的重复**，不推断作者独立性。
 
 ## 一、结论

@@ -1,5 +1,5 @@
 # B02 四智能体准入审核门禁报告
-> 生成器 `build_consensus_gate/1.0.0` · 2026-11-23T14:34:36Z
+> 生成器 `build_consensus_gate/1.0.0` · 2026-11-24T02:37:26Z
 > 本报告由共识门禁机械生成。四位 Reviewer 的独立结论见 `reviewer_{1..4}_decisions.csv`。
 
 ## 一、审核授权与合规声明

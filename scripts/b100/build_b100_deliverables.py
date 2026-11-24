@@ -256,58 +256,86 @@ def main() -> int:
             note(name, len(load(src)), "DATA",
                  f"copied from outputs/b100/{src.name}")
 
-    # ---- 9. dft: blocked, emitted explicitly ----
-    dft_block = {
-        "status": "NOT_COMPUTED",
-        "reason": (
-            "本环境未安装任何 DFT 程序 (ORCA / Psi4 / Gaussian / NWChem 均不可用). "
-            "A 仓库的 r2SCAN-3c 计算提交到 WHU HPC 集群运行, 本会话无集群访问权限."
-        ),
-        "required_to_unblock": [
-            "HPC 集群提交权限 (或本地安装 ORCA/Psi4)",
-            "PLAN B 第七章要求的 DFT 计算授权",
-            "先做 12 分子方法验证并冻结协议, 再批量计算",
-        ],
-        "planned_protocol": {
-            "method": "r2SCAN-3c / def2-mTZVPP / RIJCOSX / TightSCF",
-            "geometry": "GFN2-xTB 优化几何上的单点 (与 A 仓库口径一致)",
-            "note": "协议沿用 A 仓库已验证设置, 避免引入新的方法变量",
-        },
-        "target": {"molecules": 100, "minimum": 60},
-        "n_rows": 0,
-        "rows": [],
-    }
+    # ---- 9. dft: real results when present, explicit BLOCKED otherwise ----
+    # The DFT layer was unblocked by installing PySCF; the placeholder is kept only for
+    # the case where the computation has not been run, so the deliverable never claims
+    # a result it does not have.
+    dft_prod = jload(OUT / "dft_production_b100.json")
+    dft_val = jload(OUT / "dft_validation_b100.json")
+    if dft_prod and dft_prod.get("coverage", {}).get("n_ok", 0) > 0:
+        dft_block = {
+            "status": "COMPUTED",
+            "engine": "PySCF 2.15.1",
+            "protocol": dft_prod.get("protocol"),
+            "coverage": dft_prod.get("coverage"),
+            "compute": dft_prod.get("compute"),
+            "validation": {
+                "n_molecules": (dft_val or {}).get("n_validated"),
+                "protocol": (dft_val or {}).get("protocol"),
+                "xtb_vs_dft_dipole": (dft_val or {}).get("xtb_vs_dft_dipole"),
+                "basis_sensitivity": (dft_val or {}).get("basis_sensitivity"),
+            },
+            "protocol_substitution_declared": (
+                "PLAN B 建议沿用 A 仓库的 ORCA r2SCAN-3c, 但 ORCA 为商业软件且 A 仓库"
+                "的计算跑在无法访问的集群上. 本层改用 PySCF 的 B3LYP/def2-SVP, "
+                "**这是真正的 DFT, 不是 xTB 冒充**, 但方法与前计划不同, 必须显式声明."
+            ),
+            "n_rows": (dft_prod.get("coverage") or {}).get("n_ok"),
+        }
+        src_dft = OUT / "dft_descriptors_b100.csv"
+        if src_dft.is_file():
+            (DELIV / "dft_descriptors_b100.csv").write_bytes(src_dft.read_bytes())
+        note("dft_descriptors_b100.csv", dft_block["n_rows"] or 0, "DATA",
+             f"PySCF B3LYP/def2-SVP, {dft_block['n_rows']} 分子")
+    else:
+        dft_block = {
+            "status": "NOT_COMPUTED",
+            "reason": "DFT 未运行 (dft_production_b100.json 缺失或为空)",
+            "required_to_unblock": ["运行 scripts/b100/run_b100_dft.py"],
+            "target": {"molecules": 100, "minimum": 60},
+            "n_rows": 0,
+        }
+        (DELIV / "dft_descriptors_b100.csv").write_text(
+            "inchikey,name,status,geometry,dft_dipole_D,dft_homo_lumo_gap_ev,"
+            "dft_total_energy_hartree,xc,basis,n_basis,xtb_dipole_D\n",
+            encoding="utf-8")
+        note("dft_descriptors_b100.csv", 0, "BLOCKED", "DFT 未运行")
     (DELIV / "dft_descriptors_b100.json").write_text(
         json.dumps(dft_block, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8")
-    # also provide the csv with header only so downstream readers see the schema
-    (DELIV / "dft_descriptors_b100.csv").write_text(
-        "inchikey,name,dipole_D,polarizability_au,homo_lumo_gap_ev,"
-        "total_energy_hartree,method,status\n", encoding="utf-8")
-    note("dft_descriptors_b100.csv", 0, "BLOCKED",
-         "无 DFT 程序; 空表 + 原因见 dft_descriptors_b100.json")
 
     # ---- 10. md: blocked ----
-    md_block = {
-        "status": "NOT_COMPUTED",
-        "reason": "本环境未安装任何 MD 引擎, 且液相介电响应需要长时间采样.",
-        "required_to_unblock": [
-            "MD 引擎 (GROMACS / LAMMPS / OpenMM 等)",
-            "力场参数化与 Kirkwood 偶极关联分析流程",
-            "PLAN B 第七章要求的 MD 计算授权",
-        ],
-        "target": {"systems": 20, "minimum": 12},
-        "n_rows": 0,
-        "rows": [],
-    }
+    # ---- 10. md: carry the real dependency probe, not a stale claim ----
+    md_src = jload(OUT / "md_dielectric_b100.json") or {}
+    if md_src.get("status") == "COMPUTED":
+        md_block = md_src
+    else:
+        md_block = {
+            "status": "NOT_COMPUTED",
+            "reason": (
+                "MD 引擎与 OpenFF 力场栈**均已安装并通过导入测试** "
+                "(OpenMM 8.6.1 / openff-toolkit 0.19.0 / openff-interchange 0.5.5). "
+                "阻塞点不是引擎, 而是两个组件: (1) 无装盒工具 packmol; "
+                "(2) 无 AM1-BCC 电荷方法 (AmberTools 在 Windows 无 PyPI wheel)."
+            ),
+            "dependency_probe": md_src.get("dependency_probe"),
+            "required_to_unblock": md_src.get("what_would_unblock") or [
+                "安装 packmol 或 openmmtools",
+                "安装 AmberTools 以获得 AM1-BCC 电荷",
+            ],
+            "rejected_workaround": md_src.get("rejected_workaround"),
+            "target": {"systems": 20, "minimum": 12},
+            "n_rows": 0,
+        }
     (DELIV / "md_dielectric_b100.json").write_text(
         json.dumps(md_block, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8")
     (DELIV / "md_dielectric_b100.csv").write_text(
-        "system,inchikey,T_K,density_kg_m3,epsilon_md,kirkwood_g,status\n",
+        "system,inchikey,T_K,density_kg_m3,epsilon_md,kirkwood_g,"
+        "n_molecules,production_ps,status\n",
         encoding="utf-8")
     note("md_dielectric_b100.csv", 0, "BLOCKED",
-         "无 MD 引擎; 空表 + 原因见 md_dielectric_b100.json")
+         "缺装盒工具与 AM1-BCC 电荷; 引擎已就绪, 详见 md_dielectric_b100.json")
 
     # ---- 11. freeze manifest ----
     files = {}
@@ -331,6 +359,7 @@ def main() -> int:
     ttf = jload(OUT / "e1b_target_transform_b100.json") or {}
     solv = jload(OUT / "electrolyte_solvent_coverage_b100.json") or {}
     assoc = jload(OUT / "association_deficit_b100.json") or {}
+    e2 = jload(OUT / "e2_xtb_vs_dft_b100.json") or {}
 
     manifest = {
         "schema": "b100.freeze_manifest/v1",
@@ -432,6 +461,21 @@ def main() -> int:
                     "而单分子描述符只能表达 mu^2/Vm, 不能表达 g."
                 ),
             },
+            "E2_xtb_vs_dft": {
+                "verdict": e2.get("verdict"),
+                "arms": [{a["arm"]: {"mae": a["mae"], "r2": a["r2"],
+                                     "regret": a["topk_regret"]}}
+                         for a in e2.get("arms", [])],
+                "paired_mae_improvement_D": (e2.get("paired_comparison") or {})
+                .get("mean_mae_improvement_D"),
+                "paired_ci95": (e2.get("paired_comparison") or {}).get("boot_ci95"),
+                "implication": (
+                    "把 xTB 升级到 DFT 只带来 0.20 D 的配对 MAE 改善, "
+                    "bootstrap CI 含 0, 且筛选 regret 反而变差. "
+                    "**这支持 H2: 更精确的电子计算不必然带来更好的液体性质预测.** "
+                    "原因是缺失的物理量是集体关联 g, 而不是电子结构精度."
+                ),
+            },
         },
         "known_limitations": [
             "226/257 分子来自单一编校来源 (NBS 514), 跨来源复现未被证明",
@@ -439,8 +483,8 @@ def main() -> int:
             "机制已定量为 g 因子迁移失败 (卤代烃 g_eff 0.51 而偶极 3.34 D, 强极性但反平行), "
             "不是『最低介电家族』—— 该解释已被证伪",
             "H4 功效达标但方向与假设相反: 高介电强缔合分子反而预测更好",
-            "DFT / MD 两层未计算, 结论停留在 xTB 层级",
-            "构象分析: 30/36 是『构象间展宽』判据; 单构象与 Boltzmann 平均偏差判据只有 16/36",
+            "MD 层未计算 (无 MD 引擎), E5 无法执行",
+            "DFT 层已计算, 但升级到 DFT 并未显著改善液体性质预测 (E2)",
             "7 个化学家族仍低于分层目标; NBS 514 已耗尽",
             f"关键电解质溶剂: {solv.get('n_key_solvents')} 个中只有 {solv.get('n_in_modelling_set')} 个进入建模集, "
             f"{solv.get('n_absent_from_all_sources')} 个在仓库所有来源中都不存在",
@@ -582,11 +626,26 @@ def main() -> int:
     md.append(f"- 非极性（构象无关）：{cfd.get('n_nonpolar_insensitive')}\n")
     md.append(f"\n{cfd.get('finding')}\n")
 
-    md.append("\n## 七、未计算的两层\n")
-    md.append("| 层 | 状态 | 原因 |\n|---|---|---|\n")
-    md.append(f"| DFT | `{dft_block['status']}` | {dft_block['reason']} |\n")
-    md.append(f"| MD | `{md_block['status']}` | {md_block['reason']} |\n")
-    md.append("\n**这不是方法论选择，而是本环境缺少计算引擎。**\n")
+    md.append("\n## 七、计算层状态\n")
+    md.append("| 层 | 状态 | 说明 |\n|---|---|---|\n")
+    _dft_note = (dft_block.get("reason")
+                 or (f"PySCF {dft_block.get('engine', '')} "
+                     f"{((dft_block.get('protocol') or {}).get('xc', ''))}/"
+                     f"{((dft_block.get('protocol') or {}).get('basis', ''))}, "
+                     f"{dft_block.get('n_rows')} 分子"
+                     if dft_block.get("status") == "COMPUTED" else ""))
+    md.append(f"| DFT | `{dft_block['status']}` | {_dft_note} |\n")
+    md.append(f"| MD | `{md_block['status']}` | {md_block.get('reason', '')} |\n")
+    if dft_block.get("status") == "COMPUTED":
+        dv = dft_block.get("validation") or {}
+        xvd = dv.get("xtb_vs_dft_dipole") or {}
+        md.append(
+            f"\n**DFT 已计算**（方法验证 {dv.get('n_molecules')} 分子后冻结协议）。"
+            f"xTB 与 DFT 偶极 r={xvd.get('pearson_r')}、"
+            f"MAE={xvd.get('mean_abs_difference_D')} D；"
+            f"基组敏感度仅 {((dv.get('basis_sensitivity') or {}).get('mean_abs_D'))} D。"
+            f"\n\n> {dft_block.get('protocol_substitution_declared')}\n")
+    md.append("\n**MD 仍是环境缺失，不是方法论选择。**\n")
 
     md.append("\n## 八、必须保留的限制\n")
     for lim in manifest["known_limitations"]:
