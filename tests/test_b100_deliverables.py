@@ -102,12 +102,24 @@ def test_blocked_layers_are_present_with_a_reason() -> None:
             assert doc.get("coverage"), f"{name} computed without coverage info"
 
 
-def test_md_layer_is_still_explicitly_blocked() -> None:
-    """MD has no engine in this environment and must not be silently omitted."""
+def test_md_layer_reports_its_real_state() -> None:
+    """MD is either computed with enough systems, or explicitly blocked with a reason.
+
+    It used to be asserted as permanently blocked ("no MD engine"). That stopped being
+    true once OpenMM gained a CPU platform, so the invariant is now the weaker but
+    correct one: the status must match the evidence.
+    """
     doc = _j(DELIV / "md_dielectric_b100.json")
-    assert doc is not None
-    assert doc["status"] == "NOT_COMPUTED"
-    assert doc.get("reason")
+    assert doc is not None, "the MD layer must always be represented"
+    if doc["status"] == "COMPUTED":
+        assert (doc.get("n_ok") or 0) >= 12, (
+            "MD reports COMPUTED with fewer than the required 12 systems")
+        assert doc.get("cross_check_vs_association"), (
+            "a computed MD layer must carry its cross-check against the "
+            "indirect g estimate")
+    else:
+        assert doc["status"] == "NOT_COMPUTED"
+        assert doc.get("reason")
 
 
 def test_dft_layer_is_now_computed() -> None:

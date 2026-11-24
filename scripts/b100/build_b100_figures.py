@@ -264,11 +264,52 @@ def main() -> int:
         plt.close(fig)
         done("fig5_applicability_domain.png", "REAL")
 
-    # ---- 6. MD : blocked ----
-    placeholder(plt, FIG / "fig6_md_dipole_correlation.png",
-                "liquid MD / Kirkwood dipole correlation",
-                mdm.get("reason", "no MD engine available"))
-    done("fig6_md_dipole_correlation.png", "EXPLICIT_NOT_COMPUTED")
+    # ---- 6. MD : real if the MD layer has run ----
+    md_rows = [r for r in load(OUT / "deliverables" / "md_dielectric_b100.csv")
+               if r.get("status") == "OK"
+               and fnum(r.get("epsilon_md")) is not None
+               and fnum(r.get("epsilon_experimental")) is not None]
+    if md_rows:
+        md_cmp = jload(OUT / "md_vs_association_b100.json") or {}
+        ex = [fnum(r["epsilon_experimental"]) for r in md_rows]
+        em = [fnum(r["epsilon_md"]) for r in md_rows]
+        fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.8))
+        axes[0].scatter(ex, em, s=42, alpha=0.8, color="#2a7")
+        hi = max(max(ex), max(em)) * 1.1
+        axes[0].plot([0, hi], [0, hi], "k--", lw=1, label="y = x")
+        axes[0].set_xlabel("experimental $\\varepsilon$")
+        axes[0].set_ylabel("MD $\\varepsilon$ (OpenFF + NAGL charges)")
+        es = md_cmp.get("epsilon_md_vs_experiment") or {}
+        axes[0].set_title(
+            f"MD vs experiment (n={len(md_rows)} liquids)\n"
+            f"rho={es.get('spearman_rho')}  mean ratio="
+            f"{es.get('mean_ratio_md_over_exp')}")
+        axes[0].legend(fontsize=8)
+        axes[0].grid(alpha=0.3)
+        # The point of the right panel: g from MD is NOT an independent handle on the
+        # Kirkwood factor, and this is where that has to be visible.
+        g_md = [fnum(r.get("kirkwood_g")) for r in md_rows]
+        pair = [(a, b) for a, b in zip(g_md, em) if a is not None]
+        if pair:
+            axes[1].scatter([p[1] for p in pair], [p[0] for p in pair],
+                            s=42, alpha=0.8, color="#c53")
+            axes[1].set_xlabel("MD $\\varepsilon$")
+            axes[1].set_ylabel("MD Kirkwood $g$")
+            gs = md_cmp.get("g_md_vs_g_eff") or {}
+            axes[1].set_title(
+                "g is algebraically tied to $\\varepsilon$\n"
+                f"g vs indirect estimate: rho={gs.get('spearman_rho')}\n"
+                "(MD layer does not independently test g)")
+            axes[1].grid(alpha=0.3)
+        fig.tight_layout()
+        fig.savefig(FIG / "fig6_md_dipole_correlation.png", dpi=140)
+        plt.close(fig)
+        done("fig6_md_dipole_correlation.png", "REAL")
+    else:
+        placeholder(plt, FIG / "fig6_md_dipole_correlation.png",
+                    "liquid MD / Kirkwood dipole correlation",
+                    mdm.get("reason", "MD layer not run"))
+        done("fig6_md_dipole_correlation.png", "EXPLICIT_NOT_COMPUTED")
 
     # ---- 7. MAE vs regret ----
     blocks = e1.get("blocks", [])

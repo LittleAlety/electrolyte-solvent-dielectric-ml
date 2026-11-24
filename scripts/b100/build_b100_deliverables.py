@@ -304,38 +304,49 @@ def main() -> int:
         json.dumps(dft_block, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8")
 
-    # ---- 10. md: blocked ----
-    # ---- 10. md: carry the real dependency probe, not a stale claim ----
+    # ---- 10. md: carry the real results when present ----
     md_src = jload(OUT / "md_dielectric_b100.json") or {}
-    if md_src.get("status") == "COMPUTED":
-        md_block = md_src
+    md_cmp = jload(OUT / "md_vs_association_b100.json") or {}
+    if (md_src.get("status") == "COMPUTED"
+            and (md_src.get("n_ok") or 0) >= 12):
+        md_block = dict(md_src)
+        # give the MD layer the same coverage shape the other layers use
+        md_block.setdefault("coverage", {
+            "n_input": md_block.get("n_systems"),
+            "n_ok": md_block.get("n_ok"),
+            "target": (md_block.get("target") or {}).get("systems"),
+            "minimum": (md_block.get("target") or {}).get("minimum"),
+            "requirement_met": md_block.get("requirement_met"),
+        })
+        md_block["cross_check_vs_association"] = {
+            "verdict": md_cmp.get("verdict"),
+            "epsilon_md_vs_experiment": md_cmp.get("epsilon_md_vs_experiment"),
+            "g_md_vs_g_eff": md_cmp.get("g_md_vs_g_eff"),
+            "why_the_test_failed": md_cmp.get("why_the_test_failed"),
+        }
+        src_md = OUT / "md_dielectric_b100.csv"
+        if src_md.is_file():
+            (DELIV / "md_dielectric_b100.csv").write_bytes(src_md.read_bytes())
+        note("md_dielectric_b100.csv", md_src.get("n_ok") or 0, "DATA",
+             "OpenMM CPU platform, {} liquid systems".format(md_src.get("n_ok")))
     else:
         md_block = {
             "status": "NOT_COMPUTED",
-            "reason": (
-                "MD 引擎与 OpenFF 力场栈**均已安装并通过导入测试** "
-                "(OpenMM 8.6.1 / openff-toolkit 0.19.0 / openff-interchange 0.5.5). "
-                "阻塞点不是引擎, 而是两个组件: (1) 无装盒工具 packmol; "
-                "(2) 无 AM1-BCC 电荷方法 (AmberTools 在 Windows 无 PyPI wheel)."
-            ),
-            "dependency_probe": md_src.get("dependency_probe"),
-            "required_to_unblock": md_src.get("what_would_unblock") or [
-                "安装 packmol 或 openmmtools",
-                "安装 AmberTools 以获得 AM1-BCC 电荷",
-            ],
-            "rejected_workaround": md_src.get("rejected_workaround"),
+            "reason": "MD not run or fewer than 12 systems",
+            "required_to_unblock": [
+                "run scripts/b100/run_b100_md.py under the conda env"],
             "target": {"systems": 20, "minimum": 12},
             "n_rows": 0,
         }
+        (DELIV / "md_dielectric_b100.csv").write_text(
+            "system,inchikey,status,T_K,density_kg_m3,epsilon_experimental,"
+            "epsilon_md,epsilon_block_sd,kirkwood_g,n_molecules,production_ps,"
+            "volume_nm3,wall_seconds,detail\n",
+            encoding="utf-8")
+        note("md_dielectric_b100.csv", 0, "BLOCKED", "MD not run")
     (DELIV / "md_dielectric_b100.json").write_text(
         json.dumps(md_block, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8")
-    (DELIV / "md_dielectric_b100.csv").write_text(
-        "system,inchikey,T_K,density_kg_m3,epsilon_md,kirkwood_g,"
-        "n_molecules,production_ps,status\n",
-        encoding="utf-8")
-    note("md_dielectric_b100.csv", 0, "BLOCKED",
-         "缺装盒工具与 AM1-BCC 电荷; 引擎已就绪, 详见 md_dielectric_b100.json")
 
     # ---- 11. freeze manifest ----
     files = {}

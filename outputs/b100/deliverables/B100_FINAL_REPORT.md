@@ -1,5 +1,5 @@
 # B100 最终报告 — 面向 100+ 分子规模的单分子描述符有效性边界
-> 生成器 `build_b100_deliverables/1.0.0` · 2026-11-24T03:22:16Z
+> 生成器 `build_b100_deliverables/1.0.0` · 2026-11-24T07:20:08Z
 > 计划：PLAN B v6.0 · 范围：纯液体静态相对介电常数 εr
 
 ## 零、硬门槛
@@ -101,7 +101,7 @@
 | 层 | 状态 | 说明 |
 |---|---|---|
 | DFT | `COMPUTED` | PySCF PySCF 2.15.1 b3lyp/def2-svp, 235 分子 |
-| MD | `NOT_COMPUTED` | MD 引擎与 OpenFF 力场栈**均已安装并通过导入测试** (OpenMM 8.6.1 / openff-toolkit 0.19.0 / openff-interchange 0.5.5). 阻塞点不是引擎, 而是两个组件: (1) 无装盒工具 packmol; (2) 无 AM1-BCC 电荷方法 (AmberTools 在 Windows 无 PyPI wheel). |
+| MD | `COMPUTED` |  |
 
 **DFT 已计算**（方法验证 12 分子后冻结协议）。xTB 与 DFT 偶极 r=0.9067、MAE=0.4146 D；基组敏感度仅 0.1126 D。
 
@@ -132,5 +132,5 @@
 | `xtb_descriptors_b100.csv` | 239 | DATA |
 | `conformer_ensemble_b100.csv` | 40 | DATA |
 | `dft_descriptors_b100.csv` | 235 | DATA |
-| `md_dielectric_b100.csv` | 0 | BLOCKED |
+| `md_dielectric_b100.csv` | 12 | DATA |
 | `b100_freeze_manifest.json` | — | 哈希与协议 |
