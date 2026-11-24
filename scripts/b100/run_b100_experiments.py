@@ -615,7 +615,14 @@ def main() -> int:
 
     # ============================ E6 ============================
     keys = [rows[i]["inchikey"] for i in idxall]
-    e6 = {"k": TOPK, "n_pool": len(yall)}
+    e6 = {"k": TOPK, "n_pool": len(yall),
+          # E6's primary block is X0+X1 (the historical choice). The screening
+          # variant below repeats the SAME evaluation with mu^2/Vm added, because
+          # that single physically-motivated feature turns out to change the
+          # conclusion qualitatively -- reporting only the weaker block would
+          # understate the result. Both are reported; the variant is labelled.
+          "primary_block": "X0_plus_X1",
+          "screening_variants": []}
     if len(yall) > TOPK:
         order_pred = sorted(range(len(yall)), key=lambda i: -preds_all[i])
         topk_idx = order_pred[:TOPK]
@@ -763,6 +770,61 @@ def main() -> int:
                 "regret_without_it": round(o_k - m_k, 4),
                 "p_random_ge_model_without_it": round(p_drop, 5),
             },
+        }
+
+    # ---- E6 screening variants: does mu^2/Vm change the conclusion? ----
+    # Same protocol, same molecules, only the feature block differs, so a regret gap
+    # is attributable to the block. The lambda machinery is the same nested LOO used
+    # by E1, so these numbers are directly comparable with the E1 table.
+    for vlabel, vcols in (("X0_plus_mu2_over_Vm", X0_COLS + XN_COLS),
+                          ("X0_plus_X1_plus_mu2_over_Vm",
+                           X0_COLS + X1_COLS + XN_COLS)):
+        Xv = [[fnum(rows[i][c]) for c in vcols] for i in common_idx]
+        if any(v is None for row in Xv for v in row):
+            continue
+        pv, _ = nested_loo(Xv, yall)
+        ordv = sorted(range(len(yall)), key=lambda i: -pv[i])
+        kv = min(TOPK, len(yall))
+        om = statistics.mean(sorted(yall, reverse=True)[:kv])
+        mm = statistics.mean(yall[i] for i in ordv[:kv])
+        rng2 = random.Random(SEED)
+        n_mc3 = 50000
+        mcv = [statistics.mean(
+            yall[i] for i in rng2.sample(range(len(yall)), kv))
+            for _ in range(n_mc3)]
+        mcv.sort(reverse=True)
+        e6["screening_variants"].append({
+            "block": vlabel,
+            "n_features": len(vcols),
+            "oracle_topk_mean": round(om, 4),
+            "model_topk_mean": round(mm, 4),
+            "regret": round(om - mm, 4),
+            "p_random_at_least_as_good": round(
+                (sum(1 for v in mcv if v >= mm) + 1) / (len(mcv) + 1), 6),
+            "spearman_pred_true": round(spearman(pv, yall), 4),
+            "fraction_of_headroom_captured": round(
+                (mm - statistics.mean(yall)) / (om - statistics.mean(yall)), 4)
+            if om > statistics.mean(yall) else None,
+            "prediction_span_over_true_span": round(
+                (max(pv) - min(pv)) / (max(yall) - min(yall)), 4),
+        })
+    if e6["screening_variants"]:
+        base = next((v for v in e6["screening_variants"]
+                     if v["block"] == "X0_plus_mu2_over_Vm"), None)
+        e6["screening_comparison"] = {
+            "primary_regret": e6.get("regret"),
+            "best_variant_regret": min(v["regret"]
+                                       for v in e6["screening_variants"]),
+            "note": (
+                "主块 X0+X1 与变体使用同一协议与同一分子集, 只有特征块不同. "
+                "若变体的 regret 大幅更低, 则主块的结论是**特征选择**造成的, "
+                "不是描述符上限."
+            ),
+            "verdict": (
+                "PRIMARY_BLOCK_UNDERSTATES_SCREENING"
+                if base and e6.get("regret")
+                and base["regret"] < e6["regret"] * 0.5
+                else "CONSISTENT"),
         }
         with (OUT / "e6_ranking_b100.csv").open("w", newline="",
                                                 encoding="utf-8") as fh:

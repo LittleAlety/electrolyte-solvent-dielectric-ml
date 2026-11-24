@@ -120,6 +120,48 @@ def test_regret_is_not_smaller_than_zero() -> None:
     assert e6["oracle_topk_mean"] >= e6["model_topk_mean"]
 
 
+def test_screening_variants_are_reported_with_the_primary_block() -> None:
+    """The primary block understates screening; the variant must be visible."""
+    e6 = _j(E6)
+    variants = e6.get("screening_variants") or []
+    assert variants, "no screening variants reported"
+    labels = {v["block"] for v in variants}
+    assert "X0_plus_mu2_over_Vm" in labels, (
+        "the mu^2/Vm screening variant is missing, so the deliverable would "
+        "report only the weaker block")
+    for v in variants:
+        assert v["regret"] >= 0
+        assert v["p_random_at_least_as_good"] > 0, "p must respect the +1 floor"
+        assert 0.0 <= v["fraction_of_headroom_captured"] <= 1.0
+
+
+def test_primary_block_understatement_is_flagged() -> None:
+    """If a variant is far better, the manifest must say the primary understates."""
+    e6 = _j(E6)
+    cmp_ = e6.get("screening_comparison")
+    assert cmp_ is not None, "screening comparison block missing"
+    best = min((v["regret"] for v in e6.get("screening_variants") or []),
+               default=None)
+    if best is None:
+        pytest.skip("no variants")
+    if best < e6["regret"] * 0.5:
+        assert cmp_["verdict"] == "PRIMARY_BLOCK_UNDERSTATES_SCREENING", (
+            f"a variant achieves regret {best} against the primary "
+            f"{e6['regret']}, but the manifest does not flag the understatement")
+
+
+def test_regret_decomposition_is_present() -> None:
+    """Regret concentrated in one outlier must be visible, not averaged away."""
+    e6 = _j(E6)
+    dec = e6.get("regret_decomposition")
+    assert dec is not None, "regret decomposition missing"
+    assert dec["contributors"], "no per-molecule contributions listed"
+    assert dec.get("mechanism") in (
+        "RANGE_COMPRESSION_AT_HIGH_EPSILON", "MIXED_RANKING_ERROR"), (
+        f"unrecognised mechanism {dec.get('mechanism')}")
+    assert "drop_largest_epsilon" in dec
+
+
 # ------------------------------------------------ E4
 
 def test_lofo_reports_failing_families() -> None:

@@ -207,3 +207,63 @@ def test_absent_solvents_are_explicitly_disclaimed() -> None:
     assert d.get("do_not_do"), "must list the forbidden shortcuts"
     joined = " ".join(d["do_not_do"])
     assert "替代" in joined or "substitut" in joined.lower()
+
+
+# ------------------------------------------------ association deficit
+
+ASSOC = OUT / "association_deficit_b100.json"
+
+
+def test_association_deficit_uses_onsager_not_clausius_mossotti() -> None:
+    """The dipole term belongs to Onsager, not CM.
+
+    Using the CM form saturated at 1 while the dipole term kept growing, which gave
+    acetonitrile a g_eff of 0.01 -- obvious nonsense. The manifest must name Onsager.
+    """
+    d = _j(ASSOC)
+    if not d:
+        pytest.skip("association deficit not run")
+    assert "Onsager" in d["method"] or "onsager" in d["method"].lower()
+    src = (REPO_ROOT / "scripts" / "b100"
+           / "audit_b100_association_deficit.py").read_text(encoding="utf-8")
+    assert "onsager_lhs" in src, "the Onsager LHS helper is missing"
+
+
+def test_effective_g_is_physically_sane() -> None:
+    """g_eff should sit in a plausible band, not at 1e4."""
+    rows = _load(OUT / "association_deficit_b100.csv")
+    if not rows:
+        pytest.skip("association deficit table missing")
+    for r in rows:
+        g = float(r["effective_g"])
+        assert 0.001 < g < 100.0, (
+            f"{r['name']} has g_eff = {g}; a value this extreme means the "
+            f"polarisability term or the dipole floor is wrong")
+
+
+def test_low_dipole_molecules_are_excluded_and_counted() -> None:
+    """g_eff is meaningless when the pure-dipole denominator approaches zero."""
+    d = _j(ASSOC)
+    if not d:
+        pytest.skip("association deficit not run")
+    assert d.get("dipole_floor_D"), "no dipole floor declared"
+    assert "n_low_dipole_skipped" in d
+
+
+def test_halocarbon_pattern_matches_the_proposed_mechanism() -> None:
+    """Halocarbons must be strongly polar yet have the LOWEST g_eff."""
+    d = _j(ASSOC)
+    if not d:
+        pytest.skip("association deficit not run")
+    hc = d.get("halocarbon_check") or {}
+    if not hc.get("halocarbon_mean_g_eff"):
+        pytest.skip("halocarbon family absent")
+    assert hc["halocarbon_mean_dipole_D"] > 2.0, (
+        "the mechanism requires halocarbons to be genuinely polar")
+    assert hc["halocarbon_mean_g_eff"] < 1.0, (
+        "g_eff < 1 is the antiparallel signature; a value above 1 contradicts "
+        "the proposed mechanism")
+    # and clearly below the hydrogen-bonding families
+    if hc.get("alcohol_mean_g_eff"):
+        assert hc["alcohol_mean_g_eff"] > hc["halocarbon_mean_g_eff"], (
+            "alcohols should be more parallel-correlated than halocarbons")

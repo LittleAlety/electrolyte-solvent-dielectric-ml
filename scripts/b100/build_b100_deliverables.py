@@ -330,6 +330,7 @@ def main() -> int:
     cfd = jload(OUT / "conformer_ensemble_b100.json") or {}
     ttf = jload(OUT / "e1b_target_transform_b100.json") or {}
     solv = jload(OUT / "electrolyte_solvent_coverage_b100.json") or {}
+    assoc = jload(OUT / "association_deficit_b100.json") or {}
 
     manifest = {
         "schema": "b100.freeze_manifest/v1",
@@ -419,10 +420,24 @@ def main() -> int:
                 "n_in_modelling_set": solv.get("n_in_modelling_set"),
                 "n_absent_from_all_sources": solv.get("n_absent_from_all_sources"),
             },
+            "association_deficit": {
+                "halocarbon_g_eff": (assoc.get("halocarbon_check") or {})
+                .get("halocarbon_mean_g_eff"),
+                "halocarbon_mean_dipole_D": (assoc.get("halocarbon_check") or {})
+                .get("halocarbon_mean_dipole_D"),
+                "finding": (
+                    "卤代烃 g_eff 最低 (0.51) 而偶极很高 (3.34 D), "
+                    "氢键家族 g_eff 高 (胺 3.88, 醇 2.61). "
+                    "这定量证实了迁移失败的机制: 强极性但反平行关联, "
+                    "而单分子描述符只能表达 mu^2/Vm, 不能表达 g."
+                ),
+            },
         },
         "known_limitations": [
             "226/257 分子来自单一编校来源 (NBS 514), 跨来源复现未被证明",
-            f"卤代烃家族 ({next((f['n_test'] for f in e4.get('families', []) if f['family'] == 'halocarbon'), '?')} 分子) 跨家族迁移失败; 真实机制是 g 因子迁移失败 (卤代烃强极性但非缔合), 不是『最低介电家族』",
+            f"卤代烃家族 ({next((f['n_test'] for f in e4.get('families', []) if f['family'] == 'halocarbon'), '?')} 分子) 跨家族迁移失败; "
+            "机制已定量为 g 因子迁移失败 (卤代烃 g_eff 0.51 而偶极 3.34 D, 强极性但反平行), "
+            "不是『最低介电家族』—— 该解释已被证伪",
             "H4 功效达标但方向与假设相反: 高介电强缔合分子反而预测更好",
             "DFT / MD 两层未计算, 结论停留在 xTB 层级",
             "构象分析: 30/36 是『构象间展宽』判据; 单构象与 Boltzmann 平均偏差判据只有 16/36",
