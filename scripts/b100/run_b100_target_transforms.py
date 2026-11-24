@@ -62,6 +62,10 @@ BLOCKS = {
     "X0_structure": X0_COLS,
     "X1_electronic": X1_COLS,
     "Xn_mu2_over_Vm": XN_COLS,
+    # X0+X1 is the block the E6 screening experiment used. Including it here lets the
+    # screening comparison be made under ONE lambda-selection protocol, so a regret
+    # difference can be attributed to the feature block rather than to regularisation.
+    "X0_plus_X1": X0_COLS + X1_COLS,
     "X0_plus_Xn": X0_COLS + XN_COLS,
     "X0_X1_Xn": X0_COLS + X1_COLS + XN_COLS,
 }
@@ -291,6 +295,18 @@ def main() -> int:
             n_below = sum(1 for v in pred if v < EPS_FLOOR)
             n_clamped = sum(1 for v in pred
                             if v <= EPS_FLOOR + 1e-9 or v >= EPS_CEIL - 1e-9)
+
+            # Does the transform fix the RANGE COMPRESSION that the E6 analysis
+            # blamed for most of the regret? Report Top-k regret and the ratio of
+            # predicted to true span, which is the direct measure of compression.
+            k = min(10, n)
+            ord_p = sorted(range(n), key=lambda i: -pred[i])
+            oracle_mean = statistics.mean(sorted(eps, reverse=True)[:k])
+            model_mean = statistics.mean(eps[i] for i in ord_p[:k])
+            pred_span = max(pred) - min(pred)
+            true_span = max(eps) - min(eps)
+            span_ratio = (pred_span / true_span) if true_span > 0 else None
+
             results.append({
                 "transform": tkind,
                 "block": label,
@@ -306,6 +322,11 @@ def main() -> int:
                 "n_pred_below_eps_floor": n_below,
                 "n_pred_clamped": n_clamped,
                 "positivity_enforced": "true" if tkind != "identity" else "false",
+                "topk_oracle_mean": round(oracle_mean, 4),
+                "topk_model_mean": round(model_mean, 4),
+                "topk_regret": round(oracle_mean - model_mean, 4),
+                "prediction_span_over_true_span": (
+                    round(span_ratio, 4) if span_ratio else ""),
             })
             print(f"  {tkind:18s} {label:16s} MAE={m['mae']:8.4f} "
                   f"R2={m['r2']:+7.3f} below1={n_below}")
@@ -318,6 +339,7 @@ def main() -> int:
             w.writerow(r)
 
     best = min(results, key=lambda r: r["mae"])
+    best_regret = min(results, key=lambda r: r["topk_regret"])
     by_t = {}
     for t in TRANSFORMS:
         rs = [r for r in results if r["transform"] == t]
@@ -328,6 +350,11 @@ def main() -> int:
                 "mae": best_t["mae"],
                 "r2": best_t["r2"],
                 "n_pred_below_floor": sum(r["n_pred_below_eps_floor"] for r in rs),
+                "min_topk_regret": min(r["topk_regret"] for r in rs),
+                "max_span_ratio": max(
+                    (r["prediction_span_over_true_span"] for r in rs
+                     if r["prediction_span_over_true_span"] != ""),
+                    default=None),
             }
     identity_below = by_t.get("identity", {}).get("n_pred_below_floor", 0)
     cm_below = by_t.get("clausius_mossotti", {}).get("n_pred_below_floor", 0)
@@ -347,7 +374,37 @@ def main() -> int:
         "constant_baseline_mae": round(const_mae, 4),
         "transforms_compared": list(TRANSFORMS),
         "best_overall": best,
+        "best_screening": best_regret,
         "by_transform": by_t,
+        "range_compression_test": {
+            "question": (
+                "E6 把大部分 regret 归因于『高介电端值域压缩』"
+                "(预测值域只有真实值域的 33%). 有界/对数变换能否修复压缩?"
+            ),
+            "note": (
+                "prediction_span_over_true_span 越接近 1, 压缩越少; "
+                "topk_regret 越小, 筛选越好. 两者与本表的 MAE 一起看, "
+                "因为一个变换可能改善筛选却恶化 MAE."
+            ),
+        },
+        "screening_block_comparison": {
+            "question": (
+                "在**同一嵌套 lambda 选择协议**下, X0+X1 (E6 所用) 与 X0+Xn 的 "
+                "Top-10 regret 差多少?"
+            ),
+            "rows": [
+                {"block": r["block"], "transform": r["transform"],
+                 "n_features": r["n_features"], "topk_regret": r["topk_regret"],
+                 "prediction_span_over_true_span":
+                     r["prediction_span_over_true_span"]}
+                for r in results if r["transform"] == "identity"
+            ],
+            "why_it_matters": (
+                "若两者相差很大, 则 E6 的『筛选不可用』结论是**特征块选择**造成的, "
+                "不是描述符本身的上限. 这将把结论从『筛选失败』改为"
+                "『用错了特征块』."
+            ),
+        },
         "positivity": {
             "identity_predictions_below_floor": identity_below,
             "clausius_mossotti_predictions_below_floor": cm_below,

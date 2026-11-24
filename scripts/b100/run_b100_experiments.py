@@ -663,6 +663,107 @@ def main() -> int:
             }
         # spearman between rank and error
         e6["spearman_pred_true"] = round(spearman(preds_all, yall), 4)
+
+        # ---- regret decomposition ----
+        # A single extreme epsilon can dominate regret and make the metric look like
+        # a screening result when it is really one outlier. Both reviewers flagged
+        # this, so the contribution of every molecule is reported and the
+        # concentration is quantified rather than left implicit.
+        oracle_idx = sorted(range(len(yall)), key=lambda i: -yall[i])[:TOPK]
+        model_set = set(topk_idx)
+        oracle_set = set(oracle_idx)
+        contrib: list[dict] = []
+        for i in oracle_set - model_set:
+            contrib.append({
+                "inchikey": keys[i], "name": rows[idxall[i]]["name"],
+                "epsilon": round(yall[i], 4),
+                "predicted": round(preds_all[i], 4),
+                "role": "MISSED_HIGH_EPSILON",
+                "regret_contribution": round(yall[i] / TOPK, 4),
+            })
+        for i in model_set - oracle_set:
+            contrib.append({
+                "inchikey": keys[i], "name": rows[idxall[i]]["name"],
+                "epsilon": round(yall[i], 4),
+                "predicted": round(preds_all[i], 4),
+                "role": "FALSE_POSITIVE",
+                "regret_contribution": round(-yall[i] / TOPK, 4),
+            })
+        contrib.sort(key=lambda z: -z["regret_contribution"])
+        top1_share = (contrib[0]["regret_contribution"] / regret) if (contrib and regret) else None
+        top2_share = (sum(c["regret_contribution"] for c in contrib[:2]) / regret
+                      if (contrib and regret) else None)
+
+        # Is the failure a ranking failure or a RANGE-COMPRESSION failure? If every
+        # missed high-epsilon molecule is UNDER-predicted, the model has the order
+        # roughly right but compresses the top of the scale -- which is a different
+        # defect with a different remedy than "the ranking is broken".
+        missed = [c for c in contrib if c["role"] == "MISSED_HIGH_EPSILON"]
+        n_under = sum(1 for c in missed if c["predicted"] < c["epsilon"])
+        compression = (n_under / len(missed)) if missed else None
+        # how much of the true range does the prediction range cover?
+        pred_span = max(preds_all) - min(preds_all) if preds_all else None
+        true_span = max(yall) - min(yall) if yall else None
+        span_ratio = (pred_span / true_span) if (pred_span and true_span) else None
+
+        # sensitivity: drop the single largest-epsilon molecule and recompute
+        drop_i = max(range(len(yall)), key=lambda i: yall[i])
+        kept = [i for i in range(len(yall)) if i != drop_i]
+        yk = [yall[i] for i in kept]
+        pk = [preds_all[i] for i in kept]
+        ordk = sorted(range(len(yk)), key=lambda i: -pk[i])
+        o_k = statistics.mean(sorted(yk, reverse=True)[:TOPK])
+        m_k = statistics.mean(yk[i] for i in ordk[:TOPK])
+        n_mc2 = 20000
+        mc3 = []
+        for _ in range(n_mc2):
+            s = rng.sample(range(len(yk)), TOPK)
+            mc3.append(statistics.mean(yk[i] for i in s))
+        mc3.sort(reverse=True)
+        p_drop = (sum(1 for v in mc3 if v >= m_k) + 1) / (len(mc3) + 1)
+
+        e6["regret_decomposition"] = {
+            "n_contributing_molecules": len(contrib),
+            "top1_contribution": round(contrib[0]["regret_contribution"], 4) if contrib else None,
+            "top1_name": contrib[0]["name"] if contrib else None,
+            "top1_share_of_regret": round(top1_share, 4) if top1_share else None,
+            "top2_share_of_regret": round(top2_share, 4) if top2_share else None,
+            "contributors": contrib[:12],
+            "n_missed_high_epsilon": len(missed),
+            "n_missed_underpredicted": n_under,
+            "underprediction_fraction": (
+                round(compression, 4) if compression is not None else None),
+            "prediction_span_over_true_span": (
+                round(span_ratio, 4) if span_ratio else None),
+            "mechanism": (
+                "RANGE_COMPRESSION_AT_HIGH_EPSILON"
+                if compression is not None and compression >= 0.8
+                else "MIXED_RANKING_ERROR"),
+            "interpretation": (
+                (
+                    f"regret 高度集中: 最大的两个分子贡献 "
+                    f"{100*top2_share:.0f}%. "
+                    if top2_share and top2_share > 0.5 else
+                    "regret 未被少数离群值主导. "
+                )
+                + (
+                    f"被错过的高介电分子中有 {n_under}/{len(missed)} 个是**被低估**的, "
+                    f"预测值域只覆盖真实值域的 "
+                    f"{100*span_ratio:.0f}% — 模型不是排序失败, 而是"
+                    f"**在高介电端压缩了值域**. "
+                    f"这需要的是有界/非线性读出或高介电加权, "
+                    f"不是重排特征."
+                    if compression is not None and compression >= 0.8 and span_ratio
+                    else ""
+                )
+            ),
+            "drop_largest_epsilon": {
+                "dropped_name": rows[idxall[drop_i]]["name"],
+                "dropped_epsilon": round(yall[drop_i], 4),
+                "regret_without_it": round(o_k - m_k, 4),
+                "p_random_ge_model_without_it": round(p_drop, 5),
+            },
+        }
         with (OUT / "e6_ranking_b100.csv").open("w", newline="",
                                                 encoding="utf-8") as fh:
             w = csv.writer(fh)

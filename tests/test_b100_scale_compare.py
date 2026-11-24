@@ -104,6 +104,58 @@ def test_no_transform_emits_epsilon_below_one() -> None:
             f"{r['n_pred_below_eps_floor']} predictions below 1")
 
 
+def test_screening_comparison_uses_one_lambda_protocol() -> None:
+    """The regret gap must not be a regularisation artefact.
+
+    X0+X1 under this protocol must reproduce the E6 experiment's regret exactly; if it
+    does not, the two runs differ in something other than the feature block and the
+    comparison is invalid.
+    """
+    rows = _load(TTC)
+    e6 = _j(OUT / "e6_manifest_b100.json")
+    if not rows or not e6:
+        pytest.skip("missing artifacts")
+    ident = {r["block"]: r for r in rows if r["transform"] == "identity"}
+    x0x1 = ident.get("X0_plus_X1")
+    if x0x1 is None:
+        pytest.skip("X0+X1 not evaluated")
+    assert abs(float(x0x1["topk_regret"]) - float(e6["regret"])) < 0.01, (
+        f"X0+X1 regret {x0x1['topk_regret']} does not reproduce the E6 regret "
+        f"{e6['regret']}; the two runs are not comparable")
+
+
+def test_mu2_over_Vm_dramatically_improves_screening() -> None:
+    """One physically-motivated feature cuts Top-10 regret by about 10x."""
+    rows = _load(TTC)
+    if not rows:
+        pytest.skip("target-transform table missing")
+    ident = {r["block"]: r for r in rows if r["transform"] == "identity"}
+    a = ident.get("X0_plus_X1")
+    b = ident.get("X0_plus_Xn")
+    if not (a and b):
+        pytest.skip("required blocks missing")
+    ra, rb = float(a["topk_regret"]), float(b["topk_regret"])
+    assert rb < ra * 0.5, (
+        f"X0+Xn regret {rb} is not substantially better than X0+X1 {ra}; the "
+        f"headline finding no longer holds and must be re-checked")
+    # while the MAE gain is modest -- that decoupling is the point
+    mae_gain = abs(float(a["mae"]) - float(b["mae"]))
+    assert mae_gain < 1.5, (
+        f"MAE improved by {mae_gain}, so this is not the decoupled case claimed")
+
+
+def test_e6_uses_the_weaker_block_and_that_is_recorded() -> None:
+    """E6's block excludes mu^2/Vm; the consequence must be stated."""
+    d = _j(TT)
+    if not d:
+        pytest.skip("target-transform experiment not run")
+    cmp_ = d.get("screening_block_comparison")
+    assert cmp_ is not None, "screening block comparison missing"
+    assert cmp_.get("why_it_matters"), (
+        "must explain that E6's negative screening result is a feature-block "
+        "artefact")
+
+
 def test_mu2_over_Vm_makes_the_electronic_block_redundant() -> None:
     """X0+Xn and X0+X1+Xn must have the same explanatory power."""
     rows = _load(TTC)

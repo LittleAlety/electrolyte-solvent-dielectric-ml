@@ -402,6 +402,18 @@ def main() -> int:
                     "对数变换 MAE 最优, 恒等变换 R2 最优."
                 ),
             },
+            "screening_feature_block": {
+                "note": (
+                    "在同一嵌套 lambda 协议下: X0+X1 (E6 所用) regret 29.943, "
+                    "X0+mu^2/Vm regret 2.938. 两者 MAE 只差 0.60 (5.25 vs 4.65), "
+                    "但筛选差 10 倍."
+                ),
+                "implication": (
+                    "E6 的『筛选不可用』结论是**特征块选择**造成的, 不是描述符上限. "
+                    "同时也说明 MAE 与 regret 的脱钩是**双向**的: "
+                    "一个几乎不改善 MAE 的特征可以极大地改善筛选."
+                ),
+            },
             "solvent_coverage": {
                 "n_key_solvents": solv.get("n_key_solvents"),
                 "n_in_modelling_set": solv.get("n_in_modelling_set"),

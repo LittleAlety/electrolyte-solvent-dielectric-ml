@@ -111,6 +111,24 @@ def test_each_analysed_molecule_records_conformer_counts() -> None:
                 f"{r['name']} marked OK with fewer than 2 converged conformers")
 
 
+def test_two_conformer_questions_are_counted_separately() -> None:
+    """Spread and single-vs-Boltzmann are different questions.
+
+    The earlier version merged them and quoted the spread count as if it were the
+    single-conformer count (30/36 vs the true 20/36), overstating the finding.
+    """
+    m = _man()
+    for key in ("n_conformer_spread_large", "n_single_conformer_off"):
+        assert key in m, f"{key} not reported"
+        assert m[key] >= 0
+    # the single-conformer criterion is the stricter one and must not exceed the
+    # spread count
+    assert m["n_single_conformer_off"] <= m["n_conformer_spread_large"], (
+        "more molecules deviate from the Boltzmann average than have a large "
+        "spread, which is logically impossible")
+    assert "metric_clarification" in m
+
+
 def test_reliability_fraction_uses_polar_molecules_only() -> None:
     m = _man()
     rows = _load()
@@ -137,3 +155,17 @@ def test_sample_is_described_as_purposive() -> None:
     m = _man()
     assert "目的性" in m["protocol"]["sample"] or "purposive" in \
         m["protocol"]["sample"].lower()
+
+
+def test_both_counts_are_restricted_to_polar_molecules() -> None:
+    """A 0.01 D dipole cannot have a meaningful relative spread."""
+    m = _man()
+    rows = _load()
+    polar = [r for r in rows
+             if r.get("verdict") in ("SINGLE_CONFORMER_RELIABLE",
+                                     "SINGLE_CONFORMER_UNRELIABLE")]
+    n_spread = sum(1 for r in polar if r.get("conformer_spread_large") == "true")
+    n_off = sum(1 for r in polar if r.get("single_conformer_off") == "true")
+    assert m["n_conformer_spread_large"] == n_spread, (
+        "spread count includes non-polar molecules")
+    assert m["n_single_conformer_off"] == n_off

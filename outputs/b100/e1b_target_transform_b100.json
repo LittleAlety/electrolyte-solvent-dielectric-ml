@@ -1,7 +1,7 @@
 {
   "schema": "b100.target_transform/v1",
   "generator": "run_b100_target_transforms/1.0.0",
-  "generated_at_utc": "2026-11-23T23:51:05Z",
+  "generated_at_utc": "2026-11-24T00:39:37Z",
   "why": "所有既有模型都用无界线性回归拟合 epsilon, 会给出 epsilon<1 的非物理预测, 卤代烃外推爆掉也源于此. Clausius-Mossotti 给出正确的响应变量 (eps-1)/(eps+2), 它在 mu^2/Vm 上是线性的, 且把输出限制在 epsilon>1.",
   "n_molecules": 239,
   "constant_baseline_mae": 8.5428,
@@ -24,27 +24,109 @@
     "mae_reduction_pct": 47.46,
     "n_pred_below_eps_floor": 0,
     "n_pred_clamped": 2,
-    "positivity_enforced": "true"
+    "positivity_enforced": "true",
+    "topk_oracle_mean": 58.676,
+    "topk_model_mean": 30.732,
+    "topk_regret": 27.944,
+    "prediction_span_over_true_span": 0.4011
+  },
+  "best_screening": {
+    "transform": "identity",
+    "block": "X0_plus_Xn",
+    "n_features": 16,
+    "n_used": 239,
+    "mae": 4.6522,
+    "rmse": 12.1202,
+    "r2": 0.399,
+    "bias": 0.097,
+    "constant_baseline_mae": 8.5428,
+    "beats_constant": "true",
+    "mae_reduction_pct": 45.54,
+    "n_pred_below_eps_floor": 0,
+    "n_pred_clamped": 23,
+    "positivity_enforced": "false",
+    "topk_oracle_mean": 58.676,
+    "topk_model_mean": 55.738,
+    "topk_regret": 2.938,
+    "prediction_span_over_true_span": 0.2534
   },
   "by_transform": {
     "identity": {
       "best_block": "X0_plus_Xn",
       "mae": 4.6522,
       "r2": 0.399,
-      "n_pred_below_floor": 0
+      "n_pred_below_floor": 0,
+      "min_topk_regret": 2.938,
+      "max_span_ratio": 0.291
     },
     "log": {
       "best_block": "X0_X1_Xn",
       "mae": 4.4887,
       "r2": 0.2679,
-      "n_pred_below_floor": 0
+      "n_pred_below_floor": 0,
+      "min_topk_regret": 19.497,
+      "max_span_ratio": 0.7345
     },
     "clausius_mossotti": {
       "best_block": "X1_electronic",
       "mae": 10.8263,
       "r2": -7.7398,
-      "n_pred_below_floor": 0
+      "n_pred_below_floor": 0,
+      "min_topk_regret": 19.497,
+      "max_span_ratio": 2.8252
     }
+  },
+  "range_compression_test": {
+    "question": "E6 把大部分 regret 归因于『高介电端值域压缩』(预测值域只有真实值域的 33%). 有界/对数变换能否修复压缩?",
+    "note": "prediction_span_over_true_span 越接近 1, 压缩越少; topk_regret 越小, 筛选越好. 两者与本表的 MAE 一起看, 因为一个变换可能改善筛选却恶化 MAE."
+  },
+  "screening_block_comparison": {
+    "question": "在**同一嵌套 lambda 选择协议**下, X0+X1 (E6 所用) 与 X0+Xn 的 Top-10 regret 差多少?",
+    "rows": [
+      {
+        "block": "X0_structure",
+        "transform": "identity",
+        "n_features": 15,
+        "topk_regret": 35.4029,
+        "prediction_span_over_true_span": 0.291
+      },
+      {
+        "block": "X1_electronic",
+        "transform": "identity",
+        "n_features": 2,
+        "topk_regret": 36.9614,
+        "prediction_span_over_true_span": 0.1466
+      },
+      {
+        "block": "Xn_mu2_over_Vm",
+        "transform": "identity",
+        "n_features": 1,
+        "topk_regret": 34.624,
+        "prediction_span_over_true_span": 0.2138
+      },
+      {
+        "block": "X0_plus_X1",
+        "transform": "identity",
+        "n_features": 17,
+        "topk_regret": 29.943,
+        "prediction_span_over_true_span": 0.1929
+      },
+      {
+        "block": "X0_plus_Xn",
+        "transform": "identity",
+        "n_features": 16,
+        "topk_regret": 2.938,
+        "prediction_span_over_true_span": 0.2534
+      },
+      {
+        "block": "X0_X1_Xn",
+        "transform": "identity",
+        "n_features": 18,
+        "topk_regret": 3.815,
+        "prediction_span_over_true_span": 0.2402
+      }
+    ],
+    "why_it_matters": "若两者相差很大, 则 E6 的『筛选不可用』结论是**特征块选择**造成的, 不是描述符本身的上限. 这将把结论从『筛选失败』改为『用错了特征块』."
   },
   "positivity": {
     "identity_predictions_below_floor": 0,
@@ -59,7 +141,7 @@
   },
   "output": {
     "path": "outputs\\b100\\e1b_target_transform_b100.csv",
-    "sha256": "8eb189aface9c2448a6547b3f18498725b2bb41ff5f92fe08e8a4063d218f0aa",
-    "rows": 15
+    "sha256": "412d0ac695436ee324831b504608643832875a4a29ceecfde886551084a73314",
+    "rows": 18
   }
 }

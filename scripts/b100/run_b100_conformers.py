@@ -303,11 +303,20 @@ def main() -> int:
         nonpolar = (dip_avg is not None and abs(dip_avg) < POLAR_FLOOR_D
                     and single is not None and abs(single) < POLAR_FLOOR_D)
 
+        # TWO DIFFERENT QUESTIONS, reported separately.
+        #   spread_large  : do the conformers disagree with EACH OTHER?
+        #   single_off    : is the single embedded geometry far from the average?
+        # The earlier report merged them into one verdict and quoted the spread
+        # count as if it were the single-conformer count, which overstated the
+        # finding. Reviewers asked for the distinction; it is now explicit.
+        spread_large = rel_spread is not None and rel_spread > tol
+        single_off = dev is not None and dev > tol
+
         if nonpolar:
             verdict = "NONPOLAR_CONFORMATION_INSENSITIVE"
         elif dev is None:
             verdict = "UNDETERMINED"
-        elif rel_spread is not None and rel_spread <= 0.10 and dev <= tol:
+        elif not spread_large and not single_off:
             verdict = "SINGLE_CONFORMER_RELIABLE"
         else:
             verdict = "SINGLE_CONFORMER_UNRELIABLE"
@@ -329,6 +338,8 @@ def main() -> int:
             "boltzmann_gap": (round(sum(w[j] * gaps[j] for j in range(len(gaps)))
                                     / sum(w[:len(gaps)]), 4) if gaps else ""),
             "energy_range_ev": round((max(en) - min(en)) * 27.211386245988, 4),
+            "conformer_spread_large": "true" if spread_large else "false",
+            "single_conformer_off": "true" if single_off else "false",
             "verdict": verdict,
         })
         print(f"  {i}/{len(work)} {r.get('name','')[:26]:26s} "
@@ -376,6 +387,19 @@ def main() -> int:
         "n_reliable": len(reliable),
         "n_unreliable": len(unreliable),
         "n_nonpolar_insensitive": len(nonpolar),
+        # the two questions, counted separately so neither can be quoted for the other.
+        # Both are restricted to the POLAR group: a molecule whose dipole is ~0.01 D
+        # cannot meaningfully have a "large relative spread", so including nonpolar
+        # molecules here would inflate both counts.
+        "n_conformer_spread_large": sum(
+            1 for r in polar if r.get("conformer_spread_large") == "true"),
+        "n_single_conformer_off": sum(
+            1 for r in polar if r.get("single_conformer_off") == "true"),
+        "metric_clarification": (
+            "两个判据必须分开引用, 且都只在极性组内统计: "
+            "『构象间相对展宽 >10%』与『单构象值与 Boltzmann 平均相差 >10%』"
+            "是两个不同的问题. 早期报告把展宽计数当成单构象计数, 高估了结论."
+        ),
         "polar_floor_D": 0.30,
         "nonpolar_note": (
             f"{len(nonpolar)} 个分子的 Boltzmann 偶极 < 0.30 D, 属于非极性分子. "
@@ -391,10 +415,13 @@ def main() -> int:
             "max_rel_dev": round(max(devs), 4) if devs else None,
         },
         "finding": (
-            f"在 {len(polar)} 个**极性**柔性分子中, {len(unreliable)} 个的单构象"
-            f"偶极矩与 Boltzmann 平均相差 >10%, 或构象间相对展宽 >10%. "
-            f"另 {len(nonpolar)} 个是非极性分子 (|<mu>| < 0.30 D), 构象对它们无影响. "
-            "结论: 单构象不足以代表柔性极性分子的偶极矩."
+            f"在 {len(polar)} 个**极性**柔性分子中: "
+            f"{sum(1 for r in polar if r.get('conformer_spread_large') == 'true')} 个"
+            f"存在构象间相对展宽 >10%, "
+            f"{sum(1 for r in polar if r.get('single_conformer_off') == 'true')} 个"
+            f"的单构象偶极与 Boltzmann 平均相差 >10%. "
+            f"后者才是『单构象不可靠』的直接证据, 前者只说明构象之间存在差异. "
+            f"另 {len(nonpolar)} 个是非极性分子 (|<mu>| < 0.30 D), 构象对它们无影响."
             if polar else "无足够极性构象数据得出结论."
         ),
         "consequence_for_modelling": (
@@ -423,7 +450,9 @@ def _write(results: list[dict], out: Path) -> None:
               "single_conformer_dipole", "boltzmann_dipole",
               "dipole_min", "dipole_max", "dipole_spread",
               "dipole_relative_spread", "single_vs_boltzmann_rel_dev",
-              "boltzmann_gap", "energy_range_ev", "verdict"]
+              "boltzmann_gap", "energy_range_ev",
+              "conformer_spread_large", "single_conformer_off",
+              "verdict"]
     for r in results:
         for f in fields:
             r.setdefault(f, "")
