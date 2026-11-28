@@ -1,0 +1,67 @@
+{
+  "schema": "b723.e6_protocol_audit/v1",
+  "generated_at_utc": "2026-11-25T13:24:26.626400+00:00",
+  "generator": "audit_e6_protocol/1.0.0",
+  "audited_against": "code path in scripts/b710_evidence/analyze_e6_stability.py",
+  "not_against": "prose descriptions in reports",
+  "definition_confirmed": {
+    "topk": "k largest predictions",
+    "regret": "mean(true epsilon of the true top-k) - mean(true epsilon of the model's top-k)",
+    "oracle": "top-k of the true target over the same candidate pool",
+    "ties": "stable sort on index"
+  },
+  "checks": [
+    {
+      "id": "R1_topk_is_largest_predicted",
+      "expected": "model top-k = the k largest predicted values",
+      "observed_model_topk_true_values": [
+        1.0,
+        2.0
+      ],
+      "passes": true
+    },
+    {
+      "id": "R2_regret_definition",
+      "expected": 8.0,
+      "observed": 8.0,
+      "passes": true
+    },
+    {
+      "id": "R3_tie_break_deterministic",
+      "expected": "same index chosen on repeated sort",
+      "observed": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "passes": true
+    },
+    {
+      "id": "R4_oracle_and_model_share_pool",
+      "expected": "topk_model_mean + regret == oracle_topk_mean for every seed",
+      "observed_allocation_consistent": true,
+      "same_candidate_pool_flag": true,
+      "same_oracle_recorded": 58.676,
+      "passes": true
+    },
+    {
+      "id": "R5_pool_size_matches_frozen_set",
+      "expected": 239,
+      "observed": 239,
+      "passes": true,
+      "note": "the E6 pool is the 239 phase-verified molecules with a static epsilon label; the LOFO file has 235 because 4 molecules sit in families with <3 members and cannot be held out as a family"
+    },
+    {
+      "id": "R6_target_direction",
+      "expected": "higher epsilon is better (screening for high-permittivity solvents)",
+      "evidence": "regret is positive when the model misses the high-epsilon tail; v7.1 mu2/Vm regret is +11.27, consistent with descending rank",
+      "passes": true
+    }
+  ],
+  "all_checks_pass": true,
+  "consequence": "the v7.1 regret numbers are computed with a defensible definition and can be built upon without re-deriving them",
+  "conflict_found": false
+}

@@ -1,5 +1,5 @@
 # B01 压力异质性审计
-> 生成器 `audit_pressure_heterogeneity/1.0.0` · 2026-11-24T02:22:31Z
+> 生成器 `audit_pressure_heterogeneity/1.0.0` · 2026-11-25T04:42:14Z
 > 只测量污染，不修复。修复需改动冻结窗口，属协议决策。
 
 ## 一、结论

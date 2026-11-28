@@ -1,0 +1,90 @@
+{
+  "schema": "b700.method_freeze_v2/v1",
+  "generated_at_utc": "2026-11-24T10:29:02Z",
+  "status": "FROZEN",
+  "why_v2_exists": "v6.0 的 DFT 层是 PySCF/B3LYP, 而计划要求 ORCA/r2SCAN-3c, 这属于方法替换而非等价实现. v7.0 按计划执行真正的 r2SCAN-3c, 因此需要一份独立的方法学冻结, 不能沿用 v6.0 的说明.",
+  "preflight_gates": {
+    "orca_runs_12_of_12_sp": true,
+    "orca_runs_12_of_12_opt": true,
+    "optimization_converged_12_of_12": true,
+    "polarizability_parsed_12_of_12": true,
+    "parser_matches_independent_orca_run": true
+  },
+  "preflight_detail": {
+    "sp": {
+      "n_jobs": 12,
+      "n_terminated_normally": 12,
+      "n_optimization_converged": 0,
+      "n_with_polarizability": 12,
+      "passes": true
+    },
+    "opt": {
+      "n_jobs": 12,
+      "n_terminated_normally": 12,
+      "n_optimization_converged": 12,
+      "n_with_polarizability": 12,
+      "passes": true
+    },
+    "parser_fixture": {
+      "available": true,
+      "dipole_parsed": 4.054695396,
+      "dipole_reference": 4.061298809,
+      "dipole_abs_diff": 0.006603,
+      "polarizability_parsed": 26.82212,
+      "polarizability_reference": 26.81326,
+      "polarizability_rel_diff": 0.00033,
+      "passes": true
+    }
+  },
+  "protocol": {
+    "program": "ORCA",
+    "version_expected": "6.1.1",
+    "program_path": "/home/pengqihang/project/soft/orca",
+    "method": "r2SCAN-3c",
+    "method_composition": "r2SCAN + D4 + gCP + def2-mTZVPP (ORCA built-in)",
+    "charge": 0,
+    "multiplicity": 1,
+    "scf": {
+      "maxiter": 300,
+      "tolx": 1e-07,
+      "tole": 1e-08
+    },
+    "maxcore_mb": 2000,
+    "elprop": "Polar 1 (static polarizability)",
+    "parallel": {
+      "slurm_ntasks": 4,
+      "cpus_per_task": 1,
+      "pal_nprocs": 4,
+      "module": "openmpi/5.0",
+      "note": "ORCA 自己调用 mpirun, 必须给 N 个 task slot; 并需 module load openmpi/5.0, 否则 startup 阶段死于 mpirun: command not found"
+    }
+  },
+  "layers": {
+    "fixed_geometry_single_point": {
+      "geometry": "GFN2-xTB optimised (v6.0 使用的同一几何)",
+      "purpose": "分离电子结构方法差异: 只有方法变, 几何不变, 因此描述符差异可归因于方法"
+    },
+    "optimised_geometry": {
+      "geometry": "r2SCAN-3c 优化几何",
+      "purpose": "生产特征层: 几何与性质来自同一方法, 内部一致, 但不能与 v6.0 一一对比"
+    },
+    "v60_b3lyp_reference": {
+      "geometry": "GFN2-xTB 优化几何",
+      "purpose": "历史对照层, 保留不动, 用于三方分解方法/几何效应"
+    }
+  },
+  "what_this_freeze_does_NOT_claim": [
+    "预检通过不等于 239 个分子都会成功; 失败必须保留失败证书, 不得从分母删除",
+    "r2SCAN-3c 是为几何与热化学参数化的复合方法, 它的偶极/极化率可靠性由本预检的性质层面检查支持, 不能由能量收敛自动推出",
+    "偶极与极化率通过预检不代表所有描述符都正确"
+  ],
+  "preflight_timing": {
+    "sp_seconds_per_molecule": "22-35 (4 cores)",
+    "opt_seconds_per_molecule": "~120 (4 cores)",
+    "note": "用于 239 分子生产的成本估算"
+  },
+  "inputs_hashed": {
+    "parsed_sp.csv": "d41a9b68ad610339511a20686283696ec8fd870334d2bcacbf5cf64b03c85f66",
+    "parsed_opt.csv": "3b138fe50c50af43b27dff03ae13bdd1bd0d448c8e9059b20f43d3ba53cdefea"
+  }
+}

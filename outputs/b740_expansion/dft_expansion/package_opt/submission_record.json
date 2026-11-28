@@ -1,0 +1,40 @@
+{
+  "schema": "b740.orca_submission_record/v1",
+  "generated_at_utc": "2026-11-26T06:31:14Z",
+  "package": "outputs/b740_expansion/dft_expansion/package_opt",
+  "remote_dir": "/project/pengqihang/b742/package_opt",
+  "cluster": {
+    "login": "pengqihang@202.114.96.180",
+    "partition": "hpxg",
+    "slurm": "--ntasks=4 --cpus-per-task=1 --time=12:00:00",
+    "qos_observation": "QOSMaxCpuPerUserLimit allows 4 array tasks concurrently; --array=5-9 stayed PENDING while 1-4 ran"
+  },
+  "submissions": [
+    {
+      "purpose": "pilot (first chunk of 8 molecules)",
+      "sbatch_array": "1",
+      "job_id": "4592091",
+      "state_at_record": "RUNNING",
+      "node": "n0356"
+    },
+    {
+      "purpose": "remaining chunks",
+      "sbatch_array": "2-9",
+      "job_id": "4592244",
+      "state_at_record": "partial: tasks 2-4 RUNNING (n0375/n0375/n0360), tasks 5-9 PENDING on QOS CPU limit"
+    }
+  ],
+  "status": "SUBMITTED_RUNNING_RESULTS_NOT_COLLECTED",
+  "honesty_note": "no descriptor value for a new molecule exists until its job.out contains 'ORCA TERMINATED NORMALLY'; the manifest field status (BUILT_NOT_SUBMITTED) describes the package build, this file describes the submission",
+  "collection_procedure": [
+    "ssh to the cluster and check: grep -l 'ORCA TERMINATED NORMALLY' /project/pengqihang/b742/package_opt/jobs/*/job.out",
+    "re-submit any chunk whose jobs lack the termination line: the sbatch script skips completed jobs, so resubmission is idempotent",
+    "pull the job.out/xyz back with: tar czf - -C /project/pengqihang/b742/package_opt jobs | (local tar xzf -)",
+    "parse dipole / polarizability / HOMO-LUMO from the ORCA output (same fields as the b700 parser) and rebuild outputs/b740_expansion/transfer with the X0+X1 layer"
+  ],
+  "deployment_bug_fixed_before_submission": {
+    "symptom": "all 8 pilot jobs failed instantly with 'cd: /project/.../jobs/<IK>\\r: No such file or directory'",
+    "cause": "joblist.txt was written in Windows text mode (CRLF) but consumed on Linux",
+    "fix": "build_new_orca_package.py now writes joblist.txt as explicit LF bytes"
+  }
+}

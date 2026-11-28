@@ -1,12 +1,12 @@
 # B00 W49 提交对账（w49_commit_reconciliation.md）
-> 生成器 `build_branch_reconciliation/1.0.0` · 2026-11-24T01:58:03Z
+> 生成器 `build_branch_reconciliation/1.0.0` · 2026-11-25T04:41:15Z
 > 本文件只读 git。未执行 commit / push / merge / checkout / release。
 
 ## 一、结论先行
 **本地 `main` 是 `origin/main` 的纯快进（fast-forward）后继。**
 
-- `merge-base(origin/main, HEAD)` = `9869728fc7a2`
-- `origin/main`                  = `9869728fc7a2`
+- `merge-base(origin/main, HEAD)` = `ddb1207f5981`
+- `origin/main`                  = `ddb1207f5981`
 - 两者相等 ⇒ origin 上没有任何本地缺失的提交（behind = 0）。
 
 因此「对账 W49」在技术上不是一次合并决策，而是一次 **推送决策**。本计划不授权推送，所以此处只登记状态，不推进。
@@ -14,22 +14,28 @@
 ## 二、端点确认
 | 项 | 值 | 判定 |
 |---|---|---|
-| 本地 HEAD | `9869728fc7a2` — B100 机制定位：卤代烃失败的定量机制是 g 因子迁移失败（g_eff 0.51） | ⚠️ 未见 W49 |
-| origin/main | `9869728fc7a2` — B100 机制定位：卤代烃失败的定量机制是 g 因子迁移失败（g_eff 0.51） | ⚠️ 非 W40 开头 |
-| ahead / behind | 0 / 0 | ✅ 仅领先 |
+| 本地 HEAD | `bc4d9b81bc0f` — B700 v7.0 收口：239/239 SP+Opt 完成、227/227 构象完成、B706 协议修正重跑 | ⚠️ 未见 W49 |
+| origin/main | `ddb1207f5981` — B100 目标完成核验: 27/27 项全部通过 (含 MD 12 体系与 8/8 真实图表) | ⚠️ 非 W40 开头 |
+| ahead / behind | 6 / 0 | ✅ 仅领先 |
 
 ## 三、5 个未推送提交的实际差异
 | # | 短 SHA | 日期 | 主题 | 文件 | +行 | −行 | 主要目录 |
 |---|---|---|---|---|---|---|---|
+| 1 | `bc4d9b8` | 2026-11-25 | B700 v7.0 收口：239/239 SP+Opt 完成、227/227 构象完成、B706 协议修正重跑 | 47 | 6418 | 1332 | `outputs`×32, `scripts`×12, `.gitignore`×1, `docs`×1 |
+| 2 | `52758fb` | 2026-11-24 | B703-B706: fixed-geometry comparison, descriptors, E1/E2/E4/ | 25 | 4317 | 0 | `outputs`×16, `scripts`×8, `.gitignore`×1 |
+| 3 | `35388c8` | 2026-11-24 | B702 完成：8 个关键电解质溶剂全部从仓库已有数据恢复准入 | 8 | 1000 | 0 | `outputs`×7, `scripts`×1 |
+| 4 | `00fb781` | 2026-11-24 | B701 SP 层完成 239/239：r2SCAN-3c 全量固定几何单点，极化率零缺失 | 1382 | 467451 | 3 | `outputs`×1379, `scripts`×3 |
+| 5 | `354384a` | 2026-11-24 | B701 方法学冻结 v2: ORCA r2SCAN-3c 五道预检闸门全部通过 | 156 | 91313 | 57 | `outputs`×153, `scripts`×3 |
+| 6 | `83fd824` | 2026-11-24 | PLAN B v7.0 启动：v6.0 冻结 + B701 ORCA r2SCAN-3c 预检通过 | 1120 | 51531 | 0 | `outputs`×1116, `scripts`×4 |
 
-合计：**0** 文件、**+0** / **−0** 行。
+合计：**2738** 文件、**+622030** / **−1392** 行。
 
 ## 四、分支与标签清单
 | 类型 | ref | tip | 当前 |
 |---|---|---|---|
-| local | `main` | `9869728` | 是 |
+| local | `main` | `bc4d9b8` | 是 |
 | remote | `remotes/origin/HEAD` | `->` |  |
-| remote | `remotes/origin/main` | `9869728` |  |
+| remote | `remotes/origin/main` | `ddb1207` |  |
 
 标签（按创建时间倒序）：
 
@@ -44,8 +50,8 @@
 ## 五、与 B00 要求的对应
 | B00 要求 | 状态 | 依据 |
 |---|---|---|
-| 1. 确认本地 W49 | ❌ | HEAD = `9869728fc7a2` |
-| 2. 确认 origin/main 的 W40 | ❌ | `9869728fc7a2` — B100 机制定位：卤代烃失败的定量机制是 g 因子迁移失败（g_eff 0.51） |
-| 3. 检查 5 个未推送提交及实际差异 | ✅ | 见§三，共 0 条 |
+| 1. 确认本地 W49 | ❌ | HEAD = `bc4d9b81bc0f` |
+| 2. 确认 origin/main 的 W40 | ❌ | `ddb1207f5981` — B100 目标完成核验: 27/27 项全部通过 (含 MD 12 体系与 8/8 真实图表) |
+| 3. 检查 5 个未推送提交及实际差异 | ✅ | 见§三，共 6 条 |
 | 6. 不自动合并分支 | ✅ | 本脚本无 merge/checkout 调用路径 |
 | 7. 不 commit / push / release | ✅ | 本脚本无写 git 调用路径 |

@@ -1,0 +1,46 @@
+{
+  "schema": "b740.md_preflight/v1",
+  "generated_at_utc": "2026-11-25T17:07:16.582833+00:00",
+  "generator": "validate_md_convergence/1.0.0",
+  "source_data": "outputs/b100/deliverables/md_dielectric_b100.csv",
+  "n_systems": 12,
+  "force_field_class": "NON-POLARIZABLE fixed-charge (v6.0 inherited layer)",
+  "tests": {
+    "T1_density": {
+      "criterion": "relative error <= 3%",
+      "n_evaluable": 7,
+      "n_pass": 3,
+      "median_rel_error": 0.0673,
+      "verdict": "PARTIAL"
+    },
+    "T2_dielectric": {
+      "criterion": "relative error <= 15%",
+      "n_evaluable": 12,
+      "n_pass": 1,
+      "median_rel_error": 0.5334,
+      "n_underestimated": 11,
+      "mean_signed_error": -3.9051,
+      "verdict": "FAIL"
+    },
+    "T3_kirkwood_sanity": {
+      "criterion": "0 < g < 100",
+      "n_pass": 12,
+      "verdict": "PASS"
+    }
+  },
+  "finding": "A fixed-charge force field reproduces DENSITY acceptably but systematically UNDERESTIMATES the static dielectric constant (11/12 systems low, mean error -3.905). That is the expected physics: without explicit induced polarisation the model cannot produce the collective dipole response, so the computed epsilon collapses toward 1 for non-polar liquids and badly misses polar ones.",
+  "consequence_for_this_round": {
+    "status": "BLOCKED_FOR_POLARIZABLE_MD",
+    "why": "the physics RQ3 asks about (intermolecular dipole correlation contributing to epsilon) requires a force field that reproduces epsilon. The available fixed-charge layer does not, and no validated polarizable / Drude / fluctuating-charge parametrisation for these solvents is installed (openmm present, openff-evaluator/mdtraj/parmed absent, no polarizable FF shipped).",
+    "what_is_legitimate": [
+      "report the fixed-charge MD as evidence that non-polarizable models fail on the dielectric response (a NEGATIVE control, not a result)",
+      "use the MD densities as a structural check only"
+    ],
+    "what_is_NOT_legitimate": [
+      "quoting eps_md as a predicted dielectric constant",
+      "using g_K from these runs to explain g_apparent",
+      "claiming a Kirkwood comparison was performed"
+    ]
+  },
+  "next_step_if_resources_allow": "install a validated polarizable model (e.g. AMOEBA/Drude via OpenMM or a fluctuating-charge scheme), re-run 4 systems, and require T1+T2 both pass before any mechanism claim"
+}

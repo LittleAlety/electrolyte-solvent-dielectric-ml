@@ -1,0 +1,319 @@
+{
+  "schema": "b740.new_molecule_transfer/v1",
+  "generated_at_utc": "2026-11-26T06:25:21.475691+00:00",
+  "generator": "run_new_molecule_transfer/1.0.0",
+  "question": "does a model fitted on CORE239 predict the 67 molecules that v7.4 recovered outside CORE239?",
+  "feature_layer": {
+    "name": "X0_RDKIT",
+    "features": [
+      "heavy_atom_count",
+      "hbd",
+      "hba",
+      "tpsa_A2",
+      "molecular_volume_A3",
+      "formal_charge",
+      "n_rings",
+      "n_rotatable",
+      "fraction_csp3",
+      "n_aromatic_atoms",
+      "n_hetero",
+      "n_halogen",
+      "mw"
+    ],
+    "why_recomputed": "one code path for both cohorts, so a feature-definition difference cannot look like a transfer effect",
+    "excluded": {
+      "morgan2_nbits": "the stored column is an integer whose fingerprint parameters are not recorded in the v7.0 artefact",
+      "X1_X2_X3": "dipole/polarizability/conformer/liquid indices do not exist for the new molecules (no DFT layer, no conformer search)"
+    },
+    "volume_reproduction_check": {
+      "n": 239,
+      "median_rel_diff_vs_stored": 0.00564,
+      "max_rel_diff_vs_stored": 0.09382
+    }
+  },
+  "label_definition": {
+    "core239": "v6.0 consensus epsilon (near-ambient, 293-303 K)",
+    "new_molecules": "nearest static epsilon to 298.15 K in the local ThermoML corpus, |dT| <= 10.0 K; per-row offset recorded in the prediction table",
+    "known_noise": "the two cohorts therefore differ by a few K of measurement temperature; this is label noise, not a model effect"
+  },
+  "model": {
+    "type": "ridge regression, intercept not penalised, alpha=1.0",
+    "standardisation": "training-fold only"
+  },
+  "training_cohort": {
+    "n": 239,
+    "mean_epsilon": 10.9072
+  },
+  "core239_10fold_cv": {
+    "n": 239,
+    "mae": 7.1696,
+    "rmse": 15.567,
+    "bias": 0.0285,
+    "mae_rel_pct": 131.178,
+    "r2": 0.0085,
+    "constant_baseline_mae": 8.5428
+  },
+  "transfer": {
+    "all_new": {
+      "n": 65,
+      "mae": 11.7905,
+      "rmse": 17.1644,
+      "bias": -10.0642,
+      "mae_rel_pct": 67.29,
+      "r2": 0.2727,
+      "constant_baseline_mae": 14.281
+    },
+    "neutral_organic": {
+      "n": 38,
+      "mae": 11.1457,
+      "rmse": 18.5594,
+      "bias": -8.9427,
+      "mae_rel_pct": 71.206,
+      "r2": 0.2122,
+      "constant_baseline_mae": 14.4774
+    },
+    "ionic_liquid": {
+      "n": 27,
+      "mae": 12.698,
+      "rmse": 14.9826,
+      "bias": -11.6426,
+      "mae_rel_pct": 61.778,
+      "r2": 0.3709,
+      "constant_baseline_mae": 14.0045
+    },
+    "n_missing_excluded": 2,
+    "missing": [
+      [
+        "butanedinitrile",
+        "no static epsilon within 10 K of 298.15"
+      ],
+      [
+        "1,4,7,10,13,16-hexaoxacyclooctadecane",
+        "no static epsilon within 10 K of 298.15"
+      ]
+    ]
+  },
+  "distribution_shift": {
+    "core239_epsilon_quantiles": [
+      2.004,
+      2.975,
+      6.02,
+      13.3,
+      30.275
+    ],
+    "new_epsilon_quantiles": [
+      4.319,
+      12.8,
+      15.48,
+      29.71,
+      60.66
+    ],
+    "note": "quantiles are 5/25/50/75/95 percent"
+  },
+  "worst_errors": [
+    {
+      "inchikey": "ZHNUHDYFZUAESO-UHFFFAOYSA-N",
+      "name": "formamide",
+      "label_T_K": 303.15,
+      "label_T_offset_K": 5.0,
+      "label_doi": "10.1016/j.fluid.2008.01.024",
+      "formal_charge": 0,
+      "n_fragments": 1,
+      "is_ionic": false,
+      "mw": 45.04,
+      "n_heavy": 3,
+      "n_distinct_dois": "2",
+      "epsilon_label": 106.14,
+      "epsilon_pred": 35.2262,
+      "resid": -70.9138
+    },
+    {
+      "inchikey": "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
+      "name": "water",
+      "label_T_K": 298.0,
+      "label_T_offset_K": 0.15,
+      "label_doi": "10.1016/j.fluid.2014.05.006",
+      "formal_charge": 0,
+      "n_fragments": 1,
+      "is_ionic": false,
+      "mw": 18.02,
+      "n_heavy": 1,
+      "n_distinct_dois": "3",
+      "epsilon_label": 80.0,
+      "epsilon_pred": 32.9733,
+      "resid": -47.0267
+    },
+    {
+      "inchikey": "NEQXUPRFDXNNTA-UHFFFAOYSA-N",
+      "name": "2-hydroxyethylammonium lactate",
+      "label_T_K": 298.15,
+      "label_T_offset_K": 0.0,
+      "label_doi": "10.1021/je101184s",
+      "formal_charge": 0,
+      "n_fragments": 2,
+      "is_ionic": true,
+      "mw": 151.16,
+      "n_heavy": 10,
+      "n_distinct_dois": "1",
+      "epsilon_label": 85.6,
+      "epsilon_pred": 45.5238,
+      "resid": -40.0762
+    },
+    {
+      "inchikey": "IAZDPXIOMUYVGZ-UHFFFAOYSA-N",
+      "name": "dimethyl sulfoxide",
+      "label_T_K": 298.15,
+      "label_T_offset_K": 0.0,
+      "label_doi": "10.1016/j.tca.2017.03.018",
+      "formal_charge": 0,
+      "n_fragments": 1,
+      "is_ionic": false,
+      "mw": 78.14,
+      "n_heavy": 4,
+      "n_distinct_dois": "4",
+      "epsilon_label": 47.3,
+      "epsilon_pred": 10.389,
+      "resid": -36.911
+    },
+    {
+      "inchikey": "HXJUTPCZVOIRIF-UHFFFAOYSA-N",
+      "name": "sulfolane",
+      "label_T_K": 298.15,
+      "label_T_offset_K": 0.0,
+      "label_doi": "10.1016/j.tca.2012.10.004",
+      "formal_charge": 0,
+      "n_fragments": 1,
+      "is_ionic": false,
+      "mw": 120.17,
+      "n_heavy": 7,
+      "n_distinct_dois": "1",
+      "epsilon_label": 44.0,
+      "epsilon_pred": 12.1414,
+      "resid": -31.8586
+    },
+    {
+      "inchikey": "YEJRWHAVMIAJKC-UHFFFAOYSA-N",
+      "name": ".gamma.-butyrolactone",
+      "label_T_K": 298.15,
+      "label_T_offset_K": 0.0,
+      "label_doi": "10.1021/je900503p",
+      "formal_charge": 0,
+      "n_fragments": 1,
+      "is_ionic": false,
+      "mw": 86.09,
+      "n_heavy": 6,
+      "n_distinct_dois": "1",
+      "epsilon_label": 41.64,
+      "epsilon_pred": 13.9916,
+      "resid": -27.6484
+    },
+    {
+      "inchikey": "FXHOOIRPVKKKFG-UHFFFAOYSA-N",
+      "name": "N,N-dimethylethanamide",
+      "label_T_K": 303.15,
+      "label_T_offset_K": 5.0,
+      "label_doi": "10.1016/j.fluid.2008.01.024",
+      "formal_charge": 0,
+      "n_fragments": 1,
+      "is_ionic": false,
+      "mw": 87.12,
+      "n_heavy": 6,
+      "n_distinct_dois": "3",
+      "epsilon_label": 37.72,
+      "epsilon_pred": 11.6887,
+      "resid": -26.0313
+    },
+    {
+      "inchikey": "VRFOKYHDLYBVAL-UHFFFAOYSA-M",
+      "name": "1-ethyl-3-methylimidazolium ethyl sulfate",
+      "label_T_K": 298.15,
+      "label_T_offset_K": 0.0,
+      "label_doi": "10.1021/je101184s",
+      "formal_charge": 0,
+      "n_fragments": 2,
+      "is_ionic": true,
+      "mw": 236.29,
+      "n_heavy": 15,
+      "n_distinct_dois": "1",
+      "epsilon_label": 35.0,
+      "epsilon_pred": 12.0237,
+      "resid": -22.9763
+    },
+    {
+      "inchikey": "ZMXDDKWLCZADIW-UHFFFAOYSA-N",
+      "name": "dimethylformamide",
+      "label_T_K": 297.72,
+      "label_T_offset_K": 0.43,
+      "label_doi": "10.1021/je9010773",
+      "formal_charge": 0,
+      "n_fragments": 1,
+      "is_ionic": false,
+      "mw": 73.09,
+      "n_heavy": 5,
+      "n_distinct_dois": "3",
+      "epsilon_label": 37.396,
+      "epsilon_pred": 14.8765,
+      "resid": -22.5195
+    },
+    {
+      "inchikey": "GSGLHYXFTXGIAQ-UHFFFAOYSA-M",
+      "name": "1,3-dimethylimidazolium dimethylphosphate",
+      "label_T_K": 298.15,
+      "label_T_offset_K": 0.0,
+      "label_doi": "10.1021/je101184s",
+      "formal_charge": 0,
+      "n_fragments": 2,
+      "is_ionic": true,
+      "mw": 222.18,
+      "n_heavy": 14,
+      "n_distinct_dois": "1",
+      "epsilon_label": 29.6,
+      "epsilon_pred": 9.9077,
+      "resid": -19.6923
+    }
+  ],
+  "error_structure": {
+    "n": 65,
+    "pearson_resid_vs_observed": -0.8191,
+    "split_at_observed_median": {
+      "median": 15.48,
+      "low_epsilon": {
+        "n": 33,
+        "mae": 7.1844,
+        "rmse": 9.0788,
+        "bias": -4.8895,
+        "mae_rel_pct": 94.032,
+        "r2": -3.906,
+        "constant_baseline_mae": 3.4208
+      },
+      "high_epsilon": {
+        "n": 32,
+        "mae": 16.5406,
+        "rmse": 22.6592,
+        "bias": -15.4006,
+        "mae_rel_pct": 39.712,
+        "r2": -0.0747,
+        "constant_baseline_mae": 25.4805
+      }
+    },
+    "high_epsilon_ge_15": {
+      "n": 35,
+      "mae": 16.0961,
+      "rmse": 22.0349,
+      "bias": -15.005,
+      "mae_rel_pct": 42.683,
+      "r2": -0.0288,
+      "constant_baseline_mae": 23.6651
+    },
+    "low_epsilon_lt_15": {
+      "n": 30,
+      "mae": 6.7674,
+      "rmse": 8.478,
+      "bias": -4.3001,
+      "mae_rel_pct": 95.998,
+      "r2": -3.3532,
+      "constant_baseline_mae": 3.3328
+    }
+  },
+  "interpretation_guard": "the transfer error is NOT a cross-validation score and must not be compared with the v7.0 CV MAE as if the two were the same quantity; it mixes domain shift, label-definition noise and (for the ionic liquids) a chemistry class that CORE239 does not contain at all"
+}

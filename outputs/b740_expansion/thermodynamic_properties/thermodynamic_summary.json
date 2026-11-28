@@ -1,0 +1,73 @@
+{
+  "schema": "b740.thermodynamic_indices/v1",
+  "generated_at_utc": "2026-11-26T06:28:27.525462+00:00",
+  "generator": "compute_molar_refraction/1.0.0",
+  "n_molecules": 51,
+  "n_in_core239": 27,
+  "temperature_matching": {
+    "tolerance_K": 2.0,
+    "rule": "one index is computed from one (T, eps, n, rho) tuple; inputs must share T within the tolerance, no cross-T splicing",
+    "n_molecules_skipped_no_match": 51
+  },
+  "molar_volume": {
+    "formula": "V_m = M / rho with M in g/mol and rho in kg/m^3 -> V_m in cm^3/mol",
+    "n_from_descriptor_mw": 27,
+    "n_from_thermoml_formula": 24,
+    "n_without_molar_mass": 0,
+    "formula_mw_crosscheck": {
+      "n_overlap": 102,
+      "max_abs_deviation_g_mol": 0.007,
+      "note": "where both a CORE239 descriptor mass and a ThermoML formula mass exist they are compared; the formula mass is used only when the descriptor mass is absent"
+    },
+    "consequence": "before this fallback the 67 NEW_MOLECULE_VALIDATED molecules had a measured density but no M, so V_m -- and therefore molar refraction, CED and H-bond site density -- was blank"
+  },
+  "formulas": {
+    "molar_refraction": "R_m = (n^2-1)/(n^2+2) * V_m   [cm^3/mol]",
+    "lorentz_lorenz_alpha": "alpha = 3/(4 pi N_A) * (n^2-1)/(n^2+2) * V_m -> A^3",
+    "cohesive_energy_density": "CED = (dH_vap - RT)/V_m   [MPa = J/cm^3]",
+    "hildebrand": "delta_H = sqrt(CED)",
+    "lippert_mataga": "df = (eps-1)/(2eps+1) - (n^2-1)/(2n^2+1)",
+    "hbond_site_density": "rho_HBD = N_HBD/V_m ; rho_HBA = N_HBA/V_m",
+    "dielectric_T_coefficient": "OLS slope of eps vs T (>=3 points)"
+  },
+  "coverage": {
+    "with_molar_volume": 50,
+    "with_molar_refraction": 39,
+    "with_lippert_mataga": 40,
+    "with_CED": 0,
+    "with_d_eps_dT": 40
+  },
+  "distributions": {
+    "molar_refraction": {
+      "n": 39,
+      "median": 26.8004,
+      "min": 3.7122,
+      "max": 57.0922
+    },
+    "lippert_mataga_delta_f": {
+      "n": 40,
+      "median": 0.2334,
+      "min": -0.0007,
+      "max": 0.3201
+    },
+    "d_eps_dT_per_K": {
+      "n": 40,
+      "median": -0.0816,
+      "min": -0.333,
+      "max": 0.0005
+    }
+  },
+  "dft_polarizability_validation": {
+    "what": "Lorentz-Lorenz polarizability from measured n_D and V_m, compared with the r2SCAN-3c isotropic alpha",
+    "n_pairs": 22,
+    "pearson_r": 0.9972,
+    "mae_A3": 1.1368,
+    "interpretation": "a high r means the DFT polarizability is consistent with the optical response; a systematic offset means the two definitions differ (gas-phase vs condensed)"
+  },
+  "caveats": [
+    "CORRECTION: the local ThermoML corpus contains ZERO enthalpy-of-vaporisation records (see thermoml_coverage.json, 'enthalpy_of_vaporization': 0). CED and the Hildebrand parameter are therefore NOT_TESTABLE from this data, not 'computed on a small subset' -- an earlier wording of this caveat said 'sparse', which understated the gap",
+    "Lorentz-Lorenz uses n_D at the sodium D line; comparing it with a STATIC DFT polarizability assumes the optical and static electronic responses coincide, which is an approximation, not an identity",
+    "3-4 pi N_A conversion is the SI form; the 1e24 factor converts cm^3 to A^3",
+    "for the new molecules the molar mass comes from the ThermoML formula string, not from an optimised structure; multi-component or charged formulas are refused rather than summed, so a missing V_m here means 'mass not established', not 'density absent'"
+  ]
+}

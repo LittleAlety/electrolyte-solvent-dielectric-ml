@@ -1,0 +1,130 @@
+{
+  "schema": "b740.mixture_dielectric/v1",
+  "generated_at_utc": "2026-11-26T06:23:39.352114+00:00",
+  "generator": "analyze_mixture_dielectric/1.0.0",
+  "source": "local ThermoML corpus (242 documents)",
+  "n_mixture_records_scanned": 3064,
+  "n_evaluable_points": 2278,
+  "n_distinct_pairs": 36,
+  "n_distinct_doi": 13,
+  "mixing_rules": {
+    "linear": "eps = x1 eps1 + x2 eps2",
+    "lichtenecker": "ln eps = phi1 ln eps1 + phi2 ln eps2",
+    "clausius_mossotti": "(eps-1)/(eps+2) additive over VOLUME fractions"
+  },
+  "assumptions": [
+    "volume fractions come from pure-component molar volumes at the matched temperature, i.e. zero excess volume of mixing",
+    "the pure-component epsilon is the nearest value within 5 K anywhere in the corpus; the same-DOI flag records when it came from the mixture's own study",
+    "only 2-component datasets with a molar composition variable are used"
+  ],
+  "association_classification": {
+    "rule": "a pair is PROTIC_PRESENT if either pure component has HBD>0 in its molecular descriptor row; UNKNOWN if either component has no resolved structure",
+    "source": "CORE239 descriptor table + newly resolved PubChem structures; no name-based chemical guessing"
+  },
+  "evaluability": {
+    "records_scanned": 3064,
+    "evaluated": 2278,
+    "drop_reasons": {
+      "missing_pure_epsilon": 164,
+      "missing_pure_density_or_mass": 622
+    },
+    "parse_drop_reasons": {
+      "mixture_without_static_eps": 1012,
+      "n_components_not_2": 314,
+      "mixture_without_T_or_x": 1088
+    }
+  },
+  "rule_fit": {
+    "linear": {
+      "n": 2278,
+      "mae": 1.1148
+    },
+    "lichtenecker": {
+      "n": 2278,
+      "mae": 0.7282
+    },
+    "clausius_mossotti": {
+      "n": 318,
+      "mae": 0.2073
+    },
+    "constant_baseline": {
+      "n": 2278,
+      "mae": 8.4184
+    }
+  },
+  "residual_by_association_class": {
+    "APROTIC_PAIR": {
+      "n_points": 550,
+      "n_pairs": 11,
+      "resid_vs_cm": {
+        "n": 264,
+        "median": 0.10165,
+        "ci95": [
+          0.07705,
+          0.13075
+        ]
+      },
+      "rel_resid_vs_cm": {
+        "n": 264,
+        "median": 0.04174,
+        "ci95": [
+          0.02978,
+          0.05028
+        ]
+      },
+      "resid_vs_lichtenecker": {
+        "n": 550,
+        "median": 0.0886,
+        "ci95": [
+          0.0746,
+          0.1
+        ]
+      }
+    },
+    "PROTIC_PRESENT": {
+      "n_points": 1728,
+      "n_pairs": 25,
+      "resid_vs_cm": {
+        "n": 54,
+        "median": 0.21115,
+        "ci95": [
+          0.099,
+          0.38895
+        ]
+      },
+      "rel_resid_vs_cm": {
+        "n": 54,
+        "median": 0.06357,
+        "ci95": [
+          0.03104,
+          0.1446
+        ]
+      },
+      "resid_vs_lichtenecker": {
+        "n": 1728,
+        "median": 0.2442,
+        "ci95": [
+          0.2032,
+          0.2894
+        ]
+      }
+    }
+  },
+  "clausius_mossotti_domain": {
+    "n_defined": 318,
+    "n_undefined": 1960,
+    "why": "the CM rule maps eps to f=(eps-1)/(eps+2) in [0,1) and inverts g=(eps-1)/(eps+2); when the volume-fraction-weighted g reaches 0.49 the predicted eps diverges, so the rule is formally undefined for water-rich and other high-permittivity mixtures",
+    "consequence": "the CM comparison is restricted to the low-epsilon part of the composition space; it must NOT be quoted as covering the whole dataset, and the protic class is under-represented there. Lichtenecker is the rule defined on every point."
+  },
+  "sign_of_the_residual": "measured epsilon exceeds every ideal rule on median in BOTH association classes; the protic residual is the larger one, i.e. the departure grows with H-bond capability rather than with polarity alone",
+  "same_doi_pure_reference": {
+    "n_points": 1332,
+    "fraction": 0.5847,
+    "note": "most reference epsilon values come from a different study than the mixture; this is a cross-source splice of the REFERENCE, which is recorded per row and must not be hidden"
+  },
+  "what_this_can_and_cannot_say": [
+    "CAN: quantify how far measured mixture epsilon departs from three fixed ideal mixing rules, and whether the departure is systematically larger for H-bonding pairs",
+    "CANNOT: turn that residual into an association parameter or a Kirkwood g; the rules are not derived from a molecular model of the mixture",
+    "CANNOT: be used as a training label set -- no mixture record enters the single-molecule epsilon model"
+  ]
+}

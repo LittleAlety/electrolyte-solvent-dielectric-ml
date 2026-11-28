@@ -1,5 +1,7 @@
 # 电解液溶剂筛选：可审计的多通道机器学习管线
 
+> **2026-11-28 · PLAN B 生产失败诊断**：[根因分析](outputs/b750_completion/failure_diagnostics/FAILURE_ANALYSIS.md) · [执行报告](outputs/b750_completion/COMPLETION_REPORT.md)。214条测试通过；38/67合格，剩余21个几何步数耗尽、1个超时中断、7个从未启动。首轮5个续算全部合格，当前状态 BLOCKED_NEEDS_SUBMISSION。历史目标泄漏、方法错标、CM截断和点级CI解释已由[科学更正](outputs/b750_completion/scientific_errata.json)取代。
+
 > An auditable, pre-registered machine-learning pipeline for electrolyte-solvent
 > screening: static permittivity (epsilon), viscosity (eta), the orbital window
 > (HOMO / LUMO), and redox potential - with a frozen main scoreboard, a shot ledger,
